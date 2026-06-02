@@ -38,14 +38,14 @@ class LoginChallenge extends Component
         if ($google2fa->verifyKey($secret, $this->code)) {
             Auth::guard('central')->login($user, Session::get('login.remember', false));
             
+            Session::forget(['login.id', 'login.remember']);
+            session()->regenerate();
+
             app(\App\Modules\Central\Auth\Actions\LoginCentralUserAction::class)->recordSession($user);
 
             activity('auth')
                 ->performedOn($user)
                 ->log('central_user_logged_in_mfa');
-
-            Session::forget(['login.id', 'login.remember']);
-            session()->regenerate();
 
             $this->redirectIntended(default: route('central.dashboard'));
         } else {

@@ -41,8 +41,6 @@ final readonly class LoginCentralUserAction {
 
         Auth::guard('central')->login($user, $data->remember);
 
-        $this->recordSession($user);
-
         activity('auth')
             ->performedOn($user)
             ->log('central_user_logged_in');

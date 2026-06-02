@@ -34,6 +34,7 @@ it('revokes the oldest session when limit is exceeded', function () {
         Session::flush(); // Simulate different requests
         Session::start();
         $action->execute($data);
+        $action->recordSession($user);
         
         // Manually adjust the last session's issued_at to ensure order
         $session = CentralSession::latest('created_at')->first();
@@ -46,6 +47,7 @@ it('revokes the oldest session when limit is exceeded', function () {
     Session::flush();
     Session::start();
     $action->execute($data);
+    $action->recordSession($user);
 
     // Should still be 3 active sessions, and 1 revoked
     expect(CentralSession::where('user_id', $user->id)->whereNull('revoked_at')->count())->toBe(3);

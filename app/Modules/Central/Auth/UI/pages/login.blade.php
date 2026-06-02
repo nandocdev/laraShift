@@ -7,6 +7,12 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if (session('error'))
+        <flux:card class="mb-4 bg-red-50 border-red-200">
+            <flux:text color="red" size="sm">{{ session('error') }}</flux:text>
+        </flux:card>
+    @endif
+
     <form wire:submit="authenticate" class="flex flex-col gap-6">
         <!-- Email Address -->
         <flux:input
