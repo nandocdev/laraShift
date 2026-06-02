@@ -2,16 +2,28 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Actions\GenerateInvoicePdfAction;
+use App\Modules\Central\Billing\Http\Controllers\BillingApiController;
+use App\Modules\Central\Billing\Http\Controllers\DlocalWebhookController;
 use App\Modules\Central\Billing\Http\Controllers\StripeWebhookController;
 use App\Modules\Central\Billing\Livewire\SubscriptionList;
 use App\Modules\Central\Billing\Livewire\TenantInvoiceList;
 use App\Modules\Central\Billing\Models\Invoice;
+use App\Modules\Central\Billing\Actions\GenerateInvoicePdfAction;
 use Illuminate\Support\Facades\Route;
 
+// Webhooks (Public with internal validation)
 Route::post('/central/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.stripe');
+Route::post('/central/webhooks/dlocal', [DlocalWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.dlocal');
 
 Route::middleware(['web', 'auth:central'])->group(function () {
+    // API Endpoints
+    Route::get('/central/plans', [BillingApiController::class, 'listPlans'])->name('central.billing.api.plans');
+    Route::post('/central/billing/checkout', [BillingApiController::class, 'checkout'])->name('central.billing.api.checkout');
+    Route::get('/central/billing/subscriptions/{tenant_id}', [BillingApiController::class, 'subscriptionStatus'])->name('central.billing.api.subscription_status');
+    Route::post('/central/billing/subscriptions/{id}/cancel', [BillingApiController::class, 'cancelSubscription'])->name('central.billing.api.cancel');
+    Route::get('/central/billing/invoices', [BillingApiController::class, 'listInvoices'])->name('central.billing.api.invoices');
+
+    // UI & Documents
     Route::get('/central/billing/subscriptions', SubscriptionList::class)->name('central.billing.subscriptions');
     Route::get('/central/billing/tenants/{tenant}/invoices', TenantInvoiceList::class)->name('central.billing.tenant.invoices');
     
