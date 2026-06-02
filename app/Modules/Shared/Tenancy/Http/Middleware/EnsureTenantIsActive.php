@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Tenancy\Http\Middleware;
 
+use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,9 @@ class EnsureTenantIsActive
         if (! function_exists('tenant') || ! tenant()) {
             return $next($request);
         }
+
+        // Prime Features Cache (Redis-first)
+        app(ResolveTenantFeaturesAction::class)->execute(tenant());
 
         if (tenant('maintenance_mode')) {
             abort(503, 'Tenant is undergoing maintenance.');

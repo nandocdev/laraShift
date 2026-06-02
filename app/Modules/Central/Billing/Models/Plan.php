@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Models;
 
+use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Plan extends Model
 {
@@ -27,4 +29,9 @@ class Plan extends Model
         'price_monthly' => 'integer',
         'price_yearly' => 'integer',
     ];
+
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(Feature::class, 'plan_features');
+    }
 }

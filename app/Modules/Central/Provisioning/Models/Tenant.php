@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Modules\Central\Features\Models\Concerns\HasFeatures;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
@@ -15,7 +15,7 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
-    use Billable, HasDatabase, HasDomains, Notifiable, SoftDeletes;
+    use Billable, HasDatabase, HasDomains, HasFeatures, Notifiable, SoftDeletes;
 
     public $incrementing = false;
     protected $keyType = 'string';
