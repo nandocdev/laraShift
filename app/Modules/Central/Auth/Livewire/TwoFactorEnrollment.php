@@ -62,7 +62,7 @@ class TwoFactorEnrollment extends Component
 
     public function render(): View
     {
-        return view('auth::livewire.two-factor-enrollment', [
+        return view('central-auth::livewire.two-factor-enrollment', [
             'enabled' => auth('central')->user()->hasTwoFactorEnabled(),
         ]);
     }
