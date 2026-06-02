@@ -26,10 +26,15 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
+    \App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions::class,
 ])->group(function () {
     Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
     });
+
+    // Support & Impersonation
+    Route::get('/support/auth', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
+    Route::post('/support/logout', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'logout'])->name('tenant.support.logout');
 
     Route::middleware(['auth'])->group(function () {
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');

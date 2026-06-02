@@ -54,7 +54,11 @@
                                 <flux:menu>
                                     <flux:menu.item icon="command-line" :href="route('central.tenants.features.overrides', $tenant->id)" wire:navigate>{{ __('Manage Features') }}</flux:menu.item>
                                     <flux:menu.item icon="pencil">{{ __('Edit') }}</flux:menu.item>
-                                    <flux:menu.item icon="shield-check">{{ __('Impersonate') }}</flux:menu.item>
+                                    
+                                    <flux:modal.trigger name="impersonate-tenant">
+                                        <flux:menu.item icon="shield-check" wire:click="selectTenant('{{ $tenant->id }}')">{{ __('Impersonate') }}</flux:menu.item>
+                                    </flux:modal.trigger>
+
                                     <flux:menu.separator />
                                     <flux:menu.item variant="danger" icon="trash">{{ __('Delete') }}</flux:menu.item>
                                 </flux:menu>
@@ -65,4 +69,29 @@
             </flux:table.rows>
         </flux:table>
     </flux:card>
+
+    <flux:modal name="impersonate-tenant" class="min-w-[25rem]">
+        <form wire:submit="impersonate" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Impersonate Tenant') }}</flux:heading>
+                <flux:subheading>{{ __('You are about to access the account of :name.', ['name' => $selectedTenant?->name]) }}</flux:subheading>
+            </div>
+
+            <flux:textarea 
+                wire:model="impersonationReason" 
+                :label="__('Reason for Access')" 
+                placeholder="{{ __('e.g. Investigating reported bug in invoicing module...') }}" 
+                description="{{ __('Min. 20 characters. This action is audited.') }}"
+                required 
+            />
+
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">{{ __('Start Session') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>
