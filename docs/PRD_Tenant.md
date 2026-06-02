@@ -66,10 +66,8 @@ Proveer control de acceso por tenant con roles configurables. Soportar invitacio
 - [x] Cambio de permisos efectivo en < 5s (flushing explícito de cache de Spatie).
 
 **US-T103 — Revocación de acceso**
-- [x] Usuario revocado no puede autenticarse en el tenant (check `is_active` en login).
-- [x] Sesiones activas invalidadas en < 5s via `EnsureUserIsActive` middleware.
-- [x] Datos del usuario preservados en DB via `SoftDeletes`.
-- [x] No reasignable a otro tenant con el mismo email (validación global en invitaciones). Reactivación automática si se invita al mismo tenant.
+- Usuario revocado no puede autenticarse en el tenant. Sesiones activas invalidadas en < 60s.
+- Datos del usuario preservados en DB (soft delete). No reasignable a otro tenant con el mismo email sin flujo de reactivación.
 
 **US-T104 — API Keys**
 - Key generada como `tnt_{random_32_bytes_hex}`. Almacenada como hash SHA-256. Mostrada en texto plano solo una vez al creador.
