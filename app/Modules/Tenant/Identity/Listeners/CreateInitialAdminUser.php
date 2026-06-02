@@ -14,15 +14,18 @@ class CreateInitialAdminUser
     public function handle(TenantProvisioned $event): void
     {
         $event->tenant->run(function () use ($event) {
-            User::create([
+            $user = User::create([
                 'tenant_id' => $event->tenant->id,
                 'name' => $event->adminName,
                 'email' => $event->adminEmail,
                 'password' => Hash::make(Str::random(16)), // Use random password for security
             ]);
-            
-            // TODO: In a real production app, dispatch a notification to the user
-            // to reset their password or set it up.
+
+            // Notify user as per PRD US-101
+            $user->notify(new \App\Modules\Central\Provisioning\Notifications\WelcomeTenantNotification(
+                $event->tenant->name,
+                $event->tenant->domains->first()?->domain ?? 'localhost'
+            ));
         });
     }
 }

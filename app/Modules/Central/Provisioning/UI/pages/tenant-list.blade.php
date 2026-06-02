@@ -9,6 +9,10 @@
         </flux:button>
     </div>
 
+    @if (session('status'))
+        <flux:text color="emerald">{{ session('status') }}</flux:text>
+    @endif
+
     <flux:card>
         <flux:table :paginate="$tenants">
             <flux:table.columns>
@@ -60,7 +64,9 @@
                                     </flux:modal.trigger>
 
                                     <flux:menu.separator />
-                                    <flux:menu.item variant="danger" icon="trash">{{ __('Delete') }}</flux:menu.item>
+                                    <flux:modal.trigger name="delete-tenant">
+                                        <flux:menu.item variant="danger" icon="trash" wire:click="selectTenant('{{ $tenant->id }}')">{{ __('Delete') }}</flux:menu.item>
+                                    </flux:modal.trigger>
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>
@@ -91,6 +97,30 @@
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="primary">{{ __('Start Session') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="delete-tenant" class="min-w-[25rem]">
+        <form wire:submit="delete" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Hard Delete Tenant') }}</flux:heading>
+                <flux:subheading>{{ __('Warning: This will permanently purge all data, database schema and files for :name.', ['name' => $selectedTenant?->name]) }}</flux:subheading>
+            </div>
+
+            <flux:input 
+                wire:model="confirmSlug" 
+                :label="__('Type the tenant slug to confirm')" 
+                :placeholder="$selectedTenant?->slug"
+                required 
+            />
+
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="danger">{{ __('Confirm Purge') }}</flux:button>
             </div>
         </form>
     </flux:modal>

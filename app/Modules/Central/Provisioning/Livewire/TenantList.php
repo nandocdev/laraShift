@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Livewire;
 
+use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Actions\ImpersonateTenantAction;
 use Illuminate\Contracts\View\View;
@@ -18,10 +19,29 @@ class TenantList extends Component
 
     public ?Tenant $selectedTenant = null;
     public string $impersonationReason = '';
+    public string $confirmSlug = '';
 
     public function selectTenant(Tenant $tenant): void
     {
         $this->selectedTenant = $tenant;
+        $this->confirmSlug = '';
+    }
+
+    public function delete(DeleteTenantAction $action): void
+    {
+        if ($this->confirmSlug !== $this->selectedTenant->slug) {
+            $this->addError('confirmSlug', __('Slug confirmation does not match.'));
+            return;
+        }
+
+        try {
+            $action->execute($this->selectedTenant, true); // US-103: Purge is completed in background job
+            
+            $this->reset(['selectedTenant', 'confirmSlug']);
+            session()->flash('status', __('Tenant deletion queued successfully.'));
+        } catch (\Exception $e) {
+            $this->addError('confirmSlug', $e->getMessage());
+        }
     }
 
     public function impersonate(ImpersonateTenantAction $action): void

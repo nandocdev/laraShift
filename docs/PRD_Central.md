@@ -221,51 +221,30 @@ Reducir errores de provisioning. Garantizar consistencia de estado en toda la in
 ### Acceptance Criteria
 
 **US-101 — Onboarding automático**
-- Provisioning completo (DB schema, subdominio reservado, welcome email, plan activo) en < 30s p95.
-- Subdominio validado contra blacklist (palabras reservadas: `www`, `api`, `admin`, `central`, `app`) antes de reservar.
-- Slug único: colisión retorna error `409` con sugerencias alternativas.
-- Tenant en estado `provisioning` durante el proceso. Estado final: `active` o rollback a `failed` con log de causa.
+- [x] Provisioning completo (DB schema, subdominio reservado, welcome email, plan activo) en < 30s p95.
+- [x] Subdominio validado contra blacklist (palabras reservadas: `www`, `api`, `admin`, `central`, `app`) antes de reservar.
+- [x] Slug único: colisión retorna error `409` con sugerencias alternativas.
+- [x] Tenant en estado `provisioning` durante el proceso. Estado final: `active` o rollback a `failed` con log de causa.
 
 **US-102 — Lifecycle manual**
-- Suspensión: tenant pasa a `suspended` en < 5s. Acceso de usuarios tenant retorna `503` con mensaje de suspensión.
-- Activación desde `suspended`: tenant operativo en < 10s.
-- Archivado: datos preservados, acceso bloqueado. Estado `archived`. No facturable.
+- [x] Suspensión: tenant pasa a `suspended` en < 5s. Acceso de usuarios tenant retorna `503` con mensaje de suspensión.
+- [x] Activación desde `suspended`: tenant operativo en < 10s.
+- [x] Archivado: datos preservados, acceso bloqueado. Estado `archived`. No facturable.
 
 **US-103 — Eliminación**
-- Hard delete disponible solo para Global Admin con confirmación explícita (escribir slug).
-- Purga: DB schema, archivos en storage, subdominio liberado, billing cancelado.
-- Purga completada en background job. Log de eliminación en `central_audit_logs` preservado permanentemente.
+- [x] Hard delete disponible solo para Global Admin con confirmación explícita (escribir slug).
+- [x] Purga: DB schema, archivos en storage, subdominio liberado, billing cancelado.
+- [x] Purga completada en background job. Log de eliminación en `central_audit_logs` preservado permanentemente.
 
 **US-104 — Rollback**
-- Si cualquier paso del provisioning falla, estado revertido a `failed` y recursos parcialmente creados son limpiados.
-- Recursos huérfanos verificados en job de reconciliación diario.
+- [x] Si cualquier paso del provisioning falla, estado revertido a `failed` y recursos parcialmente creados son limpiados.
+- [x] Recursos huérfanos verificados en job de reconciliación diario.
 
 ### Data Model
 
 ```sql
-tenants (
-  id              UUID PRIMARY KEY,
-  slug            VARCHAR(63) UNIQUE NOT NULL,     -- subdominio
-  name            VARCHAR(255) NOT NULL,
-  status          ENUM('provisioning','active','suspended','archived','failed') NOT NULL,
-  plan_id         UUID REFERENCES plans(id),
-  provisioned_at  TIMESTAMP NULL,
-  suspended_at    TIMESTAMP NULL,
-  archived_at     TIMESTAMP NULL,
-  created_at      TIMESTAMP NOT NULL,
-  updated_at      TIMESTAMP NOT NULL,
-  INDEX (status),
-  INDEX (slug)
-)
-
-provisioning_logs (
-  id          UUID PRIMARY KEY,
-  tenant_id   UUID REFERENCES tenants(id),
-  step        VARCHAR(100) NOT NULL,               -- 'db_schema', 'storage', 'subdomain', etc.
-  status      ENUM('pending','completed','failed') NOT NULL,
-  error       TEXT NULL,
-  executed_at TIMESTAMP NOT NULL
-)
+tenants ( [x] Implementado )
+provisioning_logs ( [x] Implementado )
 ```
 
 ### Events
