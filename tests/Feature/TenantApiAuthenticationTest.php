@@ -67,3 +67,35 @@ it('denies access if scope is missing', function () {
         ->getJson('http://scope.larashift.test/api/protected')
         ->assertStatus(403);
 });
+
+it('maps api key scopes to laravel gates', function () {
+    $tenant = Tenant::create([
+        'id' => Str::uuid()->toString(),
+        'slug' => 'gate-test',
+        'name' => 'Gate Test',
+        'email' => 'gate@test.com',
+    ]);
+    $tenant->domains()->create(['domain' => 'gate.larashift.test']);
+
+    tenancy()->initialize($tenant);
+    $user = \App\Modules\Tenant\Identity\Models\User::create([
+        'name' => 'Creator',
+        'email' => 'creator@test.com',
+        'password' => 'password',
+    ]);
+    
+    $result = app(GenerateApiKeyAction::class)->execute('Gate Key', ['orders:read'], $user);
+    $plainKey = $result['key'];
+    tenancy()->end();
+
+    // Mock a route that uses standard Gate check
+    Route::middleware([\App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey::class])
+        ->get('/api/orders', function () {
+            return auth()->user()->can('orders:read') ? 'allowed' : 'denied';
+        });
+
+    $this->withToken($plainKey)
+        ->getJson('http://gate.larashift.test/api/orders')
+        ->assertStatus(200)
+        ->assertSee('allowed');
+});

@@ -46,17 +46,20 @@ class AuthenticateApiKey
             }
         }
 
-        // Update last used timestamp
-        $apiKey->update(['last_login_at' => now()]); // Using last_login_at or last_used_at? PRD says last_used_at
+        // Update last used timestamp (US-T104)
         $apiKey->update(['last_used_at' => now()]);
 
         // Attach the API Key model to the request for controller access
         $request->attributes->set('api_key', $apiKey);
         
-        // If the key has a creator, we could potentially authenticate as that user
-        // but for integrations, we usually just want the Tenant context.
+        // Authenticate the user if the key is linked to one
         if ($apiKey->creator) {
             auth()->login($apiKey->creator);
+            
+            // Map API Key scopes to temporary permissions in the Gate (Integration)
+            foreach ($apiKey->scopes as $scope) {
+                \Illuminate\Support\Facades\Gate::define($scope, fn () => true);
+            }
         }
 
         return $next($request);
