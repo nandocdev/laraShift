@@ -257,7 +257,7 @@ Module/
 ├── DTOs/
 ├── Models/
 ├── Policies/
-├── React/
+├── Livewire/
 ├── Events/
 ├── Listeners/
 ├── Jobs/
@@ -572,8 +572,8 @@ prefer Actions.
 
 Official UI stack:
 
-- React
-- Shadcn/UI
+- Livewire 4
+- Flux UI
 - Tailwind
 
 Single design language.

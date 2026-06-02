@@ -79,13 +79,13 @@ Modules/
 Each module owns:
 * logic
 * models
-* React Components (UI)
+* Livewire Components (UI)
 * policies
 * events
 
 Modular UI Rule:
-React pages and components specific to a module MUST reside within `app/Modules/{Context}/{Module}/React/`.
-Avoid placing module-specific views in the global `resources/js/pages` directory.
+Livewire components specific to a module MUST reside within `app/Modules/{Context}/{Module}/Livewire/`.
+Avoid placing module-specific views in the global `resources/views/livewire` directory.
 
 Shared infrastructure belongs only in:
 
@@ -342,11 +342,9 @@ Fat controllers are rejected.
 
 ---
 
-# 7. React Components
-
-React handles:
+# 7. Livewire Components
+Livewire handles:
 UI state.
-
 Not domain logic.
 
 Responsibilities:
