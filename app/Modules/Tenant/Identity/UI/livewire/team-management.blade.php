@@ -79,21 +79,46 @@
                     <flux:table.columns>
                         <flux:table.column>{{ __('Email') }}</flux:table.column>
                         <flux:table.column>{{ __('Role') }}</flux:table.column>
-                        <flux:table.column>{{ __('Expires') }}</flux:table.column>
+                        <flux:table.column>{{ __('Status / Expires') }}</flux:table.column>
                         <flux:table.column></flux:table.column>
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach($invitations as $invite)
                             <flux:table.row :key="$invite->id">
-                                <flux:table.cell class="text-sm">{{ $invite->email }}</flux:table.cell>
+                                <flux:table.cell class="text-sm font-medium">{{ $invite->email }}</flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm" variant="outline">{{ strtoupper($invite->role->name) }}</flux:badge>
                                 </flux:table.cell>
-                                <flux:table.cell class="text-xs text-zinc-500">
-                                    {{ $invite->expires_at->diffForHumans() }}
+                                <flux:table.cell>
+                                    @if($invite->expires_at->isPast())
+                                        <div class="flex flex-col">
+                                            <flux:badge size="sm" variant="danger">{{ __('EXPIRED') }}</flux:badge>
+                                            <span class="text-[10px] text-zinc-500 mt-1">{{ $invite->expires_at->format('Y-m-d H:i') }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-zinc-500">
+                                            {{ __('Expires') }} {{ $invite->expires_at->diffForHumans() }}
+                                        </span>
+                                    @endif
                                 </flux:table.cell>
                                 <flux:table.cell class="text-right">
-                                    <flux:button icon="trash" size="sm" variant="ghost" />
+                                    <div class="flex justify-end gap-2">
+                                        <flux:button 
+                                            icon="arrow-path" 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            wire:click="resendInvitation('{{ $invite->id }}')" 
+                                            tooltip="{{ __('Resend Invitation') }}"
+                                        />
+                                        <flux:button 
+                                            icon="trash" 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            wire:click="cancelInvitation('{{ $invite->id }}')"
+                                            wire:confirm="{{ __('Are you sure you want to cancel this invitation?') }}"
+                                            tooltip="{{ __('Cancel Invitation') }}"
+                                        />
+                                    </div>
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach

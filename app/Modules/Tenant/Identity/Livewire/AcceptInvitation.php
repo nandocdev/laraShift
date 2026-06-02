@@ -33,8 +33,15 @@ class AcceptInvitation extends Component
 
         $this->invitation = Invitation::where('token_hash', $tokenHash)
             ->whereNull('accepted_at')
-            ->where('expires_at', '>', now())
-            ->firstOrFail();
+            ->first();
+
+        if (! $this->invitation) {
+            abort(404, __('Invitation not found.'));
+        }
+
+        if ($this->invitation->expires_at->isPast()) {
+            abort(410, __('This invitation has expired.'));
+        }
 
         $this->name = $this->invitation->email; // Default to email as name
     }

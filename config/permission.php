@@ -200,7 +200,9 @@ return [
          * When permissions or roles are updated the cache is flushed automatically.
          */
 
-        'expiration_time' => DateInterval::createFromDateString('24 hours'),
+        'expiration_time' => env('PERMISSION_CACHE_EXPIRATION_TIME') 
+            ? DateInterval::createFromDateString(env('PERMISSION_CACHE_EXPIRATION_TIME')) 
+            : DateInterval::createFromDateString('24 hours'),
 
         /*
          * The cache key used to store all permissions.

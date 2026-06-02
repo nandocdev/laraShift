@@ -39,6 +39,39 @@ class TeamManagement extends Component
         }
     }
 
+    public function resendInvitation(string $id, SendInvitationAction $action): void
+    {
+        $oldInvite = Invitation::findOrFail($id);
+        
+        try {
+            // Re-execute sending using same email and role
+            $action->execute(
+                $oldInvite->email,
+                $oldInvite->role->name,
+                auth()->user()
+            );
+
+            // Delete the old one
+            $oldInvite->delete();
+
+            session()->flash('status', __('Invitation resent.'));
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function cancelInvitation(string $id): void
+    {
+        $invite = Invitation::findOrFail($id);
+        $invite->delete();
+
+        activity('identity')
+            ->withProperties(['email' => $invite->email])
+            ->log('invitation_cancelled');
+
+        session()->flash('status', __('Invitation cancelled.'));
+    }
+
     public function revokeAccess(string $userId): void
     {
         $user = User::findOrFail($userId);

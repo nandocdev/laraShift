@@ -7,7 +7,8 @@ namespace App\Modules\Tenant\Identity\Actions;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Modules\Tenant\Identity\Notifications\TenantInvitationNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 final readonly class SendInvitationAction
@@ -22,8 +23,15 @@ final readonly class SendInvitationAction
     ): Invitation {
         $tenant = tenant();
         
-        // 1. Check Quotas (US-T101)
-        // TODO: Integration with Quotas module
+        // 1. Check Quotas (US-T101: 10 pending invites by default)
+        // Note: For now we use the default 10, later we can pull from Plan features.
+        $pendingCount = Invitation::whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->count();
+
+        if ($pendingCount >= 10) {
+            throw new \Exception(__('Maximum limit of pending invitations reached (10).'));
+        }
         
         // 2. Resolve Role
         $role = Role::where('name', $roleName)->firstOrFail();
@@ -43,7 +51,8 @@ final readonly class SendInvitationAction
         ]);
 
         // 5. Send Notification
-        // $invitation->notify(new TenantInvitationNotification($token));
+        Notification::route('mail', $email)
+            ->notify(new TenantInvitationNotification($token, $tenant->name));
 
         activity('identity')
             ->performedOn($invitation)
