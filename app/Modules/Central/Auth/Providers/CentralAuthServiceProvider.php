@@ -23,5 +23,6 @@ class CentralAuthServiceProvider extends ServiceProvider
         Livewire::component('central-auth-login', \App\Modules\Central\Auth\Livewire\Login::class);
         Livewire::component('central-auth-forgot-password', \App\Modules\Central\Auth\Livewire\ForgotPassword::class);
         Livewire::component('central-auth-reset-password', \App\Modules\Central\Auth\Livewire\ResetPassword::class);
+        Livewire::component('central-auth-dashboard', \App\Modules\Central\Auth\Livewire\Dashboard::class);
     }
 }

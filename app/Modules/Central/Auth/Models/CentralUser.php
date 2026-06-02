@@ -45,4 +45,16 @@ class CentralUser extends Authenticatable {
     {
         $this->notify(new \App\Modules\Central\Auth\Notifications\CentralResetPasswordNotification($token));
     }
+
+    /**
+     * Get the user's initials
+     */
+    public function initials(): string
+    {
+        return \Illuminate\Support\Str::of($this->name)
+            ->explode(' ')
+            ->take(2)
+            ->map(fn ($word) => \Illuminate\Support\Str::substr($word, 0, 1))
+            ->implode('');
+    }
 }

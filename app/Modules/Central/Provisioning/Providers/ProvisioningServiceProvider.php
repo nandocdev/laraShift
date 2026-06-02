@@ -17,5 +17,8 @@ class ProvisioningServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__ . '/../UI', 'provisioning');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+
+        \Livewire\Livewire::component('provisioning-tenant-list', \App\Modules\Central\Provisioning\Livewire\TenantList::class);
+        \Livewire\Livewire::component('provisioning-create-tenant', \App\Modules\Central\Provisioning\Livewire\CreateTenant::class);
     }
 }
