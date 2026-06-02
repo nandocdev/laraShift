@@ -44,8 +44,8 @@
                     </div>
 
                     <flux:checkbox.group wire:model="channels" :label="__('Delivery Channels')">
-                        <flux:checkbox value="email" :label="__('Send via Email')" checked />
-                        <flux:checkbox value="banner" :label="__('In-App Banner (Planned)')" disabled />
+                        <flux:checkbox value="email" :label="__('Send via Email')" />
+                        <flux:checkbox value="banner" :label="__('In-App Banner')" />
                     </flux:checkbox.group>
 
                     <flux:button type="submit" variant="primary" class="w-full"

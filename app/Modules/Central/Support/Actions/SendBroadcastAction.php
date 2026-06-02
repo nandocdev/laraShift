@@ -48,6 +48,9 @@ final readonly class SendBroadcastAction
             Notification::send($tenants, new BroadcastNotification($title, $body));
         }
 
+        // Banners are effectively "sent" once they are in the DB with sent_at,
+        // as the Tenant UI will pull them dynamically based on filters.
+        
         $broadcast->update(['sent_at' => now()]);
 
         activity('support')

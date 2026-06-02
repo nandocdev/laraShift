@@ -23,5 +23,6 @@ class SupportServiceProvider extends ServiceProvider
 
         \Livewire\Livewire::component('support-broadcast-center', \App\Modules\Central\Support\Livewire\BroadcastCenter::class);
         \Livewire\Livewire::component('tenant-support-bitacora', \App\Modules\Central\Support\Livewire\TenantSupportBitacora::class);
+        \Livewire\Livewire::component('global-announcements', \App\Modules\Central\Support\Livewire\GlobalAnnouncements::class);
     }
 }
