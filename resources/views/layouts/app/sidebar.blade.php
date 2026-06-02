@@ -26,8 +26,14 @@
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Settings')" class="grid">
-                    <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')" :current="request()->routeIs('tenant.settings.*')" wire:navigate>
+                    <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')" :current="request()->routeIs('tenant.settings.branding')" wire:navigate>
                         {{ __('Branding') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="globe-americas" :href="route('tenant.settings.localization')" :current="request()->routeIs('tenant.settings.localization')" wire:navigate>
+                        {{ __('Localization') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="envelope" :href="route('tenant.settings.smtp')" :current="request()->routeIs('tenant.settings.smtp')" wire:navigate>
+                        {{ __('SMTP Settings') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="key" :href="route('tenant.api-keys.index')" :current="request()->routeIs('tenant.api-keys.*')" wire:navigate>
                         {{ __('API Keys') }}

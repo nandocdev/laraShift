@@ -15,5 +15,7 @@ class SettingsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../UI', 'settings-tenant');
         
         Livewire::component('tenant-branding-settings', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class);
+        Livewire::component('tenant-localization-settings', \App\Modules\Tenant\Settings\Livewire\LocalizationSettings::class);
+        Livewire::component('tenant-smtp-settings', \App\Modules\Tenant\Settings\Livewire\SmtpSettings::class);
     }
 }
