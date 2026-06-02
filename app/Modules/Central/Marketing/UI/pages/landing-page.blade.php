@@ -40,8 +40,8 @@
             </flux:subheading>
             
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <flux:button size="lg" variant="primary" href="#pricing" class="px-8">{{ __('Launch your SaaS') }}</flux:button>
-                <flux:button size="lg" variant="ghost" href="https://github.com/nandocdev/LaraShift" target="_blank" class="px-8" icon="folder-git-2">{{ __('View on GitHub') }}</flux:button>
+                <flux:button variant="primary" href="#pricing" class="px-8 py-3 text-lg font-bold">{{ __('Launch your SaaS') }}</flux:button>
+                <flux:button variant="ghost" href="https://github.com/nandocdev/LaraShift" target="_blank" class="px-8 py-3 text-lg font-bold" icon="folder-git-2">{{ __('View on GitHub') }}</flux:button>
             </div>
         </div>
         
@@ -137,9 +137,8 @@
                         </ul>
 
                         <flux:button 
-                            size="lg" 
                             variant="{{ $plan->slug === 'pro' ? 'primary' : 'ghost' }}" 
-                            class="w-full"
+                            class="w-full py-3"
                             style="{{ $plan->slug === 'pro' ? 'background-color: ' . $primaryColor : '' }}"
                         >
                             {{ $plan->price_monthly > 0 ? __('Get Started') : __('Start for Free') }}

@@ -7,8 +7,10 @@ namespace App\Modules\Central\Marketing\Livewire;
 use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Settings\Support\CentralBranding;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.marketing')]
 class LandingPage extends Component
 {
     public function render(): View
