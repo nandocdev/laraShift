@@ -7,4 +7,5 @@ return [
     App\Providers\TenancyServiceProvider::class,
     App\Modules\Central\Auth\Providers\CentralAuthServiceProvider::class,
     App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider::class,
+    App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
 ];
