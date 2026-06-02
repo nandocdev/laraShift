@@ -33,10 +33,16 @@ class Login extends Component {
             remember: $this->remember
         );
 
-        if ($action->execute($data)) {
-            session()->regenerate();
+        $result = $action->execute($data);
 
+        if ($result === 'success') {
+            session()->regenerate();
             $this->redirectIntended(default: route('central.dashboard'));
+            return;
+        }
+
+        if ($result === 'requires_2fa') {
+            $this->redirect(route('central.login.challenge'), navigate: true);
             return;
         }
 

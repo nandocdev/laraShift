@@ -72,7 +72,7 @@
         </flux:sidebar.nav>
 
         @auth('central')
-            <x-desktop-user-menu class="hidden lg:block" :name="auth('central')->user()->name" />
+            <x-central-user-menu class="hidden lg:block" />
         @endauth
     </flux:sidebar>
 
@@ -99,6 +99,14 @@
                                 </div>
                             </div>
                         </div>
+                    </flux:menu.radio.group>
+
+                    <flux:menu.separator />
+
+                    <flux:menu.radio.group>
+                        <flux:menu.item :href="route('central.auth.2fa')" icon="shield-check" wire:navigate>
+                            {{ __('Security & 2FA') }}
+                        </flux:menu.item>
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />
