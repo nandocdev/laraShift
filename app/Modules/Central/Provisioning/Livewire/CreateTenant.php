@@ -17,7 +17,7 @@ class CreateTenant extends Component
     #[Validate('required|string|min:3')]
     public string $name = '';
 
-    #[Validate('required|alpha_dash|unique:domains,domain')]
+    #[Validate(['required', 'alpha_dash', 'unique:domains,domain', 'not_in:admin,api,root,support,www,mail,dev,stage,prod,central'])]
     public string $slug = '';
 
     #[Validate('required|email')]
