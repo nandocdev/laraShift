@@ -28,7 +28,7 @@
             </div>
 
             @if (session('status'))
-                <flux:text color="success">{{ session('status') }}</flux:text>
+                <flux:text color="emerald">{{ session('status') }}</flux:text>
             @endif
 
             <div class="flex justify-end">
