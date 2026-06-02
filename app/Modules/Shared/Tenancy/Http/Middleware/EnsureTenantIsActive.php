@@ -31,6 +31,18 @@ class EnsureTenantIsActive
             abort(402, 'Payment Required');
         }
 
+        // Check subscription for paid plans
+        if (tenant('plan_id') !== 'free') {
+            $subscription = tenant()->subscription('default');
+            
+            if (! $subscription || ! $subscription->active()) {
+                // If it's not active but on grace period, allow it
+                if (! $subscription?->onGracePeriod()) {
+                    abort(402, 'Active subscription required.');
+                }
+            }
+        }
+
         if (tenant('read_only') && ! $request->isMethod('GET')) {
             abort(403, 'Tenant is in read-only mode.');
         }
