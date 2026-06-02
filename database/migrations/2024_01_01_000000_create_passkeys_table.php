@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('passkeys', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->string('tenant_id')->index();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('credential_id')->unique();
@@ -20,7 +21,7 @@ return new class extends Migration
             $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
 
-            $table->index('user_id');
+            $table->index(['tenant_id', 'user_id']);
         });
     }
 

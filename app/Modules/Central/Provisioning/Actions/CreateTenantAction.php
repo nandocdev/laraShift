@@ -23,9 +23,10 @@ final readonly class CreateTenantAction
      */
     public function execute(CreateTenantData $data): Tenant
     {
-        // 1. Create the tenant record
+        // 1. Create the tenant record with manual ID to avoid generation issues
         /** @var Tenant $tenant */
         $tenant = Tenant::create([
+            'id' => \Illuminate\Support\Str::uuid()->toString(),
             'name' => $data->name,
             'email' => $data->email,
             'plan_id' => $data->plan_id,
@@ -36,8 +37,9 @@ final readonly class CreateTenantAction
         $tenant->domains()->create(['domain' => $domain]);
 
         // 3. Provision the first admin user inside the tenant context
-        $tenant->run(function () use ($data) {
+        $tenant->run(function () use ($data, $tenant) {
             User::create([
+                'tenant_id' => $tenant->id,
                 'name' => 'Administrator',
                 'email' => $data->email,
                 'password' => Hash::make('password'),

@@ -13,8 +13,8 @@ trait BelongsToTenant
         static::addGlobalScope(new TenantScope());
 
         static::creating(function (Model $model) {
-            if (! $model->tenant_id && $tenantId = config('tenancy.current_tenant_id')) {
-                $model->tenant_id = $tenantId;
+            if (! $model->tenant_id && function_exists('tenancy') && tenancy()->initialized) {
+                $model->tenant_id = tenancy()->tenant->getTenantKey();
             }
         });
     }
@@ -24,6 +24,6 @@ trait BelongsToTenant
      */
     public function tenant()
     {
-        // return $this->belongsTo(config('tenancy.tenant_model'), 'tenant_id');
+        return $this->belongsTo(\App\Modules\Central\Provisioning\Models\Tenant::class, 'tenant_id');
     }
 }

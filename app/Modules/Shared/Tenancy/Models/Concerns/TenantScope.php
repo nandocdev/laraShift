@@ -15,10 +15,8 @@ class TenantScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        $tenantId = config('tenancy.current_tenant_id');
-
-        if ($tenantId) {
-            $builder->where($model->getTable() . '.tenant_id', $tenantId);
+        if (tenancy()->initialized) {
+            $builder->where($model->getTable() . '.tenant_id', tenancy()->tenant->getTenantKey());
         }
     }
 }
