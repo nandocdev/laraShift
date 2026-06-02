@@ -24,6 +24,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         'maintenance_mode' => 'boolean',
         'read_only' => 'boolean',
         'archived_at' => 'datetime',
+        'suspended_at' => 'datetime',
     ];
 
     public static function getCustomColumns(): array
@@ -34,6 +35,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'email', // Tenant owner email
             'plan_id',
             'status',
+            'suspended_at',
             'maintenance_mode',
             'read_only',
             'archived_at',

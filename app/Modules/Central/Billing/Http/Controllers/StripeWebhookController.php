@@ -58,7 +58,10 @@ class StripeWebhookController extends CashierController
             if ($attemptCount < 3) {
                 $tenant->notify(new \App\Modules\Central\Billing\Notifications\PaymentFailedNotification($attemptCount, $amount, $currency));
             } else {
-                $tenant->update(['status' => 'suspended']);
+                $tenant->update([
+                    'status' => 'suspended',
+                    'suspended_at' => now(),
+                ]);
                 
                 $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification($amount, $currency));
 
@@ -80,7 +83,10 @@ class StripeWebhookController extends CashierController
         $tenant = $this->getUserByStripeId($payload['data']['object']['customer']);
 
         if ($tenant && $tenant->status === 'suspended') {
-            $tenant->update(['status' => 'active']);
+            $tenant->update([
+                'status' => 'active',
+                'suspended_at' => null,
+            ]);
             
             activity('billing')
                 ->performedOn($tenant)
