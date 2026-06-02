@@ -24,6 +24,13 @@
                     {{ __('Tenants') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Billing')" class="grid">
+                <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
+                    :current="request()->routeIs('central.billing.*')" wire:navigate>
+                    {{ __('Subscriptions') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
         </flux:sidebar.nav>
 
         <flux:spacer />
