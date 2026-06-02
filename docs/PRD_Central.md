@@ -2,26 +2,24 @@
 
 **Metadata**
 
-- Owner: TBD
-- Created: 2026-06-01
-- Status: Draft
+| Campo    | Valor                                                                                                            |
+| -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Owner    | TBD                                                                                                              |
+| Created  | 2026-06-01                                                                                                       |
+| Updated  | 2026-06-02                                                                                                       |
+| Status   | Draft v2                                                                                                         |
+| Contexto | Bounded context Central: auth global, provisioning de tenants, facturación, soporte e infraestructura compartida |
 
-## Overview
-
-Resumen ejecutivo del bounded context Central: autenticación global, provisioning de tenants, facturación, soporte e infraestructura compartida.
+---
 
 ## Architecture Constraints
 
-- Single-DB
-- Modular Monolith
-- Tenant Isolation
-- RLS + Scopes
-- middleware order
-- tenant-aware queues
-- Redis-first quotas
-- storage isolation
-- auth scoping
-- 404 cross-tenant
+- Modular Monolith — sin microservicios, sin RPC entre módulos
+- Single DB (PostgreSQL) con schema `central_*`
+- Tenant isolation via middleware + scoped queries — nunca cross-tenant data leak
+- Redis para rate limits, sesiones y cuotas
+- Queue isolation por tenant para evitar noisy neighbor
+- Auth scoping estricto: central users != tenant users
 
 ---
 
@@ -29,97 +27,168 @@ Resumen ejecutivo del bounded context Central: autenticación global, provisioni
 
 ### Overview
 
-Autenticación y seguridad para el área central (admin/dashboard, superadmins, sesiones globales). Soporta sesiones, 2FA y políticas de acceso centralizadas.
+Autenticación y seguridad para operadores y administradores globales. Soporta sesiones con 2FA, políticas de acceso y auditoría.
 
 ### Business Goal
 
-Proteger el acceso a operaciones administrativas críticas, minimizar riesgo de compromiso y ofrecer controles operacionales (invalidación de sesiones, auditoría, políticas de concurrencia).
+Proteger operaciones administrativas críticas. Minimizar superficie de ataque. Proveer controles operacionales (invalidación de sesiones, auditoría, lockouts).
 
 ### Personas
 
-- Operador central (soporte/ops)
-- Global admin (gestión de tenants y facturación)
-- Usuario administrativo (gestión de producto)
+| Persona                | Descripción                                             |
+| ---------------------- | ------------------------------------------------------- |
+| Operador Central       | Soporte / ops — acceso a herramientas de administración |
+| Global Admin           | Gestión de tenants y facturación                        |
+| Usuario Administrativo | Gestión de producto                                     |
 
-### User Stories (priorizadas)
+### User Stories
 
-- US-001: Como Operador, quiero iniciar sesión en el dashboard central con 2FA para acceder a herramientas de administración.
-- US-002: Como Global Admin, quiero invalidar todas las sesiones de un usuario para forzar reautenticación.
-- US-003: Como Operador, quiero ver el historial de logins y cambios de sesión para auditoría.
-- US-004: Como Usuario, quiero recuperar acceso mediante flujo de 'forgot/reset password' con expiración y notificación.
-- US-005: Como Admin, quiero imponer políticas de contraseñas y límites de sesiones concurrentes.
+| ID     | Historia                                                                                                    |
+| ------ | ----------------------------------------------------------------------------------------------------------- |
+| US-001 | Como Operador, quiero iniciar sesión con credenciales + 2FA para acceder al dashboard central.              |
+| US-002 | Como Global Admin, quiero invalidar todas las sesiones de un usuario para forzar reautenticación inmediata. |
+| US-003 | Como Operador, quiero consultar historial de logins y cambios de sesión para auditoría.                     |
+| US-004 | Como Usuario, quiero recuperar acceso mediante forgot/reset password con expiración y notificación.         |
+| US-005 | Como Admin, quiero imponer políticas de contraseña y límites de sesiones concurrentes.                      |
 
-### Acceptance Criteria (ejemplos medibles)
+### Acceptance Criteria
 
-- US-001: Login exitoso con credenciales válidas + 2FA; tasa de éxito > 99% en condiciones normales. Error por MFA faltante muestra instrucciones claras.
-- US-002: Invalidación de sesiones revoca JWTs/refresh tokens y obliga a re-login en < 60s para sesiones activas.
-- US-003: Historial muestra IP, user-agent, timestamp y acción; consultas por rango retornan resultados en < 200ms.
-- US-004: Reset token expira en 1h; enlace enviado por email con sello; uso único; intento de reuse retorna 410.
-- US-005: Política aplicada: longitud mínima 12, bloqueo tras 5 intentos en 15 minutos con CAPTCHA activable.
+**US-001 — Login + 2FA**
+- Login exitoso con credenciales válidas + TOTP: respuesta en p95 < 300ms.
+- Credenciales inválidas: respuesta con código `401` y mensaje genérico (no revelar si el email existe).
+- MFA faltante o inválido: respuesta `403` con instrucción de enrollment.
+- Token emitido: short-lived JWT (15 min) + refresh token (7 días) almacenado como hash en DB.
 
-### Data Model (resumen)
+**US-002 — Revocación de sesiones**
+- Revocación efectiva en < 60s: sesión revocada no puede usar refresh token.
+- Endpoint requiere rol `global_admin`; intento sin rol retorna `403`.
+- Evento `CentralSessionRevoked` emitido con `reason` obligatorio.
 
-- `central_users`: id, email, name, password_hash, is_global_admin, locked_until, created_at, updated_at
-- `central_sessions`: id, user_id, token_hash, issued_at, expires_at, ip, user_agent, revoked_at
-- `central_2fa`: id, user_id, method (totp, webauthn), secret, recovery_codes_hash, enrolled_at
-- `central_audit_logs`: id, user_id, action, metadata(json), ip, created_at
+**US-003 — Audit logs**
+- Consulta por rango de fechas retorna resultados en p95 < 200ms (índice en `created_at`).
+- Cada entrada incluye: `user_id`, `action`, `ip`, `user_agent`, `metadata` (JSON), `created_at`.
+- Logs son append-only — sin UPDATE ni DELETE sobre `central_audit_logs`.
+
+**US-004 — Forgot/Reset password**
+- Token de reset expira en 1h. Uso del token lo marca como `used_at`; segundo intento retorna `410`.
+- Email enviado en < 30s tras la solicitud (job en queue de alta prioridad).
+- Reset exitoso invalida todas las sesiones activas del usuario.
+
+**US-005 — Políticas de contraseña y sesiones**
+- Mínimo 12 caracteres. Validación con Fortify.
+- Bloqueo tras 5 intentos fallidos en 15 minutos: `locked_until = now() + 15min`.
+- Máximo de sesiones concurrentes configurable por rol (default: 3). Sesión más antigua revocada al exceder.
+
+### Data Model
+
+```sql
+central_users (
+  id              UUID PRIMARY KEY,
+  email           VARCHAR(255) UNIQUE NOT NULL,
+  name            VARCHAR(255) NOT NULL,
+  password_hash   VARCHAR(255) NOT NULL,           -- argon2id
+  is_global_admin BOOLEAN DEFAULT FALSE,
+  locked_until    TIMESTAMP NULL,
+  created_at      TIMESTAMP NOT NULL,
+  updated_at      TIMESTAMP NOT NULL
+)
+
+central_sessions (
+  id           UUID PRIMARY KEY,
+  user_id      UUID REFERENCES central_users(id),
+  token_hash   VARCHAR(255) NOT NULL,              -- hash del refresh token
+  issued_at    TIMESTAMP NOT NULL,
+  expires_at   TIMESTAMP NOT NULL,
+  ip           INET NOT NULL,
+  user_agent   TEXT,
+  revoked_at   TIMESTAMP NULL,
+  INDEX (user_id, revoked_at)
+)
+
+central_2fa (
+  id                  UUID PRIMARY KEY,
+  user_id             UUID REFERENCES central_users(id) UNIQUE,
+  method              ENUM('totp', 'webauthn') NOT NULL,
+  secret              TEXT NOT NULL,               -- cifrado en reposo
+  recovery_codes_hash TEXT NOT NULL,               -- JSON array de hashes
+  enrolled_at         TIMESTAMP NOT NULL
+)
+
+central_audit_logs (
+  id         UUID PRIMARY KEY,
+  user_id    UUID REFERENCES central_users(id),
+  action     VARCHAR(100) NOT NULL,
+  metadata   JSONB,
+  ip         INET,
+  created_at TIMESTAMP NOT NULL,
+  INDEX (user_id, created_at),
+  INDEX (created_at)
+  -- Sin UPDATE, sin DELETE. Append-only.
+)
+```
 
 ### Events
 
-- `CentralUserLoggedIn(user_id, session_id, ip)`
-- `CentralUserLoggedOut(user_id, session_id)`
-- `CentralSessionRevoked(user_id, session_id, reason)`
-- `CentralPasswordResetRequested(user_id, token_id)`
-- `Central2FAEnrolled(user_id, method)`
+```
+CentralUserLoggedIn(user_id, session_id, ip, user_agent)
+CentralUserLoggedOut(user_id, session_id)
+CentralSessionRevoked(user_id, session_id, reason)
+CentralPasswordResetRequested(user_id, token_id)
+CentralPasswordResetCompleted(user_id)
+Central2FAEnrolled(user_id, method)
+```
 
-### API / Actions (endpoints y comandos)
+### API
 
-- POST `/central/login` — credenciales -> inicia sesión (devuelve short-lived token + refresh)
-- POST `/central/2fa/verify` — verificar TOTP / WebAuthn
-- POST `/central/logout` — revoca sesión actual
-- POST `/central/sessions/revoke` — revoca sesión(s) por id/user (admin)
-- POST `/central/password/forgot` — solicita reset
-- POST `/central/password/reset` — aplica nuevo password
-- GET `/central/audit/logs` — consulta audit logs (roles autorizados)
+| Método | Endpoint                   | Descripción                                |
+| ------ | -------------------------- | ------------------------------------------ |
+| POST   | `/central/login`           | Credenciales → short-lived token + refresh |
+| POST   | `/central/2fa/verify`      | Verificar TOTP                             |
+| POST   | `/central/logout`          | Revocar sesión actual                      |
+| POST   | `/central/sessions/revoke` | Revocar sesión(s) por id/user (admin)      |
+| POST   | `/central/password/forgot` | Solicitar reset                            |
+| POST   | `/central/password/reset`  | Aplicar nuevo password                     |
+| GET    | `/central/audit/logs`      | Consultar audit logs (roles autorizados)   |
 
-### Security & Operational Controls
+### Security
 
-- Rate limit por IP y por cuenta (ej. 100 req/min IP, 10 req/min cuenta para login).
-- WAF + CAPTCHA tras N fallos. Lockouts temporales con notificación.
-- Fortify integration para políticas de password y validación.
-- TOS: almacenar solo hashes bcrypt/argon2id; nunca tokens en texto. Usar token hashes para revocación.
-- Rotación de keys para WebAuthn y renovación de recovery codes.
-- Monitoreo de anomalías (picos de fallos, login desde geolocalizaciones distintas).
+- Rate limit: 100 req/min por IP global; 10 req/min por cuenta en `/login`.
+- CAPTCHA activable tras N fallos configurables (default: 3).
+- Passwords: hash argon2id. Nunca almacenar tokens en texto plano — solo hashes.
+- Refresh tokens: rotación en cada uso. Token anterior invalidado.
+- 2FA secrets: cifrados en reposo (AES-256-GCM). Recovery codes: hash bcrypt individual.
+- Sessions: `Secure`, `HttpOnly`, `SameSite=Strict` en cookies.
 
-### UX Flow (resumen)
+### Tests
 
-- Login: email+password -> solicitar 2FA -> acceso -> mostrar sesiones activas y opción "Cerrar otras sesiones".
-- Forgot password: request -> email con enlace seguro -> reset -> confirmation + audit log.
-- 2FA enrollment: verify device -> store credential -> show recovery codes (one-time).
+- **Unit**: validación de password policy, generación/verificación TOTP, lógica de lockout.
+- **Integration**: flujo completo login → 2FA → refresh → revocación. Forgot/reset end-to-end con mail stub.
+- **Security**: brute-force simulation (debe activar lockout en intento 5), token reuse (debe retornar 410), session revocation (token inválido en < 60s).
 
-### Tests (mínimos)
+### Métricas & SLAs
 
-- Unit: validación de password, generación/verificación de 2FA, revocación de sesiones.
-- Integration: flujo completo login+2FA+refresh, forgot/reset end-to-end con mail stub.
-- Security tests: rate-limiting, brute-force simulation, token revocation verification.
+| Métrica                                          | Target           |
+| ------------------------------------------------ | ---------------- |
+| Login p95 (sin 2FA externo)                      | < 300ms          |
+| Revocación efectiva de sesión                    | < 60s            |
+| Alerta por bloqueo masivo (>10 usuarios en 5min) | < 5min detección |
+| Disponibilidad                                   | 99.9% mensual    |
 
-### Metrics & SLAs
+### Dependencias
 
-- Tiempo de login (p95) < 300ms (sin 2FA externo).
-- Tiempo para revocación efectiva de sesión < 60s.
-- Detección y alerta por bloqueo masivo en < 5 minutos.
+- Email gateway (reset password, alertas)
+- Redis (rate limits, sesiones cache)
+- Laravel Fortify (políticas de password)
+- Logging/Telemetry (audit persistence)
 
-### Owners / Dependencies
+### Edge Cases
 
-- Owner: TBD (assignar producto/seguridad)
-- Depende de: Email gateway, Redis (rate limits/sessions), Auth service (Fortify), Telemetry/Logging.
-
-### Edge Cases & Mitigations
-
-- brute force: aplicar lockouts, CAPTCHA, IP throttling, alerting.
-- session hijacking: revocación forzada, refresh token rotation, detect concurrent logins y alertar.
-- expired reset: tokens one-time + expiración corta + mensajes claros; uso de audit logs para intentos.
-- MFA recovery: flujo de recuperación con verificación SSO/ops approval y registro de autorización.
+| Caso                | Mitigación                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Brute force         | Lockout temporal + CAPTCHA + IP throttling + alerta                                         |
+| Session hijacking   | Refresh token rotation + detección de uso concurrente + revocación forzada                  |
+| Expired reset token | One-time token + expiración 1h + mensaje claro al usuario                                   |
+| MFA perdido         | Recovery codes. Si agotados: flujo de aprobación manual por ops con audit entry obligatorio |
 
 ---
 
@@ -127,47 +196,108 @@ Proteger el acceso a operaciones administrativas críticas, minimizar riesgo de 
 
 ### Overview
 
-Onboarding y creación de tenants con proceso atómico y verificaciones de dominio/subdominio.
+Creación y ciclo de vida de tenants: onboarding, activación, suspensión, archivado y eliminación. El proceso es atómico con rollback automático en fallo.
 
 ### Business Goal
 
-Reducir errores de provisioning y asegurar consistencia y rollback seguro.
+Reducir errores de provisioning. Garantizar consistencia de estado en toda la infraestructura (DB, storage, subdominio, billing). Proveer rollback seguro ante fallos parciales.
+
+### Personas
+
+| Persona      | Descripción                                                  |
+| ------------ | ------------------------------------------------------------ |
+| Prospecto    | Usuario que completa el registro público                     |
+| Global Admin | Opera lifecycle manual de tenants desde el dashboard central |
 
 ### User Stories
 
-- Como prospecto, quiero registrarme y que se cree el tenant automáticamente.
-
-### Functional Requirements
-
-- onboarding
-- tenant creation
-- subdomain reservation
-- domain validation
-- maintenance
-- archival
-- deletion
-- atomic provisioning
-- slug reservation
-- blacklist
-- onboarding wizard
-- tenant activation
-- maintenance mode
-- read-only mode
-- archive tenant
-- hard delete
-- inter-tenant migration
-
-### Edge Cases
-
-- duplicate slug
-- partial provisioning
-- rollback
-- orphan storage
-- failed welcome job
+| ID     | Historia                                                                                                           |
+| ------ | ------------------------------------------------------------------------------------------------------------------ |
+| US-101 | Como Prospecto, quiero registrarme y que el tenant sea creado automáticamente con acceso inmediato.                |
+| US-102 | Como Global Admin, quiero activar, suspender o archivar un tenant desde el dashboard.                              |
+| US-103 | Como Global Admin, quiero eliminar permanentemente un tenant con purga de datos.                                   |
+| US-104 | Como sistema, necesito que un provisioning fallido a mitad del proceso haga rollback sin dejar recursos huérfanos. |
 
 ### Acceptance Criteria
 
-- (TODO)
+**US-101 — Onboarding automático**
+- Provisioning completo (DB schema, subdominio reservado, welcome email, plan activo) en < 30s p95.
+- Subdominio validado contra blacklist (palabras reservadas: `www`, `api`, `admin`, `central`, `app`) antes de reservar.
+- Slug único: colisión retorna error `409` con sugerencias alternativas.
+- Tenant en estado `provisioning` durante el proceso. Estado final: `active` o rollback a `failed` con log de causa.
+
+**US-102 — Lifecycle manual**
+- Suspensión: tenant pasa a `suspended` en < 5s. Acceso de usuarios tenant retorna `503` con mensaje de suspensión.
+- Activación desde `suspended`: tenant operativo en < 10s.
+- Archivado: datos preservados, acceso bloqueado. Estado `archived`. No facturable.
+
+**US-103 — Eliminación**
+- Hard delete disponible solo para Global Admin con confirmación explícita (escribir slug).
+- Purga: DB schema, archivos en storage, subdominio liberado, billing cancelado.
+- Purga completada en background job. Log de eliminación en `central_audit_logs` preservado permanentemente.
+
+**US-104 — Rollback**
+- Si cualquier paso del provisioning falla, estado revertido a `failed` y recursos parcialmente creados son limpiados.
+- Recursos huérfanos verificados en job de reconciliación diario.
+
+### Data Model
+
+```sql
+tenants (
+  id              UUID PRIMARY KEY,
+  slug            VARCHAR(63) UNIQUE NOT NULL,     -- subdominio
+  name            VARCHAR(255) NOT NULL,
+  status          ENUM('provisioning','active','suspended','archived','failed') NOT NULL,
+  plan_id         UUID REFERENCES plans(id),
+  provisioned_at  TIMESTAMP NULL,
+  suspended_at    TIMESTAMP NULL,
+  archived_at     TIMESTAMP NULL,
+  created_at      TIMESTAMP NOT NULL,
+  updated_at      TIMESTAMP NOT NULL,
+  INDEX (status),
+  INDEX (slug)
+)
+
+provisioning_logs (
+  id          UUID PRIMARY KEY,
+  tenant_id   UUID REFERENCES tenants(id),
+  step        VARCHAR(100) NOT NULL,               -- 'db_schema', 'storage', 'subdomain', etc.
+  status      ENUM('pending','completed','failed') NOT NULL,
+  error       TEXT NULL,
+  executed_at TIMESTAMP NOT NULL
+)
+```
+
+### Events
+
+```
+TenantProvisioningStarted(tenant_id, slug, plan_id)
+TenantProvisioningCompleted(tenant_id)
+TenantProvisioningFailed(tenant_id, step, error)
+TenantActivated(tenant_id)
+TenantSuspended(tenant_id, reason)
+TenantArchived(tenant_id)
+TenantDeleted(tenant_id, deleted_by)
+```
+
+### API
+
+| Método | Endpoint                                 | Descripción                               |
+| ------ | ---------------------------------------- | ----------------------------------------- |
+| POST   | `/central/tenants`                       | Iniciar provisioning (onboarding)         |
+| GET    | `/central/tenants/{id}`                  | Consultar estado y detalles               |
+| PATCH  | `/central/tenants/{id}/status`           | Cambiar status (activate/suspend/archive) |
+| DELETE | `/central/tenants/{id}`                  | Hard delete con confirmación              |
+| GET    | `/central/tenants/{id}/provisioning-log` | Log de pasos de provisioning              |
+
+### Edge Cases
+
+| Caso                  | Mitigación                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| Slug duplicado        | Validación pre-insert + constraint UNIQUE. Sugerencias generadas en la respuesta de error |
+| Provisioning parcial  | FSM con steps atómicos. Rollback handler por cada step. Job de reconciliación diario      |
+| Storage huérfano      | Reconciliation job detecta buckets/directorios sin tenant activo y notifica               |
+| Welcome email fallido | Reintentos (3x con backoff). Fallo no bloquea activación del tenant                       |
 
 ---
 
@@ -175,46 +305,146 @@ Reducir errores de provisioning y asegurar consistencia y rollback seguro.
 
 ### Overview
 
-Gestión de planes, suscripciones, facturación y conciliación centralizada.
+Gestión de planes, suscripciones, cobros recurrentes, facturación y manejo de fallos de pago (dunning). Integración con Stripe (global) y dLocal (LATAM).
 
 ### Business Goal
 
-Soportar modelos de suscripción, cobros recurrentes y manejo de overages.
+Soportar modelos de suscripción con cobros recurrentes. Manejar fallos de pago con dunning automatizado. Generar facturas descargables.
 
-### Functional Requirements
+### Personas
 
-- plans
-- pricing
-- subscriptions
-- dunning
-- taxes
-- invoices
-- overages
-- reconciliation
-- plan matrix
-- coupon engine
-- checkout orchestration
-- subscription sync
-- webhook handling
-- retries
-- suspension
-- recovery
-- consolidated invoices
-- credit balance
-- over-usage billing
-- tax engine
+| Persona      | Descripción                                             |
+| ------------ | ------------------------------------------------------- |
+| Global Admin | Gestión de planes, revisión de suscripciones y facturas |
+| Tenant Admin | Gestión de su propia suscripción y métodos de pago      |
 
-### Edge Cases
+### User Stories
 
-- duplicated webhooks
-- partial payment
-- payment gateway timeout
-- subscription drift
-- stale cache
+| ID     | Historia                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------ |
+| US-201 | Como Tenant Admin, quiero suscribirme a un plan y que el cobro se procese automáticamente. |
+| US-202 | Como Tenant Admin, quiero ver y descargar mis facturas históricas.                         |
+| US-203 | Como sistema, ante un fallo de pago necesito ejecutar dunning y notificar al tenant.       |
+| US-204 | Como Global Admin, quiero ver el estado de suscripción de cualquier tenant.                |
+| US-205 | Como Tenant Admin, quiero cambiar mi método de pago.                                       |
 
 ### Acceptance Criteria
 
-- (TODO)
+**US-201 — Checkout y suscripción**
+- Checkout completado: tenant en plan activo en < 10s tras confirmación de pago.
+- Webhook de Stripe procesado con idempotencia: evento duplicado no crea suscripción duplicada. Clave de idempotencia: `stripe_event_id`.
+- Suscripción almacenada con `external_id` (Stripe subscription ID) para reconciliación.
+
+**US-202 — Facturas**
+- Factura disponible en < 60s tras cierre del período de facturación.
+- Descarga en PDF. Incluye: número de factura, período, líneas de concepto, total, estado.
+- Historial paginado, respuesta en p95 < 200ms.
+
+**US-203 — Dunning**
+- Primer fallo: reintento automático en 3 días. Notificación por email al tenant.
+- Segundo fallo: reintento en 5 días. Segunda notificación con advertencia de suspensión.
+- Tercer fallo: tenant pasa a `suspended`. Email final con instrucciones de recuperación.
+- Recovery: tenant paga deuda pendiente → estado `active` restaurado en < 5min.
+
+**US-204 — Vista admin**
+- Lista de suscripciones con filtro por estado (`active`, `past_due`, `suspended`, `cancelled`).
+- Respuesta paginada en p95 < 300ms.
+
+**US-205 — Método de pago**
+- Actualización procesada vía Stripe Setup Intent. Nunca almacenar datos de tarjeta en la DB propia.
+- Método actualizado visible en < 30s.
+
+### Data Model
+
+```sql
+plans (
+  id             UUID PRIMARY KEY,
+  name           VARCHAR(100) NOT NULL,
+  slug           VARCHAR(100) UNIQUE NOT NULL,
+  price_monthly  INTEGER NOT NULL,                 -- en centavos
+  price_yearly   INTEGER NOT NULL,
+  is_active      BOOLEAN DEFAULT TRUE,
+  features       JSONB NOT NULL,                   -- feature flags del plan
+  created_at     TIMESTAMP NOT NULL
+)
+
+subscriptions (
+  id              UUID PRIMARY KEY,
+  tenant_id       UUID REFERENCES tenants(id),
+  plan_id         UUID REFERENCES plans(id),
+  external_id     VARCHAR(255) NOT NULL,           -- Stripe subscription ID
+  gateway         ENUM('stripe', 'dlocal') NOT NULL,
+  status          ENUM('active','past_due','suspended','cancelled') NOT NULL,
+  current_period_start TIMESTAMP NOT NULL,
+  current_period_end   TIMESTAMP NOT NULL,
+  trial_ends_at   TIMESTAMP NULL,
+  created_at      TIMESTAMP NOT NULL,
+  updated_at      TIMESTAMP NOT NULL,
+  INDEX (tenant_id, status)
+)
+
+invoices (
+  id              UUID PRIMARY KEY,
+  tenant_id       UUID REFERENCES tenants(id),
+  subscription_id UUID REFERENCES subscriptions(id),
+  external_id     VARCHAR(255),                    -- Stripe invoice ID
+  number          VARCHAR(50) UNIQUE NOT NULL,
+  status          ENUM('draft','open','paid','uncollectible','void') NOT NULL,
+  amount_due      INTEGER NOT NULL,                -- centavos
+  amount_paid     INTEGER NOT NULL,
+  currency        VARCHAR(3) NOT NULL,
+  period_start    TIMESTAMP NOT NULL,
+  period_end      TIMESTAMP NOT NULL,
+  pdf_url         TEXT NULL,
+  created_at      TIMESTAMP NOT NULL,
+  INDEX (tenant_id, created_at)
+)
+
+payment_gateway_events (
+  id              UUID PRIMARY KEY,
+  gateway_event_id VARCHAR(255) UNIQUE NOT NULL,   -- idempotencia
+  gateway         ENUM('stripe', 'dlocal') NOT NULL,
+  event_type      VARCHAR(100) NOT NULL,
+  payload         JSONB NOT NULL,
+  processed_at    TIMESTAMP NULL,
+  error           TEXT NULL,
+  created_at      TIMESTAMP NOT NULL
+)
+```
+
+### Events
+
+```
+SubscriptionCreated(tenant_id, subscription_id, plan_id, gateway)
+SubscriptionUpdated(tenant_id, subscription_id, old_plan_id, new_plan_id)
+SubscriptionCancelled(tenant_id, subscription_id, reason)
+PaymentSucceeded(tenant_id, invoice_id, amount, currency)
+PaymentFailed(tenant_id, invoice_id, attempt_number)
+TenantSuspendedByDunning(tenant_id, invoice_id)
+TenantReactivatedAfterPayment(tenant_id, invoice_id)
+```
+
+### API
+
+| Método | Endpoint                                     | Descripción                                      |
+| ------ | -------------------------------------------- | ------------------------------------------------ |
+| GET    | `/central/plans`                             | Listar planes activos                            |
+| POST   | `/central/billing/checkout`                  | Iniciar checkout (Setup Intent / Payment Intent) |
+| GET    | `/central/billing/subscriptions/{tenant_id}` | Estado de suscripción                            |
+| POST   | `/central/billing/subscriptions/{id}/cancel` | Cancelar suscripción                             |
+| GET    | `/central/billing/invoices`                  | Listar facturas del tenant                       |
+| GET    | `/central/billing/invoices/{id}/pdf`         | Descargar PDF                                    |
+| POST   | `/central/webhooks/stripe`                   | Handler de webhooks Stripe                       |
+| POST   | `/central/webhooks/dlocal`                   | Handler de webhooks dLocal                       |
+
+### Edge Cases
+
+| Caso                         | Mitigación                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Webhook duplicado            | `payment_gateway_events.gateway_event_id` UNIQUE. Procesamiento idempotente |
+| Gateway timeout              | Webhook como source of truth. Nunca asumir éxito por timeout                |
+| Suscripción desincronizada   | Job de reconciliación diaria contra Stripe API                              |
+| Fallo durante cambio de plan | Transacción DB atómica. Stripe es fuente de verdad                          |
 
 ---
 
@@ -222,36 +452,96 @@ Soportar modelos de suscripción, cobros recurrentes y manejo de overages.
 
 ### Overview
 
-Herramientas para soporte central: impersonation, broadcast y overrides.
+Herramientas para que el equipo central asista a tenants: impersonation auditada, notas internas y broadcasts. Sin overrides de quota arbitrarios.
 
 ### Business Goal
 
-Permitir asistencia segura a tenants y rastreo/auditoría de acciones de soporte.
+Permitir asistencia segura y rastreable a tenants. Toda acción de soporte debe ser auditable y reversible.
 
-### Functional Requirements
+### Personas
 
-- impersonation
-- broadcast
-- tenant assistance
-- overrides
-- audited impersonation
-- reason capture
-- support sessions
-- banners
-- notifications
-- quota override
-- support notes
-- tenant history
+| Persona          | Descripción                                     |
+| ---------------- | ----------------------------------------------- |
+| Operador Central | Ejecuta impersonation y agrega notas de soporte |
+| Global Admin     | Aprueba impersonation y envía broadcasts        |
 
-### Edge Cases
+### User Stories
 
-- impersonation abuse
-- support escalation
-- override expiration
+| ID     | Historia                                                                                                 |
+| ------ | -------------------------------------------------------------------------------------------------------- |
+| US-301 | Como Operador, quiero hacer impersonation de un tenant con razón registrada para diagnosticar problemas. |
+| US-302 | Como Global Admin, quiero enviar un broadcast a todos o a un subconjunto de tenants.                     |
+| US-303 | Como Operador, quiero agregar notas internas a la cuenta de un tenant.                                   |
 
 ### Acceptance Criteria
 
-- (TODO)
+**US-301 — Impersonation**
+- Impersonation requiere campo `reason` obligatorio (mínimo 20 caracteres). Request sin reason retorna `400`.
+- Sesión de impersonation tiene TTL máximo de 2 horas. Expiración automática.
+- Toda acción durante impersonation registrada en `central_audit_logs` con `impersonated_by` en metadata.
+- Tenant recibe notificación por email tras finalizar sesión de impersonation (post-session, no en tiempo real para no alertar innecesariamente).
+
+**US-302 — Broadcast**
+- Broadcast enviado a tenants filtrados por: `all`, `plan_id`, `status`.
+- Entrega vía email y/o banner en-app (configurable por broadcast).
+- Job de broadcast en queue separada. No bloquea requests normales.
+- Log de broadcast con: creador, timestamp, filtro, total de destinatarios.
+
+**US-303 — Notas de soporte**
+- Nota vinculada a `tenant_id` y `central_user_id` (autor).
+- Notas visibles solo para operadores centrales — nunca al tenant.
+- Sin eliminación de notas (append-only para integridad de historial).
+
+### Data Model
+
+```sql
+support_sessions (
+  id               UUID PRIMARY KEY,
+  tenant_id        UUID REFERENCES tenants(id),
+  operator_id      UUID REFERENCES central_users(id),
+  reason           TEXT NOT NULL,
+  started_at       TIMESTAMP NOT NULL,
+  ended_at         TIMESTAMP NULL,
+  expires_at       TIMESTAMP NOT NULL,             -- started_at + 2h
+  INDEX (tenant_id, started_at)
+)
+
+support_notes (
+  id          UUID PRIMARY KEY,
+  tenant_id   UUID REFERENCES tenants(id),
+  author_id   UUID REFERENCES central_users(id),
+  content     TEXT NOT NULL,
+  created_at  TIMESTAMP NOT NULL
+)
+
+broadcasts (
+  id           UUID PRIMARY KEY,
+  created_by   UUID REFERENCES central_users(id),
+  title        VARCHAR(255) NOT NULL,
+  body         TEXT NOT NULL,
+  filter_type  ENUM('all', 'plan', 'status') NOT NULL,
+  filter_value VARCHAR(100) NULL,
+  channels     JSONB NOT NULL,                     -- ['email', 'banner']
+  sent_at      TIMESTAMP NULL,
+  recipient_count INTEGER NULL,
+  created_at   TIMESTAMP NOT NULL
+)
+```
+
+### Events
+
+```
+SupportSessionStarted(operator_id, tenant_id, reason)
+SupportSessionEnded(operator_id, tenant_id, duration_seconds)
+BroadcastSent(broadcast_id, created_by, recipient_count)
+```
+
+### Edge Cases
+
+| Caso                                   | Mitigación                                                                                           |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Impersonation abuse                    | TTL 2h + audit log inmutable + notificación post-sesión al tenant                                    |
+| Broadcast a todos los tenants con typo | Preview con conteo de destinatarios antes de enviar. Confirmación requerida para `filter_type = all` |
 
 ---
 
@@ -259,45 +549,55 @@ Permitir asistencia segura a tenants y rastreo/auditoría de acciones de soporte
 
 ### Overview
 
-Telemetría, colas, cache y observabilidad del contexto central.
+Telemetría, colas, cache y observabilidad del contexto central. Foco en isolación de recursos entre tenants y detección de degradación.
 
 ### Business Goal
 
-Mantener operabilidad y límites para evitar noisy neighbors y degradación.
+Mantener operabilidad del sistema. Prevenir que un tenant impacte a otros (noisy neighbor). Detectar y alertar sobre degradación antes de que afecte SLAs.
 
 ### Functional Requirements
 
-- telemetry
-- queues
-- cache
-- rate limiting
-- observability
-- health monitor
-- Horizon
-- queue isolation
-- cache priming
-- noisy neighbor detection
-- plan rate limits
-- performance dashboards
-- incident logs
+**Queue isolation**
+- Cada tenant tiene su propia cola de jobs (prefijo `tenant.{slug}.`).
+- Jobs de tenants en `past_due` o `suspended` en cola de baja prioridad.
+- Horizon para monitoreo y gestión de colas.
 
-### Edge Cases
+**Rate limiting**
+- Rate limits aplicados por tenant y por plan desde Redis.
+- Límites configurables por plan en `plans.features` (JSONB).
+- Respuesta `429` con header `Retry-After` cuando se excede el límite.
 
-- queue contamination
-- Redis outage
-- cache poisoning
-- noisy tenant
+**Cache**
+- Cache de sesiones y cuotas en Redis con TTL explícito.
+- Cache poisoning mitigado: validación de datos al leer de cache antes de usar.
+- Invalidación explícita al cambiar plan o status de tenant.
+
+**Observability**
+- Health endpoint `/central/health` con estado de dependencias (DB, Redis, Queue).
+- Logging estructurado (JSON) con `tenant_id` en contexto cuando aplica.
+- Alertas en: error rate > 1% en 5min, queue depth > 1000 jobs, Redis memory > 80%.
 
 ### Acceptance Criteria
 
-- (TODO)
+| Requisito                                            | Threshold                                                   |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| Rate limit response con `429`                        | < 5ms overhead sobre request normal                         |
+| Health check response                                | < 100ms                                                     |
+| Queue isolation: job de tenant A no impacta tenant B | Jobs en colas separadas verificado por tests de integración |
+| Cache miss no degrada p95                            | p95 con cache miss <= p95 sin cache + 50ms                  |
+| Alerta por queue depth > 1000                        | Notificación en < 2min                                      |
+
+### Edge Cases
+
+| Caso                | Mitigación                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Redis outage        | Rate limits y cuotas fallan open (permiten tráfico) con log de warning. No fallan closed para evitar outage completo |
+| Queue contaminación | Colas por tenant. Job sin `tenant_id` va a cola `default` — nunca a cola de tenant                                   |
+| Noisy tenant        | Throttling por tenant desde Redis. Queue de baja prioridad para tenants problemáticos                                |
 
 ---
 
-## Links y Diagramas
+## Links
 
-- Diagrama maestro: see docs/\*.mermaid
-
-## Notes
-
-Seguir plantilla PRD por feature (Overview, User Stories, Acceptance Criteria, Data Model, Events, API, Security, Testing).
+- Diagramas: `docs/*.mermaid`
+- ADRs: `docs/adr/`
