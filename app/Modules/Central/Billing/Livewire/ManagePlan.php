@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Actions\UpsertPlanAction;
 use App\Modules\Central\Billing\Actions\DeletePlanAction;
 use App\Modules\Central\Billing\DTOs\PlanData;
 use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -25,7 +26,10 @@ class ManagePlan extends Component
     public bool $is_active = true;
     public string $stripe_id = '';
     
-    // Features structure
+    // Feature Catalog Integration
+    public array $selectedFeatures = [];
+    
+    // Legacy Features structure (for quotas)
     public int $quota_branches = 1;
     public int $quota_staff = 3;
     public int $quota_bookings = 100;
@@ -48,6 +52,8 @@ class ManagePlan extends Component
             $this->quota_staff = $features['quotas']['staff'] ?? 3;
             $this->quota_bookings = $features['quotas']['bookings'] ?? 100;
             $this->display_features = implode(', ', $features['display_features'] ?? []);
+
+            $this->selectedFeatures = $plan->features()->pluck('features.id')->toArray();
         }
     }
 
@@ -59,6 +65,7 @@ class ManagePlan extends Component
             'price_monthly' => 'required|numeric|min:0',
             'price_yearly' => 'required|numeric|min:0',
             'is_active' => 'boolean',
+            'selectedFeatures' => 'array',
         ]);
 
         $features = [
@@ -81,8 +88,11 @@ class ManagePlan extends Component
         );
 
         try {
-            $action->execute($data, $this->plan);
+            $plan = $action->execute($data, $this->plan);
             
+            // Sync Feature Catalog
+            $plan->features()->sync($this->selectedFeatures);
+
             session()->flash('status', $this->isEditing ? __('Plan updated.') : __('Plan created.'));
             $this->redirect(route('central.billing.plans'), navigate: true);
         } catch (\Exception $e) {
@@ -105,6 +115,8 @@ class ManagePlan extends Component
 
     public function render(): View
     {
-        return view('billing::pages.manage-plan');
+        return view('billing::pages.manage-plan', [
+            'availableFeatures' => Feature::where('is_active', true)->orderBy('module')->get(),
+        ]);
     }
 }
