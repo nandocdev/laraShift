@@ -31,9 +31,9 @@
                 />
 
                 <flux:select wire:model="plan_id" :label="__('Plan')">
-                    <option value="free">Free</flux:select.option>
-                    <option value="pro">Pro</flux:select.option>
-                    <option value="enterprise">Enterprise</flux:select.option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Enterprise</option>
                 </flux:select>
             </div>
 

@@ -32,7 +32,7 @@
                             </flux:link>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" inset="8" color="neutral">{{ strtoupper($tenant->plan_id) }}</flux:badge>
+                            <flux:badge size="sm">{{ strtoupper($tenant->plan_id) }}</flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
                             {{ $tenant->created_at->format('Y-m-d H:i') }}
