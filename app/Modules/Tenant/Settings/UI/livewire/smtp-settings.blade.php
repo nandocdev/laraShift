@@ -4,6 +4,24 @@
         <flux:subheading>{{ __('Configure your own outgoing mail server for all emails sent from this account.') }}</flux:subheading>
     </div>
 
+    @if (App\Modules\Tenant\Settings\Models\TenantSetting::where('tenant_id', tenant('id'))->first()?->smtp_verified)
+        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded flex items-center gap-3">
+            <flux:icon icon="check-badge" variant="solid" class="text-emerald-600" />
+            <div class="flex-1">
+                <div class="text-sm font-bold text-emerald-800">{{ __('SMTP Connection Verified') }}</div>
+                <div class="text-xs text-emerald-600">{{ __('Your organization is using its own mail infrastructure.') }}</div>
+            </div>
+        </div>
+    @else
+        <div class="p-3 bg-zinc-100 border border-zinc-200 rounded flex items-center gap-3">
+            <flux:icon icon="information-circle" class="text-zinc-500" />
+            <div class="flex-1">
+                <div class="text-sm font-bold text-zinc-700">{{ __('SMTP Not Verified') }}</div>
+                <div class="text-xs text-zinc-500">{{ __('Platform will use global fallback until connection is verified.') }}</div>
+            </div>
+        </div>
+    @endif
+
     @if (session('status'))
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif

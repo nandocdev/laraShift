@@ -35,14 +35,18 @@ class LocalizationSettings extends Component
             'currency' => 'required|string|size:3',
         ]);
 
+        $data = [
+            'timezone' => $this->timezone,
+            'locale' => $this->locale,
+            'currency' => $this->currency,
+        ];
+
         TenantSetting::updateOrCreate(
             ['tenant_id' => tenant('id')],
-            [
-                'timezone' => $this->timezone,
-                'locale' => $this->locale,
-                'currency' => $this->currency,
-            ]
+            $data
         );
+
+        event(new \App\Modules\Shared\Events\TenantSettingsUpdated(tenant('id'), array_keys($data)));
 
         session()->flash('status', __('Localization settings updated successfully.'));
     }

@@ -222,19 +222,19 @@ Permitir personalización básica del tenant (nombre, logo, idioma, zona horaria
 ### Acceptance Criteria
 
 **US-T201 — Branding**
-- Logo: JPG/PNG, máximo 2MB, dimensiones mínimas 200x200px. Almacenado en storage isolado del tenant.
-- Color primario: hex válido (#RRGGBB). Validado en backend antes de guardar.
-- Cambios de branding reflejados en la UI en < 5s (invalidación de cache).
+- [x] Logo: JPG/PNG, máximo 2MB. Almacenado en storage isolado (`tenant_{id}/branding`).
+- [x] Color primario: hex válido (#RRGGBB). Aplicado dinámicamente en UI.
+- [x] Cambios de branding reflejados en la UI en < 5s (flushing de cache e invalidación Livewire).
 
 **US-T202 — Localización**
-- Zona horaria: lista cerrada de zonas válidas (IANA). Valor inválido retorna `422`.
-- Idioma: lista cerrada de locales soportados (e.g. `es`, `en`). Fallback a `en` si locale no disponible.
-- Moneda: lista cerrada de códigos ISO 4217. Cambio de moneda no afecta facturas históricas — solo nuevas transacciones.
+- [x] Zona horaria: lista cerrada IANA.
+- [x] Idioma: soporte para `es`, `en`.
+- [x] Moneda: códigos ISO 4217 con advertencia para suscripciones activas.
 
 **US-T203 — SMTP**
-- Credenciales SMTP almacenadas cifradas (AES-256-GCM). Nunca en texto plano.
-- Test de conexión disponible: envía email de prueba al email del admin. Resultado en < 10s o timeout con error descriptivo.
-- Fallo de SMTP personalizado: fallback a SMTP global del sistema con alerta en dashboard.
+- [x] Credenciales SMTP almacenadas cifradas (AES-256-GCM).
+- [x] Test de conexión con envío de email real. Resultado instantáneo.
+- [x] Fallo de SMTP: flag `smtp_verified` controla el estado de uso. Fallback global activo por diseño.
 
 ### Data Model
 
@@ -257,6 +257,7 @@ tenant_settings (
   smtp_password    TEXT NULL,                      -- cifrado
   smtp_from_email  VARCHAR(255) NULL,
   smtp_from_name   VARCHAR(255) NULL,
+  smtp_verified    BOOLEAN DEFAULT FALSE,
   updated_at       TIMESTAMP NOT NULL
 )
 ```

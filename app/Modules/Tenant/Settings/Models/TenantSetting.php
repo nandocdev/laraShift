@@ -30,10 +30,12 @@ class TenantSetting extends Model
         'smtp_password',
         'smtp_from_email',
         'smtp_from_name',
+        'smtp_verified',
     ];
 
     protected $casts = [
         'mfa_required' => 'boolean',
+        'smtp_verified' => 'boolean',
         'smtp_password' => 'encrypted',
     ];
 }

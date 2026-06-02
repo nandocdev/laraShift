@@ -6,8 +6,11 @@ namespace App\Modules\Tenant\Identity\Listeners;
 
 use App\Modules\Shared\Events\TenantApiKeyCreated;
 use App\Modules\Shared\Events\TenantApiKeyRevoked;
+use App\Modules\Shared\Events\TenantMfaRequirementChanged;
 use App\Modules\Shared\Events\TenantRoleCreated;
 use App\Modules\Shared\Events\TenantRoleUpdated;
+use App\Modules\Shared\Events\TenantSettingsUpdated;
+use App\Modules\Shared\Events\TenantSmtpConfigured;
 use App\Modules\Shared\Events\TenantUserInvited;
 use App\Modules\Shared\Events\TenantUserJoined;
 use App\Modules\Shared\Events\TenantUserRevoked;
@@ -89,6 +92,33 @@ class TenantIdentityEventSubscriber
         );
     }
 
+    public function handleSettingsUpdated(TenantSettingsUpdated $event): void
+    {
+        $this->recordAuditLog->execute(
+            action: 'settings.updated',
+            resource: 'settings',
+            metadata: ['changed_fields' => $event->changedFields]
+        );
+    }
+
+    public function handleSmtpConfigured(TenantSmtpConfigured $event): void
+    {
+        $this->recordAuditLog->execute(
+            action: 'settings.smtp_configured',
+            resource: 'settings',
+            metadata: ['from_email' => $event->fromEmail]
+        );
+    }
+
+    public function handleMfaRequirementChanged(TenantMfaRequirementChanged $event): void
+    {
+        $this->recordAuditLog->execute(
+            action: 'settings.mfa_requirement_changed',
+            resource: 'settings',
+            metadata: ['mfa_required' => $event->mfaRequired]
+        );
+    }
+
     /**
      * Register the listeners for the subscriber.
      */
@@ -102,6 +132,9 @@ class TenantIdentityEventSubscriber
             TenantRoleUpdated::class => 'handleRoleUpdated',
             TenantApiKeyCreated::class => 'handleApiKeyCreated',
             TenantApiKeyRevoked::class => 'handleApiKeyRevoked',
+            TenantSettingsUpdated::class => 'handleSettingsUpdated',
+            TenantSmtpConfigured::class => 'handleSmtpConfigured',
+            TenantMfaRequirementChanged::class => 'handleMfaRequirementChanged',
         ];
     }
 }

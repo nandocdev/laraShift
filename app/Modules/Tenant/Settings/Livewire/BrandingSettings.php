@@ -60,6 +60,13 @@ class BrandingSettings extends Component
         // Update Central Tenant record name if needed for consistency
         tenant()->update(['name' => $this->name]);
 
+        // Fire Events
+        event(new \App\Modules\Shared\Events\TenantSettingsUpdated(tenant('id'), array_keys($data)));
+        
+        if (isset($data['mfa_required'])) {
+            event(new \App\Modules\Shared\Events\TenantMfaRequirementChanged(tenant('id'), (bool)$data['mfa_required']));
+        }
+
         session()->flash('status', __('Branding updated successfully.'));
     }
 

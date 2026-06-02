@@ -56,6 +56,7 @@ class SmtpSettings extends Component
             'smtp_user' => $this->smtp_user,
             'smtp_from_email' => $this->smtp_from_email,
             'smtp_from_name' => $this->smtp_from_name,
+            'smtp_verified' => false, // Reset on save
         ];
 
         if (! empty($this->smtp_password)) {
@@ -64,7 +65,9 @@ class SmtpSettings extends Component
 
         $settings->update($data);
 
-        session()->flash('status', __('SMTP settings updated successfully.'));
+        event(new \App\Modules\Shared\Events\TenantSmtpConfigured(tenant('id'), $this->smtp_from_email));
+
+        session()->flash('status', __('SMTP settings updated successfully. Connection must be verified.'));
     }
 
     public function testConnection(): void
@@ -100,6 +103,7 @@ class SmtpSettings extends Component
                     ->subject(__('LaraShift SMTP Test'));
             });
 
+            $settings->update(['smtp_verified' => true]);
             $this->test_status = 'success';
         } catch (\Exception $e) {
             $this->test_status = 'failed';
