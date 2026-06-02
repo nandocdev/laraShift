@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -50,7 +51,7 @@ it('kicks out an inactive user immediately via middleware', function () {
     $this->assertGuest();
 });
 
-it('prevents inviting an email that belongs to another tenant', function () {
+it('allows inviting an email that belongs to another tenant', function () {
     $tenantA = Tenant::create([
         'id' => Str::uuid()->toString(),
         'slug' => 'tenant-a',
@@ -73,11 +74,50 @@ it('prevents inviting an email that belongs to another tenant', function () {
     ]);
 
     tenancy()->initialize($tenantB);
+    
+    // We need roles to exist for the invitation to work
+    app(\App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction::class)->execute($tenantB);
 
     $action = app(\App\Modules\Tenant\Identity\Actions\SendInvitationAction::class);
 
-    $this->expectException(\Exception::class);
-    $this->expectExceptionMessage('This email is already associated with another organization.');
+    // This should NOT throw an exception anymore
+    $invitation = $action->execute('shared@test.com', 'member', $userA);
 
-    $action->execute('shared@test.com', 'member', $userA); // UserA is inviter but in TenantB context
+    expect($invitation->email)->toBe('shared@test.com');
+    expect($invitation->tenant_id)->toBe($tenantB->id);
+});
+
+it('returns 404 for cross-tenant access attempts', function () {
+    $tenantA = Tenant::create([
+        'id' => Str::uuid()->toString(),
+        'slug' => 'tenant-a',
+        'name' => 'Tenant A',
+        'email' => 'a@test.com',
+    ]);
+    $tenantA->domains()->create(['domain' => 'a.larashift.test']);
+
+    $userA = User::create([
+        'tenant_id' => $tenantA->id,
+        'name' => 'User A',
+        'email' => 'user@test.com',
+        'password' => 'password',
+    ]);
+
+    $tenantB = Tenant::create([
+        'id' => Str::uuid()->toString(),
+        'slug' => 'tenant-b',
+        'name' => 'Tenant B',
+        'email' => 'b@test.com',
+    ]);
+    $tenantB->domains()->create(['domain' => 'b.larashift.test']);
+
+    // Act as User A but try to access Tenant B domain
+    $this->actingAs($userA);
+
+    // Mock a route in the tenant group
+    Route::get('/api/resource', function () { return 'ok'; })
+        ->middleware(['web', EnsureUserBelongsToTenant::class]);
+
+    $this->get('http://b.larashift.test/api/resource')
+        ->assertStatus(404);
 });

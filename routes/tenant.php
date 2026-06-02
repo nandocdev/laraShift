@@ -44,7 +44,8 @@ Route::middleware([
     Route::middleware([
         'auth', 
         \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class
+        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class,
+        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant::class
     ])->group(function () {
         Route::get('/team', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
         Route::get('/team/roles', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class)->name('tenant.roles.index');
