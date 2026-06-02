@@ -548,6 +548,106 @@ Mantener operabilidad del sistema. Prevenir que un tenant impacte a otros (noisy
 
 ---
 
+## 6. Features
+
+### Overview
+Gestión granular de funcionalidades y acceso a módulos. Permite definir qué características están disponibles por plan y aplicar excepciones (overrides) por tenant de forma dinámica y desacoplada del billing.
+
+### Business Goal
+Habilitar o deshabilitar funcionalidades sin necesidad de despliegues de código. Permitir ventas personalizadas, accesos beta, periodos de prueba de features específicas y control de acceso dinámico por soporte.
+
+### Personas
+| Persona      | Descripción                                             |
+| ------------ | ------------------------------------------------------- |
+| Global Admin | Define el catálogo de features, las asigna a planes y gestiona overrides por tenant |
+
+### User Stories
+| ID     | Historia                                                                                             |
+| ------ | ---------------------------------------------------------------------------------------------------- |
+| US-401 | Como Global Admin, quiero definir una nueva funcionalidad en el catálogo global.                     |
+| US-402 | Como Global Admin, quiero asignar funcionalidades a un plan específico.                              |
+| US-403 | Como Global Admin, quiero conceder o denegar una funcionalidad a un tenant (override).               |
+| US-404 | Como Desarrollador, quiero verificar el acceso a una feature mediante una API simple (Redis-first).  |
+
+### Acceptance Criteria
+
+**US-401 — Catálogo global**
+- Feature creada con key única (formato `modulo.accion`).
+- Atributo `is_active` controla la disponibilidad global inmediata.
+
+**US-402 — Configuración de Plan**
+- Asignación M:N entre planes y features.
+- Cambios reflejados en tenants del plan tras invalidación de caché automático (< 60s).
+
+**US-403 — Overrides por Tenant**
+- Soporta tipo `allow` (concede) y `deny` (prohíbe).
+- Soporta expiración (`expires_at`). Al expirar, la resolución vuelve a la base del plan.
+- Override registrado con motivo (`reason`) para auditoría y `created_by`.
+
+**US-404 — Resolución de Features**
+- Resolución jerárquica: Override (Deny > Allow) -> Plan Base.
+- Rendimiento: Resolución vía Redis-first cache en < 10ms.
+- API fluida: `tenant()->hasFeature('key')`.
+
+### Data Model
+
+```sql
+features (
+  id          UUID PRIMARY KEY,
+  key         VARCHAR(100) UNIQUE NOT NULL,        -- e.g., 'crm.pipeline'
+  name        VARCHAR(255) NOT NULL,
+  description TEXT,
+  module      VARCHAR(100),
+  is_active   BOOLEAN DEFAULT TRUE,
+  created_at  TIMESTAMP NOT NULL
+)
+
+plan_features (
+  plan_id    UUID REFERENCES plans(id),
+  feature_id UUID REFERENCES features(id),
+  PRIMARY KEY (plan_id, feature_id)
+)
+
+tenant_feature_overrides (
+  id          UUID PRIMARY KEY,
+  tenant_id   UUID REFERENCES tenants(id),
+  feature_id  UUID REFERENCES features(id),
+  type        ENUM('allow', 'deny') NOT NULL,
+  reason      TEXT,
+  expires_at  TIMESTAMP NULL,
+  created_by  UUID REFERENCES central_users(id),
+  created_at  TIMESTAMP NOT NULL,
+  UNIQUE (tenant_id, feature_id)
+)
+```
+
+### Events
+```
+FeatureCreated(feature_id, key)
+FeatureAssignedToPlan(plan_id, feature_id)
+TenantFeatureOverrideCreated(tenant_id, feature_id, type)
+TenantFeatureOverrideExpired(tenant_id, feature_id)
+FeatureCacheInvalidated(tenant_id)
+```
+
+### API
+| Método | Endpoint                                    | Descripción                         |
+| ------ | ------------------------------------------- | ----------------------------------- |
+| GET    | `/central/features`                         | Listar catálogo global              |
+| POST   | `/central/features`                         | Crear nueva feature                 |
+| POST   | `/central/plans/{id}/features`              | Asignar feature a plan              |
+| POST   | `/central/tenants/{id}/features/override`   | Aplicar override a tenant           |
+| GET    | `/central/tenants/{id}/features`            | Ver features efectivas del tenant   |
+
+### Edge Cases
+| Caso                         | Mitigación                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Feature retirada globalmente | `is_active = false` invalida accesos incluso con overrides `allow`.         |
+| Cache poisoning              | Priming valida integridad del JSON en Redis antes de usarlo.                |
+| Race condition en downgrade  | Purga de caché inmediata al cambiar de plan para bloquear accesos.          |
+
+---
+
 ## Links
 
 - Diagramas: `docs/*.mermaid`
