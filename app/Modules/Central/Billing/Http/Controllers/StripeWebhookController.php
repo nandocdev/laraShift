@@ -6,6 +6,12 @@ namespace App\Modules\Central\Billing\Http\Controllers;
 
 use App\Modules\Central\Billing\Models\PaymentGatewayEvent;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Events\PaymentFailed;
+use App\Modules\Shared\Events\PaymentSucceeded;
+use App\Modules\Shared\Events\SubscriptionCreated;
+use App\Modules\Shared\Events\SubscriptionUpdated;
+use App\Modules\Shared\Events\TenantReactivatedAfterPayment;
+use App\Modules\Shared\Events\TenantSuspendedByDunning;
 use Illuminate\Http\Request;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierController;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +49,38 @@ class StripeWebhookController extends CashierController
         }
     }
 
+    protected function handleCustomerSubscriptionCreated(array $payload): Response
+    {
+        $tenant = $this->getUserByStripeId($payload['data']['object']['customer']);
+
+        if ($tenant) {
+            SubscriptionCreated::dispatch(
+                $tenant->id,
+                $payload['data']['object']['id'],
+                $payload['data']['object']['plan']['id'] ?? 'unknown',
+                'stripe'
+            );
+        }
+
+        return parent::handleCustomerSubscriptionCreated($payload);
+    }
+
+    protected function handleCustomerSubscriptionUpdated(array $payload): Response
+    {
+        $tenant = $this->getUserByStripeId($payload['data']['object']['customer']);
+
+        if ($tenant) {
+            SubscriptionUpdated::dispatch(
+                $tenant->id,
+                $payload['data']['object']['id'],
+                $payload['previous_attributes']['plan']['id'] ?? null,
+                $payload['data']['object']['plan']['id'] ?? 'unknown'
+            );
+        }
+
+        return parent::handleCustomerSubscriptionUpdated($payload);
+    }
+
     /**
      * Handle invoice payment failed. (US-203 Dunning)
      */
@@ -52,18 +90,22 @@ class StripeWebhookController extends CashierController
 
         if ($tenant) {
             $attemptCount = $payload['data']['object']['attempt_count'] ?? 1;
-            $amount = number_format($payload['data']['object']['amount_due'] / 100, 2);
+            $amount = (int) $payload['data']['object']['amount_due'];
             $currency = $payload['data']['object']['currency'];
             
+            PaymentFailed::dispatch($tenant->id, $payload['data']['object']['id'], $attemptCount);
+
             if ($attemptCount < 3) {
-                $tenant->notify(new \App\Modules\Central\Billing\Notifications\PaymentFailedNotification($attemptCount, $amount, $currency));
+                $tenant->notify(new \App\Modules\Central\Billing\Notifications\PaymentFailedNotification($attemptCount, number_format($amount / 100, 2), $currency));
             } else {
                 $tenant->update([
                     'status' => 'suspended',
                     'suspended_at' => now(),
                 ]);
                 
-                $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification($amount, $currency));
+                TenantSuspendedByDunning::dispatch($tenant->id, $payload['data']['object']['id']);
+
+                $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification(number_format($amount / 100, 2), $currency));
 
                 activity('billing')
                     ->performedOn($tenant)
@@ -82,15 +124,26 @@ class StripeWebhookController extends CashierController
     {
         $tenant = $this->getUserByStripeId($payload['data']['object']['customer']);
 
-        if ($tenant && $tenant->status === 'suspended') {
-            $tenant->update([
-                'status' => 'active',
-                'suspended_at' => null,
-            ]);
-            
-            activity('billing')
-                ->performedOn($tenant)
-                ->log('tenant_reactivated_after_payment');
+        if ($tenant) {
+            PaymentSucceeded::dispatch(
+                $tenant->id,
+                $payload['data']['object']['id'],
+                (int) $payload['data']['object']['amount_paid'],
+                $payload['data']['object']['currency']
+            );
+
+            if ($tenant->status === 'suspended') {
+                $tenant->update([
+                    'status' => 'active',
+                    'suspended_at' => null,
+                ]);
+                
+                TenantReactivatedAfterPayment::dispatch($tenant->id, $payload['data']['object']['id']);
+
+                activity('billing')
+                    ->performedOn($tenant)
+                    ->log('tenant_reactivated_after_payment');
+            }
         }
 
         return parent::handleInvoicePaymentSucceeded($payload);
