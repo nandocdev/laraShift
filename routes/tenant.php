@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Livewire\ManageBilling;
 use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
+use App\Modules\Shared\Tenancy\Http\Middleware\ApplyTenantRateLimits;
 use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -26,6 +27,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
+    ApplyTenantRateLimits::class,
     \App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions::class,
 ])->group(function () {
     Route::get('/', function () {

@@ -13,6 +13,9 @@ use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 
+use App\Modules\Central\Billing\Models\Plan;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use Billable, HasDatabase, HasDomains, HasFeatures, Notifiable, SoftDeletes;
@@ -26,6 +29,11 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         'archived_at' => 'datetime',
         'suspended_at' => 'datetime',
     ];
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'plan_id', 'slug');
+    }
 
     public static function getCustomColumns(): array
     {

@@ -18,13 +18,15 @@ class PlanSeeder extends Seeder
         $plans = config('plans');
 
         foreach ($plans as $slug => $data) {
+            $plan = Plan::where('slug', $slug)->first();
+            
             Plan::updateOrCreate(
                 ['slug' => $slug],
                 [
-                    'id' => Str::uuid()->toString(),
+                    'id' => $plan ? $plan->id : Str::uuid()->toString(),
                     'name' => $data['name'],
                     'price_monthly' => $data['price'],
-                    'price_yearly' => ($data['price'] * 12) * 0.8, // 20% discount for yearly
+                    'price_yearly' => (int) (($data['price'] * 12) * 0.8), // 20% discount for yearly
                     'features' => [
                         'stripe_id' => $data['stripe_id'] ?? null,
                         'display_features' => $data['features'],

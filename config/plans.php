@@ -18,6 +18,7 @@ return [
             'branches' => 1,
             'staff' => 3,
             'bookings' => 100,
+            'rate_limit_rpm' => 60,
         ],
     ],
     'pro' => [
@@ -37,6 +38,7 @@ return [
             'branches' => 3,
             'staff' => 10,
             'bookings' => -1, // Unlimited
+            'rate_limit_rpm' => 300,
         ],
     ],
     'enterprise' => [
@@ -57,6 +59,7 @@ return [
             'branches' => -1,
             'staff' => -1,
             'bookings' => -1,
+            'rate_limit_rpm' => 1000,
         ],
     ],
 ];
