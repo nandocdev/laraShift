@@ -1,10 +1,10 @@
 # Architecture.md
 
-# Plinth — Architecture
+# LaraShift — Architecture
 
 ## 1. Architectural Philosophy
 
-Plinth is built using:
+LaraShift is built using:
 
 - Modular Monolith
 - Single Database
@@ -27,7 +27,7 @@ Every technical decision must support these goals.
 
 # 2. Core Architectural Principles
 
-Plinth follows five non-negotiable principles.
+LaraShift follows five non-negotiable principles.
 
 ## 2.1 Tenant Isolation First
 
@@ -51,7 +51,7 @@ No feature may bypass isolation rules.
 
 ## 2.2 Modular Monolith
 
-Plinth uses a Modular Monolith.
+LaraShift uses a Modular Monolith.
 
 Not:
 
@@ -86,7 +86,7 @@ Avoid:
 
 ## 2.3 Single Database
 
-Plinth uses:
+LaraShift uses:
 
 Single PostgreSQL Database.
 
@@ -144,7 +144,7 @@ Reject:
 
 # 3. High-Level System Design
 
-Plinth contains two major bounded contexts.
+LaraShift contains two major bounded contexts.
 
 ## CENTRAL
 
@@ -204,7 +204,7 @@ It never manages platform billing or global operations.
 
 # 4. Project Structure
 
-Plinth follows a strict modular structure.
+LaraShift follows a strict modular structure.
 
 ```text
 app/
@@ -599,7 +599,7 @@ multiple UI systems increase:
 
 # 16. Observability
 
-Plinth assumes observability.
+LaraShift assumes observability.
 
 Required:
 

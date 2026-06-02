@@ -4,7 +4,7 @@
 
 - visión del producto
 - arquitectura oficial
-- principios SaaS Plinth
+- principios SaaS LaraShift
 - objetivos de negocio
 - non-goals
 

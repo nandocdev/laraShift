@@ -1,10 +1,10 @@
 # UseCases.md
 
-# Plinth — Use Cases
+# LaraShift — Use Cases
 
 ## Purpose
 
-This document defines the functional capabilities of Plinth.
+This document defines the functional capabilities of LaraShift.
 
 Use cases are grouped by bounded context.
 
@@ -27,7 +27,7 @@ Responsibilities do not.
 
 # 1. Context Separation
 
-Plinth contains two primary contexts:
+LaraShift contains two primary contexts:
 
 1. CENTRAL
 2. TENANT
@@ -876,7 +876,7 @@ noisy neighbors.
 
 # 7. Standard Exceptions
 
-Plinth standardizes business failures.
+LaraShift standardizes business failures.
 
 ---
 

@@ -1,14 +1,14 @@
-# Plinth — Product Vision
+# LaraShift — Product Vision
 
 ## 1. Propósito
 
-Plinth existe para acelerar la construcción de aplicaciones SaaS multi-tenant modernas sin sacrificar seguridad, aislamiento ni mantenibilidad.
+LaraShift existe para acelerar la construcción de aplicaciones SaaS multi-tenant modernas sin sacrificar seguridad, aislamiento ni mantenibilidad.
 
 No es un starter kit genérico.
 
 Es un **boilerplate SaaS enterprise-ready** diseñado para servir como fundación estable para productos B2B construidos sobre Laravel.
 
-Plinth elimina la necesidad de reconstruir continuamente infraestructura repetitiva:
+LaraShift elimina la necesidad de reconstruir continuamente infraestructura repetitiva:
 
 - multi-tenancy
 - billing
@@ -45,13 +45,13 @@ Esto genera:
 
 Los equipos terminan reescribiendo infraestructura crítica cuando el producto ya está en producción.
 
-Plinth evita ese ciclo.
+LaraShift evita ese ciclo.
 
 ---
 
 # 3. Visión del Producto
 
-Plinth aspira a convertirse en una fundación SaaS:
+LaraShift aspira a convertirse en una fundación SaaS:
 
 - segura
 - mantenible
@@ -70,7 +70,7 @@ El foco es:
 
 # 4. Filosofía Arquitectónica
 
-Plinth adopta una postura deliberada:
+LaraShift adopta una postura deliberada:
 
 ## Modular Monolith First
 
@@ -98,7 +98,7 @@ Los microservicios solo serían evaluados ante límites reales y demostrables.
 
 ## Single Database First
 
-Plinth favorece:
+LaraShift favorece:
 
 Single PostgreSQL Database.
 
@@ -137,7 +137,7 @@ Tenant isolation tiene prioridad sobre:
 
 ## Pragmatismo
 
-Plinth rechaza:
+LaraShift rechaza:
 
 - arquitectura ceremonial
 - patrones innecesarios
@@ -175,9 +175,9 @@ La mejor complejidad es la que no existe.
 
 ---
 
-# 6. Qué Es Plinth
+# 6. Qué Es LaraShift
 
-Plinth es:
+LaraShift es:
 
 - SaaS boilerplate
 - plataforma multi-tenant
@@ -199,9 +199,9 @@ Incluye dominios centrales como:
 
 ---
 
-# 7. Qué NO Es Plinth
+# 7. Qué NO Es LaraShift
 
-Plinth NO es:
+LaraShift NO es:
 
 - CMS
 - low-code builder
@@ -221,7 +221,7 @@ Las opiniones reducen complejidad.
 
 # 8. Usuario Objetivo
 
-Plinth está diseñado para:
+LaraShift está diseñado para:
 
 ## Equipos Técnicos
 
@@ -254,13 +254,13 @@ Casos típicos:
 
 # 9. North Star
 
-La medida de éxito de Plinth no es cuántas features tiene.
+La medida de éxito de LaraShift no es cuántas features tiene.
 
 La medida es:
 
 **qué tan rápido puede lanzarse y mantenerse un SaaS serio sin comprometer aislamiento ni calidad arquitectónica.**
 
-Plinth debe permitir:
+LaraShift debe permitir:
 
 > construir una vez la infraestructura correcta y reutilizarla muchas veces.
 
@@ -277,4 +277,4 @@ Si una decisión mejora velocidad pero compromete:
 
 la decisión es incorrecta.
 
-Plinth prioriza software durable sobre velocidad artificial.
+LaraShift prioriza software durable sobre velocidad artificial.

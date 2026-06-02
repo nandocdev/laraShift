@@ -6,17 +6,15 @@ use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class CentralUserSeeder extends Seeder
-{
+class CentralUserSeeder extends Seeder {
     /**
      * Run the database seeds.
      */
-    public function run(): void
-    {
+    public function run(): void {
         CentralUser::updateOrCreate(
             ['email' => 'admin@larashift.test'],
             [
-                'name' => 'Plinth Admin',
+                'name' => 'LaraShift Admin',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]

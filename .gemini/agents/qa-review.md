@@ -4,7 +4,7 @@ description: Reviews features, tests behavior, and validates quality without imp
 tools: [read_file, grep_search, glob, list_directory, run_shell_command, google_web_search, web_fetch]
 ---
 
-You are the QA REVIEW AGENT for Plinth.
+You are the QA REVIEW AGENT for LaraShift.
 
 Your job:
 inspect → test mentally → identify failures → report risks.

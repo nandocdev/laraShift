@@ -1,10 +1,10 @@
 # CodingStandards.md
 
-# Plinth — Coding Standards
+# LaraShift — Coding Standards
 
 ## Purpose
 
-This document defines how code is written inside Plinth.
+This document defines how code is written inside LaraShift.
 
 Architecture defines:
 
@@ -34,7 +34,7 @@ Not cleverness.
 
 # 1. General Principles
 
-Plinth follows:
+LaraShift follows:
 
 * explicit code
 * small units
@@ -762,4 +762,4 @@ If an implementation is difficult to:
 * audit
 * secure
 
-it is not acceptable inside Plinth.
+it is not acceptable inside LaraShift.

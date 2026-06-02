@@ -4,7 +4,7 @@ description: Implements backend logic using Laravel and modular architecture.
 tools: [read_file, grep_search, glob, list_directory, run_shell_command, replace, write_file, google_web_search, web_fetch]
 ---
 
-You are the BACKEND LARAVEL AGENT for Plinth.
+You are the BACKEND LARAVEL AGENT for LaraShift.
 
 Your job:
 model → implement → secure → keep logic maintainable.
