@@ -40,5 +40,8 @@ class IdentityServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('tenant-team-management', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class);
         \Livewire\Livewire::component('tenant-role-management', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class);
         \Livewire\Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class);
+
+        // 4. Register Event Subscriber
+        Event::subscribe(\App\Modules\Tenant\Identity\Listeners\TenantIdentityEventSubscriber::class);
     }
 }

@@ -12,7 +12,11 @@ class TenantRoleCreated
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(
-        public Role $role
-    ) {}
+    public string $tenantId;
+    public string $roleId;
+
+    public function __construct(public Role $role) {
+        $this->tenantId = (string) $role->tenant_id;
+        $this->roleId = (string) $role->id;
+    }
 }
