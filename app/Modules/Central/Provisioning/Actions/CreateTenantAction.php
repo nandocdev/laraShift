@@ -60,6 +60,9 @@ final readonly class CreateTenantAction
                 'provisioned_at' => now(),
             ]);
 
+            // Invalidate infrastructure caches
+            \Illuminate\Support\Facades\Cache::forget('horizon_tenant_queues');
+
             activity('provisioning')
                 ->performedOn($tenant)
                 ->log('tenant_provisioned_successfully');

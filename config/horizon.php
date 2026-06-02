@@ -199,7 +199,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            'queue' => \App\Modules\Central\Infrastructure\Services\HorizonQueueResolver::resolve(),
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,
