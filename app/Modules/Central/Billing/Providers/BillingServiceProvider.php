@@ -26,5 +26,8 @@ class BillingServiceProvider extends ServiceProvider
         
         $this->loadViewsFrom(__DIR__ . '/../UI', 'billing');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+
+        \Livewire\Livewire::component('billing-subscription-list', \App\Modules\Central\Billing\Livewire\SubscriptionList::class);
+        \Livewire\Livewire::component('billing-tenant-invoice-list', \App\Modules\Central\Billing\Livewire\TenantInvoiceList::class);
     }
 }

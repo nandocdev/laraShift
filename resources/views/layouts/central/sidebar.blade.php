@@ -31,6 +31,13 @@
                     {{ __('Subscriptions') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Settings')" class="grid">
+                <flux:sidebar.item icon="paint-brush" :href="route('central.settings.branding')"
+                    :current="request()->routeIs('central.settings.*')" wire:navigate>
+                    {{ __('Platform Branding') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
         </flux:sidebar.nav>
 
         <flux:spacer />

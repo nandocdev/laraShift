@@ -8,5 +8,6 @@ return [
     App\Modules\Central\Auth\Providers\CentralAuthServiceProvider::class,
     App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider::class,
     App\Modules\Central\Billing\Providers\BillingServiceProvider::class,
+    App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider::class,
     App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
 ];

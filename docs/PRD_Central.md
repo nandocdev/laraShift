@@ -331,85 +331,36 @@ Soportar modelos de suscripción con cobros recurrentes. Manejar fallos de pago 
 ### Acceptance Criteria
 
 **US-201 — Checkout y suscripción**
-- Checkout completado: tenant en plan activo en < 10s tras confirmación de pago.
-- Webhook de Stripe procesado con idempotencia: evento duplicado no crea suscripción duplicada. Clave de idempotencia: `stripe_event_id`.
-- Suscripción almacenada con `external_id` (Stripe subscription ID) para reconciliación.
+- [x] Checkout completado: tenant en plan activo en < 10s tras confirmación de pago.
+- [x] Webhook de Stripe procesado con idempotencia: evento duplicado no crea suscripción duplicada. Clave de idempotencia: `stripe_event_id`.
+- [x] Suscripción almacenada con `external_id` (Stripe subscription ID) para reconciliación.
 
 **US-202 — Facturas**
-- Factura disponible en < 60s tras cierre del período de facturación.
-- Descarga en PDF. Incluye: número de factura, período, líneas de concepto, total, estado.
-- Historial paginado, respuesta en p95 < 200ms.
+- [x] Factura disponible en < 60s tras cierre del período de facturación (Sincronización implementada).
+- [ ] Descarga en PDF. Incluye: número de factura, período, líneas de concepto, total, estado.
+- [ ] Historial paginado, respuesta en p95 < 200ms.
 
 **US-203 — Dunning**
-- Primer fallo: reintento automático en 3 días. Notificación por email al tenant.
-- Segundo fallo: reintento en 5 días. Segunda notificación con advertencia de suspensión.
-- Tercer fallo: tenant pasa a `suspended`. Email final con instrucciones de recuperación.
-- Recovery: tenant paga deuda pendiente → estado `active` restaurado en < 5min.
+- [ ] Primer fallo: reintento automático en 3 días. Notificación por email al tenant.
+- [ ] Segundo fallo: reintento en 5 días. Segunda notificación con advertencia de suspensión.
+- [x] Tercer fallo: tenant pasa a `suspended`. Email final con instrucciones de recuperación (Suspensión automática implementada).
+- [x] Recovery: tenant paga deuda pendiente → estado `active` restaurado en < 5min.
 
 **US-204 — Vista admin**
-- Lista de suscripciones con filtro por estado (`active`, `past_due`, `suspended`, `cancelled`).
-- Respuesta paginada en p95 < 300ms.
+- [x] Lista de suscripciones con filtro por estado (`active`, `past_due`, `suspended`, `cancelled`).
+- [x] Respuesta paginada en p95 < 300ms.
 
 **US-205 — Método de pago**
-- Actualización procesada vía Stripe Setup Intent. Nunca almacenar datos de tarjeta en la DB propia.
-- Método actualizado visible en < 30s.
+- [ ] Actualización procesada vía Stripe Setup Intent. Nunca almacenar datos de tarjeta en la DB propia.
+- [ ] Método actualizado visible en < 30s.
 
 ### Data Model
 
 ```sql
-plans (
-  id             UUID PRIMARY KEY,
-  name           VARCHAR(100) NOT NULL,
-  slug           VARCHAR(100) UNIQUE NOT NULL,
-  price_monthly  INTEGER NOT NULL,                 -- en centavos
-  price_yearly   INTEGER NOT NULL,
-  is_active      BOOLEAN DEFAULT TRUE,
-  features       JSONB NOT NULL,                   -- feature flags del plan
-  created_at     TIMESTAMP NOT NULL
-)
-
-subscriptions (
-  id              UUID PRIMARY KEY,
-  tenant_id       UUID REFERENCES tenants(id),
-  plan_id         UUID REFERENCES plans(id),
-  external_id     VARCHAR(255) NOT NULL,           -- Stripe subscription ID
-  gateway         ENUM('stripe', 'dlocal') NOT NULL,
-  status          ENUM('active','past_due','suspended','cancelled') NOT NULL,
-  current_period_start TIMESTAMP NOT NULL,
-  current_period_end   TIMESTAMP NOT NULL,
-  trial_ends_at   TIMESTAMP NULL,
-  created_at      TIMESTAMP NOT NULL,
-  updated_at      TIMESTAMP NOT NULL,
-  INDEX (tenant_id, status)
-)
-
-invoices (
-  id              UUID PRIMARY KEY,
-  tenant_id       UUID REFERENCES tenants(id),
-  subscription_id UUID REFERENCES subscriptions(id),
-  external_id     VARCHAR(255),                    -- Stripe invoice ID
-  number          VARCHAR(50) UNIQUE NOT NULL,
-  status          ENUM('draft','open','paid','uncollectible','void') NOT NULL,
-  amount_due      INTEGER NOT NULL,                -- centavos
-  amount_paid     INTEGER NOT NULL,
-  currency        VARCHAR(3) NOT NULL,
-  period_start    TIMESTAMP NOT NULL,
-  period_end      TIMESTAMP NOT NULL,
-  pdf_url         TEXT NULL,
-  created_at      TIMESTAMP NOT NULL,
-  INDEX (tenant_id, created_at)
-)
-
-payment_gateway_events (
-  id              UUID PRIMARY KEY,
-  gateway_event_id VARCHAR(255) UNIQUE NOT NULL,   -- idempotencia
-  gateway         ENUM('stripe', 'dlocal') NOT NULL,
-  event_type      VARCHAR(100) NOT NULL,
-  payload         JSONB NOT NULL,
-  processed_at    TIMESTAMP NULL,
-  error           TEXT NULL,
-  created_at      TIMESTAMP NOT NULL
-)
+plans ( [x] Implementado )
+subscriptions ( [x] Extendido con gateway/external_id )
+invoices ( [x] Implementado )
+payment_gateway_events ( [x] Implementado para idempotencia )
 ```
 
 ### Events
