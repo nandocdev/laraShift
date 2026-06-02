@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;

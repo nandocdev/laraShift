@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Modules\Tenant\Identity\Models\User;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
