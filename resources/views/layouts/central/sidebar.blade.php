@@ -23,6 +23,7 @@
                     :current="request()->routeIs('central.provisioning.*')" wire:navigate>
                     {{ __('Tenants') }}
                 </flux:sidebar.item>
+<<<<<<< HEAD
                 <flux:sidebar.item icon="heart" :href="route('central.health')"
                     :current="request()->routeIs('central.health')" target="_blank">
                     {{ __('Health Monitor') }}
@@ -63,6 +64,11 @@
             </flux:sidebar.group>
         </flux:sidebar.nav>
 
+=======
+            </flux:sidebar.group>
+        </flux:sidebar.nav>
+
+>>>>>>> 77de985 (refactor: renombrar proyecto de Plinth a LaraShift)
         <flux:spacer />
 
         <flux:sidebar.nav>
@@ -76,7 +82,11 @@
         </flux:sidebar.nav>
 
         @auth('central')
+<<<<<<< HEAD
             <x-central-user-menu class="hidden lg:block" />
+=======
+            <x-desktop-user-menu class="hidden lg:block" :name="auth('central')->user()->name" />
+>>>>>>> 77de985 (refactor: renombrar proyecto de Plinth a LaraShift)
         @endauth
     </flux:sidebar>
 
