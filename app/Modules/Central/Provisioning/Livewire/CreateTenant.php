@@ -6,6 +6,7 @@ namespace App\Modules\Central\Provisioning\Livewire;
 
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
+use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
@@ -17,8 +18,21 @@ class CreateTenant extends Component
     #[Validate('required|string|min:3')]
     public string $name = '';
 
-    #[Validate(['required', 'alpha_dash', 'unique:domains,domain', 'not_in:admin,api,root,support,www,mail,dev,stage,prod,central'])]
     public string $slug = '';
+
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|min:3',
+            'slug' => [
+                'required',
+                'alpha_dash',
+                'unique:domains,domain',
+                'not_in:' . implode(',', ReservedSlugs::$list),
+            ],
+            'email' => 'required|email',
+        ];
+    }
 
     #[Validate('required|email')]
     public string $email = '';

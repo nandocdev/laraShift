@@ -14,6 +14,7 @@
             <flux:table.columns>
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Domain') }}</flux:table.column>
+                <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column>{{ __('Plan') }}</flux:table.column>
                 <flux:table.column>{{ __('Created At') }}</flux:table.column>
                 <flux:table.column></flux:table.column>
@@ -32,7 +33,17 @@
                             </flux:link>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm">{{ strtoupper($tenant->plan_id) }}</flux:badge>
+                            <div class="flex items-center gap-2">
+                                <flux:badge size="sm" :variant="$tenant->status === 'active' ? 'success' : ($tenant->status === 'maintenance' ? 'warning' : 'neutral')">
+                                    {{ strtoupper($tenant->status) }}
+                                </flux:badge>
+                                @if($tenant->read_only)
+                                    <flux:badge size="sm" variant="neutral">{{ __('READ-ONLY') }}</flux:badge>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" variant="outline">{{ strtoupper($tenant->plan_id) }}</flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
                             {{ $tenant->created_at->format('Y-m-d H:i') }}
