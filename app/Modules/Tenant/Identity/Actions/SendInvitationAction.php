@@ -49,6 +49,8 @@ final readonly class SendInvitationAction
             ->performedOn($invitation)
             ->log('user_invited');
 
+        event(new \App\Modules\Shared\Events\TenantUserInvited($invitation));
+
         return $invitation;
     }
 }

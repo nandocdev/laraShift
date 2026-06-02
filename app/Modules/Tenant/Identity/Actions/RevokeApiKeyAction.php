@@ -18,5 +18,7 @@ final readonly class RevokeApiKeyAction
         activity('identity')
             ->performedOn($apiKey)
             ->log('api_key_revoked');
+
+        event(new \App\Modules\Shared\Events\TenantApiKeyRevoked($apiKey));
     }
 }

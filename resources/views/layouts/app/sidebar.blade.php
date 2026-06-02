@@ -17,8 +17,11 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="users" :href="route('tenant.team.index')" :current="request()->routeIs('tenant.team.*')" wire:navigate>
-                        {{ __('Team') }}
+                    <flux:sidebar.item icon="users" :href="route('tenant.team.index')" :current="request()->routeIs('tenant.team.index')" wire:navigate>
+                        {{ __('Members') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="shield-check" :href="route('tenant.roles.index')" :current="request()->routeIs('tenant.roles.*')" wire:navigate>
+                        {{ __('Roles & Permissions') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 

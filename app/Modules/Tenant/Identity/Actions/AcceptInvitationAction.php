@@ -48,6 +48,8 @@ final readonly class AcceptInvitationAction
                 ->performedOn($user)
                 ->log('user_joined_via_invite');
 
+            event(new \App\Modules\Shared\Events\TenantUserJoined($user, $invitation->id));
+
             return $user;
         });
     }

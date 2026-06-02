@@ -34,9 +34,11 @@ class IdentityServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../UI', 'identity');
 
         \Livewire\Livewire::component('tenant-login', \App\Modules\Tenant\Identity\Livewire\Login::class);
+        \Livewire\Livewire::component('tenant-accept-invitation', \App\Modules\Tenant\Identity\Livewire\AcceptInvitation::class);
         \Livewire\Livewire::component('tenant-login-challenge', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class);
         \Livewire\Livewire::component('tenant-2fa-enrollment', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class);
         \Livewire\Livewire::component('tenant-team-management', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class);
+        \Livewire\Livewire::component('tenant-role-management', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class);
         \Livewire\Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class);
     }
 }
