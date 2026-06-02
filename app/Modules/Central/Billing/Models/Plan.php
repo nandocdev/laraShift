@@ -30,7 +30,7 @@ class Plan extends Model
         'price_yearly' => 'integer',
     ];
 
-    public function features(): BelongsToMany
+    public function catalogFeatures(): BelongsToMany
     {
         return $this->belongsToMany(Feature::class, 'plan_features');
     }

@@ -28,7 +28,7 @@ it('resolves features from the plan', function () {
         'name' => 'Advanced Reports',
     ]);
 
-    $plan->features()->attach($feature->id);
+    $plan->catalogFeatures()->attach($feature->id);
 
     $tenant = Tenant::create([
         'id' => 'test-tenant',
@@ -57,7 +57,7 @@ it('can override plan features with deny type', function () {
         'name' => 'Advanced Reports',
     ]);
 
-    $plan->features()->attach($feature->id);
+    $plan->catalogFeatures()->attach($feature->id);
 
     $tenant = Tenant::create([
         'id' => 'test-tenant',

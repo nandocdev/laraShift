@@ -53,7 +53,7 @@ class ManagePlan extends Component
             $this->quota_bookings = $features['quotas']['bookings'] ?? 100;
             $this->display_features = implode(', ', $features['display_features'] ?? []);
 
-            $this->selectedFeatures = $plan->features()->pluck('features.id')->toArray();
+            $this->selectedFeatures = $plan->catalogFeatures()->pluck('features.id')->toArray();
         }
     }
 
@@ -91,7 +91,7 @@ class ManagePlan extends Component
             $plan = $action->execute($data, $this->plan);
             
             // Sync Feature Catalog
-            $plan->features()->sync($this->selectedFeatures);
+            $plan->catalogFeatures()->sync($this->selectedFeatures);
 
             session()->flash('status', $this->isEditing ? __('Plan updated.') : __('Plan created.'));
             $this->redirect(route('central.billing.plans'), navigate: true);

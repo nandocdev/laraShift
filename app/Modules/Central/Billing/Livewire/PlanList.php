@@ -12,10 +12,17 @@ use Livewire\Component;
 #[Layout('layouts.central')]
 class PlanList extends Component
 {
+    public ?Plan $selectedPlan = null;
+
+    public function showFeatures(Plan $plan): void
+    {
+        $this->selectedPlan = $plan->load('catalogFeatures');
+    }
+
     public function render(): View
     {
         return view('billing::pages.plan-list', [
-            'plans' => Plan::all(),
+            'plans' => Plan::with('catalogFeatures')->get(),
         ]);
     }
 }
