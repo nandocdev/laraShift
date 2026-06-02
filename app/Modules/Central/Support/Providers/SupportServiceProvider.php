@@ -13,6 +13,14 @@ class SupportServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__ . '/../UI', 'support');
 
-        // Note: No global routes here yet as they are either in tenant or triggered via Provisioning
+        $this->app->booted(function () {
+            \Illuminate\Support\Facades\Route::middleware(['web', 'auth:central'])
+                ->group(function () {
+                    \Illuminate\Support\Facades\Route::get('/central/support/broadcasts', \App\Modules\Central\Support\Livewire\BroadcastCenter::class)
+                        ->name('central.support.broadcasts');
+                });
+        });
+
+        \Livewire\Livewire::component('support-broadcast-center', \App\Modules\Central\Support\Livewire\BroadcastCenter::class);
     }
 }

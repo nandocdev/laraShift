@@ -25,6 +25,13 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Support')" class="grid">
+                <flux:sidebar.item icon="megaphone" :href="route('central.support.broadcasts')"
+                    :current="request()->routeIs('central.support.broadcasts')" wire:navigate>
+                    {{ __('Broadcast Center') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('Billing')" class="grid">
                 <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
                     :current="request()->routeIs('central.billing.subscriptions')" wire:navigate>
