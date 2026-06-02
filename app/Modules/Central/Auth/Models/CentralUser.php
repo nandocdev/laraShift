@@ -44,6 +44,11 @@ class CentralUser extends Authenticatable {
         return $this->hasOne(Central2FA::class, 'user_id');
     }
 
+    public function centralSessions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CentralSession::class, 'user_id');
+    }
+
     public function hasTwoFactorEnabled(): bool
     {
         return $this->twoFactorAuth()->exists();

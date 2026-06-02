@@ -6,9 +6,11 @@ namespace App\Modules\Central\Auth\Actions;
 
 use App\Modules\Central\Auth\DTOs\LoginData;
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Auth\Models\CentralSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 final readonly class LoginCentralUserAction {
     /**
@@ -39,10 +41,29 @@ final readonly class LoginCentralUserAction {
 
         Auth::guard('central')->login($user, $data->remember);
 
+        $this->recordSession($user);
+
         activity('auth')
             ->performedOn($user)
             ->log('central_user_logged_in');
 
         return 'success';
+    }
+
+    public function recordSession(CentralUser $user): void
+    {
+        // 1. Create tracking record
+        CentralSession::create([
+            'id' => Str::uuid()->toString(),
+            'user_id' => $user->id,
+            'session_id' => Session::getId(),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'issued_at' => now(),
+            'expires_at' => now()->addMinutes(config('session.lifetime')),
+        ]);
+
+        // 2. Enforce concurrency limits (US-005)
+        app(RevokeOldestSessionAction::class)->execute($user);
     }
 }

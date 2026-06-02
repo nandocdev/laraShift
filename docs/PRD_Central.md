@@ -529,17 +529,17 @@ Gestión granular de funcionalidades y acceso a módulos. Permite definir qué c
 Habilitar o deshabilitar funcionalidades sin necesidad de despliegues de código. Permitir ventas personalizadas, accesos beta, periodos de prueba de features específicas y control de acceso dinámico por soporte.
 
 ### Personas
-| Persona      | Descripción                                             |
-| ------------ | ------------------------------------------------------- |
+| Persona      | Descripción                                                                         |
+| ------------ | ----------------------------------------------------------------------------------- |
 | Global Admin | Define el catálogo de features, las asigna a planes y gestiona overrides por tenant |
 
 ### User Stories
-| ID     | Historia                                                                                             |
-| ------ | ---------------------------------------------------------------------------------------------------- |
-| US-401 | Como Global Admin, quiero definir una nueva funcionalidad en el catálogo global.                     |
-| US-402 | Como Global Admin, quiero asignar funcionalidades a un plan específico.                              |
-| US-403 | Como Global Admin, quiero conceder o denegar una funcionalidad a un tenant (override).               |
-| US-404 | Como Desarrollador, quiero verificar el acceso a una feature mediante una API simple (Redis-first).  |
+| ID     | Historia                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------- |
+| US-401 | Como Global Admin, quiero definir una nueva funcionalidad en el catálogo global.                    |
+| US-402 | Como Global Admin, quiero asignar funcionalidades a un plan específico.                             |
+| US-403 | Como Global Admin, quiero conceder o denegar una funcionalidad a un tenant (override).              |
+| US-404 | Como Desarrollador, quiero verificar el acceso a una feature mediante una API simple (Redis-first). |
 
 ### Acceptance Criteria
 
@@ -603,20 +603,20 @@ FeatureCacheInvalidated(tenant_id)
 ```
 
 ### API
-| Método | Endpoint                                    | Descripción                         |
-| ------ | ------------------------------------------- | ----------------------------------- |
-| GET    | `/central/features`                         | Listar catálogo global              |
-| POST   | `/central/features`                         | Crear nueva feature                 |
-| POST   | `/central/plans/{id}/features`              | Asignar feature a plan              |
-| POST   | `/central/tenants/{id}/features/override`   | Aplicar override a tenant           |
-| GET    | `/central/tenants/{id}/features`            | Ver features efectivas del tenant   |
+| Método | Endpoint                                  | Descripción                       |
+| ------ | ----------------------------------------- | --------------------------------- |
+| GET    | `/central/features`                       | Listar catálogo global            |
+| POST   | `/central/features`                       | Crear nueva feature               |
+| POST   | `/central/plans/{id}/features`            | Asignar feature a plan            |
+| POST   | `/central/tenants/{id}/features/override` | Aplicar override a tenant         |
+| GET    | `/central/tenants/{id}/features`          | Ver features efectivas del tenant |
 
 ### Edge Cases
-| Caso                         | Mitigación                                                                  |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| Feature retirada globalmente | `is_active = false` invalida accesos incluso con overrides `allow`.         |
-| Cache poisoning              | Priming valida integridad del JSON en Redis antes de usarlo.                |
-| Race condition en downgrade  | Purga de caché inmediata al cambiar de plan para bloquear accesos.          |
+| Caso                         | Mitigación                                                          |
+| ---------------------------- | ------------------------------------------------------------------- |
+| Feature retirada globalmente | `is_active = false` invalida accesos incluso con overrides `allow`. |
+| Cache poisoning              | Priming valida integridad del JSON en Redis antes de usarlo.        |
+| Race condition en downgrade  | Purga de caché inmediata al cambiar de plan para bloquear accesos.  |
 
 ---
 
@@ -624,3 +624,37 @@ FeatureCacheInvalidated(tenant_id)
 
 - Diagramas: `docs/*.mermaid`
 - ADRs: `docs/adr/`
+
+
+---
+
+
+La inspección exhaustiva del Bounded Context Central ha revelado discrepancias importantes entre la implementación actual y el PRD_Central.md (v2). Aunque las funcionalidades core están operativas, existen "Gaps" técnicos y de
+  cumplimiento de arquitectura que deben abordarse para alcanzar el estándar "Production-Ready".
+
+  Reporte de Auditoría: Central
+
+  1. Módulo: Auth (Estado: ⚠️ Crítico)
+   * Gap (US-005): No hay control de sesiones concurrentes. Actualmente un administrador puede iniciar sesión en dispositivos ilimitados sin que el sistema revoque la sesión más antigua.
+   * Discrepancia de Datos: No se está usando la tabla central_sessions (con UUID e INET) definida en el PRD; el sistema depende de la tabla sessions estándar de Laravel.
+   * Logro: El sistema 2FA (TOTP) y las políticas de bloqueo (locked_until) cumplen con el estándar.
+
+  2. Módulo: Provisioning (Estado: ⚠️ Riesgo)
+   * Gap de Auditoría: Falta la tabla dedicada provisioning_logs. Estamos delegando todo al activity_log genérico, lo que impide una trazabilidad detallada de los pasos técnicos (DB creation, Storage setup, DNS config) requerida para
+     depuración en producción.
+   * Rollback (US-104): La atomicidad es parcial. Si falla un paso externo (como el envío del email de bienvenida), el sistema no tiene un mecanismo de "compensación" o reintento estructurado.
+
+  3. Módulo: Infrastructure (Estado: ⚠️ Desviación)
+   * Discrepancia de Colas: Tenemos el TenantQueueManager listo, pero el worker (Horizon/Queue) no está configurado para "escuchar" dinámicamente los prefijos tenant.{slug}.*. Es funcional a nivel de despacho, pero la infraestructura no
+     está procesando esas colas aisladas actualmente.
+
+  4. Módulo: Support (Estado: ❌ Incompleto)
+   * Gap de Canales: El Canal de Banner para Broadcasts es inexistente. Solo se envía por Email. Falta la infraestructura para persistir y mostrar estos avisos en la UI del tenant en tiempo real.
+
+  5. General (Estado: ⚠️ Desviación)
+   * Inconsistencia de UUIDs: Tablas críticas como activity_log y tenants siguen usando tipos de datos por defecto (bigint y string) en lugar del estándar de arquitectura de LaraShift (UUID).
+
+  Recomendación del @master:
+  Sugiero priorizar la implementación de la tabla provisioning_logs y el control de sesiones concurrentes para estabilizar la seguridad y trazabilidad del sistema antes de pasar al contexto de Tenant.
+
+  ¿Deseas que procedamos con la corrección de alguno de estos hallazgos críticos?
