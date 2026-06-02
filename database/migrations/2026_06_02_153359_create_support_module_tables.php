@@ -16,7 +16,7 @@ return new class extends Migration
         // 1. Support Sessions (Impersonation)
         Schema::create('support_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_id')->index();
+            $table->uuid('tenant_id')->index();
             $table->foreignUuid('operator_id')->constrained('central_users')->onDelete('cascade');
             $table->text('reason');
             $table->string('token')->unique(); // One-time token for transition
@@ -31,7 +31,7 @@ return new class extends Migration
         // 2. Support Notes
         Schema::create('support_notes', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_id')->index();
+            $table->uuid('tenant_id')->index();
             $table->foreignUuid('author_id')->constrained('central_users')->onDelete('cascade');
             $table->text('content');
             $table->timestamps();

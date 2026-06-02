@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('provisioning_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_id')->index();
+            $table->uuid('tenant_id')->index();
             $table->string('step'); // 'db_schema', 'storage', 'subdomain', 'admin_user', 'welcome_email'
             $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
             $table->text('error')->nullable();

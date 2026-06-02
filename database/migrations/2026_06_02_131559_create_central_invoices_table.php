@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_id')->index();
+            $table->uuid('tenant_id')->index();
             $table->unsignedBigInteger('subscription_id')->nullable()->index();
             $table->string('external_id')->nullable()->index(); // Stripe/dLocal invoice ID
             $table->string('number')->unique();

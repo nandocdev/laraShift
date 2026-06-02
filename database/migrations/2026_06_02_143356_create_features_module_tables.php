@@ -34,7 +34,7 @@ return new class extends Migration
         // 3. Tenant-specific Overrides
         Schema::create('tenant_feature_overrides', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('tenant_id')->index(); // Matches Stancl Tenancy ID string type
+            $table->uuid('tenant_id')->index();
             $table->foreignUuid('feature_id')->constrained('features')->onDelete('cascade');
             $table->enum('type', ['allow', 'deny']);
             $table->text('reason')->nullable();

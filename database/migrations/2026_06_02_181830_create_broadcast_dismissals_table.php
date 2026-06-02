@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('broadcast_dismissals', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('broadcast_id')->constrained('broadcasts')->onDelete('cascade');
-            $table->string('tenant_id')->index(); // To allow querying by tenant context
+            $table->uuid('tenant_id')->index();
             $table->uuid('user_id')->index(); // Specific user who dismissed
             $table->timestamp('dismissed_at');
             $table->timestamps();
