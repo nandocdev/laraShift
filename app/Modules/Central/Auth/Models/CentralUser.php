@@ -6,13 +6,22 @@ namespace App\Modules\Central\Auth\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class CentralUser extends Authenticatable {
-    use Notifiable;
+    use HasFactory, Notifiable;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): \App\Modules\Central\Auth\Database\Factories\CentralUserFactory
+    {
+        return \App\Modules\Central\Auth\Database\Factories\CentralUserFactory::new();
+    }
 
     /**
      * Get the attributes that should be cast.
