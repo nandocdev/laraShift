@@ -73,7 +73,7 @@
                         @forelse($selectedPlan->catalogFeatures as $f)
                             <flux:badge size="sm" variant="outline" class="font-mono text-[10px]">{{ $f->key }}</flux:badge>
                         @empty
-                            <flux:text color="zinc" size="sm">{{ __('No functional features assigned to this plan yet.') }}</flux:text>
+                            <flux:text variant="subtle" size="sm">{{ __('No functional features assigned to this plan yet.') }}</flux:text>
                         @endforelse
                     </div>
 
