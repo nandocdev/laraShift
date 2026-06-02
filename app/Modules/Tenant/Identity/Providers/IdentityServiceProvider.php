@@ -35,5 +35,6 @@ class IdentityServiceProvider extends ServiceProvider
 
         \Livewire\Livewire::component('tenant-login', \App\Modules\Tenant\Identity\Livewire\Login::class);
         \Livewire\Livewire::component('tenant-team-management', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class);
+        \Livewire\Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class);
     }
 }

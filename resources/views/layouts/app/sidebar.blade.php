@@ -26,6 +26,9 @@
                     <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')" :current="request()->routeIs('tenant.settings.*')" wire:navigate>
                         {{ __('Branding') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="key" :href="route('tenant.api-keys.index')" :current="request()->routeIs('tenant.api-keys.*')" wire:navigate>
+                        {{ __('API Keys') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('tenant.audit.index')" :current="request()->routeIs('tenant.audit.*')" wire:navigate>
                         {{ __('Audit Log') }}
                     </flux:sidebar.item>

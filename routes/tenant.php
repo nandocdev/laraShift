@@ -41,6 +41,7 @@ Route::middleware([
 
     Route::middleware(['auth'])->group(function () {
         Route::get('/team', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
+        Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
         Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
