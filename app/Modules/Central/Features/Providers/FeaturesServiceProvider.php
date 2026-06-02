@@ -20,10 +20,12 @@ class FeaturesServiceProvider extends ServiceProvider
                     Route::get('/central/features', \App\Modules\Central\Features\Livewire\FeatureList::class)->name('central.features.index');
                     Route::get('/central/features/create', \App\Modules\Central\Features\Livewire\ManageFeature::class)->name('central.features.create');
                     Route::get('/central/features/{feature}/edit', \App\Modules\Central\Features\Livewire\ManageFeature::class)->name('central.features.edit');
+                    Route::get('/central/tenants/{tenant}/features/overrides', \App\Modules\Central\Features\Livewire\TenantOverrides::class)->name('central.tenants.features.overrides');
                 });
         });
 
         Livewire::component('features-list', \App\Modules\Central\Features\Livewire\FeatureList::class);
         Livewire::component('manage-feature', \App\Modules\Central\Features\Livewire\ManageFeature::class);
+        Livewire::component('tenant-overrides', \App\Modules\Central\Features\Livewire\TenantOverrides::class);
     }
 }

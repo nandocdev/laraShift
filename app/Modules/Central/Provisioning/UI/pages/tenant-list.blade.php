@@ -52,6 +52,7 @@
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                 <flux:menu>
+                                    <flux:menu.item icon="command-line" :href="route('central.tenants.features.overrides', $tenant->id)" wire:navigate>{{ __('Manage Features') }}</flux:menu.item>
                                     <flux:menu.item icon="pencil">{{ __('Edit') }}</flux:menu.item>
                                     <flux:menu.item icon="shield-check">{{ __('Impersonate') }}</flux:menu.item>
                                     <flux:menu.separator />
