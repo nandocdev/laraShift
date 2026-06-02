@@ -93,6 +93,9 @@ class RoleManagement extends Component
 
         $this->editingRole->syncPermissions($this->editPermissions);
 
+        // Explicitly flush Spatie permission cache to ensure < 5s effectiveness
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
         activity('identity')
             ->performedOn($this->editingRole)
             ->log('role_updated');
@@ -108,15 +111,19 @@ class RoleManagement extends Component
         $role = Role::findOrFail($roleId);
 
         if ($role->is_system) {
+            session()->flash('error', __('System roles cannot be deleted.'));
             return;
         }
 
         if ($role->users()->exists()) {
-            $this->addError('roles', __('Cannot delete role with active users.'));
+            abort(409, __('Cannot delete role with active users. Please reassign them first.'));
             return;
         }
 
         $role->delete();
+
+        // Explicitly flush Spatie permission cache to ensure < 5s effectiveness
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         activity('identity')
             ->performedOn($role)

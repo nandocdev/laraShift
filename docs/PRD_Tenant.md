@@ -60,10 +60,10 @@ Proveer control de acceso por tenant con roles configurables. Soportar invitacio
 - Máximo de invites pendientes simultáneos: configurable por plan (default: 10).
 
 **US-T102 — Roles y permisos**
-- Roles predefinidos no eliminables: `admin`, `member`.
-- Roles personalizados: crear, editar, eliminar. Eliminación de rol con usuarios asignados retorna `409` — debe reasignarse primero.
-- Permisos por resource:action (e.g. `orders:read`, `orders:write`, `settings:manage`).
-- Cambio de permisos efectivo en < 5s (invalidación de cache de permisos del usuario).
+- [x] Roles predefinidos no eliminables: `admin`, `member`. Protegidos a nivel de modelo.
+- [x] Roles personalizados: crear, editar, eliminar. Eliminación de rol con usuarios asignados retorna `409 Conflict` — debe reasignarse primero.
+- [x] Permisos por resource:action (e.g. `team:read`, `roles:manage`).
+- [x] Cambio de permisos efectivo en < 5s (flushing explícito de cache de Spatie).
 
 **US-T103 — Revocación de acceso**
 - Usuario revocado no puede autenticarse en el tenant. Sesiones activas invalidadas en < 60s.
@@ -100,10 +100,20 @@ users (
 
 roles (
   id           UUID PRIMARY KEY,
-  name         VARCHAR(100) UNIQUE NOT NULL,
+  tenant_id    UUID REFERENCES tenants(id),
+  name         VARCHAR(100) NOT NULL,
+  guard_name   VARCHAR(100) NOT NULL,
   is_system    BOOLEAN DEFAULT FALSE,              -- admin, member no eliminables
-  permissions  JSONB NOT NULL,                     -- ['orders:read', 'orders:write', ...]
-  created_at   TIMESTAMP NOT NULL
+  created_at   TIMESTAMP NOT NULL,
+  UNIQUE (tenant_id, name, guard_name)
+)
+
+permissions (
+  id           UUID PRIMARY KEY,
+  name         VARCHAR(100) NOT NULL,
+  guard_name   VARCHAR(100) NOT NULL,
+  created_at   TIMESTAMP NOT NULL,
+  UNIQUE (name, guard_name)
 )
 
 invitations (

@@ -14,4 +14,19 @@ class Role extends SpatieRole
 
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Role $role) {
+            if ($role->is_system) {
+                throw new \Exception(__('System roles cannot be deleted.'));
+            }
+        });
+
+        static::updating(function (Role $role) {
+            if ($role->is_system && $role->isDirty('name')) {
+                throw new \Exception(__('System roles cannot be renamed.'));
+            }
+        });
+    }
 }
