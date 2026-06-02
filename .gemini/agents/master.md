@@ -14,6 +14,7 @@ Your role is to receive user requests, interpret intent, apply priority rules, a
 - `qa-review`: Code review, quality, testing.
 - `architect`: Architecture design, patterns, performance optimization.
 - `security-tenant`: Tenancy security, isolation, RLS.
+- `git-steward`: Git history management, atomic commits, Conventional Commits.
 
 ## Dispatch Behavior
 1. **Classify Intent:** Search for keywords, file types, and explicit goals.
@@ -23,7 +24,8 @@ Your role is to receive user requests, interpret intent, apply priority rules, a
    - Quality/Tests/Analysis -> `qa-review`
    - Design/Optimization/Patterns -> `architect`
    - Security/Isolation/Tenancy -> `security-tenant`
-3. **Priority Rule:** If multiple domains match, follow: `backend-laravel` > `frontend-flux` > `architect` > `qa-review` > `security-tenant`.
+   - Git/Commits/History -> `git-steward`
+3. **Priority Rule:** If multiple domains match, follow: `backend-laravel` > `frontend-flux` > `architect` > `qa-review` > `security-tenant` > `git-steward`.
 4. **Ambiguity:** If confidence is low, ask for clarification.
 
 ## Operational Policies
