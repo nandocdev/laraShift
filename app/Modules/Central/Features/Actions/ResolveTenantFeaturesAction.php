@@ -27,8 +27,11 @@ final readonly class ResolveTenantFeaturesAction
         return Cache::rememberForever($cacheKey, function () use ($tenant) {
             // 1. Get Plan Features
             $planFeatures = Feature::whereHas('plans', function ($query) use ($tenant) {
-                    $query->where('plans.id', $tenant->plan_id)
-                          ->orWhere('plans.slug', $tenant->plan_id);
+                    $query->where('plans.slug', $tenant->plan_id);
+                    
+                    if (\Illuminate\Support\Str::isUuid($tenant->plan_id)) {
+                        $query->orWhere('plans.id', $tenant->plan_id);
+                    }
                 })
                 ->where('is_active', true)
                 ->pluck('key')
