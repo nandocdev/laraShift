@@ -72,6 +72,39 @@ class TeamManagement extends Component
         session()->flash('status', __('Invitation cancelled.'));
     }
 
+    // Change Role state
+    public ?User $selectedMember = null;
+    public string $newRole = '';
+
+    public function selectMember(string $userId): void
+    {
+        $this->selectedMember = User::findOrFail($userId);
+        $this->newRole = $this->selectedMember->getRoleNames()->first() ?: 'member';
+    }
+
+    public function updateRole(): void
+    {
+        $this->validate([
+            'newRole' => 'required|exists:roles,name',
+        ]);
+
+        if ($this->selectedMember->id === auth()->id()) {
+            $this->addError('newRole', __('You cannot change your own role.'));
+            return;
+        }
+
+        setPermissionsTeamId(tenant('id'));
+        $this->selectedMember->syncRoles([$this->newRole]);
+
+        activity('identity')
+            ->performedOn($this->selectedMember)
+            ->withProperties(['new_role' => $this->newRole])
+            ->log('user_role_changed');
+
+        $this->reset(['selectedMember', 'newRole']);
+        session()->flash('status', __('User role updated.'));
+    }
+
     public function revokeAccess(string $userId): void
     {
         $user = User::findOrFail($userId);

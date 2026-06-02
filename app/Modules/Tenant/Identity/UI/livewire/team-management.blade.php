@@ -48,15 +48,18 @@
                         <flux:table.cell class="text-sm text-zinc-500">
                             {{ $member->created_at->format('Y-m-d') }}
                         </flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="text-right">
                             @if($member->id !== auth()->id())
                                 <flux:dropdown>
                                     <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                     <flux:menu>
-                                        <flux:menu.item icon="pencil">{{ __('Change Role') }}</flux:menu.item>
+                                        <flux:modal.trigger name="change-role">
+                                            <flux:menu.item icon="pencil" wire:click="selectMember('{{ $member->id }}')">{{ __('Change Role') }}</flux:menu.item>
+                                        </flux:modal.trigger>
+                                        
                                         <flux:menu.separator />
                                         @if($member->is_active)
-                                            <flux:menu.item variant="danger" icon="user-minus" wire:click="revokeAccess('{{ $member->id }}')">{{ __('Revoke Access') }}</flux:menu.item>
+                                            <flux:menu.item variant="danger" icon="user-minus" wire:click="revokeAccess('{{ $member->id }}')" wire:confirm="{{ __('Are you sure you want to revoke access for this user?') }}">{{ __('Revoke Access') }}</flux:menu.item>
                                         @else
                                             <flux:menu.item variant="success" icon="user-plus">{{ __('Restore Access') }}</flux:menu.item>
                                         @endif
@@ -127,6 +130,30 @@
             </flux:card>
         </div>
     @endif
+
+    <!-- Change Role Modal -->
+    <flux:modal name="change-role" class="min-w-[25rem]">
+        <form wire:submit="updateRole" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Change Member Role') }}</flux:heading>
+                <flux:subheading>{{ __('Assign a new access level to :name.', ['name' => $selectedMember?->name]) }}</flux:subheading>
+            </div>
+
+            <flux:select wire:model="newRole" :label="__('New Role')">
+                @foreach($availableRoles as $role)
+                    <option value="{{ $role->name }}">{{ strtoupper($role->name) }}</option>
+                @endforeach
+            </flux:select>
+
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">{{ __('Update Role') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     <!-- Invitation Modal -->
     <flux:modal name="invite-member" class="min-w-[25rem]">
