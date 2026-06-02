@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Billing\Livewire\ManageBilling;
+use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
 use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -27,5 +29,10 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
+    });
+
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
+        Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
     });
 });

@@ -351,8 +351,8 @@ Soportar modelos de suscripción con cobros recurrentes. Manejar fallos de pago 
 - [x] Respuesta paginada en p95 < 300ms.
 
 **US-205 — Método de pago**
-- [ ] Actualización procesada vía Stripe Setup Intent. Nunca almacenar datos de tarjeta en la DB propia.
-- [ ] Método actualizado visible en < 30s.
+- [x] Actualización procesada vía Stripe Setup Intent. Nunca almacenar datos de tarjeta en la DB propia.
+- [x] Método actualizado visible en < 30s.
 
 ### Data Model
 
