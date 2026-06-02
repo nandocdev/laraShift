@@ -52,6 +52,10 @@ class HealthCheckController extends Controller
     protected function checkRedis(): array
     {
         try {
+            if (! class_exists('Redis')) {
+                return ['status' => 'fail', 'message' => 'Redis extension not installed (php-redis)'];
+            }
+
             Redis::connection()->ping();
             return ['status' => 'pass', 'message' => 'Pings'];
         } catch (\Exception $e) {
