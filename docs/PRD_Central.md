@@ -644,8 +644,7 @@ La inspección exhaustiva del Bounded Context Central ha revelado discrepancias 
    * Rollback (US-104): La atomicidad es parcial. Si falla un paso externo (como el envío del email de bienvenida), el sistema no tiene un mecanismo de "compensación" o reintento estructurado.
 
   3. Módulo: Infrastructure (Estado: ⚠️ Desviación)
-   * Discrepancia de Colas: Tenemos el TenantQueueManager listo, pero el worker (Horizon/Queue) no está configurado para "escuchar" dinámicamente los prefijos tenant.{slug}.*. Es funcional a nivel de despacho, pero la infraestructura no
-     está procesando esas colas aisladas actualmente.
+   * Discrepancia de Colas: Tenemos el TenantQueueManager listo, pero el worker (Horizon/Queue) no está configurado para "escuchar" dinámicamente los prefijos tenant.{slug}.*. Es funcional a nivel de despacho, pero la infraestructura no está procesando esas colas aisladas actualmente.
 
   4. Módulo: Support (Estado: ❌ Incompleto)
    * Gap de Canales: El Canal de Banner para Broadcasts es inexistente. Solo se envía por Email. Falta la infraestructura para persistir y mostrar estos avisos en la UI del tenant en tiempo real.
