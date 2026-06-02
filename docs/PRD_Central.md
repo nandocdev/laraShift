@@ -640,8 +640,7 @@ La inspección exhaustiva del Bounded Context Central ha revelado discrepancias 
    * Logro: El sistema 2FA (TOTP) y las políticas de bloqueo (locked_until) cumplen con el estándar.
 
   2. Módulo: Provisioning (Estado: ⚠️ Riesgo)
-   * Gap de Auditoría: Falta la tabla dedicada provisioning_logs. Estamos delegando todo al activity_log genérico, lo que impide una trazabilidad detallada de los pasos técnicos (DB creation, Storage setup, DNS config) requerida para
-     depuración en producción.
+   * Gap de Auditoría: Falta la tabla dedicada provisioning_logs. Estamos delegando todo al activity_log genérico, lo que impide una trazabilidad detallada de los pasos técnicos (DB creation, Storage setup, DNS config) requerida para depuración en producción.
    * Rollback (US-104): La atomicidad es parcial. Si falla un paso externo (como el envío del email de bienvenida), el sistema no tiene un mecanismo de "compensación" o reintento estructurado.
 
   3. Módulo: Infrastructure (Estado: ⚠️ Desviación)
