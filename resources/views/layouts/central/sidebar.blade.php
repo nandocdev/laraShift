@@ -45,6 +45,10 @@
                     :current="request()->routeIs('central.settings.*')" wire:navigate>
                     {{ __('Platform Branding') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="command-line" :href="route('central.features.index')"
+                    :current="request()->routeIs('central.features.*')" wire:navigate>
+                    {{ __('Feature Catalog') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>
 

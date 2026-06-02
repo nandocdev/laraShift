@@ -9,5 +9,6 @@ return [
     App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider::class,
     App\Modules\Central\Billing\Providers\BillingServiceProvider::class,
     App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider::class,
+    App\Modules\Central\Features\Providers\FeaturesServiceProvider::class,
     App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
 ];
