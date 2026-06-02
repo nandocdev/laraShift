@@ -6,7 +6,6 @@ namespace App\Modules\Tenant\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,8 +20,16 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
-    /** @use HasFactory<UserFactory> */
+    /** @use HasFactory<\App\Modules\Tenant\Identity\Database\Factories\UserFactory> */
     use BelongsToTenant, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): \App\Modules\Tenant\Identity\Database\Factories\UserFactory
+    {
+        return \App\Modules\Tenant\Identity\Database\Factories\UserFactory::new();
+    }
 
     /**
      * Get the attributes that should be cast.
