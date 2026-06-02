@@ -17,6 +17,21 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="users" :href="route('tenant.team.index')" :current="request()->routeIs('tenant.team.*')" wire:navigate>
+                        {{ __('Team') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Settings')" class="grid">
+                    <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')" :current="request()->routeIs('tenant.settings.*')" wire:navigate>
+                        {{ __('Branding') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="clipboard-document-list" :href="route('tenant.audit.index')" :current="request()->routeIs('tenant.audit.*')" wire:navigate>
+                        {{ __('Audit Log') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="credit-card" :href="route('tenant.billing.manage')" :current="request()->routeIs('tenant.billing.*')" wire:navigate>
+                        {{ __('Billing') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

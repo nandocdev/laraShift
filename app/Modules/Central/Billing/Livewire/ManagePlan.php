@@ -10,6 +10,7 @@ use App\Modules\Central\Billing\DTOs\PlanData;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Contracts\View\View;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -53,7 +54,7 @@ class ManagePlan extends Component
             $this->quota_bookings = $features['quotas']['bookings'] ?? 100;
             $this->display_features = implode(', ', $features['display_features'] ?? []);
 
-            $this->selectedFeatures = $plan->catalogFeatures()->pluck('features.id')->toArray();
+            $this->selectedFeatures = $plan->catalogFeatures()->pluck('id')->toArray();
         }
     }
 
@@ -61,7 +62,7 @@ class ManagePlan extends Component
     {
         $this->validate([
             'name' => 'required|string|max:100',
-            'slug' => 'required|alpha_dash|max:100|unique:plans,slug,' . ($this->plan->id ?? 'NULL') . ',id',
+            'slug' => ['required','alpha_dash','max:100', Rule::unique('plans','slug')->ignore($this->plan?->id)],
             'price_monthly' => 'required|numeric|min:0',
             'price_yearly' => 'required|numeric|min:0',
             'is_active' => 'boolean',

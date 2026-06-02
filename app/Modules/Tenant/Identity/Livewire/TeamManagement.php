@@ -1,0 +1,68 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Tenant\Identity\Livewire;
+
+use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
+use App\Modules\Tenant\Identity\Models\Invitation;
+use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Tenant\Identity\Models\User;
+use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
+
+#[Layout('layouts.app')]
+class TeamManagement extends Component
+{
+    use WithPagination;
+
+    // Invitation form state
+    public string $inviteEmail = '';
+    public string $inviteRole = 'member';
+
+    public function invite(SendInvitationAction $action): void
+    {
+        $this->validate([
+            'inviteEmail' => 'required|email|max:255',
+            'inviteRole' => 'required|exists:roles,name',
+        ]);
+
+        try {
+            $action->execute($this->inviteEmail, $this->inviteRole, auth()->user());
+            
+            $this->reset(['inviteEmail', 'inviteRole']);
+            session()->flash('status', __('Invitation sent.'));
+        } catch (\Exception $e) {
+            $this->addError('inviteEmail', $e->getMessage());
+        }
+    }
+
+    public function revokeAccess(string $userId): void
+    {
+        $user = User::findOrFail($userId);
+        
+        // Don't allow revoking self
+        if ($user->id === auth()->id()) {
+            return;
+        }
+
+        $user->update(['is_active' => false]);
+
+        activity('identity')
+            ->performedOn($user)
+            ->log('user_access_revoked');
+
+        session()->flash('status', __('User access revoked.'));
+    }
+
+    public function render(): View
+    {
+        return view('identity::livewire.team-management', [
+            'members' => User::with('roles')->latest()->paginate(10),
+            'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->get(),
+            'availableRoles' => Role::all(),
+        ]);
+    }
+}

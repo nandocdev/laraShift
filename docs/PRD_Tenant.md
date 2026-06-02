@@ -14,11 +14,12 @@
 
 ## Architecture Constraints
 
-- Schema dedicado por tenant (`tenant_{slug}`)
-- Tenant context inyectado via middleware — nunca hardcodeado en queries
+- Single PostgreSQL Database (as mandated in ARCHITECTURE.md)
+- Tenant isolation via PostgreSQL Row Level Security (RLS) + Eloquent Scopes
+- tenant_id (UUID) mandatory in all tenant-scoped tables
 - Auth de tenant completamente separado de auth central
 - Cuotas validadas contra Redis — DB como fallback, no como fuente primaria
-- Audit logs append-only en schema del tenant
+- Audit logs append-only en la tabla audit_logs (tenant-aware)
 
 ---
 

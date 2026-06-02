@@ -221,30 +221,51 @@ Reducir errores de provisioning. Garantizar consistencia de estado en toda la in
 ### Acceptance Criteria
 
 **US-101 — Onboarding automático**
-- [x] Provisioning completo (DB schema, subdominio reservado, welcome email, plan activo) en < 30s p95.
-- [x] Subdominio validado contra blacklist (palabras reservadas: `www`, `api`, `admin`, `central`, `app`) antes de reservar.
-- [x] Slug único: colisión retorna error `409` con sugerencias alternativas.
-- [x] Tenant en estado `provisioning` durante el proceso. Estado final: `active` o rollback a `failed` con log de causa.
+- Provisioning completo (DB schema, subdominio reservado, welcome email, plan activo) en < 30s p95.
+- Subdominio validado contra blacklist (palabras reservadas: `www`, `api`, `admin`, `central`, `app`) antes de reservar.
+- Slug único: colisión retorna error `409` con sugerencias alternativas.
+- Tenant en estado `provisioning` durante el proceso. Estado final: `active` o rollback a `failed` con log de causa.
 
 **US-102 — Lifecycle manual**
-- [x] Suspensión: tenant pasa a `suspended` en < 5s. Acceso de usuarios tenant retorna `503` con mensaje de suspensión.
-- [x] Activación desde `suspended`: tenant operativo en < 10s.
-- [x] Archivado: datos preservados, acceso bloqueado. Estado `archived`. No facturable.
+- Suspensión: tenant pasa a `suspended` en < 5s. Acceso de usuarios tenant retorna `503` con mensaje de suspensión.
+- Activación desde `suspended`: tenant operativo en < 10s.
+- Archivado: datos preservados, acceso bloqueado. Estado `archived`. No facturable.
 
 **US-103 — Eliminación**
-- [x] Hard delete disponible solo para Global Admin con confirmación explícita (escribir slug).
-- [x] Purga: DB schema, archivos en storage, subdominio liberado, billing cancelado.
-- [x] Purga completada en background job. Log de eliminación en `central_audit_logs` preservado permanentemente.
+- Hard delete disponible solo para Global Admin con confirmación explícita (escribir slug).
+- Purga: DB schema, archivos en storage, subdominio liberado, billing cancelado.
+- Purga completada en background job. Log de eliminación en `central_audit_logs` preservado permanentemente.
 
 **US-104 — Rollback**
-- [x] Si cualquier paso del provisioning falla, estado revertido a `failed` y recursos parcialmente creados son limpiados.
-- [x] Recursos huérfanos verificados en job de reconciliación diario.
+- Si cualquier paso del provisioning falla, estado revertido a `failed` y recursos parcialmente creados son limpiados.
+- Recursos huérfanos verificados en job de reconciliación diario.
 
 ### Data Model
 
 ```sql
-tenants ( [x] Implementado )
-provisioning_logs ( [x] Implementado )
+tenants (
+  id              UUID PRIMARY KEY,
+  slug            VARCHAR(63) UNIQUE NOT NULL,     -- subdominio
+  name            VARCHAR(255) NOT NULL,
+  status          ENUM('provisioning','active','suspended','archived','failed') NOT NULL,
+  plan_id         UUID REFERENCES plans(id),
+  provisioned_at  TIMESTAMP NULL,
+  suspended_at    TIMESTAMP NULL,
+  archived_at     TIMESTAMP NULL,
+  created_at      TIMESTAMP NOT NULL,
+  updated_at      TIMESTAMP NOT NULL,
+  INDEX (status),
+  INDEX (slug)
+)
+
+provisioning_logs (
+  id          UUID PRIMARY KEY,
+  tenant_id   UUID REFERENCES tenants(id),
+  step        VARCHAR(100) NOT NULL,               -- 'db_schema', 'storage', 'subdomain', etc.
+  status      ENUM('pending','completed','failed') NOT NULL,
+  error       TEXT NULL,
+  executed_at TIMESTAMP NOT NULL
+)
 ```
 
 ### Events
@@ -599,39 +620,76 @@ FeatureCacheInvalidated(tenant_id)
 
 ---
 
+## 7. Landing Pública (Comercial)
+
+### Overview
+
+Página pública comercial destinada a convertir visitantes en prospectos y clientes. Debe comunicar propuesta de valor, planes, beneficios clave, confianza (testimonios/logos) y llamadas a la acción claras (signup/contact). La landing será la entrada pública al producto y el punto de captación principal para marketing.
+
+### Business Goal
+
+- Atraer y convertir tráfico orgánico y pagado en registros de prueba y leads cualificados.
+- Comunicar diferenciadores clave frente a competidores SaaS locales e internacionales.
+
+### Público Objetivo
+
+- Dueños de producto / CTOs de pymes y startups.
+- Equipos de soporte/ops que buscan multitenancy y control centralizado.
+- Resellers/partners interesados en desplegar instancias para clientes.
+
+### Contenido Requerido
+
+- **Hero**: título claro, subtítulo de 1 línea y CTA principal (`Comenzar prueba gratuita`).
+- **Beneficios clave**: 3–5 bullets con pain→solution.
+- **Planes y precios**: tabla resumida con CTA por plan.
+- **Casos de uso / features**: highlights vinculados a `Features` del PRD.
+- **Testimonios / logos**: validación social.
+- **FAQ**: preguntas frecuentes sobre seguridad, datos y facturación.
+- **Footer legal**: enlaces a `Términos`, `Privacidad`, `Contacto` y `Status`.
+
+### Requisitos Funcionales
+
+- Formulario de captura de leads con campos: `nombre`, `email`, `empresa`, `roles`, `plan interés`.
+- Integración con CRM/Marketing (webhook/segment) y con la cola de emails para nurturing.
+- Soporte para registro directo de tenant (onboarding) con validación de slug y bloqueo de palabras reservadas.
+- Soporte i18n (ES/EN) y detección automática de idioma con fallback a ES.
+- Medición y tracking: Google Analytics / GA4, UTM parsing, conversión por CTA y eventos en el backend (`LandingLeadCaptured`).
+
+### SEO y Performance
+
+- Meta tags dinámicos y Open Graph para compartir.
+- Sitemap actualizado y robots.txt configurado.
+- Tiempo de carga objetivo: First Contentful Paint < 1s en conexión 3G lenta (optimización de assets y lazy-loading).
+- Rendimiento móvil prioritario y accesibilidad WCAG AA.
+
+### Seguridad y Compliance
+
+- ReCaptcha (v3 o equivalente) en formularios para prevenir spam.
+- Consentimiento GDPR en captura de datos, checkbox explícito y registro del consent_id.
+- TLS obligatorio, CSP básico y encabezados de seguridad por defecto.
+
+### Acceptance Criteria
+
+- Hero + CTA visibles y testeables (A/B) en versión móvil y desktop.
+- Formulario almacena leads en DB y dispara evento `LandingLeadCaptured` con payload mínimo `{email,name,company,locale}`.
+- Registro directo de tenant desde landing valida `slug` contra blacklist y crea provisioning job en queue en < 30s p95.
+- Páginas indexables: tags SEO presentes y sitemap listado.
+
+### Métricas & SLAs
+
+- Conversion rate (visit→lead) objetivo: > 3% primer trimestre.
+- Tiempo de carga p95: < 2s en desktop, <3s en móvil.
+- Disponibilidad de página: 99.9% mensual.
+
+### Implementación / Notas Técnicas
+
+- Entrega como contenido estático cacheado por CDN (Cloudflare o equivalente) con fallback a SSR para contenido dinámico (prices, plan availability).
+- Assets optimizados (webp, critical CSS inlining) y prerender de rutas principales.
+- Endpoints para capture de leads protegidos por rate-limits y captchas.
+- Soporte para experimentos A/B y feature flags (usar `features` module para toggles).
+
 ## Links
 
 - Diagramas: `docs/*.mermaid`
 - ADRs: `docs/adr/`
 
-
----
-
-
-La inspección exhaustiva del Bounded Context Central ha revelado discrepancias importantes entre la implementación actual y el PRD_Central.md (v2). Aunque las funcionalidades core están operativas, existen "Gaps" técnicos y de
-  cumplimiento de arquitectura que deben abordarse para alcanzar el estándar "Production-Ready".
-
-  Reporte de Auditoría: Central
-
-  1. Módulo: Auth (Estado: ⚠️ Crítico)
-   * Gap (US-005): No hay control de sesiones concurrentes. Actualmente un administrador puede iniciar sesión en dispositivos ilimitados sin que el sistema revoque la sesión más antigua.
-   * Discrepancia de Datos: No se está usando la tabla central_sessions (con UUID e INET) definida en el PRD; el sistema depende de la tabla sessions estándar de Laravel.
-   * Logro: El sistema 2FA (TOTP) y las políticas de bloqueo (locked_until) cumplen con el estándar.
-
-  2. Módulo: Provisioning (Estado: ⚠️ Riesgo)
-   * Gap de Auditoría: Falta la tabla dedicada provisioning_logs. Estamos delegando todo al activity_log genérico, lo que impide una trazabilidad detallada de los pasos técnicos (DB creation, Storage setup, DNS config) requerida para depuración en producción.
-   * Rollback (US-104): La atomicidad es parcial. Si falla un paso externo (como el envío del email de bienvenida), el sistema no tiene un mecanismo de "compensación" o reintento estructurado.
-
-  3. Módulo: Infrastructure (Estado: ⚠️ Desviación)
-   * Discrepancia de Colas: Tenemos el TenantQueueManager listo, pero el worker (Horizon/Queue) no está configurado para "escuchar" dinámicamente los prefijos tenant.{slug}.*. Es funcional a nivel de despacho, pero la infraestructura no está procesando esas colas aisladas actualmente.
-
-  4. Módulo: Support (Estado: ❌ Incompleto)
-   * Gap de Canales: El Canal de Banner para Broadcasts es inexistente. Solo se envía por Email. Falta la infraestructura para persistir y mostrar estos avisos en la UI del tenant en tiempo real.
-
-  5. General (Estado: ⚠️ Desviación)
-   * Inconsistencia de UUIDs: Tablas críticas como activity_log y tenants siguen usando tipos de datos por defecto (bigint y string) en lugar del estándar de arquitectura de LaraShift (UUID).
-
-  Recomendación del @master:
-  Sugiero priorizar la implementación de la tabla provisioning_logs y el control de sesiones concurrentes para estabilizar la seguridad y trazabilidad del sistema antes de pasar al contexto de Tenant.
-
-  ¿Deseas que procedamos con la corrección de alguno de estos hallazgos críticos?
