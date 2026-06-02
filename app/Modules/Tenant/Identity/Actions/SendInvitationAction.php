@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Actions;
 
+use App\Modules\Shared\Infrastructure\Services\QuotaManager;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Models\User;
@@ -23,14 +24,11 @@ final readonly class SendInvitationAction
     ): Invitation {
         $tenant = tenant();
         
-        // 1. Check Quotas (US-T101: 10 pending invites by default)
-        // Note: For now we use the default 10, later we can pull from Plan features.
-        $pendingCount = Invitation::whereNull('accepted_at')
-            ->where('expires_at', '>', now())
-            ->count();
-
-        if ($pendingCount >= 10) {
-            throw new \Exception(__('Maximum limit of pending invitations reached (10).'));
+        // 1. Check Quotas (US-T101, US-T401)
+        $quota = app(QuotaManager::class);
+        
+        if (! $quota->increment($tenant, 'invitations')) {
+            throw new \Exception(__('Maximum limit of pending invitations reached for your plan.'));
         }
         
         // 2. Resolve Role

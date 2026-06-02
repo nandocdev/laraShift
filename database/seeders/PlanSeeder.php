@@ -21,7 +21,7 @@ class PlanSeeder extends Seeder {
             'features' => [
                'stripe_id' => null,
                'display_features' => ['Basic CRM', '1 Branch', 'Up to 3 staff'],
-               'quotas' => ['branches' => 1, 'staff' => 3, 'bookings' => 100],
+               'quotas' => ['branches' => 1, 'staff' => 3, 'bookings' => 100, 'invitations' => 5, 'api_keys' => 2],
             ],
          ],
          [
@@ -33,7 +33,7 @@ class PlanSeeder extends Seeder {
             'features' => [
                'stripe_id' => 'price_pro_monthly',
                'display_features' => ['CRM Pipeline', 'API Access', 'Custom Domain'],
-               'quotas' => ['branches' => 5, 'staff' => 20, 'bookings' => 1000],
+               'quotas' => ['branches' => 5, 'staff' => 20, 'bookings' => 1000, 'invitations' => 20, 'api_keys' => 10],
             ],
          ],
          [
@@ -45,7 +45,7 @@ class PlanSeeder extends Seeder {
             'features' => [
                'stripe_id' => 'price_enterprise_monthly',
                'display_features' => ['Advanced Analytics', 'SLA', 'Priority Support'],
-               'quotas' => ['branches' => 50, 'staff' => 500, 'bookings' => 100000],
+               'quotas' => ['branches' => 50, 'staff' => 500, 'bookings' => 100000, 'invitations' => -1, 'api_keys' => 100],
             ],
          ],
       ];

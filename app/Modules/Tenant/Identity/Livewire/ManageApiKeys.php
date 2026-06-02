@@ -37,10 +37,10 @@ class ManageApiKeys extends Component
             'selectedScopes' => 'required|array|min:1',
         ]);
 
-        // Check Limit (US-T104: 10 keys)
-        $activeCount = ApiKey::whereNull('revoked_at')->count();
-        if ($activeCount >= 10) {
-            $this->addError('name', __('You have reached the maximum limit of 10 active API keys.'));
+        // Check Limit (US-T104, US-T401)
+        $quota = app(\App\Modules\Shared\Infrastructure\Services\QuotaManager::class);
+        if (! $quota->increment(tenant(), 'api_keys')) {
+            $this->addError('name', __('Maximum limit of API keys reached for your plan.'));
             return;
         }
 

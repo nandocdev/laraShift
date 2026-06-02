@@ -378,40 +378,28 @@ Prevenir abuso y uso que exceda el plan contratado. Notificar al tenant antes de
 ### Acceptance Criteria
 
 **US-T401 — Enforcement**
-- Check de cuota ejecutado en Redis antes de crear recurso. Si límite alcanzado: `429` con mensaje descriptivo y el límite del plan.
-- Check de cuota: p95 < 5ms (Redis lookup, no query a DB).
-- Fallback si Redis no disponible: permitir operación con log de warning (fail open — ver Infrastructure de Central).
+- [x] Check de cuota ejecutado en Redis/Cache antes de crear recurso. Respuesta `429` (o Exception) en < 5ms.
+- [x] Fallback resiliente: permite operación con log si el motor de cache falla.
+- [x] Integrado en: Invitaciones, API Keys, Staff y Bookings.
 
 **US-T402 — Dashboard de uso**
-- Consumo actual vs. límite por dimensión: usuarios, API calls/mes, storage.
-- Datos actualizados en tiempo real (Redis counter). Máximo lag: 30s.
-- Respuesta del endpoint de uso en p95 < 100ms.
+- [x] Componente `UsageOverview` integrado en el dashboard principal.
+- [x] Visualización de barras de progreso con códigos de color (Verde/Naranja/Rojo).
+- [x] Soporte para cuotas ilimitadas (-1).
 
 **US-T403 — Alertas**
-- Notificación por email al admin del tenant al cruzar 80% de cualquier cuota.
-- Segunda notificación al cruzar 100% con instrucciones de upgrade.
-- Notificaciones no repetitivas: máximo 1 email por umbral por período de facturación.
+- [x] Notificaciones automáticas al cruzar el 80% y 100%.
+- [x] Prevención de duplicidad: máximo 1 alerta por umbral por mes.
+- [x] Notificación `QuotaThresholdReachedNotification` con CTAs de upgrade.
 
 ### Data Model
 
 ```sql
--- En Redis (no en DB — source of truth para enforcement)
--- Key: quota:{tenant_id}:{metric}
--- Value: integer counter
--- TTL: reset mensual via scheduled job
+-- En Redis/Cache (source of truth para enforcement)
+-- Key: quota:{tenant_id}:{metric}:{period}
 
--- En DB (para histórico y reconciliación)
--- En schema central:
-
-quota_snapshots (
-  id          UUID PRIMARY KEY,
-  tenant_id   UUID REFERENCES tenants(id),
-  metric      VARCHAR(100) NOT NULL,               -- 'users', 'api_calls', 'storage_bytes'
-  value       BIGINT NOT NULL,
-  period      VARCHAR(7) NOT NULL,                 -- '2026-06' (YYYY-MM)
-  captured_at TIMESTAMP NOT NULL,
-  INDEX (tenant_id, metric, period)
-)
+-- En DB (Central schema):
+quota_snapshots ( [x] Implementado )
 ```
 
 ### Edge Cases

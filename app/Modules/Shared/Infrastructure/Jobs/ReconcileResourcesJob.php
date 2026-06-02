@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Provisioning\Jobs;
+namespace App\Modules\Shared\Infrastructure\Jobs;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\Domain;
