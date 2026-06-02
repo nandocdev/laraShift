@@ -20,5 +20,6 @@ class ProvisioningServiceProvider extends ServiceProvider
 
         \Livewire\Livewire::component('provisioning-tenant-list', \App\Modules\Central\Provisioning\Livewire\TenantList::class);
         \Livewire\Livewire::component('provisioning-create-tenant', \App\Modules\Central\Provisioning\Livewire\CreateTenant::class);
+        \Livewire\Livewire::component('provisioning-manage-tenant', \App\Modules\Central\Provisioning\Livewire\ManageTenant::class);
     }
 }

@@ -3,7 +3,8 @@
         <flux:button icon="arrow-left" variant="ghost" :href="route('central.provisioning.index')" wire:navigate />
         <div>
             <flux:heading size="xl">{{ __('Feature Overrides for') }} {{ $tenant->name }}</flux:heading>
-            <flux:subheading>{{ __('Manually grant or deny specific functionalities for this tenant.') }}</flux:subheading>
+            <flux:subheading>{{ __('Manually grant or deny specific functionalities for this tenant.') }}
+            </flux:subheading>
         </div>
     </div>
 
@@ -16,11 +17,11 @@
         <div class="lg:col-span-1">
             <flux:card class="space-y-6">
                 <flux:heading size="lg">{{ __('Apply New Override') }}</flux:heading>
-                
+
                 <form wire:submit="applyOverride" class="space-y-4">
                     <flux:select wire:model="selectedFeatureKey" :label="__('Feature')">
                         <option value="">{{ __('Select a feature...') }}</option>
-                        @foreach($availableFeatures as $f)
+                        @foreach ($availableFeatures as $f)
                             <option value="{{ $f->key }}">{{ $f->name }} ({{ $f->key }})</option>
                         @endforeach
                     </flux:select>
@@ -32,9 +33,11 @@
 
                     <flux:input wire:model="expiresAt" type="datetime-local" :label="__('Expiration (Optional)')" />
 
-                    <flux:textarea wire:model="reason" :label="__('Reason / Internal Note')" placeholder="e.g. Beta testing, Support exception..." required />
+                    <flux:textarea wire:model="reason" :label="__('Reason / Internal Note')"
+                        placeholder="e.g. Beta testing, Support exception..." required />
 
-                    <flux:button type="submit" variant="primary" class="w-full">{{ __('Apply Override') }}</flux:button>
+                    <flux:button type="submit" variant="primary" class="w-full">{{ __('Apply Override') }}
+                    </flux:button>
                 </form>
             </flux:card>
 
@@ -42,8 +45,9 @@
                 <flux:card class="bg-zinc-50 dark:bg-zinc-800 border-none shadow-none">
                     <flux:heading size="sm" class="mb-2">{{ __('Effective Feature Set') }}</flux:heading>
                     <div class="flex flex-wrap gap-1">
-                        @foreach($effectiveFeatures as $key)
-                            <flux:badge size="sm" variant="outline" class="font-mono text-[10px]">{{ $key }}</flux:badge>
+                        @foreach ($effectiveFeatures as $key)
+                            <flux:badge size="sm" variant="outline" class="font-mono text-[10px]">
+                                {{ $key }}</flux:badge>
                         @endforeach
                     </div>
                 </flux:card>
@@ -52,7 +56,7 @@
 
         <!-- Active Overrides List -->
         <div class="lg:col-span-2">
-            <flux:card class="p-0 overflow-hidden">
+            <flux:card class=" overflow-hidden">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>{{ __('Feature') }}</flux:table.column>
@@ -70,12 +74,14 @@
                                     <div class="text-xs text-zinc-500 font-mono">{{ $override->feature->key }}</div>
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    <flux:badge size="sm" :variant="$override->type === 'allow' ? 'success' : 'danger'">
+                                    <flux:badge size="sm"
+                                        :variant="$override->type === 'allow' ? 'success' : 'danger'">
                                         {{ strtoupper($override->type) }}
                                     </flux:badge>
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    <span class="text-sm {{ $override->expires_at?->isPast() ? 'text-red-500 line-through' : '' }}">
+                                    <span
+                                        class="text-sm {{ $override->expires_at?->isPast() ? 'text-red-500 line-through' : '' }}">
                                         {{ $override->expires_at?->format('Y-m-d H:i') ?: __('Never') }}
                                     </span>
                                 </flux:table.cell>
@@ -83,7 +89,9 @@
                                     {{ $override->reason }}
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    <flux:button icon="trash" size="sm" variant="ghost" wire:click="removeOverride('{{ $override->id }}')" wire:confirm="{{ __('Remove this override?') }}" />
+                                    <flux:button icon="trash" size="sm" variant="ghost"
+                                        wire:click="removeOverride('{{ $override->id }}')"
+                                        wire:confirm="{{ __('Remove this override?') }}" />
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty
