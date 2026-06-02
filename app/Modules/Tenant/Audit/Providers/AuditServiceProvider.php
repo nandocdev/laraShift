@@ -14,5 +14,8 @@ class AuditServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../UI', 'audit');
         
         Livewire::component('tenant-audit-viewer', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class);
+
+        // Register Subscribers
+        \Illuminate\Support\Facades\Event::subscribe(\App\Modules\Tenant\Audit\Listeners\TenantAuthAuditSubscriber::class);
     }
 }

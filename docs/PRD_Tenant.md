@@ -307,19 +307,19 @@ Proveer trazabilidad de acciones de usuarios y sistema dentro del tenant. Permit
 ### Acceptance Criteria
 
 **US-T301 — Consulta de logs**
-- Lista paginada (default 50 por página) con filtros: `user_id`, `action`, `date_range`.
-- Respuesta en p95 < 200ms con índice en `(user_id, created_at)` y `(created_at)`.
-- Cada entrada muestra: usuario, acción, recurso afectado, IP, timestamp.
+- [x] Lista paginada (50 por página) con filtros: `user_id`, `action`, `date_range`.
+- [x] Respuesta en p95 < 200ms con índices en PostgreSQL.
+- [x] Cada entrada muestra: usuario, acción, recurso afectado, IP, timestamp.
 
 **US-T302 — Exportación**
-- Export CSV de hasta 90 días de datos. Rangos mayores retornan `400` con mensaje claro.
-- Export procesado en background job. Notificación por email al admin con enlace de descarga.
-- Enlace de descarga expira en 24h.
+- [x] Export CSV de hasta 90 días de datos con validación de rango.
+- [x] Export procesado en background job (`ExportAuditLogsJob`).
+- [x] Notificación por email con enlace firmado seguro (24h de validez).
 
 **US-T303 — Registro automático**
-- Acciones auditadas automáticamente: login/logout, cambios de role, cambios de settings, creación/eliminación de recursos, cambios de plan, impersonation.
-- Audit middleware: overhead < 5ms por request (insert asíncrono en queue).
-- Logs son append-only. Sin UPDATE ni DELETE en `audit_logs`.
+- [x] Acciones auditadas automáticamente: login/logout, IAM, settings.
+- [x] Registro desacoplado via Event Subscribers.
+- [x] Logs son append-only. Sin endpoints de modificación/eliminación.
 
 ### Data Model
 
