@@ -28,6 +28,7 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/plans', \App\Modules\Central\Billing\Livewire\PlanList::class)->name('central.billing.plans');
     Route::get('/central/billing/plans/create', \App\Modules\Central\Billing\Livewire\ManagePlan::class)->name('central.billing.plans.create');
     Route::get('/central/billing/plans/{plan}/edit', \App\Modules\Central\Billing\Livewire\ManagePlan::class)->name('central.billing.plans.edit');
+    Route::get('/central/billing/invoices/global', \App\Modules\Central\Billing\Livewire\GlobalInvoiceList::class)->name('central.billing.invoices.global');
     Route::get('/central/billing/tenants/{tenant}/invoices', TenantInvoiceList::class)->name('central.billing.tenant.invoices');
     
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {

@@ -45,8 +45,8 @@
                     :current="request()->routeIs('central.billing.plans')" wire:navigate>
                     {{ __('Plans') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="receipt-percent" href="#"
-                    :current="false" wire:navigate>
+                <flux:sidebar.item icon="receipt-percent" :href="route('central.billing.invoices.global')"
+                    :current="request()->routeIs('central.billing.invoices.global')" wire:navigate>
                     {{ __('Global Invoices') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
