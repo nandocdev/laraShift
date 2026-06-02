@@ -27,8 +27,16 @@
 
             <flux:sidebar.group :heading="__('Billing')" class="grid">
                 <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
-                    :current="request()->routeIs('central.billing.*')" wire:navigate>
+                    :current="request()->routeIs('central.billing.subscriptions')" wire:navigate>
                     {{ __('Subscriptions') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="presentation-chart-line" :href="route('central.billing.plans')"
+                    :current="request()->routeIs('central.billing.plans')" wire:navigate>
+                    {{ __('Plans') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="receipt-percent" href="#"
+                    :current="false" wire:navigate>
+                    {{ __('Global Invoices') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
