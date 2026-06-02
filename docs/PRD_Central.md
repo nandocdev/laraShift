@@ -337,12 +337,12 @@ Soportar modelos de suscripción con cobros recurrentes. Manejar fallos de pago 
 
 **US-202 — Facturas**
 - [x] Factura disponible en < 60s tras cierre del período de facturación (Sincronización implementada).
-- [ ] Descarga en PDF. Incluye: número de factura, período, líneas de concepto, total, estado.
-- [ ] Historial paginado, respuesta en p95 < 200ms.
+- [x] Descarga en PDF. Incluye: número de factura, período, líneas de concepto, total, estado.
+- [x] Historial paginado, respuesta en p95 < 200ms.
 
 **US-203 — Dunning**
-- [ ] Primer fallo: reintento automático en 3 días. Notificación por email al tenant.
-- [ ] Segundo fallo: reintento en 5 días. Segunda notificación con advertencia de suspensión.
+- [x] Primer fallo: reintento automático en 3 días. Notificación por email al tenant.
+- [x] Segundo fallo: reintento en 5 días. Segunda notificación con advertencia de suspensión.
 - [x] Tercer fallo: tenant pasa a `suspended`. Email final con instrucciones de recuperación (Suspensión automática implementada).
 - [x] Recovery: tenant paga deuda pendiente → estado `active` restaurado en < 5min.
 

@@ -52,13 +52,16 @@ class StripeWebhookController extends CashierController
 
         if ($tenant) {
             $attemptCount = $payload['data']['object']['attempt_count'] ?? 1;
+            $amount = number_format($payload['data']['object']['amount_due'] / 100, 2);
+            $currency = $payload['data']['object']['currency'];
             
-            // Logic for dunning notifications based on attemptCount
-            // In LaraShift, we might trigger a specific Action or Job here.
-            
-            if ($attemptCount >= 3) {
+            if ($attemptCount < 3) {
+                $tenant->notify(new \App\Modules\Central\Billing\Notifications\PaymentFailedNotification($attemptCount, $amount, $currency));
+            } else {
                 $tenant->update(['status' => 'suspended']);
                 
+                $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification($amount, $currency));
+
                 activity('billing')
                     ->performedOn($tenant)
                     ->withProperties(['invoice_id' => $payload['data']['object']['id']])
