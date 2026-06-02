@@ -4,7 +4,7 @@
             <flux:heading size="xl">{{ __('Subscription Plans') }}</flux:heading>
             <flux:subheading>{{ __('Manage the commercial matrix and platform tiers.') }}</flux:subheading>
         </div>
-        <flux:button variant="primary" icon="plus" disabled>{{ __('New Plan') }}</flux:button>
+        <flux:button :href="route('central.billing.plans.create')" variant="primary" icon="plus" wire:navigate>{{ __('New Plan') }}</flux:button>
     </div>
 
     <flux:card>
@@ -39,10 +39,10 @@
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                 <flux:menu>
-                                    <flux:menu.item icon="pencil">{{ __('Edit') }}</flux:menu.item>
+                                    <flux:menu.item :href="route('central.billing.plans.edit', $plan->id)" icon="pencil" wire:navigate>{{ __('Edit') }}</flux:menu.item>
                                     <flux:menu.item icon="eye">{{ __('View Features') }}</flux:menu.item>
                                     <flux:menu.separator />
-                                    <flux:menu.item variant="danger" icon="trash">{{ __('Delete') }}</flux:menu.item>
+                                    <flux:menu.item variant="danger" icon="trash" disabled>{{ __('Delete') }}</flux:menu.item>
                                 </flux:menu>
                             </flux:dropdown>
                         </flux:table.cell>
