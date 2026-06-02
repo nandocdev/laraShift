@@ -29,6 +29,9 @@
                     <flux:sidebar.item icon="key" :href="route('tenant.api-keys.index')" :current="request()->routeIs('tenant.api-keys.*')" wire:navigate>
                         {{ __('API Keys') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="shield-check" :href="route('tenant.settings.security.2fa')" :current="request()->routeIs('tenant.settings.security.*')" wire:navigate>
+                        {{ __('Security & 2FA') }}
+                    </flux:sidebar.item>
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('tenant.audit.index')" :current="request()->routeIs('tenant.audit.*')" wire:navigate>
                         {{ __('Audit Log') }}
                     </flux:sidebar.item>

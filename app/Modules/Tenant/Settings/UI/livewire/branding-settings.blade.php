@@ -34,4 +34,19 @@
             </div>
         </form>
     </flux:card>
+
+    <div class="mt-8">
+        <flux:heading size="lg">{{ __('Security Policies') }}</flux:heading>
+        <flux:subheading>{{ __('Configure global security requirements for all organization members.') }}</flux:subheading>
+    </div>
+
+    <flux:card>
+        <div class="flex items-center justify-between">
+            <div class="flex flex-col">
+                <span class="font-medium text-zinc-900 dark:text-white">{{ __('Mandatory Multi-Factor Authentication') }}</span>
+                <span class="text-xs text-zinc-500">{{ __('When enabled, all members will be required to set up MFA to access the dashboard.') }}</span>
+            </div>
+            <flux:switch wire:model="mfa_required" wire:click="save" />
+        </div>
+    </flux:card>
 </div>

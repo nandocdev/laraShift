@@ -19,6 +19,7 @@ class BrandingSettings extends Component
     public $logo;
     public string $logo_path = '';
     public string $primary_color = '#4f46e5';
+    public bool $mfa_required = false;
 
     public function mount(): void
     {
@@ -30,6 +31,7 @@ class BrandingSettings extends Component
         $this->name = $settings->name;
         $this->logo_path = $settings->logo_path ?? '';
         $this->primary_color = $settings->primary_color ?? '#4f46e5';
+        $this->mfa_required = $settings->mfa_required;
     }
 
     public function save(): void
@@ -38,6 +40,7 @@ class BrandingSettings extends Component
             'name' => 'required|string|max:255',
             'logo' => 'nullable|image|max:2048',
             'primary_color' => 'required|hex_color',
+            'mfa_required' => 'boolean',
         ]);
 
         $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
@@ -45,6 +48,7 @@ class BrandingSettings extends Component
         $data = [
             'name' => $this->name,
             'primary_color' => $this->primary_color,
+            'mfa_required' => $this->mfa_required,
         ];
 
         if ($this->logo) {

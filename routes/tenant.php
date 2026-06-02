@@ -34,15 +34,17 @@ Route::middleware([
     })->name('tenant.home');
 
     Route::get('/login', \App\Modules\Tenant\Identity\Livewire\Login::class)->name('login');
+    Route::get('/login/challenge', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class)->name('login.challenge');
 
     // Support & Impersonation
     Route::get('/support/auth', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
     Route::post('/support/logout', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'logout'])->name('tenant.support.logout');
 
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class])->group(function () {
         Route::get('/team', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
         Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
         Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
+        Route::get('/settings/security/2fa', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');

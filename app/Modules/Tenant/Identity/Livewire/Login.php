@@ -36,7 +36,16 @@ class Login extends Component
             return;
         }
 
-        // TODO: MFA Challenge check (US-T105)
+        // Check if user has 2FA enabled
+        if ($user->hasTwoFactorEnabled()) {
+            Session::put([
+                'login.id' => $user->id,
+                'login.remember' => $this->remember,
+            ]);
+
+            $this->redirect(route('login.challenge'), navigate: true);
+            return;
+        }
         
         Auth::guard('web')->login($user, $this->remember);
 

@@ -8,6 +8,7 @@ namespace App\Modules\Tenant\Identity\Models;
 use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -56,6 +57,16 @@ class User extends Authenticatable
             'mfa_enrolled' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function mfa(): HasOne
+    {
+        return $this->hasOne(UserMfa::class, 'user_id');
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->mfa()->exists();
     }
 
     /**
