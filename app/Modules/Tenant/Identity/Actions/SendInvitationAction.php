@@ -23,7 +23,17 @@ final readonly class SendInvitationAction
     ): Invitation {
         $tenant = tenant();
         
-        // 1. Check Quotas (US-T101: 10 pending invites by default)
+        // 1. Check if email exists in another tenant (PRD US-T103 policy)
+        $existingUser = User::withoutGlobalScope(\App\Modules\Shared\Tenancy\Models\Concerns\TenantScope::class)
+            ->where('email', $email)
+            ->where('tenant_id', '!=', $tenant->id)
+            ->first();
+
+        if ($existingUser) {
+            throw new \Exception(__('This email is already associated with another organization. Multi-organization access requires a reactivation flow.'));
+        }
+
+        // 2. Check Quotas (US-T101: 10 pending invites by default)
         // Note: For now we use the default 10, later we can pull from Plan features.
         $pendingCount = Invitation::whereNull('accepted_at')
             ->where('expires_at', '>', now())

@@ -82,6 +82,7 @@ class TeamManagement extends Component
         }
 
         $user->update(['is_active' => false]);
+        $user->delete(); // Soft delete as per US-T103
 
         activity('identity')
             ->performedOn($user)

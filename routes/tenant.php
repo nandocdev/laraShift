@@ -41,7 +41,11 @@ Route::middleware([
     Route::get('/support/auth', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
     Route::post('/support/logout', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'logout'])->name('tenant.support.logout');
 
-    Route::middleware(['auth', \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class])->group(function () {
+    Route::middleware([
+        'auth', 
+        \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class,
+        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class
+    ])->group(function () {
         Route::get('/team', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
         Route::get('/team/roles', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class)->name('tenant.roles.index');
         Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');

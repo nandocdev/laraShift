@@ -25,17 +25,29 @@ final readonly class AcceptInvitationAction
             ->firstOrFail();
 
         return DB::transaction(function () use ($invitation, $name, $password) {
-            // 1. Create or Update User
-            // Since User model has BelongsToTenant, we must ensure it links correctly
-            $user = User::updateOrCreate(
-                ['tenant_id' => $invitation->tenant_id, 'email' => $invitation->email],
-                [
-                    'id' => Str::uuid()->toString(),
+            // 1. Create or Update User (including soft-deleted for reactivation)
+            $user = User::withTrashed()
+                ->where('tenant_id', $invitation->tenant_id)
+                ->where('email', $invitation->email)
+                ->first();
+
+            if ($user) {
+                $user->restore(); // If it was soft-deleted
+                $user->update([
                     'name' => $name,
                     'password' => Hash::make($password),
                     'is_active' => true,
-                ]
-            );
+                ]);
+            } else {
+                $user = User::create([
+                    'id' => Str::uuid()->toString(),
+                    'tenant_id' => $invitation->tenant_id,
+                    'name' => $name,
+                    'email' => $invitation->email,
+                    'password' => Hash::make($password),
+                    'is_active' => true,
+                ]);
+            }
 
             // 2. Assign Role
             setPermissionsTeamId($invitation->tenant_id);
