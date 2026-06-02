@@ -693,3 +693,52 @@ Página pública comercial destinada a convertir visitantes en prospectos y clie
 - Diagramas: `docs/*.mermaid`
 - ADRs: `docs/adr/`
 
+
+===
+
+
+**Archivos revisados**
+- Plan upsert: UpsertPlanAction.php  
+- Modelo Plan: Plan.php  
+- Livewire gestion planes: ManagePlan.php  
+- Migración `plans`: 2026_06_02_131559_create_plans_table.php  
+- Pivot/features: 2026_06_02_143356_create_features_module_tables.php  
+- Tenant model (relación a plan): Tenant.php  
+- Resolución features por tenant: ResolveTenantFeaturesAction.php
+
+Cambios pequeños aplicados (lista corta)
+- Corregí un `pluck` incorrecto en `ManagePlan::mount`: ahora se usa `->pluck('id')` (línea relevante): [app/Modules/Central/Billing/Livewire/ManagePlan.php#L57].  
+- Reemplacé la regla `unique` por `Rule::unique(...)->ignore(...)` para el `slug` en la validación del formulario (línea relevante): [app/Modules/Central/Billing/Livewire/ManagePlan.php#L65].
+
+Hallazgos y riesgos (resumen)
+- Duplicidad de fuente de truth de features:
+  - Existe columna `plans.features` (JSONB) usada para quotas/stripe meta, y a la vez la relación M:N `plan_features` con catálogo `features`. Riesgo de desincronización entre JSON y pivot.
+- Identificador de plan inconsistente:
+  - `tenants.plan_id` es una string/slug (ver migración de `tenants`) mientras que `plans` tiene `id` UUID + `slug`. El código actual trabaja con slug (Tenant::plan() usa ownerKey `slug`) y el resolver de features contempla ambos, pero esto es una decisión de diseño que debería documentarse o normalizarse (usar UUID o slug de forma consistente).
+- Eliminación insegura de planes:
+  - `DeletePlanAction` hace delete directo sin chequear suscripciones activas ni tenants que usen el plan. Riesgo operativo (clientes en producción perderán referencia).
+- Validaciones/UX menores:
+  - El Livewire `ManagePlan` convertía/preparaba precios correctamente (float ↔ int cents) — OK, pero revisar inputs para evitar redondeos inesperados.
+- Query de resolución de features:
+  - `ResolveTenantFeaturesAction` intenta cubrir slug o UUID; funciona pero revela la inconsistencia de datos mencionada arriba.
+
+Recomendaciones (priorizadas)
+1. Evitar borrado hard de un `Plan`: implementar soft-delete / `is_active=false` y chequear suscripciones/tenants antes de permitir eliminar. (Alta prioridad)  
+2. Elegir y normalizar el identificador del plan: (a) migrar `tenants.plan_id` a UUID y referenciar `plans.id`, o (b) documentar y mantener slug como FK con constraint y tests. (Med/Alta)  
+3. Decidir fuente canónica de features: usar pivot `plan_features` como fuente principal y convertir/retirar `plans.features` (si es legacy), o mantener `plans.features` solo para metadata no relacional y añadir sincronización. (Med)  
+4. Añadir checks en `DeletePlanAction` y mensaje UX (deny si hay tenants/subscriptions activas). (Alta)  
+5. Añadir pruebas unit/integration para: sync `plan_features`, creación/edición de plan (incluyendo quotas en JSON), y protección contra borrado de plan en uso. (Med)
+
+Acciones realizadas ahora
+- Fixes aplicados en `ManagePlan` (pluck + unique) — ver archivo: ManagePlan.php y ManagePlan.php.  
+- Registré el progreso en la lista de tareas interna (revisión y fixes).
+
+¿Quieres que implemente ya alguno de los siguientes?
+- A) Protección en `DeletePlanAction` (rechazar borrado si hay tenants o subscriptions activas) y tests asociados.  
+- B) Migración/guardia para normalizar `tenants.plan_id` a UUID (esto requiere plan de migración y pruebas).  
+- C) Refactor para eliminar ambigüedad entre `plans.features` JSON y la tabla pivot `plan_features` (incluye script de migración si se elige pivot como canónico).  
+- D) Solo commitear los cambios pequeños que apliqué y ejecutar la suite de tests.
+
+Indica la opción (A/B/C/D) o pide que haga un cambio específico — procedo con commit y tests si confirmas.
+
+Made changes.

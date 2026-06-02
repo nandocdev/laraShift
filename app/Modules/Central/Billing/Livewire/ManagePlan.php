@@ -15,8 +15,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.central')]
-class ManagePlan extends Component
-{
+class ManagePlan extends Component {
     public ?Plan $plan = null;
     public bool $isEditing = false;
 
@@ -26,18 +25,17 @@ class ManagePlan extends Component
     public float $price_yearly = 0.0;
     public bool $is_active = true;
     public string $stripe_id = '';
-    
+
     // Feature Catalog Integration
     public array $selectedFeatures = [];
-    
+
     // Legacy Features structure (for quotas)
     public int $quota_branches = 1;
     public int $quota_staff = 3;
     public int $quota_bookings = 100;
     public string $display_features = ''; // Comma separated
 
-    public function mount(?Plan $plan = null): void
-    {
+    public function mount(?Plan $plan = null): void {
         if ($plan && $plan->exists) {
             $this->plan = $plan;
             $this->isEditing = true;
@@ -46,7 +44,7 @@ class ManagePlan extends Component
             $this->price_monthly = $plan->price_monthly / 100;
             $this->price_yearly = $plan->price_yearly / 100;
             $this->is_active = $plan->is_active;
-            
+
             $features = $plan->features ?? [];
             $this->stripe_id = $features['stripe_id'] ?? '';
             $this->quota_branches = $features['quotas']['branches'] ?? 1;
@@ -58,11 +56,10 @@ class ManagePlan extends Component
         }
     }
 
-    public function save(UpsertPlanAction $action): void
-    {
+    public function save(UpsertPlanAction $action): void {
         $this->validate([
             'name' => 'required|string|max:100',
-            'slug' => ['required','alpha_dash','max:100', Rule::unique('plans','slug')->ignore($this->plan?->id)],
+            'slug' => ['required', 'alpha_dash', 'max:100', Rule::unique('plans', 'slug')->ignore($this->plan?->id)],
             'price_monthly' => 'required|numeric|min:0',
             'price_yearly' => 'required|numeric|min:0',
             'is_active' => 'boolean',
@@ -90,7 +87,7 @@ class ManagePlan extends Component
 
         try {
             $plan = $action->execute($data, $this->plan);
-            
+
             // Sync Feature Catalog
             $plan->catalogFeatures()->sync($this->selectedFeatures);
 
@@ -101,8 +98,7 @@ class ManagePlan extends Component
         }
     }
 
-    public function delete(DeletePlanAction $action): void
-    {
+    public function delete(DeletePlanAction $action): void {
         if (! $this->plan) return;
 
         try {
@@ -114,8 +110,7 @@ class ManagePlan extends Component
         }
     }
 
-    public function render(): View
-    {
+    public function render(): View {
         return view('billing::pages.manage-plan', [
             'availableFeatures' => Feature::where('is_active', true)->orderBy('module')->get(),
         ]);
