@@ -48,8 +48,16 @@ class TenantImpersonationController extends Controller
         $sessionId = Session::get('impersonation_session_id');
 
         if ($sessionId) {
-            $session = SupportSession::find($sessionId);
-            $session?->update(['ended_at' => now()]);
+            $session = SupportSession::with('tenant')->find($sessionId);
+            if ($session) {
+                $session->update(['ended_at' => now()]);
+                
+                // Notify tenant as per PRD security requirement
+                $session->tenant->notify(new \App\Modules\Central\Support\Notifications\ImpersonationEndedNotification(
+                    $session->reason,
+                    $session->started_at->format('Y-m-d H:i')
+                ));
+            }
         }
 
         Session::forget(['impersonation_session_id', 'impersonated_by']);

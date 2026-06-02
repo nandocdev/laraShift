@@ -427,56 +427,28 @@ Permitir asistencia segura y rastreable a tenants. Toda acción de soporte debe 
 ### Acceptance Criteria
 
 **US-301 — Impersonation**
-- Impersonation requiere campo `reason` obligatorio (mínimo 20 caracteres). Request sin reason retorna `400`.
-- Sesión de impersonation tiene TTL máximo de 2 horas. Expiración automática.
-- Toda acción durante impersonation registrada en `central_audit_logs` con `impersonated_by` en metadata.
-- Tenant recibe notificación por email tras finalizar sesión de impersonation (post-session, no en tiempo real para no alertar innecesariamente).
+- [x] Impersonation requiere campo `reason` obligatorio (mínimo 20 caracteres). Request sin reason retorna `400`.
+- [x] Sesión de impersonation tiene TTL máximo de 2 horas. Expiración automática.
+- [x] Toda acción durante impersonation registrada en `central_audit_logs` con `impersonated_by` en metadata.
+- [x] Tenant recibe notificación por email tras finalizar sesión de impersonation (post-session, no en tiempo real para no alertar innecesariamente).
 
 **US-302 — Broadcast**
-- Broadcast enviado a tenants filtrados por: `all`, `plan_id`, `status`.
-- Entrega vía email y/o banner en-app (configurable por broadcast).
-- Job de broadcast en queue separada. No bloquea requests normales.
-- Log de broadcast con: creador, timestamp, filtro, total de destinatarios.
+- [x] Broadcast enviado a tenants filtrados por: `all`, `plan_id`, `status`.
+- [x] Entrega vía email y/o banner en-app (configurable por broadcast).
+- [x] Job de broadcast en queue separada. No bloquea requests normales.
+- [x] Log de broadcast con: creador, timestamp, filtro, total de destinatarios.
 
 **US-303 — Notas de soporte**
-- Nota vinculada a `tenant_id` y `central_user_id` (autor).
-- Notas visibles solo para operadores centrales — nunca al tenant.
-- Sin eliminación de notas (append-only para integridad de historial).
+- [x] Nota vinculada a `tenant_id` y `central_user_id` (autor).
+- [x] Notas visibles solo para operadores centrales — nunca al tenant.
+- [x] Sin eliminación de notas (append-only para integridad de historial).
 
 ### Data Model
 
 ```sql
-support_sessions (
-  id               UUID PRIMARY KEY,
-  tenant_id        UUID REFERENCES tenants(id),
-  operator_id      UUID REFERENCES central_users(id),
-  reason           TEXT NOT NULL,
-  started_at       TIMESTAMP NOT NULL,
-  ended_at         TIMESTAMP NULL,
-  expires_at       TIMESTAMP NOT NULL,             -- started_at + 2h
-  INDEX (tenant_id, started_at)
-)
-
-support_notes (
-  id          UUID PRIMARY KEY,
-  tenant_id   UUID REFERENCES tenants(id),
-  author_id   UUID REFERENCES central_users(id),
-  content     TEXT NOT NULL,
-  created_at  TIMESTAMP NOT NULL
-)
-
-broadcasts (
-  id           UUID PRIMARY KEY,
-  created_by   UUID REFERENCES central_users(id),
-  title        VARCHAR(255) NOT NULL,
-  body         TEXT NOT NULL,
-  filter_type  ENUM('all', 'plan', 'status') NOT NULL,
-  filter_value VARCHAR(100) NULL,
-  channels     JSONB NOT NULL,                     -- ['email', 'banner']
-  sent_at      TIMESTAMP NULL,
-  recipient_count INTEGER NULL,
-  created_at   TIMESTAMP NOT NULL
-)
+support_sessions ( [x] Implementado )
+support_notes ( [x] Implementado )
+broadcasts ( [x] Implementado )
 ```
 
 ### Events

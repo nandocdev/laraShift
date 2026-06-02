@@ -13,8 +13,9 @@
         <div class="lg:col-span-1">
             <flux:card>
                 <form wire:submit="send" class="space-y-6">
-                    <flux:input wire:model="title" :label="__('Broadcast Title')" placeholder="{{ __('Maintenance Notice') }}" required />
-                    
+                    <flux:input wire:model="title" :label="__('Broadcast Title')"
+                        placeholder="{{ __('Maintenance Notice') }}" required />
+
                     <flux:textarea wire:model="body" :label="__('Message Content')" rows="5" required />
 
                     <div class="grid grid-cols-2 gap-4">
@@ -24,10 +25,10 @@
                             <option value="status">{{ __('By Status') }}</option>
                         </flux:select>
 
-                        @if($filterType === 'plan')
+                        @if ($filterType === 'plan')
                             <flux:select wire:model="filterValue" :label="__('Select Plan')">
                                 <option value="">{{ __('Any') }}</option>
-                                @foreach($plans as $plan)
+                                @foreach ($plans as $plan)
                                     <option value="{{ $plan->id }}">{{ $plan->name }}</option>
                                 @endforeach
                             </flux:select>
@@ -47,7 +48,8 @@
                         <flux:checkbox value="banner" :label="__('In-App Banner (Planned)')" disabled />
                     </flux:checkbox.group>
 
-                    <flux:button type="submit" variant="primary" class="w-full" wire:confirm="{{ __('Are you sure you want to send this broadcast?') }}">
+                    <flux:button type="submit" variant="primary" class="w-full"
+                        wire:confirm="{{ __('Are you sure you want to send this broadcast?') }}">
                         {{ __('Dispatch Message') }}
                     </flux:button>
                 </form>
@@ -56,7 +58,7 @@
 
         <!-- History -->
         <div class="lg:col-span-2">
-            <flux:card class="p-0 overflow-hidden">
+            <flux:card class="overflow-hidden">
                 <flux:table :paginate="$broadcasts">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Broadcast') }}</flux:table.column>
@@ -74,7 +76,7 @@
                                 </flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge size="sm" variant="outline">
-                                        {{ strtoupper($b->filter_type) }} 
+                                        {{ strtoupper($b->filter_type) }}
                                         {{ $b->filter_value ? "($b->filter_value)" : '' }}
                                     </flux:badge>
                                 </flux:table.cell>

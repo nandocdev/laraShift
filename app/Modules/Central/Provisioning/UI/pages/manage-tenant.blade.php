@@ -58,4 +58,8 @@
             </div>
         </form>
     </flux:card>
+
+    <div class="mt-12">
+        <livewire:tenant-support-bitacora :tenant="$tenant" />
+    </div>
 </div>
