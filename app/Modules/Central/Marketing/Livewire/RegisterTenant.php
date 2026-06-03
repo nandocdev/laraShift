@@ -22,6 +22,8 @@ class RegisterTenant extends Component
     public string $password = '';
     public string $plan_id = 'free';
 
+    protected bool $autoGenerateSlug = true;
+
     public function mount(): void
     {
         $this->plan_id = request()->query('plan', 'free');
@@ -29,9 +31,17 @@ class RegisterTenant extends Component
 
     public function updatedCompany(): void
     {
-        if (empty($this->slug)) {
+        if ($this->autoGenerateSlug) {
             $this->slug = Str::slug($this->company);
         }
+    }
+
+    public function updatedSlug(): void
+    {
+        // If the user manually edits the slug, stop auto-generating it
+        $this->autoGenerateSlug = false;
+        // Keep it URL friendly
+        $this->slug = Str::slug($this->slug);
     }
 
     public function register(CreateTenantAction $action): void

@@ -24,9 +24,9 @@
                 </div>
 
                 <!-- Organization Info -->
-                <flux:input wire:model.blur="company" :label="__('Company Name')" placeholder="Acme Corp" required />
+                <flux:input wire:model.live.debounce.300ms="company" :label="__('Company Name')" placeholder="Acme Corp" required />
                 
-                <flux:input wire:model="slug" :label="__('Workspace URL')" required>
+                <flux:input wire:model.live.debounce.300ms="slug" :label="__('Workspace URL')" required>
                     <x-slot name="append">
                         .{{ config('tenancy.central_domain') }}
                     </x-slot>
