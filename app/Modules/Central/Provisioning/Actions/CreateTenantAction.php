@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Actions;
 
+use App\Modules\Central\Billing\Actions\RegisterPaymentMethodAction;
+use App\Modules\Central\Billing\Actions\SetupTenantPaymentProviderAction;
+use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
@@ -50,6 +53,23 @@ final readonly class CreateTenantAction {
             // Step 3: Initial Admin User (Cross-module via Event)
             $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
                 TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
+            });
+
+            // Step 4: Billing Setup (Plinth) — only for paid plans
+            $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
+                $plan = Plan::where('slug', $data->plan_id)->first();
+
+                if ($plan && $plan->price_monthly > 0 && $data->payment_token) {
+                    // Register payment method + subscription
+                    app(RegisterPaymentMethodAction::class)->execute(
+                        $tenant,
+                        $data->payment_token,
+                        $data->plan_id
+                    );
+
+                    // Copy platform gateway credentials to tenant
+                    app(SetupTenantPaymentProviderAction::class)->execute($tenant);
+                }
             });
 
             // Finalize: Active
