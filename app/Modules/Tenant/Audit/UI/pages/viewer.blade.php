@@ -4,8 +4,9 @@
             <flux:heading size="xl">{{ __('Audit Logs') }}</flux:heading>
             <flux:subheading>{{ __('Immutable history of actions performed within this account.') }}</flux:subheading>
         </div>
-        
-        <flux:button icon="document-arrow-up" wire:click="$set('showingExportModal', true)">{{ __('Export CSV') }}</flux:button>
+
+        <flux:button icon="document-arrow-up" wire:click="$set('showingExportModal', true)">{{ __('Export CSV') }}
+        </flux:button>
     </div>
 
     <!-- Filter Bar -->
@@ -13,14 +14,15 @@
         <div class="flex-1 min-w-[200px]">
             <flux:select wire:model.live="filterUser" :label="__('Filter by Member')">
                 <option value="">{{ __('All Members') }}</option>
-                @foreach($users as $user)
+                @foreach ($users as $user)
                     <option value="{{ $user->id }}">{{ $user->name }}</option>
                 @endforeach
             </flux:select>
         </div>
 
         <div class="flex-1 min-w-[200px]">
-            <flux:input wire:model.live.debounce.500ms="filterAction" :label="__('Search Action')" placeholder="e.g. login, settings..." />
+            <flux:input wire:model.live.debounce.500ms="filterAction" :label="__('Search Action')"
+                placeholder="e.g. login, settings..." />
         </div>
 
         <div class="flex gap-4">
@@ -35,7 +37,7 @@
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif
 
-    <flux:card class="p-0 overflow-hidden">
+    <flux:card class="overflow-hidden">
         <flux:table :paginate="$logs">
             <flux:table.columns>
                 <flux:table.column>{{ __('Action') }}</flux:table.column>
@@ -49,10 +51,11 @@
                 @foreach ($logs as $log)
                     <flux:table.row :key="$log->id">
                         <flux:table.cell>
-                            <flux:badge size="sm" variant="outline" class="font-mono text-xs uppercase">{{ $log->action }}</flux:badge>
+                            <flux:badge size="sm" variant="outline" class="font-mono text-xs uppercase">
+                                {{ $log->action }}</flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
-                            @if($log->user)
+                            @if ($log->user)
                                 <div class="flex items-center gap-2">
                                     <flux:avatar :name="$log->user->name" size="xs" />
                                     <span class="text-sm font-medium">{{ $log->user->name }}</span>
@@ -62,8 +65,8 @@
                             @endif
                         </flux:table.cell>
                         <flux:table.cell class="text-xs text-zinc-500">
-                            {{ strtoupper($log->resource ?: '-') }} 
-                            @if($log->resource_id)
+                            {{ strtoupper($log->resource ?: '-') }}
+                            @if ($log->resource_id)
                                 <span class="text-[10px] block opacity-50">{{ $log->resource_id }}</span>
                             @endif
                         </flux:table.cell>
@@ -84,7 +87,8 @@
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">{{ __('Export Audit Log') }}</flux:heading>
-                <flux:subheading>{{ __('Generate a CSV file for the selected date range. Max 90 days.') }}</flux:subheading>
+                <flux:subheading>{{ __('Generate a CSV file for the selected date range. Max 90 days.') }}
+                </flux:subheading>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -95,7 +99,8 @@
             <div class="flex gap-2">
                 <flux:spacer />
                 <flux:modal.close>
-                    <flux:button variant="ghost" wire:click="$set('showingExportModal', false)">{{ __('Cancel') }}</flux:button>
+                    <flux:button variant="ghost" wire:click="$set('showingExportModal', false)">{{ __('Cancel') }}
+                    </flux:button>
                 </flux:modal.close>
                 <flux:button variant="primary" wire:click="export" :loading="$exporting">
                     {{ __('Generate & Email CSV') }}
