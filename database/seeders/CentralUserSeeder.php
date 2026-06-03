@@ -11,8 +11,10 @@ class CentralUserSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $email = 'admin@' . config('tenancy.central_domain') . '.com';
+
         CentralUser::updateOrCreate(
-            ['email' => 'admin@larashift.test'],
+            ['email' => $email],
             [
                 'name' => 'LaraShift Admin',
                 'password' => Hash::make('password'),
@@ -20,6 +22,6 @@ class CentralUserSeeder extends Seeder {
             ]
         );
 
-        $this->command->info('Usuario Central Admin creado: admin@larashift.test / password');
+        $this->command->info("Usuario Central Admin creado: {$email} / password");
     }
 }
