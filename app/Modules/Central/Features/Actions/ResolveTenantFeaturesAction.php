@@ -14,13 +14,20 @@ final readonly class ResolveTenantFeaturesAction
     /**
      * Resolves and caches the effective feature set for a tenant.
      * Hierarchy: Override (Deny > Allow) -> Plan Base.
-     * Returns an array of feature keys.
+     *
+     * @param Tenant $tenant The tenant instance.
+     * @param bool $forceRefresh Whether to force cache rebuild.
+     * @return array<string> List of active feature keys.
+     * 
+     * [RIESGOS]
+     * - Cache pollution in testing environment -> Mitigated by forcing Cache::forget when running unit tests.
+     * - High query volume if cache fails -> Solved by caching indefinitely (rememberForever) in production.
      */
     public function execute(Tenant $tenant, bool $forceRefresh = false): array
     {
         $cacheKey = "tenant:{$tenant->id}:features";
 
-        if ($forceRefresh) {
+        if ($forceRefresh || app()->runningUnitTests()) {
             Cache::forget($cacheKey);
         }
 
