@@ -42,6 +42,10 @@ class TenantList extends Component
         } catch (\Exception $e) {
             $this->addError('confirmSlug', $e->getMessage());
         }
+            if (! $this->selectedTenant) {
+                $this->addError('confirmSlug', __('No tenant selected.')); 
+                return;
+            }
     }
 
     public function impersonate(ImpersonateTenantAction $action): void
@@ -50,6 +54,10 @@ class TenantList extends Component
             'impersonationReason' => 'required|string|min:20',
         ]);
 
+        if (! $this->selectedTenant) {
+            $this->addError('impersonationReason', __('No tenant selected.'));
+            return;
+        }
         try {
             $url = $action->execute($this->selectedTenant, $this->impersonationReason);
             
