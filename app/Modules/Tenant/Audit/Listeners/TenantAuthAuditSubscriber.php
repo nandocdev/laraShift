@@ -17,8 +17,8 @@ class TenantAuthAuditSubscriber
 
     public function handleUserLogin(Login $event): void
     {
-        // Only log if it's a tenant user (using web guard)
-        if ($event->guard === 'web') {
+        // Only log if it's a tenant user (using web guard) and tenancy is initialized
+        if ($event->guard === 'web' && tenancy()->initialized) {
             $this->recordAuditLog->execute(
                 action: 'auth.login',
                 resource: 'users',
@@ -29,7 +29,7 @@ class TenantAuthAuditSubscriber
 
     public function handleUserLogout(Logout $event): void
     {
-        if ($event->guard === 'web' && $event->user) {
+        if ($event->guard === 'web' && $event->user && tenancy()->initialized) {
             $this->recordAuditLog->execute(
                 action: 'auth.logout',
                 resource: 'users',
