@@ -22,7 +22,7 @@
                         <flux:button :href="route('central.dashboard')" variant="ghost" size="sm" wire:navigate>{{ __('Go to Dashboard') }}</flux:button>
                     @else
                         <flux:button :href="route('central.login')" variant="ghost" size="sm" wire:navigate>{{ __('Log in') }}</flux:button>
-                        <flux:button href="#pricing" variant="primary" size="sm">{{ __('Get Started') }}</flux:button>
+                        <flux:button href="/register" variant="primary" size="sm">{{ __('Get Started') }}</flux:button>
                     @endauth
                 </div>
             </div>
@@ -40,7 +40,7 @@
             </flux:subheading>
             
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <flux:button variant="primary" href="#pricing" class="px-8 py-3 text-lg font-bold">{{ __('Launch your SaaS') }}</flux:button>
+                <flux:button variant="primary" href="/register" class="px-8 py-3 text-lg font-bold">{{ __('Launch your SaaS') }}</flux:button>
                 <flux:button variant="ghost" href="https://github.com/nandocdev/LaraShift" target="_blank" class="px-8 py-3 text-lg font-bold" icon="folder-git-2">{{ __('View on GitHub') }}</flux:button>
             </div>
         </div>
@@ -137,6 +137,7 @@
                         </ul>
 
                         <flux:button 
+                            href="/register?plan={{ $plan->slug }}"
                             variant="{{ $plan->slug === 'pro' ? 'primary' : 'ghost' }}" 
                             class="w-full py-3"
                             style="{{ $plan->slug === 'pro' ? 'background-color: ' . $primaryColor : '' }}"

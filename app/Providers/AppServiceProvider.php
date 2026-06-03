@@ -26,6 +26,19 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         \Illuminate\Support\Facades\Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
+
+        \Livewire\Livewire::setUpdateRoute(function ($handle) {
+            $path = class_exists(\Livewire\Mechanisms\HandleRequests\EndpointResolver::class) 
+                ? \Livewire\Mechanisms\HandleRequests\EndpointResolver::updatePath() 
+                : '/livewire/update';
+
+            return \Illuminate\Support\Facades\Route::post($path, $handle)
+                ->middleware([
+                    'web',
+                    'universal',
+                    \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+                ]);
+        });
     }
 
     /**

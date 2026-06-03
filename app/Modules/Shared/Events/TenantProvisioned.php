@@ -16,5 +16,6 @@ class TenantProvisioned
         public Tenant $tenant,
         public string $adminEmail,
         public string $adminName = 'Administrator',
+        public ?string $password = null,
     ) {}
 }

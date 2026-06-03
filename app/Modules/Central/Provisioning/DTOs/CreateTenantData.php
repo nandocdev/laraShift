@@ -12,6 +12,7 @@ final class CreateTenantData extends Data
         public string $name,
         public string $slug,
         public string $email,
-        public ?string $plan_id = 'free',
+        public string $plan_id,
+        public ?string $password = null
     ) {}
 }
