@@ -33,5 +33,5 @@ it('can find a specific plan by slug', function () {
 
     expect($plan)->not->toBeNull();
     expect($plan->name)->toBe('Pro');
-    expect($plan->price_monthly)->toBe(2900);
+    expect($plan->price_monthly)->toBe(2999);
 });

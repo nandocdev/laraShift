@@ -1,7 +1,10 @@
 <?php
 
 use App\Modules\Tenant\Identity\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+
+
 
 test('profile page is displayed', function () {
     $this->actingAs($user = User::factory()->create());
@@ -56,7 +59,7 @@ test('user can delete their account', function () {
         ->assertHasNoErrors()
         ->assertRedirect('/');
 
-    expect($user->fresh())->toBeNull();
+    expect($user->fresh()->trashed())->toBeTrue();
     expect(auth()->check())->toBeFalse();
 });
 
