@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "15611b1d36939b4e4481d671bbab0a80",
+    "content-hash": "6bbaf37a7abea30cf670a3a53c40f94f",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3429,6 +3429,63 @@
                 }
             ],
             "time": "2026-01-02T08:56:05+00:00"
+        },
+        {
+            "name": "nandocdev/plinth-multitenant-billing",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../plinth-multitenant-billing",
+                "reference": "927efc2fa056f38ce6fea8424174fa730ae0e607"
+            },
+            "require": {
+                "illuminate/http": "^11.0 || ^12.0 || ^13.0",
+                "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.17",
+                "pestphp/pest": "^4.7"
+            },
+            "type": "package",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Plinth\\MultiTenantBilling\\BillingServiceProvider"
+                    ],
+                    "aliases": {
+                        "MultiTenantBilling": "Plinth\\MultiTenantBilling\\Facades\\Billing"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Plinth\\MultiTenantBilling\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Plinth\\MultiTenantBilling\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fernando Castillo",
+                    "email": "nandocdev@hotmail.com"
+                }
+            ],
+            "description": "Laravel package to automate payments and subscriptions via dLocal API",
+            "keywords": [
+                "billing",
+                "payments"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "nesbot/carbon",
@@ -13026,7 +13083,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "nandocdev/plinth-multitenant-billing": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
