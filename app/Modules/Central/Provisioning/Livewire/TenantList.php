@@ -20,8 +20,7 @@ class TenantList extends Component {
     public string $impersonationReason = '';
     public string $confirmSlug = '';
 
-    public function getSelectedTenantProperty(): ?Tenant
-    {
+    public function getSelectedTenantProperty(): ?Tenant {
         if (! $this->selectedTenantId) {
             return null;
         }
@@ -29,8 +28,7 @@ class TenantList extends Component {
         return Tenant::find($this->selectedTenantId);
     }
 
-    public function selectTenant($tenantId): void
-    {
+    public function selectTenant($tenantId): void {
         $tenant = Tenant::find($tenantId);
 
         if (! $tenant) {
@@ -90,6 +88,7 @@ class TenantList extends Component {
     public function render(): View {
         return view('provisioning::pages.tenant-list', [
             'tenants' => Tenant::with('domains')->latest()->paginate(10),
+            'selectedTenant' => $this->selectedTenant,
         ]);
     }
 }
