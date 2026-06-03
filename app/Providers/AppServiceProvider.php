@@ -25,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        \Illuminate\Database\Eloquent\Factories\Factory::guessFactoryNamesUsing(function (string $modelName) {
+            if (str_starts_with($modelName, 'App\\Modules\\')) {
+                return str_replace('\\Models\\', '\\Database\\Factories\\', $modelName) . 'Factory';
+            }
+            return 'Database\\Factories\\' . class_basename($modelName) . 'Factory';
+        });
+
         \Illuminate\Support\Facades\Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
 
         \Livewire\Livewire::setUpdateRoute(function ($handle) {

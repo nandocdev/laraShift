@@ -12,12 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\PasskeyAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements PasskeyUser
 {
-    use BelongsToTenant, HasFactory, HasRoles, HasUuids, Notifiable, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasRoles, HasUuids, Notifiable, SoftDeletes, TwoFactorAuthenticatable, PasskeyAuthenticatable;
 
     /**
      * The attributes that are mass assignable.

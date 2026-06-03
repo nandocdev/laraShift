@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,8 +16,32 @@ use Tests\TestCase;
 |
 */
 
-pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+uses(TestCase::class, RefreshDatabase::class)
+    ->beforeEach(function () {
+        $class = get_class($this);
+        if ((str_contains($class, 'Feature\\Auth') || str_contains($class, 'Feature\\Settings')) && ! str_contains($class, 'AuthenticationTest')) {
+            $plan = Plan::firstOrCreate(['slug' => 'free'], [
+                'name' => 'Free Plan',
+                'price_monthly' => 0,
+                'price_yearly' => 0,
+                'features' => [],
+            ]);
+
+            $tenant = Tenant::firstOrCreate(['id' => 'test-tenant'], [
+                'slug' => 'test-tenant',
+                'name' => 'Test Tenant',
+                'email' => 'test@tenant.com',
+                'plan_id' => 'free',
+                'status' => 'active',
+            ]);
+
+            $domain = 'test-tenant.' . config('tenancy.central_domain');
+            $tenant->domains()->firstOrCreate(['domain' => $domain]);
+
+            tenancy()->initialize($tenant);
+            Illuminate\Support\Facades\URL::forceRootUrl('http://' . $domain);
+        }
+    })
     ->in('Feature');
 
 /*
