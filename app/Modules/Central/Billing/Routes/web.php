@@ -30,6 +30,7 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/plans/{plan}/edit', \App\Modules\Central\Billing\Livewire\ManagePlan::class)->name('central.billing.plans.edit');
     Route::get('/central/billing/invoices/global', \App\Modules\Central\Billing\Livewire\GlobalInvoiceList::class)->name('central.billing.invoices.global');
     Route::get('/central/billing/tenants/{tenant}/invoices', TenantInvoiceList::class)->name('central.billing.tenant.invoices');
+    Route::get('/central/billing/ledger', \App\Modules\Central\Billing\Livewire\LedgerAudit::class)->name('central.billing.ledger');
     
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {
         return $action->download($invoice);
