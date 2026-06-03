@@ -54,8 +54,6 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'central_domain' => env('CENTRAL_DOMAIN', 'larashift.test'),
-
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -7,28 +7,13 @@
     <flux:card>
         <form wire:submit="save" class="flex flex-col gap-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <flux:input 
-                    wire:model="name" 
-                    :label="__('Company Name')" 
-                    placeholder="Acme Corp" 
-                    required 
-                />
+                <flux:input wire:model="name" :label="__('Company Name')" placeholder="Acme Corp" required />
 
-                <flux:input 
-                    wire:model="slug" 
-                    :label="__('Subdomain / Slug')" 
-                    placeholder="acme" 
-                    required 
-                    suffix=".{{ config('app.central_domain') }}" 
-                />
+                <flux:input wire:model="slug" :label="__('Subdomain / Slug')" placeholder="acme" required
+                    suffix=".{{ config('tenancy.central_domain') }}" />
 
-                <flux:input 
-                    wire:model="email" 
-                    :label="__('Owner Email')" 
-                    type="email" 
-                    placeholder="admin@acme.com" 
-                    required 
-                />
+                <flux:input wire:model="email" :label="__('Owner Email')" type="email" placeholder="admin@acme.com"
+                    required />
 
                 <flux:select wire:model="plan_id" :label="__('Plan')">
                     <option value="free">Free</option>

@@ -12,14 +12,21 @@ return [
     'domain_model' => \App\Modules\Central\Provisioning\Models\Domain::class,
 
     /**
+     * The main domain for the central application.
+     */
+    'central_domain' => env('CENTRAL_DOMAIN', 'larashift.test'),
+
+    /**
      * The list of domains hosting your central app.
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    'central_domains' => [
+    'central_domains' => array_unique(array_filter([
         '127.0.0.1',
         'localhost',
-    ],
+        env('CENTRAL_DOMAIN', 'larashift.test'),
+        ...explode(',', env('CENTRAL_DOMAINS', '')),
+    ])),
 
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.

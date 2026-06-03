@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-final readonly class CreateTenantAction
-{
+final readonly class CreateTenantAction {
     /**
      * Executes the atomic provisioning of a new tenant with Step-based tracking and Rollback.
      * 
@@ -23,8 +22,7 @@ final readonly class CreateTenantAction
      * - Records infrastructure steps in provisioning_logs.
      * - Triggers automatic cleanup on critical failure.
      */
-    public function execute(CreateTenantData $data): Tenant
-    {
+    public function execute(CreateTenantData $data): Tenant {
         /** @var Tenant $tenant */
         $tenant = Tenant::create([
             'id' => Str::uuid()->toString(),
@@ -38,7 +36,7 @@ final readonly class CreateTenantAction
         try {
             // Step 1: Subdomain / Domain Reservation
             $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
-                $domain = $data->slug . '.' . config('app.central_domain', 'larashift.test');
+                $domain = $data->slug . '.' . config('tenancy.central_domain', 'larashift.test');
                 $tenant->domains()->create(['domain' => $domain]);
             });
 
@@ -68,15 +66,13 @@ final readonly class CreateTenantAction
                 ->log('tenant_provisioned_successfully');
 
             return $tenant;
-
         } catch (\Exception $e) {
             $this->handleFailure($tenant, $e);
             throw $e;
         }
     }
 
-    private function logStep(Tenant $tenant, string $step, callable $callback): void
-    {
+    private function logStep(Tenant $tenant, string $step, callable $callback): void {
         $log = ProvisioningLog::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => $tenant->id,
@@ -94,17 +90,16 @@ final readonly class CreateTenantAction
         }
     }
 
-    private function handleFailure(Tenant $tenant, \Exception $exception): void
-    {
+    private function handleFailure(Tenant $tenant, \Exception $exception): void {
         Log::error("Provisioning failed for tenant {$tenant->slug}: " . $exception->getMessage());
 
         // Compensation Logic (Rollback)
         DB::transaction(function () use ($tenant) {
             $tenant->update(['status' => 'failed']);
-            
+
             // Clean up resources that might cause orphan state
             $tenant->domains()->delete();
-            
+
             // Note: DB cleanup depends on config. 
             // In LaraShift, we might preserve the failed tenant record for support analysis,
             // but delete it if the user wants an atomic "nothing happened" experience.
