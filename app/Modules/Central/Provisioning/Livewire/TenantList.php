@@ -21,8 +21,15 @@ class TenantList extends Component
     public string $impersonationReason = '';
     public string $confirmSlug = '';
 
-    public function selectTenant(Tenant $tenant): void
+    public function selectTenant($tenantId): void
     {
+        $tenant = Tenant::find($tenantId);
+
+        if (! $tenant) {
+            $this->addError('selectedTenant', __('Tenant not found.'));
+            return;
+        }
+
         $this->selectedTenant = $tenant;
         $this->confirmSlug = '';
     }
