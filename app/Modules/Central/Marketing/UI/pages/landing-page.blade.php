@@ -18,13 +18,8 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
-                    @auth('central')
-                        <flux:button :href="route('central.dashboard')" variant="ghost" size="sm" wire:navigate>{{ __('Go to Dashboard') }}</flux:button>
-                    @else
-                        <flux:button :href="route('central.login')" variant="ghost" size="sm" wire:navigate>{{ __('Log in') }}</flux:button>
                         <flux:button href="/register" variant="primary" size="sm">{{ __('Get Started') }}</flux:button>
-                    @endauth
-                </div>
+                  </div>
             </div>
         </div>
     </nav>
