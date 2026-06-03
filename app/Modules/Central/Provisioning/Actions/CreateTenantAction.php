@@ -49,7 +49,7 @@ final readonly class CreateTenantAction {
 
             // Step 3: Initial Admin User (Cross-module via Event)
             $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
-                TenantProvisioned::dispatch($tenant, $data->email, 'Administrator');
+                TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
             });
 
             // Finalize: Active

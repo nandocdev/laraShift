@@ -14,5 +14,6 @@ class MarketingServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../UI', 'marketing');
 
         Livewire::component('marketing-landing-page', \App\Modules\Central\Marketing\Livewire\LandingPage::class);
+        Livewire::component('marketing-register-tenant', \App\Modules\Central\Marketing\Livewire\RegisterTenant::class);
     }
 }

@@ -19,7 +19,7 @@ class CreateInitialAdminUser
             app(EnsureTenantRolesExistAction::class)->execute($event->tenant);
 
             // 2. Create the user
-            $password = app()->environment(['local', 'testing']) ? 'password' : Str::random(16);
+            $password = $event->password ?: (app()->environment(['local', 'testing']) ? 'password' : Str::random(16));
             
             $user = User::create([
                 'tenant_id' => $event->tenant->id,
