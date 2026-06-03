@@ -16,7 +16,7 @@ use Livewire\WithPagination;
 class TenantList extends Component {
     use WithPagination;
 
-    public ?int $selectedTenantId = null;
+    public ?string $selectedTenantId = null;
     public string $impersonationReason = '';
     public string $confirmSlug = '';
 
@@ -36,7 +36,7 @@ class TenantList extends Component {
             return;
         }
 
-        $this->selectedTenantId = (int) $tenant->id;
+        $this->selectedTenantId = $tenant->id;
         $this->confirmSlug = '';
     }
 
