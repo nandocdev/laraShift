@@ -27,7 +27,7 @@ it('provisions a tenant atomically and dispatches the event', function () {
     expect($tenant)->toBeInstanceOf(Tenant::class);
     expect($tenant->name)->toBe('Acme Corp');
     expect($tenant->domains)->toHaveCount(1);
-    expect($tenant->domains->first()->domain)->toBe('acme.larashift.test');
+    expect($tenant->domains->first()->domain)->toBe('acme.' . config('tenancy.central_domain'));
 
     Event::assertDispatched(TenantProvisioned::class, function ($event) use ($tenant) {
         return $event->tenant->id === $tenant->id && $event->adminEmail === 'admin@acme.com';

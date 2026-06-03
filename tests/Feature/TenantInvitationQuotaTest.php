@@ -14,12 +14,25 @@ use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-it('enforces a limit of 10 pending invitations', function () {
+beforeEach(function () {
+    \App\Modules\Central\Billing\Models\Plan::updateOrCreate(
+        ['slug' => 'free'],
+        [
+            'name' => 'Free',
+            'price_monthly' => 0,
+            'price_yearly' => 0,
+            'features' => ['quotas' => ['invitations' => 5]],
+        ]
+    );
+});
+
+it('enforces a limit of pending invitations based on plan', function () {
     $tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
         'slug' => 'quota-test',
         'name' => 'Quota Test',
         'email' => 'quota@test.com',
+        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);
@@ -35,16 +48,16 @@ it('enforces a limit of 10 pending invitations', function () {
     Notification::fake();
     $action = app(SendInvitationAction::class);
 
-    // Create 10 invitations
-    for ($i = 0; $i < 10; $i++) {
+    // Create 5 invitations
+    for ($i = 0; $i < 5; $i++) {
         $action->execute("user{$i}@test.com", 'member', $admin);
     }
 
-    expect(Invitation::count())->toBe(10);
+    expect(Invitation::count())->toBe(5);
 
-    // 11th should fail
+    // 6th should fail
     $this->expectException(\Exception::class);
-    $this->expectExceptionMessage('Maximum limit of pending invitations reached (10).');
+    $this->expectExceptionMessage('Maximum limit of pending invitations reached for your plan.');
     
     $action->execute("extra@test.com", 'member', $admin);
 });
@@ -57,7 +70,8 @@ it('aborts with 410 if invitation is expired', function () {
         'email' => 'expire@test.com',
         'plan_id' => 'free',
     ]);
-    $tenant->domains()->create(['domain' => 'expire-test.larashift.test']);
+    $domain = 'expire-test.' . config('tenancy.central_domain');
+    $tenant->domains()->create(['domain' => $domain]);
 
     tenancy()->initialize($tenant);
 
@@ -70,6 +84,6 @@ it('aborts with 410 if invitation is expired', function () {
     ]);
 
     // Simulating Livewire mount logic via direct call or testing the route
-    $this->get('http://expire-test.larashift.test' . route('tenant.invitations.accept', ['token' => 'expired-token'], false))
+    $this->get("http://{$domain}" . route('tenant.invitations.accept', ['token' => 'expired-token'], false))
         ->assertStatus(410);
 });

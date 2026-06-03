@@ -94,7 +94,8 @@ it('returns 404 for cross-tenant access attempts', function () {
         'name' => 'Tenant A',
         'email' => 'a@test.com',
     ]);
-    $tenantA->domains()->create(['domain' => 'a.larashift.test']);
+    $domainA = 'a.' . config('tenancy.central_domain');
+    $tenantA->domains()->create(['domain' => $domainA]);
 
     $userA = User::create([
         'tenant_id' => $tenantA->id,
@@ -109,7 +110,8 @@ it('returns 404 for cross-tenant access attempts', function () {
         'name' => 'Tenant B',
         'email' => 'b@test.com',
     ]);
-    $tenantB->domains()->create(['domain' => 'b.larashift.test']);
+    $domainB = 'b.' . config('tenancy.central_domain');
+    $tenantB->domains()->create(['domain' => $domainB]);
 
     // Act as User A but try to access Tenant B domain
     $this->actingAs($userA);
@@ -118,6 +120,6 @@ it('returns 404 for cross-tenant access attempts', function () {
     Route::get('/api/resource', function () { return 'ok'; })
         ->middleware(['web', EnsureUserBelongsToTenant::class]);
 
-    $this->get('http://b.larashift.test/api/resource')
+    $this->get("http://{$domainB}/api/resource")
         ->assertStatus(404);
 });

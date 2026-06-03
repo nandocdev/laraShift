@@ -75,7 +75,8 @@ it('maps api key scopes to laravel gates', function () {
         'name' => 'Gate Test',
         'email' => 'gate@test.com',
     ]);
-    $tenant->domains()->create(['domain' => 'gate.larashift.test']);
+    $domain = 'gate.' . config('tenancy.central_domain');
+    $tenant->domains()->create(['domain' => $domain]);
 
     tenancy()->initialize($tenant);
     $user = \App\Modules\Tenant\Identity\Models\User::create([
@@ -89,13 +90,15 @@ it('maps api key scopes to laravel gates', function () {
     tenancy()->end();
 
     // Mock a route that uses standard Gate check
-    Route::middleware([\App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey::class])
-        ->get('/api/orders', function () {
-            return auth()->user()->can('orders:read') ? 'allowed' : 'denied';
-        });
+    Route::middleware([
+        \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+        \App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey::class
+    ])->get('/api/orders', function () {
+        return auth()->user()->can('orders:read') ? 'allowed' : 'denied';
+    });
 
     $this->withToken($plainKey)
-        ->getJson('http://gate.larashift.test/api/orders')
+        ->getJson("http://{$domain}/api/orders")
         ->assertStatus(200)
         ->assertSee('allowed');
 });
