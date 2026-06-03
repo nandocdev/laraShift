@@ -47,6 +47,8 @@ Route::middleware([
         \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class,
         \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant::class
     ])->group(function () {
+        Route::view('dashboard', 'dashboard')->name('dashboard');
+        
         Route::get('/team/members', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
         Route::get('/settings/roles', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class)->name('tenant.roles.index');
         Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
