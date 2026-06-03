@@ -31,7 +31,7 @@ class BrandingSettings extends Component
         $this->name = $settings->name;
         $this->logo_path = $settings->logo_path ?? '';
         $this->primary_color = $settings->primary_color ?? '#4f46e5';
-        $this->mfa_required = $settings->mfa_required;
+        $this->mfa_required = (bool) ($settings->mfa_required ?? false);
     }
 
     public function save(): void
