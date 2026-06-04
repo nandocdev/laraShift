@@ -17,19 +17,19 @@ class TenantSeeder extends Seeder
             [
                 'name' => 'Acme Corporation',
                 'slug' => 'acme',
-                'email' => 'admin@acme.test',
+                'email' => 'alone-setup-crock@duck.com',
                 'plan_id' => 'enterprise',
             ],
             [
                 'name' => 'Globex Corp',
                 'slug' => 'globex',
-                'email' => 'admin@globex.test',
+                'email' => 'ample-smell-unripe@duck.com',
                 'plan_id' => 'pro',
             ],
             [
                 'name' => 'Initech',
                 'slug' => 'initech',
-                'email' => 'admin@initech.test',
+                'email' => 'gusto-spied-disk@duck.com',
                 'plan_id' => 'free',
             ],
         ];

@@ -11,7 +11,7 @@ class CentralUserSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
-        $email = 'admin@' . config('tenancy.central_domain') . '.com';
+        $email = 'truck-grape-early@duck.com';
 
         CentralUser::updateOrCreate(
             ['email' => $email],
