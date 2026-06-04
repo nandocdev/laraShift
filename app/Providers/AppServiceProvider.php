@@ -46,6 +46,13 @@ class AppServiceProvider extends ServiceProvider
                     \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
                 ]);
         });
+
+        // Inject tenancy middleware into file preview route so it resolves the tenant disk.
+        \Livewire\Features\SupportFileUploads\FilePreviewController::$middleware = [
+            'web',
+            'universal',
+            \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+        ];
     }
 
     /**

@@ -122,7 +122,7 @@ return [
          */
         'root_override' => [
             // Disks whose roots should be overridden after storage_path() is suffixed.
-            'local' => '%storage_path%/app/',
+            'local' => '%storage_path%/app/private/',
             'public' => '%storage_path%/app/public/',
         ],
 
