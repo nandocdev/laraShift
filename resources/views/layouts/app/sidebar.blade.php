@@ -29,6 +29,15 @@
                     :current="request()->routeIs('tenant.roles.*')" wire:navigate>
                     {{ __('Roles & Permissions') }}
                 </flux:sidebar.item>
+                
+                @php
+                    $rootLanding = \App\Modules\Central\Landings\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
+                @endphp
+                @if($rootLanding)
+                    <flux:sidebar.item icon="megaphone" :href="route('tenant.landings.builder', $rootLanding)" target="_blank">
+                        {{ __('Landing Page') }}
+                    </flux:sidebar.item>
+                @endif
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Settings')" class="grid">

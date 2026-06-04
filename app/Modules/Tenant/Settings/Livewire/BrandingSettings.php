@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Settings\Livewire;
 
+use App\Modules\Central\Landings\Models\Landing;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,54 @@ class BrandingSettings extends Component
     public string $logo_path = '';
     public string $primary_color = '#4f46e5';
     public bool $mfa_required = false;
+
+    public function initializeLanding(): void
+    {
+        $tenant = tenant();
+        
+        $landing = Landing::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'slug' => 'saas-landing'],
+            [
+                'title' => $tenant->name . ' Landing',
+                'status' => 'draft',
+                'theme' => [
+                    'colors' => [
+                        'primary' => $this->primary_color,
+                        'secondary' => '#1e293b',
+                    ],
+                    'typography' => [
+                        'font_heading' => 'Inter',
+                        'font_body' => 'Inter',
+                    ]
+                ],
+                'blocks' => [
+                    [
+                        'id' => 'hero-initial',
+                        'type' => 'hero',
+                        'variant' => 'centered',
+                        'order' => 0,
+                        'config' => [
+                            'headline' => 'Welcome to ' . $tenant->name,
+                            'subtitle' => 'This is your new public landing page. You can edit this content in the Visual Builder.',
+                            'button_primary_text' => 'Get Started',
+                        ],
+                        'styles' => ['padding' => 'xl']
+                    ],
+                    [
+                        'id' => 'footer-initial',
+                        'type' => 'footer',
+                        'variant' => 'simple',
+                        'order' => 1,
+                        'config' => [
+                            'copyright_text' => '© ' . date('Y') . ' ' . $tenant->name,
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        session()->flash('status', __('Landing page initialized!'));
+    }
 
     public function updatedLogo(): void
     {

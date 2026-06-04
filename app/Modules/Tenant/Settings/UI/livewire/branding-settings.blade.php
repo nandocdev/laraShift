@@ -50,4 +50,37 @@
             <flux:switch wire:model="mfa_required" wire:click="save" />
         </div>
     </flux:card>
+
+    <flux:card class="space-y-6">
+        <div>
+            <flux:heading size="lg">{{ __('Public Landing Page') }}</flux:heading>
+            <flux:subheading>{{ __('Customize the page that visitors see when they visit your root domain.') }}</flux:subheading>
+        </div>
+
+        <div class="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-700">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-primary/10 text-primary rounded-xl">
+                    <flux:icon.megaphone size="lg" />
+                </div>
+                <div>
+                    <p class="font-bold text-zinc-800 dark:text-white">{{ __('Visual Builder') }}</p>
+                    <p class="text-sm text-zinc-500">{{ __('Drag, drop and edit your marketing site.') }}</p>
+                </div>
+            </div>
+
+            @php
+                $landing = \App\Modules\Central\Landings\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
+            @endphp
+
+            @if($landing)
+                <flux:button href="{{ route('tenant.landings.builder', $landing) }}" variant="primary" icon="pencil-square" target="_blank">
+                    {{ __('Open Builder') }}
+                </flux:button>
+            @else
+                <flux:button wire:click="initializeLanding" variant="primary" icon="plus">
+                    {{ __('Initialize Landing') }}
+                </flux:button>
+            @endif
+        </div>
+    </flux:card>
 </div>

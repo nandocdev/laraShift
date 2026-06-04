@@ -29,9 +29,7 @@ Route::middleware([
     ApplyTenantRateLimits::class,
     \App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions::class,
 ])->group(function () {
-    Route::get('/', function () {
-        return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
-    })->name('tenant.home');
+    Route::get('/', \App\Modules\Central\Landings\Http\Controllers\ServeTenantLandingController::class)->name('tenant.home');
 
     Route::get('/auth/login', \App\Modules\Tenant\Identity\Livewire\Login::class)->name('login');
     Route::get('/auth/2fa/verify', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class)->name('login.challenge');
@@ -65,5 +63,8 @@ Route::middleware([
         })->name('tenant.audit.download');
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
+
+        // Landing Builder
+        Route::get('/landings/{landing}/builder', \App\Modules\Central\Landings\Livewire\LandingBuilder::class)->name('tenant.landings.builder');
     });
 });
