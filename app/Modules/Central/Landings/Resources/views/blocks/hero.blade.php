@@ -17,91 +17,117 @@
         'secondary' => 'bg-secondary text-white',
         'surface' => 'bg-surface',
         'dark' => 'bg-gray-900 text-white',
+        'white' => 'bg-white',
         default => 'bg-white'
     };
+
+    $textAlign = $styles['text_align'] ?? ($variant === 'centered' ? 'center' : 'left');
+    $alignmentClass = match($textAlign) {
+        'center' => 'text-center',
+        'right' => 'text-right',
+        default => 'text-left'
+    };
+
+    $isFullscreen = ($variant === 'fullscreen' || ($styles['height'] ?? '') === 'screen');
+    $containerClass = $isFullscreen ? 'min-h-screen flex items-center' : '';
+
+    $overlayOpacity = (int) ($styles['overlay_opacity'] ?? 50);
 @endphp
 
-<section class="{{ $bgClass }} {{ $padding }}">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        @if($variant === 'centered')
-            <div class="text-center">
+<section class="relative overflow-hidden {{ $bgClass }} {{ ! $isFullscreen ? $padding : '' }} {{ $containerClass }}">
+    @if($variant === 'bg-image' && ($config['image_url'] ?? null))
+        <div class="absolute inset-0 z-0">
+            <img src="{{ $config['image_url'] }}" class="w-full h-full object-cover" alt="{{ $config['image_alt'] ?? '' }}">
+            <div class="absolute inset-0 bg-black" style="opacity: {{ $overlayOpacity / 100 }}"></div>
+        </div>
+    @endif
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        @if($variant === 'centered' || $variant === 'bg-image' || $variant === 'fullscreen')
+            <div class="max-w-4xl mx-auto {{ $alignmentClass }}">
                 @if($config['badge_text'] ?? null)
-                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
+                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-6 border border-primary/20">
                         {{ $config['badge_text'] }}
                     </span>
                 @endif
                 
-                <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+                <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-7xl leading-tight">
                     {{ $config['headline'] ?? 'Hero Headline' }}
                 </h1>
                 
                 @if($config['subtitle'] ?? null)
-                    <p class="mt-3 max-w-md mx-auto text-base sm:text-lg md:mt-5 md:text-xl md:max-w-3xl opacity-90">
+                    <p class="mt-6 text-lg sm:text-xl opacity-90 max-w-2xl {{ $textAlign === 'center' ? 'mx-auto' : ($textAlign === 'right' ? 'ml-auto' : '') }}">
                         {{ $config['subtitle'] }}
                     </p>
                 @endif
                 
-                <div class="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+                <div class="mt-10 flex flex-wrap gap-4 {{ $textAlign === 'center' ? 'justify-center' : ($textAlign === 'right' ? 'justify-end' : '') }}">
                     @if($config['button_primary_text'] ?? null)
-                        <div class="rounded-md shadow">
-                            <a href="{{ $config['button_primary_url'] ?? '#' }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:opacity-90 md:py-4 md:text-lg md:px-10">
-                                {{ $config['button_primary_text'] }}
-                            </a>
-                        </div>
+                        <a href="{{ $config['button_primary_url'] ?? '#' }}" class="px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg shadow-primary/20">
+                            {{ $config['button_primary_text'] }}
+                        </a>
                     @endif
                     
-                    @if($config['button_secondary_text'] ?? null)
-                        <div class="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-                            <a href="{{ $config['button_secondary_url'] ?? '#' }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
-                                {{ $config['button_secondary_text'] }}
-                            </a>
-                        </div>
+                    @if(($config['show_secondary_button'] ?? true) && ($config['button_secondary_text'] ?? null))
+                        <a href="{{ $config['button_secondary_url'] ?? '#' }}" class="px-8 py-4 bg-white/10 backdrop-blur-md border border-current/20 rounded-xl font-bold text-lg hover:bg-white/20 transition">
+                            {{ $config['button_secondary_text'] }}
+                        </a>
                     @endif
                 </div>
+
+                @if(($config['show_stats'] ?? false) && ($config['stats'] ?? null))
+                    <div class="mt-16 pt-8 border-t border-current/10 flex flex-wrap gap-12 {{ $textAlign === 'center' ? 'justify-center' : ($textAlign === 'right' ? 'justify-end' : '') }}">
+                        @foreach($config['stats'] as $stat)
+                            <div>
+                                <div class="text-3xl font-black">{{ $stat['value'] }}</div>
+                                <div class="text-xs uppercase tracking-widest opacity-60 font-bold">{{ $stat['label'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
-        @elseif($variant === 'split')
-            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
-                <div class="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+
+        @elseif($variant === 'split' || $variant === 'image-left')
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="{{ $variant === 'image-left' ? 'lg:order-2' : '' }} {{ $alignmentClass }}">
                     @if($config['badge_text'] ?? null)
-                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
+                        <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary mb-6">
                             {{ $config['badge_text'] }}
                         </span>
                     @endif
                     
-                    <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+                    <h1 class="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl leading-tight">
                         {{ $config['headline'] ?? 'Hero Headline' }}
                     </h1>
                     
                     @if($config['subtitle'] ?? null)
-                        <p class="mt-3 text-base sm:text-lg md:mt-5 md:text-xl opacity-90">
+                        <p class="mt-6 text-lg opacity-80 leading-relaxed">
                             {{ $config['subtitle'] }}
                         </p>
                     @endif
                     
-                    <div class="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            @if($config['button_primary_text'] ?? null)
-                                <a href="{{ $config['button_primary_url'] ?? '#' }}" class="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:opacity-90 md:py-4 md:text-lg md:px-10">
-                                    {{ $config['button_primary_text'] }}
-                                </a>
-                            @endif
-                            
-                            @if($config['button_secondary_text'] ?? null)
-                                <a href="{{ $config['button_secondary_url'] ?? '#' }}" class="flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
-                                    {{ $config['button_secondary_text'] }}
-                                </a>
-                            @endif
-                        </div>
+                    <div class="mt-10 flex flex-wrap gap-4">
+                        @if($config['button_primary_text'] ?? null)
+                            <a href="{{ $config['button_primary_url'] ?? '#' }}" class="px-8 py-4 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition">
+                                {{ $config['button_primary_text'] }}
+                            </a>
+                        @endif
+                        @if(($config['show_secondary_button'] ?? true) && ($config['button_secondary_text'] ?? null))
+                            <a href="{{ $config['button_secondary_url'] ?? '#' }}" class="px-8 py-4 bg-zinc-100 dark:bg-zinc-800 rounded-xl font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">
+                                {{ $config['button_secondary_text'] }}
+                            </a>
+                        @endif
                     </div>
                 </div>
-                
-                <div class="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-                    <div class="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
+
+                <div class="{{ $variant === 'image-left' ? 'lg:order-1' : '' }}">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-primary/10 rounded-[3rem] rotate-3 -z-10"></div>
                         @if($config['image_url'] ?? null)
-                            <img class="w-full rounded-lg" src="{{ $config['image_url'] }}" alt="{{ $config['image_alt'] ?? '' }}">
+                            <img class="w-full rounded-[2.5rem] shadow-2xl" src="{{ $config['image_url'] }}" alt="{{ $config['image_alt'] ?? '' }}">
                         @else
-                            <div class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <div class="aspect-square bg-zinc-100 dark:bg-zinc-800 rounded-[2.5rem] flex items-center justify-center text-zinc-400">
+                                <flux:icon.photo size="xl" />
                             </div>
                         @endif
                     </div>
