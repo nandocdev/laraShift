@@ -1017,4 +1017,4 @@ Decisión: los bloques son planos. No hay columns-inside-columns ni tabs-inside-
 - Definir el sistema de íconos: ¿Heroicons, Lucide, o set custom del tema?
 - Establecer proceso de QA por bloque: checklist de accesibilidad, responsive, dark mode.
 
-─ Fin del documento ─
+─ Fin del documento 
