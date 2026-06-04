@@ -11,7 +11,7 @@
         $brandName = $tenant->name ?? $brandName;
         $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::where('tenant_id', $tenant->getTenantKey())->first();
         if ($settings && $settings->logo_path) {
-            $logoUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($settings->logo_path);
+            $logoUrl = tenant_asset($settings->logo_path);
         }
     } else {
         $brandName = \App\Modules\Central\Settings\Support\CentralBranding::platformName();

@@ -6,6 +6,7 @@ namespace App\Modules\Tenant\Settings\Livewire;
 
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -88,10 +89,20 @@ class BrandingSettings extends Component
         ];
 
         if ($this->logo) {
-            $data['logo_path'] = $this->logo->store("tenant_" . tenant('id') . "/branding", 'public');
+            // Delete previous logo if exists
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+
+            // Disk is already tenant-scoped by FilesystemTenancyBootstrapper
+            $data['logo_path'] = $this->logo->store('branding', 'public');
         }
 
         $settings->update($data);
+
+        // Refresh local state so the view renders the saved logo immediately
+        $this->logo_path = $settings->fresh()->logo_path ?? '';
+        $this->reset('logo');
 
         // Update Central Tenant record name if needed for consistency
         tenant()->update(['name' => $this->name]);

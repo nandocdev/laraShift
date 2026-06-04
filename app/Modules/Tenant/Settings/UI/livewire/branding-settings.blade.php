@@ -19,7 +19,7 @@
                     @if($this->logoPreviewUrl)
                         <img src="{{ $this->logoPreviewUrl }}" class="h-12 w-auto mb-2">
                     @elseif($logo_path)
-                        <img src="{{ Storage::disk('public')->url($logo_path) }}" class="h-12 w-auto mb-2">
+                        <img src="{{ tenant_asset($logo_path) }}" class="h-12 w-auto mb-2">
                     @endif
                     
                     <flux:input wire:model="logo" type="file" :label="__('Upload New Logo')" />
