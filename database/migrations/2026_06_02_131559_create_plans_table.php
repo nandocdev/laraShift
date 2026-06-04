@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('plans', function (Blueprint $table) {
+        if (! Schema::hasTable('plans')) {
+            Schema::create('plans', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('slug')->unique();
@@ -22,7 +23,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->jsonb('features');
             $table->timestamps();
-        });
+            });
+        }
     }
 
     /**
