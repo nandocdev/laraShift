@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subscription_items', function (Blueprint $table) {
+        if (! Schema::hasTable('subscription_items')) {
+            Schema::create('subscription_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subscription_id');
             $table->string('stripe_id')->unique();
@@ -21,7 +22,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['subscription_id', 'stripe_price']);
-        });
+            });
+        }
     }
 
     /**
