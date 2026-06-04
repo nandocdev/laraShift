@@ -57,9 +57,18 @@ final readonly class CreateTenantAction {
 
             // Step 4: Billing Setup (Plinth) — only for paid plans
             $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
-                $plan = Plan::where('slug', $data->plan_id)->first();
+                $plan = null;
 
-                if ($plan && $plan->price_monthly > 0 && $data->payment_token) {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {
+                    $plan = Plan::where('slug', $data->plan_id)->first();
+                } else {
+                    // Fallback: try provider_plan_id or name, or the first plan available
+                    $plan = Plan::where('provider_plan_id', $data->plan_id)->first()
+                        ?? Plan::where('name', $data->plan_id)->first()
+                        ?? Plan::first();
+                }
+
+                if ($plan && (data_get($plan, 'price_monthly', 0) > 0) && $data->payment_token) {
                     // Register payment method + subscription
                     app(RegisterPaymentMethodAction::class)->execute(
                         $tenant,
