@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoices', function (Blueprint $table) {
+        if (! Schema::hasTable('invoices')) {
+            Schema::create('invoices', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('tenant_id')->index();
             $table->unsignedBigInteger('subscription_id')->nullable()->index();
@@ -27,7 +28,8 @@ return new class extends Migration
             $table->timestamp('period_end');
             $table->text('pdf_url')->nullable();
             $table->timestamps();
-        });
+            });
+        }
     }
 
     /**
