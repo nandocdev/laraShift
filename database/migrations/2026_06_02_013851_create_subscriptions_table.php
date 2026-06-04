@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('subscriptions', function (Blueprint $table) {
+        if (! Schema::hasTable('subscriptions')) {
+            Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
             $table->uuid('tenant_id');
             $table->string('type');
@@ -24,7 +25,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['tenant_id', 'stripe_status']);
-        });
+            });
+        }
     }
 
     /**
