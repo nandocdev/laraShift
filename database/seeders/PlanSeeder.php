@@ -11,6 +11,10 @@ use Illuminate\Support\Str;
 
 class PlanSeeder extends Seeder {
    public function run(): void {
+      if (!\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {
+         echo "plans table does not have 'slug' column; skipping PlanSeeder.\n";
+         return;
+      }
       $plans = [
          [
             'name' => 'Free',
