@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::create('plan_features', function (Blueprint $table) {
             // Use unsigned big integer for plan_id to match existing `plans.id` created by billing package.
             $table->unsignedBigInteger('plan_id');
-            $table->foreignId('feature_id')->constrained('features')->onDelete('cascade');
+            $table->foreignUuid('feature_id')->constrained('features')->onDelete('cascade');
 
             $table->foreign('plan_id')->references('id')->on('plans')->onDelete('cascade');
             $table->primary(['plan_id', 'feature_id']);
