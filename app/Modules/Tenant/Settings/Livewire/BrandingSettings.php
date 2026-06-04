@@ -21,6 +21,34 @@ class BrandingSettings extends Component
     public string $primary_color = '#4f46e5';
     public bool $mfa_required = false;
 
+    public function updatedLogo(): void
+    {
+        try {
+            $this->validate([
+                'logo' => 'image|max:2048',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            // Handle Flysystem errors (missing metadata/file) or other upload failures
+            $this->reset('logo');
+            $this->addError('logo', __('The uploaded file could not be processed. Please try again.'));
+        }
+    }
+
+    public function getLogoPreviewUrlProperty(): ?string
+    {
+        if (! $this->logo || $this->getErrorBag()->has('logo')) {
+            return null;
+        }
+
+        try {
+            return $this->logo->temporaryUrl();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     public function mount(): void
     {
         $settings = TenantSetting::firstOrCreate(
@@ -36,12 +64,20 @@ class BrandingSettings extends Component
 
     public function save(): void
     {
-        $this->validate([
-            'name' => 'required|string|max:255',
-            'logo' => 'nullable|image|max:2048',
-            'primary_color' => 'required|hex_color',
-            'mfa_required' => 'boolean',
-        ]);
+        try {
+            $this->validate([
+                'name' => 'required|string|max:255',
+                'logo' => 'nullable|image|max:2048',
+                'primary_color' => 'required|hex_color',
+                'mfa_required' => 'boolean',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            $this->reset('logo');
+            $this->addError('logo', __('The uploaded file could not be processed. Please try again.'));
+            return;
+        }
 
         $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
 
