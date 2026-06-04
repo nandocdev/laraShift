@@ -102,6 +102,12 @@ class TenancyServiceProvider extends ServiceProvider
         $this->bootEvents();
         $this->mapRoutes();
 
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Modules\Shared\Tenancy\Console\Commands\EnableRlsCommand::class,
+            ]);
+        }
+
         $this->makeTenancyMiddlewareHighestPriority();
     }
 
