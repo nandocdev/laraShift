@@ -650,23 +650,60 @@
 
                         <!-- FAQ Editor -->
                         <template x-if="selectedBlock.type === 'faq'">
-                            <div class="space-y-4">
-                                <flux:heading size="sm">{{ __('Manage FAQ Items') }}</flux:heading>
-                                <template x-for="(item, index) in selectedBlock.config.items" :key="index">
-                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
-                                        <div class="flex justify-between items-center">
-                                            <flux:icon.question-mark-circle size="xs" class="text-zinc-400" />
-                                            <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                <flux:icon.trash size="xs" />
-                                            </button>
-                                        </div>
-                                        <flux:input x-model="item.question" placeholder="Question" x-on:input="isDirty = true" size="sm" />
-                                        <flux:textarea x-model="item.answer" placeholder="Answer" x-on:input="isDirty = true" rows="2" size="sm" />
+                            <div class="space-y-6">
+                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <div class="flex items-center justify-between">
+                                        <flux:label>{{ __('Open First Item') }}</flux:label>
+                                        <flux:switch x-model="selectedBlock.config.open_first" x-on:change="isDirty = true" />
                                     </div>
-                                </template>
-                                <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({question: 'New Question', answer: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                    {{ __('+ Add FAQ Item') }}
-                                </flux:button>
+                                    <template x-if="selectedBlock.variant === 'accordion'">
+                                        <flux:field>
+                                            <flux:label>{{ __('Icon Type') }}</flux:label>
+                                            <flux:select x-model="selectedBlock.config.icon_type" x-on:change="isDirty = true">
+                                                <option value="chevron">{{ __('Chevron') }}</option>
+                                                <option value="plus">{{ __('Plus/Minus') }}</option>
+                                            </flux:select>
+                                        </flux:field>
+                                    </template>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Manage FAQ Items') }}</flux:heading>
+                                    <template x-for="(item, index) in selectedBlock.config.items" :key="index">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <flux:icon icon="question-mark-circle" size="xs" class="text-zinc-400" />
+                                                <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                    <flux:icon.trash size="xs" />
+                                                </button>
+                                            </div>
+                                            <flux:input x-model="item.question" placeholder="Question" x-on:input="isDirty = true" size="sm" class="font-bold" />
+                                            <flux:textarea x-model="item.answer" placeholder="Answer" x-on:input="isDirty = true" rows="3" size="sm" />
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({question: 'New Question', answer: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        {{ __('+ Add FAQ Item') }}
+                                    </flux:button>
+                                </div>
+
+                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <div class="flex items-center justify-between">
+                                        <flux:heading size="sm">{{ __('Contact CTA') }}</flux:heading>
+                                        <flux:switch x-model="selectedBlock.config.show_contact_cta" x-on:change="isDirty = true" />
+                                    </div>
+                                    <template x-if="selectedBlock.config.show_contact_cta">
+                                        <div class="space-y-3 pt-2">
+                                            <flux:input x-model="selectedBlock.config.contact_cta_text" placeholder="Button Label" x-on:input="isDirty = true" size="sm" />
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <flux:input x-model="selectedBlock.config.contact_cta_url" placeholder="URL or #anchor" x-on:input="isDirty = true" size="xs" />
+                                                <select x-model="selectedBlock.config.contact_cta_target" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
+                                                    <option value="_self">Same Tab</option>
+                                                    <option value="_blank">New Tab</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </template>
 
@@ -947,6 +984,29 @@
                                         <option value="screen">{{ __('Full Screen (100vh)') }}</option>
                                     </flux:select>
                                 </flux:field>
+                            </div>
+                        </template>
+                        
+                        <!-- FAQ Advanced Styles -->
+                        <template x-if="selectedBlock.type === 'faq'">
+                            <div class="space-y-4 pt-4">
+                                <flux:field>
+                                    <flux:label>{{ __('Header Alignment') }}</flux:label>
+                                    <flux:select x-model="selectedBlock.styles.text_align" x-on:change="isDirty = true">
+                                        <option value="center">{{ __('Center') }}</option>
+                                        <option value="left">{{ __('Left') }}</option>
+                                    </flux:select>
+                                </flux:field>
+                                <template x-if="selectedBlock.variant === 'accordion'">
+                                    <flux:field>
+                                        <flux:label>{{ __('Item Style') }}</flux:label>
+                                        <flux:select x-model="selectedBlock.styles.item_style" x-on:change="isDirty = true">
+                                            <option value="boxed">{{ __('Boxed') }}</option>
+                                            <option value="separated">{{ __('Separated Cards') }}</option>
+                                            <option value="flat">{{ __('Flat (Divider only)') }}</option>
+                                        </flux:select>
+                                    </flux:field>
+                                </template>
                             </div>
                         </template>
                     </div>
