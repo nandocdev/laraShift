@@ -130,36 +130,82 @@
             <flux:heading size="sm" class="mb-4 uppercase tracking-wider text-zinc-500">{{ __('Page Structure') }}</flux:heading>
             <div class="grid gap-2">
                 <template x-for="(block, index) in blocks" :key="block.id">
-                    <div 
-                        x-on:click="selectedBlockId = block.id"
-                        class="flex flex-col p-2 rounded-md cursor-pointer border transition relative"
-                        :class="selectedBlockId === block.id ? 'bg-zinc-100 border-zinc-300' : 'bg-white border-transparent hover:bg-zinc-50'"
+    <div
+        x-on:click="selectedBlockId = block.id"
+        class="group relative rounded-xl border p-3 transition-all duration-200 cursor-pointer"
+        :class="
+            selectedBlockId === block.id
+                ? 'border-zinc-300 bg-zinc-50 shadow-sm ring-1 ring-zinc-200'
+                : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
+        "
+    >
+        <!-- Header -->
+        <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <span
+                        class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium capitalize text-zinc-700"
+                        x-text="block.type"
+                    ></span>
+
+                    <span
+                        x-show="selectedBlockId === block.id"
+                        class="text-[10px] font-medium uppercase tracking-wider text-zinc-500"
                     >
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-bold capitalize" x-text="block.type"></span>
-                            <div class="flex gap-1">
-                                <button x-on:click.stop="moveBlock(block.id, 'up')" class="p-1 hover:bg-zinc-200 rounded text-zinc-500">
-                                    <flux:icon.chevron-up size="xs" />
-                                </button>
-                                <button x-on:click.stop="moveBlock(block.id, 'down')" class="p-1 hover:bg-zinc-200 rounded text-zinc-500">
-                                    <flux:icon.chevron-down size="xs" />
-                                </button>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1 mt-1">
-                            <flux:icon.hashtag size="xs" class="text-zinc-400" />
-                            <span class="text-[10px] font-mono text-zinc-400 select-all" x-text="block.id"></span>
-                        </div>
-                        <button 
-                            x-show="selectedBlockId === block.id" 
-                            x-on:click.stop="removeBlock(block.id)" 
-                            class="absolute -right-2 -top-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-sm transition"
-                            title="{{ __('Delete Block') }}"
-                        >
-                            <flux:icon.x-mark size="xs" stroke-width="3" />
-                        </button>
-                    </div>
-                </template>
+                        Selected
+                    </span>
+                </div>
+
+                <div class="mt-2 flex items-center gap-1">
+                    <flux:icon.hashtag class="size-3 text-zinc-400" />
+
+                    <span
+                        class="font-mono text-[11px] text-zinc-500 truncate"
+                        x-text="block.id"
+                    ></span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div
+                class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+            >
+                <flux:button
+                    size="xs"
+                    variant="ghost"
+                    x-on:click.stop="moveBlock(block.id, 'up')"
+                >
+                    <flux:icon.chevron-up />
+                </flux:button>
+
+                <flux:button
+                    size="xs"
+                    variant="ghost"
+                    x-on:click.stop="moveBlock(block.id, 'down')"
+                >
+                    <flux:icon.chevron-down />
+                </flux:button>
+            </div>
+        </div>
+
+        <!-- Delete -->
+        <div
+            x-show="selectedBlockId === block.id"
+            x-transition
+            class="absolute right-2 top-2"
+        >
+            <flux:button
+                variant="danger"
+                size="xs"
+                square
+                x-on:click.stop="removeBlock(block.id)"
+                title="{{ __('Delete Block') }}"
+            >
+                <flux:icon.x-mark />
+            </flux:button>
+        </div>
+    </div>
+</template>
             </div>
         </aside>
 
