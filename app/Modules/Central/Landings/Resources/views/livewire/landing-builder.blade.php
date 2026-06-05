@@ -709,30 +709,72 @@
 
                         <!-- About Editor -->
                         <template x-if="selectedBlock.type === 'about'">
-                            <div class="space-y-4">
+                            <div class="space-y-6">
                                 <flux:field>
-                                    <flux:label>{{ __('Section Description') }}</flux:label>
-                                    <flux:textarea x-model="selectedBlock.config.description" x-on:input="isDirty = true" rows="5" />
+                                    <flux:label>{{ __('Description / Story') }}</flux:label>
+                                    <flux:textarea x-model="selectedBlock.config.description" x-on:input="isDirty = true" rows="5" size="sm" />
                                 </flux:field>
+
+                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <div class="flex items-center justify-between">
+                                        <flux:heading size="sm">{{ __('Call to Action') }}</flux:heading>
+                                        <flux:switch x-model="selectedBlock.config.show_cta" x-on:change="isDirty = true" />
+                                    </div>
+                                    <template x-if="selectedBlock.config.show_cta">
+                                        <div class="space-y-3 pt-2">
+                                            <flux:input x-model="selectedBlock.config.cta_text" placeholder="Button Label" x-on:input="isDirty = true" size="sm" />
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <flux:input x-model="selectedBlock.config.cta_url" placeholder="URL or #anchor" x-on:input="isDirty = true" size="xs" />
+                                                <select x-model="selectedBlock.config.cta_target" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
+                                                    <option value="_self">Same Tab</option>
+                                                    <option value="_blank">New Tab</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Key Metrics') }}</flux:heading>
+                                    <template x-for="(metric, mIndex) in selectedBlock.config.metrics" :key="mIndex">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <flux:input x-model="metric.value" placeholder="Value (e.g. 10+)" x-on:input="isDirty = true" size="xs" class="font-bold w-1/2" />
+                                                <button x-on:click="selectedBlock.config.metrics.splice(mIndex, 1); isDirty = true" class="text-red-500"><flux:icon.trash size="xs" /></button>
+                                            </div>
+                                            <flux:input x-model="metric.label" placeholder="Label (e.g. Years)" x-on:input="isDirty = true" size="xs" />
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.metrics = selectedBlock.config.metrics || []; selectedBlock.config.metrics.push({value: '10', label: 'New Metric'}); isDirty = true" variant="outline" size="xs" class="w-full">+ Add Metric</flux:button>
+                                </div>
                                 
                                 <template x-if="selectedBlock.variant === 'team-intro'">
                                     <div class="space-y-4">
                                         <flux:heading size="sm">{{ __('Manage Team') }}</flux:heading>
                                         <template x-for="(member, index) in selectedBlock.config.team_members" :key="index">
-                                            <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
+                                            <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
                                                 <div class="flex justify-between items-center">
-                                                    <flux:input x-model="member.name" placeholder="Name" x-on:input="isDirty = true" size="sm" />
+                                                    <flux:input x-model="member.name" placeholder="Full Name" x-on:input="isDirty = true" size="sm" class="font-bold" />
                                                     <button x-on:click="selectedBlock.config.team_members.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
                                                         <flux:icon.trash size="xs" />
                                                     </button>
                                                 </div>
-                                                <flux:input x-model="member.role" placeholder="Role" x-on:input="isDirty = true" size="sm" />
+                                                <flux:input x-model="member.role" placeholder="Role / Position" x-on:input="isDirty = true" size="xs" />
+                                                <flux:input x-model="member.avatar_url" placeholder="Avatar URL" x-on:input="isDirty = true" size="xs" />
+                                                <flux:textarea x-model="member.bio" placeholder="Short bio..." x-on:input="isDirty = true" rows="2" size="xs" />
                                             </div>
                                         </template>
-                                        <flux:button x-on:click="selectedBlock.config.team_members = selectedBlock.config.team_members || []; selectedBlock.config.team_members.push({name: 'New Member', role: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        <flux:button x-on:click="selectedBlock.config.team_members = selectedBlock.config.team_members || []; selectedBlock.config.team_members.push({name: 'New Member', role: 'Team Lead', avatar_url: '', bio: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
                                             {{ __('+ Add Member') }}
                                         </flux:button>
                                     </div>
+                                </template>
+
+                                <template x-if="['image-right', 'image-left'].includes(selectedBlock.variant)">
+                                    <flux:field>
+                                        <flux:label>{{ __('Image URL') }}</flux:label>
+                                        <flux:input x-model="selectedBlock.config.image_url" placeholder="https://..." x-on:input="isDirty = true" />
+                                    </flux:field>
                                 </template>
                             </div>
                         </template>
