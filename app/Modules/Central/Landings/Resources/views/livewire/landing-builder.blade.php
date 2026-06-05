@@ -739,25 +739,76 @@
 
                         <!-- Contact Editor -->
                         <template x-if="selectedBlock.type === 'contact'">
-                            <div class="space-y-4">
-                                <flux:field>
-                                    <flux:label>{{ __('Email Address') }}</flux:label>
-                                    <flux:input x-model="selectedBlock.config.email" x-on:input="isDirty = true" size="sm" />
-                                </flux:field>
-                                <flux:field>
-                                    <flux:label>{{ __('Phone Number') }}</flux:label>
-                                    <flux:input x-model="selectedBlock.config.phone" x-on:input="isDirty = true" size="sm" />
-                                </flux:field>
-                                <flux:field>
-                                    <flux:label>{{ __('Physical Address') }}</flux:label>
-                                    <flux:textarea x-model="selectedBlock.config.address" x-on:input="isDirty = true" rows="2" size="sm" />
-                                </flux:field>
-                                
+                            <div class="space-y-6">
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Form Fields') }}</flux:heading>
+                                    <template x-for="(field, fIndex) in selectedBlock.config.fields" :key="fIndex">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <select x-model="field.type" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
+                                                    <option value="text">Text</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="tel">Phone</option>
+                                                    <option value="textarea">Message</option>
+                                                </select>
+                                                <button x-on:click="selectedBlock.config.fields.splice(fIndex, 1); isDirty = true" class="text-red-500"><flux:icon.trash size="xs" /></button>
+                                            </div>
+                                            <flux:input x-model="field.label" placeholder="Label" size="xs" x-on:input="isDirty = true" />
+                                            <flux:input x-model="field.placeholder" placeholder="Placeholder" size="xs" x-on:input="isDirty = true" />
+                                            <div class="flex items-center justify-between">
+                                                <flux:label size="sm">{{ __('Required') }}</flux:label>
+                                                <flux:switch x-model="field.required" x-on:change="isDirty = true" />
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.fields = selectedBlock.config.fields || []; selectedBlock.config.fields.push({type: 'text', label: 'New Field', name: 'field_' + Date.now(), required: false}); isDirty = true" variant="outline" size="xs" class="w-full">+ Add Field</flux:button>
+                                </div>
+
+                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <flux:heading size="sm">{{ __('Submission Settings') }}</flux:heading>
+                                    <flux:input x-model="selectedBlock.config.submit_text" placeholder="Submit Button Label" x-on:input="isDirty = true" size="sm" />
+                                    <flux:textarea x-model="selectedBlock.config.success_message" placeholder="Success Message" x-on:input="isDirty = true" rows="2" size="sm" />
+                                </div>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Business Information') }}</flux:heading>
+                                    
+                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <flux:label size="sm">{{ __('Show Email') }}</flux:label>
+                                            <flux:switch x-model="selectedBlock.config.show_email" x-on:change="isDirty = true" />
+                                        </div>
+                                        <template x-if="selectedBlock.config.show_email">
+                                            <flux:input x-model="selectedBlock.config.email" placeholder="Email Address" size="xs" x-on:input="isDirty = true" />
+                                        </template>
+                                    </div>
+
+                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <flux:label size="sm">{{ __('Show Phone') }}</flux:label>
+                                            <flux:switch x-model="selectedBlock.config.show_phone" x-on:change="isDirty = true" />
+                                        </div>
+                                        <template x-if="selectedBlock.config.show_phone">
+                                            <flux:input x-model="selectedBlock.config.phone" placeholder="Phone Number" size="xs" x-on:input="isDirty = true" />
+                                        </template>
+                                    </div>
+
+                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <flux:label size="sm">{{ __('Show Address') }}</flux:label>
+                                            <flux:switch x-model="selectedBlock.config.show_address" x-on:change="isDirty = true" />
+                                        </div>
+                                        <template x-if="selectedBlock.config.show_address">
+                                            <flux:textarea x-model="selectedBlock.config.address" placeholder="Physical Address" size="xs" x-on:input="isDirty = true" rows="2" />
+                                        </template>
+                                    </div>
+                                </div>
+
                                 <template x-if="selectedBlock.variant === 'map-included'">
-                                    <flux:field>
-                                        <flux:label>{{ __('Google Maps Embed URL') }}</flux:label>
-                                        <flux:input x-model="selectedBlock.config.map_embed_url" x-on:input="isDirty = true" size="sm" placeholder="https://www.google.com/maps/embed?..." />
-                                    </flux:field>
+                                    <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                        <flux:heading size="sm">{{ __('Map Settings') }}</flux:heading>
+                                        <flux:input x-model="selectedBlock.config.map_embed_url" placeholder="Google Maps Embed URL" x-on:input="isDirty = true" size="sm" />
+                                    </div>
                                 </template>
                             </div>
                         </template>
