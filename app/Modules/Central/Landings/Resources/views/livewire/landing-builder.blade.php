@@ -205,59 +205,12 @@
                             ]"
                         >
                             <!-- Visual Block Representation (Alpine-based) -->
-                            <div class="p-12 text-center">
-                                <div x-show="block.type === 'hero'" class="space-y-4">
-                                    <div class="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold" x-text="block.config.badge_text || 'Badge'"></div>
-                                    <h1 class="text-4xl font-black" x-text="block.config.headline"></h1>
-                                    <p class="max-w-xl mx-auto opacity-70" x-text="block.config.subtitle"></p>
-                                    <div class="flex justify-center gap-4 pt-4">
-                                        <div class="px-6 py-3 bg-primary text-white rounded-lg font-bold" x-text="block.config.button_primary_text || 'CTA Primary'"></div>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'cta'" class="space-y-4 py-8">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline"></h2>
-                                    <p class="opacity-80" x-text="block.config.description"></p>
-                                    <div class="inline-block px-8 py-4 bg-white text-primary rounded-xl font-black shadow-lg" x-text="block.config.button_primary_text || 'Action'"></div>
-                                </div>
-
-                                <div x-show="block.type === 'features'" class="space-y-8">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Features'"></h2>
-                                    <div class="grid grid-cols-3 gap-6">
-                                        <template x-for="f in (block.config.features || [{title: 'Feature', description: 'Desc'}])">
-                                            <div class="p-6 border border-zinc-100 rounded-2xl text-left bg-white/5">
-                                                <div class="w-10 h-10 bg-primary/20 rounded-lg mb-4"></div>
-                                                <h4 class="font-bold mb-2" x-text="f.title"></h4>
-                                                <p class="text-sm opacity-60" x-text="f.description"></p>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'pricing'" class="space-y-8">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Pricing'"></h2>
-                                    <div class="grid grid-cols-3 gap-6">
-                                        <template x-for="p in (block.config.plans || [{name: 'Plan', price_monthly: 0}])">
-                                            <div class="p-8 border border-zinc-200 rounded-3xl text-left bg-white/5">
-                                                <h4 class="font-bold text-lg mb-4" x-text="p.name"></h4>
-                                                <div class="text-4xl font-black mb-6" x-text="'$' + p.price_monthly"></div>
-                                                <div class="w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-center text-sm font-bold">{{ __('Choose Plan') }}</div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'faq'" class="space-y-6 text-left max-w-2xl mx-auto">
-                                    <h2 class="text-3xl font-bold text-center mb-8" x-text="block.config.headline || 'FAQ'"></h2>
-                                    <template x-for="item in (block.config.items || [{question: 'Question?', answer: 'Answer'}])">
-                                        <div class="p-4 border border-zinc-200 rounded-xl bg-white/5">
-                                            <div class="font-bold flex justify-between">
-                                                <span x-text="item.question"></span>
-                                                <flux:icon.plus size="xs" />
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
+                            <div class="pointer-events-none">
+                                @include('landings::livewire.previews.hero')
+                                @include('landings::livewire.previews.cta')
+                                @include('landings::livewire.previews.features')
+                                @include('landings::livewire.previews.pricing')
+                                @include('landings::livewire.previews.faq')
 
                                 <div x-show="block.type === 'contact'" class="space-y-4">
                                     <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Contact Us'"></h2>
