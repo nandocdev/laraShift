@@ -211,6 +211,7 @@
                                 @include('landings::livewire.previews.features')
                                 @include('landings::livewire.previews.pricing')
                                 @include('landings::livewire.previews.faq')
+                                @include('landings::livewire.previews.trust-signals')
 
                                 <div x-show="block.type === 'contact'" class="space-y-4">
                                     <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Contact Us'"></h2>
@@ -250,15 +251,6 @@
                                                     </div>
                                                 </template>
                                             </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'trust-signals'" class="space-y-6">
-                                    <h3 class="text-sm font-bold uppercase tracking-widest opacity-40" x-text="block.config.section_title || 'Trusted By'"></h3>
-                                    <div class="flex flex-wrap justify-center gap-8 opacity-50 grayscale">
-                                        <template x-for="item in (block.config.items || [{alt: 'Company 1'}, {alt: 'Company 2'}])">
-                                            <div class="font-black text-2xl tracking-tighter" x-text="item.alt"></div>
                                         </template>
                                     </div>
                                 </div>
