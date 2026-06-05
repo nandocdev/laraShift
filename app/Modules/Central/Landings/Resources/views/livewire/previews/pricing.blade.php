@@ -60,8 +60,8 @@
                     <ul class="mb-10 space-y-4 flex-1">
                         <template x-for="feature in (plan.features || [])">
                             <li class="flex items-start text-sm">
-                                <flux:icon.check-circle variant="solid" class="mr-3 h-5 w-5" :class="feature.included !== false ? 'text-primary' : 'text-zinc-300 dark:text-zinc-600 opacity-50'" />
-                                <span :class="feature.included !== false ? 'font-medium' : 'opacity-40 line-through'" x-text="feature.text"></span>
+                                <flux:icon.check-circle variant="solid" class="mr-3 h-5 w-5" x-bind:class="feature.included !== false ? 'text-primary' : 'text-zinc-300 dark:text-zinc-600 opacity-50'" />
+                                <span x-bind:class="feature.included !== false ? 'font-medium' : 'opacity-40 line-through'" x-text="feature.text"></span>
                             </li>
                         </template>
                     </ul>
