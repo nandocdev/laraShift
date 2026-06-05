@@ -132,7 +132,7 @@
                 <template x-for="(block, index) in blocks" :key="block.id">
                     <div 
                         x-on:click="selectedBlockId = block.id"
-                        class="flex flex-col p-2 rounded-md cursor-pointer border transition"
+                        class="flex flex-col p-2 rounded-md cursor-pointer border transition relative"
                         :class="selectedBlockId === block.id ? 'bg-zinc-100 border-zinc-300' : 'bg-white border-transparent hover:bg-zinc-50'"
                     >
                         <div class="flex items-center justify-between">
@@ -150,6 +150,14 @@
                             <flux:icon.hashtag size="xs" class="text-zinc-400" />
                             <span class="text-[10px] font-mono text-zinc-400 select-all" x-text="block.id"></span>
                         </div>
+                        <button 
+                            x-show="selectedBlockId === block.id" 
+                            x-on:click.stop="removeBlock(block.id)" 
+                            class="absolute -right-2 -top-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-sm transition"
+                            title="{{ __('Delete Block') }}"
+                        >
+                            <flux:icon.x-mark size="xs" stroke-width="3" />
+                        </button>
                     </div>
                 </template>
             </div>
