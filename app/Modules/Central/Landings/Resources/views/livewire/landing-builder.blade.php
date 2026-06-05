@@ -293,7 +293,16 @@
                                     </div>
                                 </div>
 
-                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                                <div x-show="block.type === 'trust-signals'" class="space-y-6">
+                                    <h3 class="text-sm font-bold uppercase tracking-widest opacity-40" x-text="block.config.section_title || 'Trusted By'"></h3>
+                                    <div class="flex flex-wrap justify-center gap-8 opacity-50 grayscale">
+                                        <template x-for="item in (block.config.items || [{alt: 'Company 1'}, {alt: 'Company 2'}])">
+                                            <div class="font-black text-2xl tracking-tighter" x-text="item.alt"></div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery', 'trust-signals', 'about', 'lead-form'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                                     <flux:heading size="lg" x-text="block.config.headline || block.type"></flux:heading>
                                     <flux:text x-text="'Preview for ' + block.type + ' coming soon'"></flux:text>
                                 </div>
@@ -532,22 +541,41 @@
 
                         <!-- Trust Signals Editor -->
                         <template x-if="selectedBlock.type === 'trust-signals'">
-                            <div class="space-y-4">
-                                <flux:heading size="sm">{{ __('Manage Logos/Badges') }}</flux:heading>
-                                <template x-for="(item, index) in selectedBlock.config.items" :key="index">
-                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
-                                        <div class="flex justify-between items-center">
-                                            <flux:input x-model="item.logo_url" placeholder="Logo URL" x-on:input="isDirty = true" size="sm" class="w-2/3" />
-                                            <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                <flux:icon.trash size="xs" />
-                                            </button>
-                                        </div>
-                                        <flux:input x-model="item.alt" placeholder="Company/Badge Name" x-on:input="isDirty = true" size="sm" />
+                            <div class="space-y-6">
+                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <div class="flex items-center justify-between">
+                                        <flux:label size="sm">{{ __('Apply Grayscale Filter') }}</flux:label>
+                                        <flux:switch x-model="selectedBlock.config.grayscale" x-on:change="isDirty = true" />
                                     </div>
-                                </template>
-                                <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({logo_url: '', alt: '', description: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                    {{ __('+ Add Logo') }}
-                                </flux:button>
+                                    <div class="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                                        <flux:label size="sm">{{ __('Show Original Colors on Hover') }}</flux:label>
+                                        <flux:switch x-model="selectedBlock.config.show_hover_color" x-on:change="isDirty = true" />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Manage Logos / Badges') }}</flux:heading>
+                                    <template x-for="(item, index) in selectedBlock.config.items" :key="index">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <flux:input x-model="item.logo_url" placeholder="Logo Image URL" x-on:input="isDirty = true" size="sm" class="font-bold w-3/4" />
+                                                <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                    <flux:icon.trash size="xs" />
+                                                </button>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <flux:input x-model="item.alt" placeholder="Company / Badge Name" x-on:input="isDirty = true" size="xs" />
+                                                <flux:input x-model="item.url" placeholder="Link URL (optional)" x-on:input="isDirty = true" size="xs" />
+                                            </div>
+                                            <template x-if="selectedBlock.variant === 'certifications'">
+                                                <flux:textarea x-model="item.description" placeholder="Short description..." x-on:input="isDirty = true" rows="2" size="xs" />
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({logo_url: '', alt: 'Partner', description: '', url: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        {{ __('+ Add Logo') }}
+                                    </flux:button>
+                                </div>
                             </div>
                         </template>
 
