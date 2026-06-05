@@ -21,11 +21,60 @@ class BrandingSettings extends Component
     public $logo;
     public string $logo_path = '';
     public string $primary_color = '#4f46e5';
+    public string $theme_preset = 'saas';
     public bool $mfa_required = false;
+
+    // Curated Professional Palettes
+    public array $presets = [
+        'saas' => [
+            'name' => 'SaaS Blue',
+            'primary' => '#4f46e5', // Indigo 600
+            'secondary' => '#1e293b', // Slate 800
+            'font_heading' => 'Inter',
+            'font_body' => 'Inter',
+        ],
+        'corporate' => [
+            'name' => 'Corporate Slate',
+            'primary' => '#0f172a', // Slate 900
+            'secondary' => '#475569', // Slate 600
+            'font_heading' => 'Montserrat',
+            'font_body' => 'Inter',
+        ],
+        'startup' => [
+            'name' => 'Startup Emerald',
+            'primary' => '#10b981', // Emerald 500
+            'secondary' => '#111827', // Zinc 900
+            'font_heading' => 'Plus Jakarta Sans',
+            'font_body' => 'Inter',
+        ],
+        'creative' => [
+            'name' => 'Creative Rose',
+            'primary' => '#e11d48', // Rose 600
+            'secondary' => '#171717', // Neutral 900
+            'font_heading' => 'Playfair Display',
+            'font_body' => 'Lato',
+        ],
+        'custom' => [
+            'name' => 'Custom Colors',
+            'primary' => null, // Uses $this->primary_color
+            'secondary' => '#1e293b',
+            'font_heading' => 'Inter',
+            'font_body' => 'Inter',
+        ]
+    ];
+
+    public function updatedThemePreset($value): void
+    {
+        if ($value !== 'custom' && isset($this->presets[$value])) {
+            $this->primary_color = $this->presets[$value]['primary'];
+        }
+    }
 
     public function initializeLanding(): void
     {
         $tenant = tenant();
+        $preset = $this->presets[$this->theme_preset] ?? $this->presets['saas'];
+        $primaryColor = $this->theme_preset === 'custom' ? $this->primary_color : $preset['primary'];
         
         $landing = Landing::firstOrCreate(
             ['tenant_id' => $tenant->id, 'slug' => 'saas-landing'],
@@ -34,12 +83,12 @@ class BrandingSettings extends Component
                 'status' => 'draft',
                 'theme' => [
                     'colors' => [
-                        'primary' => $this->primary_color,
-                        'secondary' => '#1e293b',
+                        'primary' => $primaryColor,
+                        'secondary' => $preset['secondary'],
                     ],
                     'typography' => [
-                        'font_heading' => 'Inter',
-                        'font_body' => 'Inter',
+                        'font_heading' => $preset['font_heading'],
+                        'font_body' => $preset['font_body'],
                     ]
                 ],
                 'blocks' => [
@@ -110,6 +159,15 @@ class BrandingSettings extends Component
         $this->logo_path = $settings->logo_path ?? '';
         $this->primary_color = $settings->primary_color ?? '#4f46e5';
         $this->mfa_required = (bool) ($settings->mfa_required ?? false);
+
+        // Detect preset based on primary color
+        $this->theme_preset = 'custom';
+        foreach ($this->presets as $key => $preset) {
+            if ($preset['primary'] === $this->primary_color) {
+                $this->theme_preset = $key;
+                break;
+            }
+        }
     }
 
     public function save(): void
@@ -119,6 +177,7 @@ class BrandingSettings extends Component
                 'name' => 'required|string|max:255',
                 'logo' => 'nullable|image|max:2048',
                 'primary_color' => 'required|hex_color',
+                'theme_preset' => 'required|string',
                 'mfa_required' => 'boolean',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -148,6 +207,20 @@ class BrandingSettings extends Component
         }
 
         $settings->update($data);
+
+        // Update landing page theme if it exists
+        $landing = Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
+        if ($landing) {
+            $preset = $this->presets[$this->theme_preset] ?? $this->presets['custom'];
+            $theme = $landing->theme ?? [];
+            
+            $theme['colors']['primary'] = $this->primary_color;
+            $theme['colors']['secondary'] = $preset['secondary'];
+            $theme['typography']['font_heading'] = $preset['font_heading'];
+            $theme['typography']['font_body'] = $preset['font_body'];
+            
+            $landing->update(['theme' => $theme]);
+        }
 
         // Refresh local state so the view renders the saved logo immediately
         $this->logo_path = $settings->fresh()->logo_path ?? '';

@@ -12,8 +12,16 @@
         <form wire:submit="save" class="flex flex-col gap-6">
             <flux:input wire:model="name" :label="__('Display Name')" placeholder="Acme Corp" required />
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                <flux:input wire:model="primary_color" type="color" :label="__('Brand Color')" required />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <div class="space-y-4">
+                    <flux:select wire:model.live="theme_preset" :label="__('Theme Preset')">
+                        @foreach($this->presets as $key => $preset)
+                            <option value="{{ $key }}">{{ $preset['name'] }}</option>
+                        @endforeach
+                    </flux:select>
+
+                    <flux:input wire:model="primary_color" type="color" :label="__('Brand Color')" required :disabled="$theme_preset !== 'custom'" />
+                </div>
                 
                 <div>
                     @if($this->logoPreviewUrl)
