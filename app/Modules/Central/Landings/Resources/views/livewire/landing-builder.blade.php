@@ -212,50 +212,15 @@
                                 @include('landings::livewire.previews.pricing')
                                 @include('landings::livewire.previews.faq')
                                 @include('landings::livewire.previews.trust-signals')
+                                @include('landings::livewire.previews.about')
+                                @include('landings::livewire.previews.statistics')
+                                @include('landings::livewire.previews.gallery')
+                                @include('landings::livewire.previews.lead-form')
+                                @include('landings::livewire.previews.contact')
+                                @include('landings::livewire.previews.footer')
+                                @include('landings::livewire.previews.testimonials')
 
-                                <div x-show="block.type === 'contact'" class="space-y-4">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Contact Us'"></h2>
-                                    <div class="max-w-md mx-auto p-8 border border-zinc-200 rounded-3xl bg-white/5">
-                                        <div class="space-y-4">
-                                            <div class="h-10 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
-                                            <div class="h-10 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
-                                            <div class="h-24 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
-                                            <div class="h-12 bg-primary rounded-lg"></div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'statistics'" class="space-y-8">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'By the numbers'"></h2>
-                                    <div class="flex flex-wrap justify-center gap-8">
-                                        <template x-for="stat in (block.config.stats || [{value: '100', label: 'Metric'}])">
-                                            <div class="text-center">
-                                                <div class="text-4xl font-black text-primary" x-text="(stat.prefix || '') + stat.value + (stat.suffix || '')"></div>
-                                                <div class="text-xs uppercase font-bold opacity-60" x-text="stat.label"></div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div x-show="block.type === 'gallery'" class="space-y-8">
-                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Gallery'"></h2>
-                                    <div class="grid grid-cols-3 gap-4">
-                                        <template x-for="img in (block.config.images || [{url: ''}, {url: ''}, {url: ''}])">
-                                            <div class="aspect-square bg-zinc-200 dark:bg-zinc-800 rounded-2xl overflow-hidden relative border border-zinc-100 dark:border-zinc-700">
-                                                <template x-if="img.url">
-                                                    <img :src="img.url" class="w-full h-full object-cover opacity-80" />
-                                                </template>
-                                                <template x-if="!img.url">
-                                                    <div class="w-full h-full flex items-center justify-center text-zinc-400">
-                                                        <flux:icon.photo size="lg" />
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery', 'trust-signals', 'about', 'lead-form'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery', 'trust-signals', 'about', 'lead-form', 'footer', 'testimonials'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                                     <flux:heading size="lg" x-text="block.config.headline || block.type"></flux:heading>
                                     <flux:text x-text="'Preview for ' + block.type + ' coming soon'"></flux:text>
                                 </div>
