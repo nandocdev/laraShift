@@ -263,7 +263,19 @@
                                     </div>
                                 </div>
 
-                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                                <div x-show="block.type === 'statistics'" class="space-y-8">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'By the numbers'"></h2>
+                                    <div class="flex flex-wrap justify-center gap-8">
+                                        <template x-for="stat in (block.config.stats || [{value: '100', label: 'Metric'}])">
+                                            <div class="text-center">
+                                                <div class="text-4xl font-black text-primary" x-text="(stat.prefix || '') + stat.value + (stat.suffix || '')"></div>
+                                                <div class="text-xs uppercase font-bold opacity-60" x-text="stat.label"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                                     <flux:heading size="lg" x-text="block.config.headline || block.type"></flux:heading>
                                     <flux:text x-text="'Preview for ' + block.type + ' coming soon'"></flux:text>
                                 </div>
@@ -411,26 +423,43 @@
 
                         <!-- Statistics Editor -->
                         <template x-if="selectedBlock.type === 'statistics'">
-                            <div class="space-y-4">
-                                <flux:heading size="sm">{{ __('Manage Metrics') }}</flux:heading>
-                                <template x-for="(stat, index) in selectedBlock.config.stats" :key="index">
-                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
-                                        <div class="flex justify-between items-center">
-                                            <flux:input x-model="stat.value" placeholder="Value (e.g. 99)" x-on:input="isDirty = true" size="sm" class="w-1/2" />
-                                            <button x-on:click="selectedBlock.config.stats.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                <flux:icon.trash size="xs" />
-                                            </button>
-                                        </div>
-                                        <flux:input x-model="stat.label" placeholder="Label (e.g. Happy Users)" x-on:input="isDirty = true" size="sm" />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <flux:input x-model="stat.prefix" placeholder="Prefix" x-on:input="isDirty = true" size="sm" />
-                                            <flux:input x-model="stat.suffix" placeholder="Suffix" x-on:input="isDirty = true" size="sm" />
-                                        </div>
-                                    </div>
+                            <div class="space-y-6">
+                                <template x-if="selectedBlock.variant === 'grid'">
+                                    <flux:field>
+                                        <flux:label>{{ __('Grid Columns') }}</flux:label>
+                                        <flux:select x-model="selectedBlock.config.columns_count" x-on:change="isDirty = true">
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="6">6</option>
+                                        </flux:select>
+                                    </flux:field>
                                 </template>
-                                <flux:button x-on:click="selectedBlock.config.stats = selectedBlock.config.stats || []; selectedBlock.config.stats.push({value: '100', label: 'Metric', prefix: '', suffix: '+'}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                    {{ __('+ Add Metric') }}
-                                </flux:button>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Manage Metrics') }}</flux:heading>
+                                    <template x-for="(stat, index) in selectedBlock.config.stats" :key="index">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <flux:input x-model="stat.value" placeholder="Value (e.g. 99)" x-on:input="isDirty = true" size="sm" class="font-bold w-1/2" />
+                                                <button x-on:click="selectedBlock.config.stats.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                    <flux:icon.trash size="xs" />
+                                                </button>
+                                            </div>
+                                            <flux:input x-model="stat.label" placeholder="Label (e.g. Happy Users)" x-on:input="isDirty = true" size="sm" />
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <flux:input x-model="stat.prefix" placeholder="Prefix" x-on:input="isDirty = true" size="xs" />
+                                                <flux:input x-model="stat.suffix" placeholder="Suffix" x-on:input="isDirty = true" size="xs" />
+                                            </div>
+                                            <template x-if="selectedBlock.variant === 'grid'">
+                                                <flux:input x-model="stat.icon" placeholder="Icon Name" x-on:input="isDirty = true" size="xs" />
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.stats = selectedBlock.config.stats || []; selectedBlock.config.stats.push({value: '100', label: 'Metric', prefix: '', suffix: '+', icon: 'chart-bar'}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        {{ __('+ Add Metric') }}
+                                    </flux:button>
+                                </div>
                             </div>
                         </template>
 
