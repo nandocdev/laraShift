@@ -275,7 +275,25 @@
                                     </div>
                                 </div>
 
-                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                                <div x-show="block.type === 'gallery'" class="space-y-8">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Gallery'"></h2>
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <template x-for="img in (block.config.images || [{url: ''}, {url: ''}, {url: ''}])">
+                                            <div class="aspect-square bg-zinc-200 dark:bg-zinc-800 rounded-2xl overflow-hidden relative border border-zinc-100 dark:border-zinc-700">
+                                                <template x-if="img.url">
+                                                    <img :src="img.url" class="w-full h-full object-cover opacity-80" />
+                                                </template>
+                                                <template x-if="!img.url">
+                                                    <div class="w-full h-full flex items-center justify-center text-zinc-400">
+                                                        <flux:icon.photo size="lg" />
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                                     <flux:heading size="lg" x-text="block.config.headline || block.type"></flux:heading>
                                     <flux:text x-text="'Preview for ' + block.type + ' coming soon'"></flux:text>
                                 </div>
@@ -465,30 +483,50 @@
 
                         <!-- Gallery Editor -->
                         <template x-if="selectedBlock.type === 'gallery'">
-                            <div class="space-y-4">
-                                <flux:field>
-                                    <flux:label>{{ __('Columns') }}</flux:label>
-                                    <flux:select x-model="selectedBlock.config.columns" x-on:change="isDirty = true">
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                    </flux:select>
-                                </flux:field>
-                                <flux:heading size="sm">{{ __('Manage Images') }}</flux:heading>
-                                <template x-for="(img, index) in selectedBlock.config.images" :key="index">
-                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
-                                        <div class="flex justify-between items-center">
-                                            <flux:input x-model="img.url" placeholder="Image URL" x-on:input="isDirty = true" size="sm" class="w-2/3" />
-                                            <button x-on:click="selectedBlock.config.images.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                <flux:icon.trash size="xs" />
-                                            </button>
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-2 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <template x-if="['grid', 'masonry'].includes(selectedBlock.variant)">
+                                        <flux:field>
+                                            <flux:label>{{ __('Columns') }}</flux:label>
+                                            <flux:select x-model="selectedBlock.config.columns_count" x-on:change="isDirty = true">
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                            </flux:select>
+                                        </flux:field>
+                                    </template>
+                                    <template x-if="selectedBlock.variant === 'carousel'">
+                                        <div class="flex items-center justify-between col-span-2">
+                                            <flux:label>{{ __('Autoplay') }}</flux:label>
+                                            <flux:switch x-model="selectedBlock.config.autoplay" x-on:change="isDirty = true" />
                                         </div>
-                                        <flux:input x-model="img.caption" placeholder="Caption (optional)" x-on:input="isDirty = true" size="sm" />
+                                    </template>
+                                    <div class="flex items-center justify-between col-span-2 pt-1 border-t border-zinc-200 dark:border-zinc-700">
+                                        <flux:label size="sm">{{ __('Show Captions on Hover') }}</flux:label>
+                                        <flux:switch x-model="selectedBlock.config.show_captions" x-on:change="isDirty = true" />
                                     </div>
-                                </template>
-                                <flux:button x-on:click="selectedBlock.config.images = selectedBlock.config.images || []; selectedBlock.config.images.push({url: '', alt: '', caption: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                    {{ __('+ Add Image') }}
-                                </flux:button>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <flux:heading size="sm">{{ __('Manage Images') }}</flux:heading>
+                                    <template x-for="(img, index) in selectedBlock.config.images" :key="index">
+                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                            <div class="flex justify-between items-center">
+                                                <flux:input x-model="img.url" placeholder="Image URL" x-on:input="isDirty = true" size="sm" class="font-bold w-3/4" />
+                                                <button x-on:click="selectedBlock.config.images.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                    <flux:icon.trash size="xs" />
+                                                </button>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <flux:input x-model="img.alt" placeholder="Alt Text" x-on:input="isDirty = true" size="xs" />
+                                                <flux:input x-model="img.caption" placeholder="Caption (optional)" x-on:input="isDirty = true" size="xs" />
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <flux:button x-on:click="selectedBlock.config.images = selectedBlock.config.images || []; selectedBlock.config.images.push({url: '', alt: '', caption: 'New Image'}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        {{ __('+ Add Image') }}
+                                    </flux:button>
+                                </div>
                             </div>
                         </template>
 
