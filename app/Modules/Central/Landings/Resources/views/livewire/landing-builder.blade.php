@@ -198,10 +198,10 @@
                 variant="danger"
                 size="xs"
                 square
+                icon="x-mark"
                 x-on:click.stop="removeBlock(block.id)"
                 title="{{ __('Delete Block') }}"
             >
-                <flux:icon.x-mark />
             </flux:button>
         </div>
     </div>
