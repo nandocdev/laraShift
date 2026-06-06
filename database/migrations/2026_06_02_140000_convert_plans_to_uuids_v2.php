@@ -31,6 +31,25 @@ return new class extends Migration
         if (Schema::hasTable('subscriptions')) {
             DB::statement('ALTER TABLE subscriptions ALTER COLUMN plan_id TYPE UUID USING (NULL)');
         }
+
+        // 4. Add missing columns if they don't exist
+        Schema::table('plans', function (Blueprint $table) {
+            if (! Schema::hasColumn('plans', 'slug')) {
+                $table->string('slug')->unique()->nullable()->after('name');
+            }
+            if (! Schema::hasColumn('plans', 'price_monthly')) {
+                $table->integer('price_monthly')->default(0)->after('slug');
+            }
+            if (! Schema::hasColumn('plans', 'price_yearly')) {
+                $table->integer('price_yearly')->default(0)->after('price_monthly');
+            }
+            if (! Schema::hasColumn('plans', 'is_active')) {
+                $table->boolean('is_active')->default(true)->after('price_yearly');
+            }
+            if (! Schema::hasColumn('plans', 'features')) {
+                $table->jsonb('features')->nullable()->after('is_active');
+            }
+        });
         
         // Note: plan_features will be created by the failing migration, 
         // but we ensure compatibility by making sure the parent is already UUID.
