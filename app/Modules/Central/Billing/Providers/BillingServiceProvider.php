@@ -23,6 +23,8 @@ class BillingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Cashier::useCustomerModel(Tenant::class);
+        Cashier::useSubscriptionModel(\App\Modules\Central\Billing\Models\Subscription::class);
+        Cashier::useSubscriptionItemModel(\App\Modules\Central\Billing\Models\SubscriptionItem::class);
         
         $this->loadViewsFrom(__DIR__ . '/../UI', 'billing');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');

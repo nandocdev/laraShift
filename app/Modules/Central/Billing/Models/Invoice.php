@@ -42,7 +42,6 @@ class Invoice extends Model
 
     public function subscription(): BelongsTo
     {
-        // Use Cashier's subscription model or our custom one if we extend it
-        return $this->belongsTo(\Laravel\Cashier\Subscription::class);
+        return $this->belongsTo(Subscription::class);
     }
 }
