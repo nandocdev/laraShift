@@ -32,7 +32,7 @@
                     
                     <flux:input wire:model="logo" type="file" :label="__('Upload New Logo')" />
                     <flux:error name="logo" />
-                    <flux:text color="zinc" size="xs" class="mt-1">{{ __('Max 2MB. JPG/PNG.') }}</flux:text>
+                    <flux:text size="xs" class="mt-1">{{ __('Max 2MB. JPG/PNG.') }}</flux:text>
                 </div>
             </div>
 

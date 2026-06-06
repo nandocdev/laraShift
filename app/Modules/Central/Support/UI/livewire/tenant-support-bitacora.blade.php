@@ -31,7 +31,7 @@
                     <p class="text-sm text-zinc-700 dark:text-zinc-300 italic">"{{ $note->content }}"</p>
                 </div>
             @empty
-                <flux:text color="zinc" class="text-center py-4">{{ __('No internal notes for this tenant.') }}</flux:text>
+                <flux:text class="text-center py-4">{{ __('No internal notes for this tenant.') }}</flux:text>
             @endforelse
         </div>
 
