@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Support;
 
+use App\Modules\Central\Billing\Support\Drivers\PaguelofacilBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
@@ -21,11 +22,9 @@ class BillingManager extends Manager implements BillingProvider
         return new StripeBillingProvider();
     }
 
-    // Placeholder for dLocal
-    public function createDlocalDriver()
+    public function createPaguelofacilDriver(): PaguelofacilBillingProvider
     {
-        // return new DlocalBillingProvider();
-        throw new \Exception('dLocal driver not implemented yet.');
+        return new PaguelofacilBillingProvider();
     }
 
     public function forTenant(Tenant $tenant): BillingProvider
