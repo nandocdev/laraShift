@@ -12,8 +12,12 @@ class PaguelofacilBillingProvider implements BillingProvider
 {
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
-        // Since we are using Direct API with an internal form, we return our internal route
-        return route('central.billing.checkout.paguelofacil', [
+        // Resolve the correct route based on context (Tenant vs Central)
+        $routeName = \Route::has('tenant.billing.checkout.paguelofacil') 
+            ? 'tenant.billing.checkout.paguelofacil' 
+            : 'central.billing.checkout.paguelofacil';
+
+        return route($routeName, [
             'tenant' => $tenant->id,
             'plan' => $planId,
         ]);

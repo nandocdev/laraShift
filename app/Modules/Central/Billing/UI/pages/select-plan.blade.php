@@ -41,12 +41,18 @@
                     variant="{{ $plan->slug === $currentPlanId ? 'ghost' : 'primary' }}" 
                     class="w-full py-3"
                     :disabled="$plan->slug === $currentPlanId"
+                    wire:loading.attr="disabled"
                 >
-                    @if($plan->slug === $currentPlanId)
-                        {{ __('Selected') }}
-                    @else
-                        {{ $plan->price_monthly > 0 ? __('Upgrade Now') : __('Select Plan') }}
-                    @endif
+                    <span wire:loading.remove wire:target="selectPlan('{{ $plan->id }}')">
+                        @if($plan->slug === $currentPlanId)
+                            {{ __('Selected') }}
+                        @else
+                            {{ $plan->price_monthly > 0 ? __('Upgrade Now') : __('Select Plan') }}
+                        @endif
+                    </span>
+                    <span wire:loading wire:target="selectPlan('{{ $plan->id }}')">
+                        {{ __('Redirecting...') }}
+                    </span>
                 </flux:button>
             </flux:card>
         @endforeach

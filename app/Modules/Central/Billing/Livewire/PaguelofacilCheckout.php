@@ -83,7 +83,12 @@ class PaguelofacilCheckout extends Component
             ]);
 
             session()->flash('success', __('Subscription created successfully via PagueloFacil.'));
-            $this->redirect(route('central.billing.success', ['tenant' => $this->tenant->id]));
+            
+            $successRoute = \Route::has('tenant.billing.success') 
+                ? route('tenant.billing.success') 
+                : route('central.billing.success', ['tenant' => $this->tenant->id]);
+
+            $this->redirect($successRoute, navigate: true);
 
         } catch (\Exception $e) {
             \Log::error("PagueloFacil Checkout Error: " . $e->getMessage());
