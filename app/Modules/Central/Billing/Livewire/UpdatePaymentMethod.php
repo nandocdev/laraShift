@@ -34,9 +34,24 @@ class UpdatePaymentMethod extends Component
 
     public function render(): View
     {
+        $tenant = tenant();
+        $gateway = $tenant->billing_gateway ?? config('cashier.driver', 'stripe');
+        
+        $intent = null;
+        $stripeKey = config('cashier.key');
+
+        if ($gateway === 'stripe' && $stripeKey && config('cashier.secret')) {
+            try {
+                $intent = $tenant->createSetupIntent();
+            } catch (\Exception $e) {
+                \Log::error("Stripe SetupIntent Error: " . $e->getMessage());
+            }
+        }
+
         return view('billing::pages.update-payment-method', [
-            'intent' => tenant()->createSetupIntent(),
-            'stripeKey' => config('cashier.key'),
+            'intent' => $intent,
+            'stripeKey' => $stripeKey,
+            'gateway' => $gateway,
         ]);
     }
 }
