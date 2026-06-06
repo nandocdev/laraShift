@@ -25,10 +25,10 @@ class PaguelofacilCheckout extends Component
     public string $firstName = '';
     public string $lastName = '';
 
-    public function mount(string $tenant, string $plan): void
+    public function mount(string $tenant_uuid, string $plan_uuid): void
     {
-        $this->tenant = Tenant::findOrFail($tenant);
-        $this->plan = Plan::findOrFail($plan);
+        $this->tenant = Tenant::findOrFail($tenant_uuid);
+        $this->plan = Plan::findOrFail($plan_uuid);
         
         $nameParts = explode(' ', $this->tenant->name, 2);
         $this->firstName = $nameParts[0];

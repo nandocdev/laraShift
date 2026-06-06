@@ -33,7 +33,7 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/ledger', \App\Modules\Central\Billing\Livewire\LedgerAudit::class)->name('central.billing.ledger');
 
     // PagueloFacil Internal Checkout
-    Route::get('/central/billing/checkout/paguelofacil/{tenant}/{plan}', \App\Modules\Central\Billing\Livewire\PaguelofacilCheckout::class)->name('central.billing.checkout.paguelofacil');
+    Route::get('/central/billing/checkout/paguelofacil/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\PaguelofacilCheckout::class)->name('central.billing.checkout.paguelofacil');
     
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {
         return $action->download($invoice);

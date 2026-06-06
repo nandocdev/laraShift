@@ -18,8 +18,8 @@ class PaguelofacilBillingProvider implements BillingProvider
             : 'central.billing.checkout.paguelofacil';
 
         return route($routeName, [
-            'tenant' => $tenant->id,
-            'plan' => $planId,
+            'tenant_uuid' => $tenant->id,
+            'plan_uuid' => $planId,
         ]);
     }
 
