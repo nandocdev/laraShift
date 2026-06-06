@@ -2,7 +2,7 @@
 $user = auth('central')->user();
 @endphp
 
-<flux:dropdown position="bottom" align="start">
+<flux:dropdown position="bottom" align="start" {{ $attributes }}>
     <flux:sidebar.profile
         :name="$user->name"
         :initials="$user->initials()"

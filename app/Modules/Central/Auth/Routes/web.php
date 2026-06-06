@@ -16,7 +16,7 @@ Route::middleware('web')->group(function () {
 
         Route::post('/central/logout', function (\App\Modules\Central\Auth\Actions\LogoutCentralUserAction $action) {
             $action->execute();
-            return redirect()->route('central.login');
+            return redirect('/');
         })->name('central.logout');
     });
 });

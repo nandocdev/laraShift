@@ -79,7 +79,7 @@
         </flux:sidebar.nav>
 
         @auth('central')
-            <x-desktop-user-menu class="hidden lg:block" :name="auth('central')->user()->name" />
+            <x-central-user-menu class="hidden lg:block" />
         @endauth
     </flux:sidebar>
 
