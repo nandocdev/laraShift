@@ -61,6 +61,9 @@ class PlanSeeder extends Seeder {
                'name' => $p['name'],
                'price_monthly' => $p['price_monthly'],
                'price_yearly' => $p['price_yearly'],
+               'amount' => $p['price_monthly'] / 100,
+               'currency' => 'USD',
+               'interval' => 'month',
                'is_active' => $p['is_active'],
                'features' => $p['features'],
             ]

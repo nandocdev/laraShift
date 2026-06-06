@@ -19,6 +19,9 @@ class Plan extends Model
         'slug',
         'price_monthly',
         'price_yearly',
+        'amount',
+        'currency',
+        'interval',
         'is_active',
         'features',
     ];

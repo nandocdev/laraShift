@@ -62,7 +62,7 @@ class PaguelofacilCheckout extends Component
                 'plan_id' => $this->plan->provider_plan_id,
                 'customer_id' => $customer['data']['idCustomer'] ?? '',
                 'amount' => $this->plan->amount,
-                'period' => $this->plan->interval === 'month' ? 'mo' : ($this->plan->interval === 'year' ? 'yr' : 'mo'),
+                'period' => 'mo', // defaulting to monthly for now
                 'card_number' => $this->cardNumber,
                 'exp_month' => $this->expMonth,
                 'exp_year' => $this->expYear,

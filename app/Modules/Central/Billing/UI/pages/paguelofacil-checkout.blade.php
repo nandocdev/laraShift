@@ -3,7 +3,7 @@
         <flux:heading size="xl">{{ __('Secure Checkout') }}</flux:heading>
         <flux:subheading>{{ __('Subscribe to :plan', ['plan' => $plan->name]) }}</flux:subheading>
         <div class="mt-2 text-2xl font-black text-primary">
-            {{ Number::currency($plan->amount, $plan->currency ?? 'USD') }} <span class="text-sm font-normal opacity-60">/ {{ $plan->interval }}</span>
+            {{ Number::currency($plan->amount, $plan->currency ?: 'USD') }} <span class="text-sm font-normal opacity-60">/ {{ $plan->interval ?: __('month') }}</span>
         </div>
     </div>
 
