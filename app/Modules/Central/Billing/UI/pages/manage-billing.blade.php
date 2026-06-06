@@ -17,7 +17,7 @@
                     <flux:badge size="sm" variant="success" class="mt-1">{{ strtoupper($tenant->plan_id) }}
                     </flux:badge>
                 </div>
-                <flux:button variant="ghost" icon="arrow-path">{{ __('Change Plan') }}</flux:button>
+                <flux:button :href="route('tenant.billing.plans')" variant="ghost" icon="arrow-path" wire:navigate>{{ __('Change Plan') }}</flux:button>
             </div>
 
             <div class="space-y-4">
@@ -80,7 +80,7 @@
                     @forelse($invoices as $invoice)
                         <flux:table.row :key="$invoice->id">
                             <flux:table.cell>{{ $invoice->created_at->format('M j, Y') }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($invoice->amount_due / 100, 2) }}
+                            <flux:table.cell>{{ number_format($invoice->amount / 100, 2) }}
                                 {{ strtoupper($invoice->currency) }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm"

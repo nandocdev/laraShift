@@ -34,5 +34,6 @@ class BillingServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('billing-update-payment-method', \App\Modules\Central\Billing\Livewire\UpdatePaymentMethod::class);
         \Livewire\Livewire::component('billing-ledger-audit', \App\Modules\Central\Billing\Livewire\LedgerAudit::class);
         \Livewire\Livewire::component('billing-paguelofacil-checkout', \App\Modules\Central\Billing\Livewire\PaguelofacilCheckout::class);
+        \Livewire\Livewire::component('billing-select-plan', \App\Modules\Central\Billing\Livewire\SelectPlan::class);
     }
 }

@@ -61,7 +61,9 @@ Route::middleware([
             }
             return Illuminate\Support\Facades\Storage::disk('private')->download($request->path);
         })->name('tenant.audit.download');
+        
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
+        Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
         // Landing Builder
