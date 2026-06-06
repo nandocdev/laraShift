@@ -34,8 +34,7 @@ class PagueloFacilClient
      */
     public function createCustomer(array $data): array
     {
-        // Reference: /subscriptions-api/v1/Customers
-        $response = $this->client()->post('/subscriptions-api/v1/Customers', [
+        $response = $this->client()->post('/Customer', [
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
             'email' => $data['email'],
@@ -51,8 +50,7 @@ class PagueloFacilClient
      */
     public function createSubscription(array $data): array
     {
-        // Reference: /subscriptions-api/v1/CustomerSubscriptions
-        $response = $this->client()->post('/subscriptions-api/v1/CustomerSubscriptions', [
+        $response = $this->client()->post('/CustomerSubscriptions', [
             'idPlan' => $data['plan_id'],
             'idCustomer' => $data['customer_id'],
             'startDate' => now()->format('Y-m-d\TH:i:s'),
@@ -81,7 +79,7 @@ class PagueloFacilClient
      */
     public function cancelSubscription(string $subscriptionId): array
     {
-        $response = $this->client()->post('/subscriptions-api/v1/CancelSubscription', [
+        $response = $this->client()->post('/CancelSubscription', [
             'idSubscription' => $subscriptionId,
         ]);
 
