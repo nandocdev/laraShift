@@ -26,7 +26,7 @@ return new class extends Migration
 
         // 2. M:N Plan <-> Features
         Schema::create('plan_features', function (Blueprint $table) {
-            $table->foreignUuid('plan_id')->constrained('plans')->onDelete('cascade');
+            $table->foreignId('plan_id')->constrained('plans')->onDelete('cascade');
             $table->foreignUuid('feature_id')->constrained('features')->onDelete('cascade');
 
             $table->primary(['plan_id', 'feature_id']);

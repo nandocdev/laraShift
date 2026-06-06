@@ -54,7 +54,7 @@
     </form>
 
     <div class="space-y-2 text-center text-sm">
-        <flux:text color="zinc">{{ __("Don't have an account?") }}</flux:text>
+        <flux:text>{{ __("Don't have an account?") }}</flux:text>
         <flux:link href="#" variant="subtle">{{ __('Contact your administrator') }}</flux:link>
     </div>
 </div>

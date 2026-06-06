@@ -130,82 +130,28 @@
             <flux:heading size="sm" class="mb-4 uppercase tracking-wider text-zinc-500">{{ __('Page Structure') }}</flux:heading>
             <div class="grid gap-2">
                 <template x-for="(block, index) in blocks" :key="block.id">
-    <div
-        x-on:click="selectedBlockId = block.id"
-        class="group relative rounded-xl border p-3 transition-all duration-200 cursor-pointer"
-        :class="
-            selectedBlockId === block.id
-                ? 'border-zinc-300 bg-zinc-50 shadow-sm ring-1 ring-zinc-200'
-                : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
-        "
-    >
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                    <span
-                        class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium capitalize text-zinc-700"
-                        x-text="block.type"
-                    ></span>
-
-                    <span
-                        x-show="selectedBlockId === block.id"
-                        class="text-[10px] font-medium uppercase tracking-wider text-zinc-500"
+                    <div 
+                        x-on:click="selectedBlockId = block.id"
+                        class="flex flex-col p-2 rounded-md cursor-pointer border transition"
+                        :class="selectedBlockId === block.id ? 'bg-zinc-100 border-zinc-300' : 'bg-white border-transparent hover:bg-zinc-50'"
                     >
-                        Selected
-                    </span>
-                </div>
-
-                <div class="mt-2 flex items-center gap-1">
-                    <flux:icon.hashtag class="size-3 text-zinc-400" />
-
-                    <span
-                        class="font-mono text-[11px] text-zinc-500 truncate"
-                        x-text="block.id"
-                    ></span>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div
-                class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-            >
-                <flux:button
-                    size="xs"
-                    variant="ghost"
-                    x-on:click.stop="moveBlock(block.id, 'up')"
-                >
-                    <flux:icon.chevron-up />
-                </flux:button>
-
-                <flux:button
-                    size="xs"
-                    variant="ghost"
-                    x-on:click.stop="moveBlock(block.id, 'down')"
-                >
-                    <flux:icon.chevron-down />
-                </flux:button>
-            </div>
-        </div>
-
-        <!-- Delete -->
-        <div
-            x-show="selectedBlockId === block.id"
-            x-transition
-            class="absolute right-2 top-2"
-        >
-            <flux:button
-                variant="danger"
-                size="xs"
-                square
-                icon="x-mark"
-                x-on:click.stop="removeBlock(block.id)"
-                title="{{ __('Delete Block') }}"
-            >
-            </flux:button>
-        </div>
-    </div>
-</template>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold capitalize" x-text="block.type"></span>
+                            <div class="flex gap-1">
+                                <button x-on:click.stop="moveBlock(block.id, 'up')" class="p-1 hover:bg-zinc-200 rounded text-zinc-500">
+                                    <flux:icon.chevron-up size="xs" />
+                                </button>
+                                <button x-on:click.stop="moveBlock(block.id, 'down')" class="p-1 hover:bg-zinc-200 rounded text-zinc-500">
+                                    <flux:icon.chevron-down size="xs" />
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 mt-1">
+                            <flux:icon.hashtag size="xs" class="text-zinc-400" />
+                            <span class="text-[10px] font-mono text-zinc-400 select-all" x-text="block.id"></span>
+                        </div>
+                    </div>
+                </template>
             </div>
         </aside>
 
@@ -251,22 +197,83 @@
                             ]"
                         >
                             <!-- Visual Block Representation (Alpine-based) -->
-                            <div class="pointer-events-none">
-                                @include('landings::livewire.previews.hero')
-                                @include('landings::livewire.previews.cta')
-                                @include('landings::livewire.previews.features')
-                                @include('landings::livewire.previews.pricing')
-                                @include('landings::livewire.previews.faq')
-                                @include('landings::livewire.previews.trust-signals')
-                                @include('landings::livewire.previews.about')
-                                @include('landings::livewire.previews.statistics')
-                                @include('landings::livewire.previews.gallery')
-                                @include('landings::livewire.previews.lead-form')
-                                @include('landings::livewire.previews.contact')
-                                @include('landings::livewire.previews.footer')
-                                @include('landings::livewire.previews.testimonials')
+                            <div class="p-12 text-center">
+                                <div x-show="block.type === 'hero'" class="space-y-4">
+                                    <div class="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold" x-text="block.config.badge_text || 'Badge'"></div>
+                                    <h1 class="text-4xl font-black" x-text="block.config.headline"></h1>
+                                    <p class="max-w-xl mx-auto opacity-70" x-text="block.config.subtitle"></p>
+                                    <div class="flex justify-center gap-4 pt-4">
+                                        <div class="px-6 py-3 bg-primary text-white rounded-lg font-bold" x-text="block.config.button_primary_text || 'CTA Primary'"></div>
+                                    </div>
+                                </div>
 
-                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact', 'statistics', 'gallery', 'trust-signals', 'about', 'lead-form', 'footer', 'testimonials'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
+                                <div x-show="block.type === 'cta'" class="space-y-4 py-8">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline"></h2>
+                                    <p class="opacity-80" x-text="block.config.description"></p>
+                                    <div class="inline-block px-8 py-4 bg-white text-primary rounded-xl font-black shadow-lg" x-text="block.config.button_primary_text || 'Action'"></div>
+                                </div>
+
+                                <div x-show="block.type === 'features'" class="space-y-8">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Features'"></h2>
+                                    <div class="grid grid-cols-3 gap-6">
+                                        <template x-for="f in (block.config.features || [{title: 'Feature', description: 'Desc'}])">
+                                            <div class="p-6 border border-zinc-100 rounded-2xl text-left bg-white/5">
+                                                <div class="w-10 h-10 bg-primary/20 rounded-lg mb-4"></div>
+                                                <h4 class="font-bold mb-2" x-text="f.title"></h4>
+                                                <p class="text-sm opacity-60" x-text="f.description"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="block.type === 'pricing'" class="space-y-8">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Pricing'"></h2>
+                                    <div class="grid grid-cols-3 gap-6">
+                                        <template x-for="p in (block.config.plans || [{name: 'Plan', price_monthly: 0}])">
+                                            <div class="p-8 border border-zinc-200 rounded-3xl text-left bg-white/5">
+                                                <h4 class="font-bold text-lg mb-4" x-text="p.name"></h4>
+                                                <div class="text-4xl font-black mb-6" x-text="'$' + p.price_monthly"></div>
+                                                <div class="w-full py-3 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-center text-sm font-bold">{{ __('Choose Plan') }}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div x-show="block.type === 'faq'" class="space-y-6 text-left max-w-2xl mx-auto">
+                                    <h2 class="text-3xl font-bold text-center" x-text="block.config.headline || 'FAQ'"></h2>
+                                    <p class="text-center opacity-70 -mt-4 mb-8" x-text="block.config.subtitle" x-show="block.config.subtitle"></p>
+                                    
+                                    <div :class="block.variant === 'two-columns' ? 'grid grid-cols-2 gap-6' : 'space-y-4'">
+                                        <template x-for="item in (block.config.items || [{question: 'Question?', answer: 'Answer'}])">
+                                            <div class="p-4 border border-zinc-200 rounded-xl bg-white/5">
+                                                <div class="font-bold flex justify-between">
+                                                    <span x-text="item.question"></span>
+                                                    <flux:icon.plus size="xs" x-show="block.variant !== 'two-columns'" />
+                                                </div>
+                                                <div x-show="block.variant === 'two-columns' || block.variant === 'simple-list'" class="mt-2 text-sm opacity-60" x-text="item.answer"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div x-show="block.config.show_contact_cta" class="mt-8 pt-6 border-t border-zinc-100 text-center">
+                                        <p class="text-xs text-zinc-400 mb-2">{{ __('Still have questions?') }}</p>
+                                        <span class="text-primary font-bold text-sm" x-text="block.config.contact_cta_text || 'Contact support'"></span>
+                                    </div>
+                                </div>
+
+                                <div x-show="block.type === 'contact'" class="space-y-4">
+                                    <h2 class="text-3xl font-bold" x-text="block.config.headline || 'Contact Us'"></h2>
+                                    <div class="max-w-md mx-auto p-8 border border-zinc-200 rounded-3xl bg-white/5">
+                                        <div class="space-y-4">
+                                            <div class="h-10 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
+                                            <div class="h-10 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
+                                            <div class="h-24 bg-zinc-100 dark:bg-zinc-900 rounded-lg"></div>
+                                            <div class="h-12 bg-primary rounded-lg"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div x-show="!['hero', 'cta', 'features', 'pricing', 'faq', 'contact'].includes(block.type)" class="py-12 border-2 border-dashed border-zinc-200 rounded-2xl">
                                     <flux:heading size="lg" x-text="block.config.headline || block.type"></flux:heading>
                                     <flux:text x-text="'Preview for ' + block.type + ' coming soon'"></flux:text>
                                 </div>
@@ -414,132 +421,76 @@
 
                         <!-- Statistics Editor -->
                         <template x-if="selectedBlock.type === 'statistics'">
-                            <div class="space-y-6">
-                                <template x-if="selectedBlock.variant === 'grid'">
-                                    <flux:field>
-                                        <flux:label>{{ __('Grid Columns') }}</flux:label>
-                                        <flux:select x-model="selectedBlock.config.columns_count" x-on:change="isDirty = true">
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4">4</option>
-                                            <option value="6">6</option>
-                                        </flux:select>
-                                    </flux:field>
-                                </template>
-
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Manage Metrics') }}</flux:heading>
-                                    <template x-for="(stat, index) in selectedBlock.config.stats" :key="index">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
-                                            <div class="flex justify-between items-center">
-                                                <flux:input x-model="stat.value" placeholder="Value (e.g. 99)" x-on:input="isDirty = true" size="sm" class="font-bold w-1/2" />
-                                                <button x-on:click="selectedBlock.config.stats.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                    <flux:icon.trash size="xs" />
-                                                </button>
-                                            </div>
-                                            <flux:input x-model="stat.label" placeholder="Label (e.g. Happy Users)" x-on:input="isDirty = true" size="sm" />
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <flux:input x-model="stat.prefix" placeholder="Prefix" x-on:input="isDirty = true" size="xs" />
-                                                <flux:input x-model="stat.suffix" placeholder="Suffix" x-on:input="isDirty = true" size="xs" />
-                                            </div>
-                                            <template x-if="selectedBlock.variant === 'grid'">
-                                                <flux:input x-model="stat.icon" placeholder="Icon Name" x-on:input="isDirty = true" size="xs" />
-                                            </template>
+                            <div class="space-y-4">
+                                <flux:heading size="sm">{{ __('Manage Metrics') }}</flux:heading>
+                                <template x-for="(stat, index) in selectedBlock.config.stats" :key="index">
+                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <flux:input x-model="stat.value" placeholder="Value (e.g. 99)" x-on:input="isDirty = true" size="sm" class="w-1/2" />
+                                            <button x-on:click="selectedBlock.config.stats.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                <flux:icon.trash size="xs" />
+                                            </button>
                                         </div>
-                                    </template>
-                                    <flux:button x-on:click="selectedBlock.config.stats = selectedBlock.config.stats || []; selectedBlock.config.stats.push({value: '100', label: 'Metric', prefix: '', suffix: '+', icon: 'chart-bar'}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                        {{ __('+ Add Metric') }}
-                                    </flux:button>
-                                </div>
+                                        <flux:input x-model="stat.label" placeholder="Label (e.g. Happy Users)" x-on:input="isDirty = true" size="sm" />
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <flux:input x-model="stat.prefix" placeholder="Prefix" x-on:input="isDirty = true" size="sm" />
+                                            <flux:input x-model="stat.suffix" placeholder="Suffix" x-on:input="isDirty = true" size="sm" />
+                                        </div>
+                                    </div>
+                                </template>
+                                <flux:button x-on:click="selectedBlock.config.stats = selectedBlock.config.stats || []; selectedBlock.config.stats.push({value: '100', label: 'Metric', prefix: '', suffix: '+'}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                    {{ __('+ Add Metric') }}
+                                </flux:button>
                             </div>
                         </template>
 
                         <!-- Gallery Editor -->
                         <template x-if="selectedBlock.type === 'gallery'">
-                            <div class="space-y-6">
-                                <div class="grid grid-cols-2 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <template x-if="['grid', 'masonry'].includes(selectedBlock.variant)">
-                                        <flux:field>
-                                            <flux:label>{{ __('Columns') }}</flux:label>
-                                            <flux:select x-model="selectedBlock.config.columns_count" x-on:change="isDirty = true">
-                                                <option value="2">2</option>
-                                                <option value="3">3</option>
-                                                <option value="4">4</option>
-                                            </flux:select>
-                                        </flux:field>
-                                    </template>
-                                    <template x-if="selectedBlock.variant === 'carousel'">
-                                        <div class="flex items-center justify-between col-span-2">
-                                            <flux:label>{{ __('Autoplay') }}</flux:label>
-                                            <flux:switch x-model="selectedBlock.config.autoplay" x-on:change="isDirty = true" />
+                            <div class="space-y-4">
+                                <flux:field>
+                                    <flux:label>{{ __('Columns') }}</flux:label>
+                                    <flux:select x-model="selectedBlock.config.columns" x-on:change="isDirty = true">
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                    </flux:select>
+                                </flux:field>
+                                <flux:heading size="sm">{{ __('Manage Images') }}</flux:heading>
+                                <template x-for="(img, index) in selectedBlock.config.images" :key="index">
+                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <flux:input x-model="img.url" placeholder="Image URL" x-on:input="isDirty = true" size="sm" class="w-2/3" />
+                                            <button x-on:click="selectedBlock.config.images.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                <flux:icon.trash size="xs" />
+                                            </button>
                                         </div>
-                                    </template>
-                                    <div class="flex items-center justify-between col-span-2 pt-1 border-t border-zinc-200 dark:border-zinc-700">
-                                        <flux:label size="sm">{{ __('Show Captions on Hover') }}</flux:label>
-                                        <flux:switch x-model="selectedBlock.config.show_captions" x-on:change="isDirty = true" />
+                                        <flux:input x-model="img.caption" placeholder="Caption (optional)" x-on:input="isDirty = true" size="sm" />
                                     </div>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Manage Images') }}</flux:heading>
-                                    <template x-for="(img, index) in selectedBlock.config.images" :key="index">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
-                                            <div class="flex justify-between items-center">
-                                                <flux:input x-model="img.url" placeholder="Image URL" x-on:input="isDirty = true" size="sm" class="font-bold w-3/4" />
-                                                <button x-on:click="selectedBlock.config.images.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                    <flux:icon.trash size="xs" />
-                                                </button>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <flux:input x-model="img.alt" placeholder="Alt Text" x-on:input="isDirty = true" size="xs" />
-                                                <flux:input x-model="img.caption" placeholder="Caption (optional)" x-on:input="isDirty = true" size="xs" />
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <flux:button x-on:click="selectedBlock.config.images = selectedBlock.config.images || []; selectedBlock.config.images.push({url: '', alt: '', caption: 'New Image'}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                        {{ __('+ Add Image') }}
-                                    </flux:button>
-                                </div>
+                                </template>
+                                <flux:button x-on:click="selectedBlock.config.images = selectedBlock.config.images || []; selectedBlock.config.images.push({url: '', alt: '', caption: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                    {{ __('+ Add Image') }}
+                                </flux:button>
                             </div>
                         </template>
 
                         <!-- Trust Signals Editor -->
                         <template x-if="selectedBlock.type === 'trust-signals'">
-                            <div class="space-y-6">
-                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <div class="flex items-center justify-between">
-                                        <flux:label size="sm">{{ __('Apply Grayscale Filter') }}</flux:label>
-                                        <flux:switch x-model="selectedBlock.config.grayscale" x-on:change="isDirty = true" />
-                                    </div>
-                                    <div class="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
-                                        <flux:label size="sm">{{ __('Show Original Colors on Hover') }}</flux:label>
-                                        <flux:switch x-model="selectedBlock.config.show_hover_color" x-on:change="isDirty = true" />
-                                    </div>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Manage Logos / Badges') }}</flux:heading>
-                                    <template x-for="(item, index) in selectedBlock.config.items" :key="index">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
-                                            <div class="flex justify-between items-center">
-                                                <flux:input x-model="item.logo_url" placeholder="Logo Image URL" x-on:input="isDirty = true" size="sm" class="font-bold w-3/4" />
-                                                <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
-                                                    <flux:icon.trash size="xs" />
-                                                </button>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <flux:input x-model="item.alt" placeholder="Company / Badge Name" x-on:input="isDirty = true" size="xs" />
-                                                <flux:input x-model="item.url" placeholder="Link URL (optional)" x-on:input="isDirty = true" size="xs" />
-                                            </div>
-                                            <template x-if="selectedBlock.variant === 'certifications'">
-                                                <flux:textarea x-model="item.description" placeholder="Short description..." x-on:input="isDirty = true" rows="2" size="xs" />
-                                            </template>
+                            <div class="space-y-4">
+                                <flux:heading size="sm">{{ __('Manage Logos/Badges') }}</flux:heading>
+                                <template x-for="(item, index) in selectedBlock.config.items" :key="index">
+                                    <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <flux:input x-model="item.logo_url" placeholder="Logo URL" x-on:input="isDirty = true" size="sm" class="w-2/3" />
+                                            <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
+                                                <flux:icon.trash size="xs" />
+                                            </button>
                                         </div>
-                                    </template>
-                                    <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({logo_url: '', alt: 'Partner', description: '', url: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
-                                        {{ __('+ Add Logo') }}
-                                    </flux:button>
-                                </div>
+                                        <flux:input x-model="item.alt" placeholder="Company/Badge Name" x-on:input="isDirty = true" size="sm" />
+                                    </div>
+                                </template>
+                                <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({logo_url: '', alt: '', description: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                    {{ __('+ Add Logo') }}
+                                </flux:button>
                             </div>
                         </template>
 
@@ -712,32 +663,23 @@
                             <div class="space-y-6">
                                 <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
                                     <div class="flex items-center justify-between">
-                                        <flux:label>{{ __('Open First Item') }}</flux:label>
+                                        <flux:label size="sm">{{ __('Open First by Default') }}</flux:label>
                                         <flux:switch x-model="selectedBlock.config.open_first" x-on:change="isDirty = true" />
                                     </div>
-                                    <template x-if="selectedBlock.variant === 'accordion'">
-                                        <flux:field>
-                                            <flux:label>{{ __('Icon Type') }}</flux:label>
-                                            <flux:select x-model="selectedBlock.config.icon_type" x-on:change="isDirty = true">
-                                                <option value="chevron">{{ __('Chevron') }}</option>
-                                                <option value="plus">{{ __('Plus/Minus') }}</option>
-                                            </flux:select>
-                                        </flux:field>
-                                    </template>
                                 </div>
 
                                 <div class="space-y-4">
                                     <flux:heading size="sm">{{ __('Manage FAQ Items') }}</flux:heading>
                                     <template x-for="(item, index) in selectedBlock.config.items" :key="index">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                        <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
                                             <div class="flex justify-between items-center">
-                                                <flux:icon icon="question-mark-circle" size="xs" class="text-zinc-400" />
+                                                <flux:icon.question-mark-circle size="xs" class="text-zinc-400" />
                                                 <button x-on:click="selectedBlock.config.items.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
                                                     <flux:icon.trash size="xs" />
                                                 </button>
                                             </div>
-                                            <flux:input x-model="item.question" placeholder="Question" x-on:input="isDirty = true" size="sm" class="font-bold" />
-                                            <flux:textarea x-model="item.answer" placeholder="Answer" x-on:input="isDirty = true" rows="3" size="sm" />
+                                            <flux:input x-model="item.question" placeholder="Question" x-on:input="isDirty = true" size="sm" />
+                                            <flux:textarea x-model="item.answer" placeholder="Answer" x-on:input="isDirty = true" rows="2" size="sm" />
                                         </div>
                                     </template>
                                     <flux:button x-on:click="selectedBlock.config.items = selectedBlock.config.items || []; selectedBlock.config.items.push({question: 'New Question', answer: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
@@ -747,19 +689,13 @@
 
                                 <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
                                     <div class="flex items-center justify-between">
-                                        <flux:heading size="sm">{{ __('Contact CTA') }}</flux:heading>
+                                        <flux:heading size="sm">{{ __('Show Contact CTA') }}</flux:heading>
                                         <flux:switch x-model="selectedBlock.config.show_contact_cta" x-on:change="isDirty = true" />
                                     </div>
                                     <template x-if="selectedBlock.config.show_contact_cta">
-                                        <div class="space-y-3 pt-2">
-                                            <flux:input x-model="selectedBlock.config.contact_cta_text" placeholder="Button Label" x-on:input="isDirty = true" size="sm" />
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <flux:input x-model="selectedBlock.config.contact_cta_url" placeholder="URL or #anchor" x-on:input="isDirty = true" size="xs" />
-                                                <select x-model="selectedBlock.config.contact_cta_target" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
-                                                    <option value="_self">Same Tab</option>
-                                                    <option value="_blank">New Tab</option>
-                                                </select>
-                                            </div>
+                                        <div class="space-y-4 pt-2">
+                                            <flux:input x-model="selectedBlock.config.contact_cta_text" placeholder="Contact our support team" x-on:input="isDirty = true" size="sm" />
+                                            <flux:input x-model="selectedBlock.config.contact_cta_url" placeholder="URL (e.g. /contact)" x-on:input="isDirty = true" size="sm" />
                                         </div>
                                     </template>
                                 </div>
@@ -768,148 +704,55 @@
 
                         <!-- About Editor -->
                         <template x-if="selectedBlock.type === 'about'">
-                            <div class="space-y-6">
+                            <div class="space-y-4">
                                 <flux:field>
-                                    <flux:label>{{ __('Description / Story') }}</flux:label>
-                                    <flux:textarea x-model="selectedBlock.config.description" x-on:input="isDirty = true" rows="5" size="sm" />
+                                    <flux:label>{{ __('Section Description') }}</flux:label>
+                                    <flux:textarea x-model="selectedBlock.config.description" x-on:input="isDirty = true" rows="5" />
                                 </flux:field>
-
-                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <div class="flex items-center justify-between">
-                                        <flux:heading size="sm">{{ __('Call to Action') }}</flux:heading>
-                                        <flux:switch x-model="selectedBlock.config.show_cta" x-on:change="isDirty = true" />
-                                    </div>
-                                    <template x-if="selectedBlock.config.show_cta">
-                                        <div class="space-y-3 pt-2">
-                                            <flux:input x-model="selectedBlock.config.cta_text" placeholder="Button Label" x-on:input="isDirty = true" size="sm" />
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <flux:input x-model="selectedBlock.config.cta_url" placeholder="URL or #anchor" x-on:input="isDirty = true" size="xs" />
-                                                <select x-model="selectedBlock.config.cta_target" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
-                                                    <option value="_self">Same Tab</option>
-                                                    <option value="_blank">New Tab</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Key Metrics') }}</flux:heading>
-                                    <template x-for="(metric, mIndex) in selectedBlock.config.metrics" :key="mIndex">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
-                                            <div class="flex justify-between items-center">
-                                                <flux:input x-model="metric.value" placeholder="Value (e.g. 10+)" x-on:input="isDirty = true" size="xs" class="font-bold w-1/2" />
-                                                <button x-on:click="selectedBlock.config.metrics.splice(mIndex, 1); isDirty = true" class="text-red-500"><flux:icon.trash size="xs" /></button>
-                                            </div>
-                                            <flux:input x-model="metric.label" placeholder="Label (e.g. Years)" x-on:input="isDirty = true" size="xs" />
-                                        </div>
-                                    </template>
-                                    <flux:button x-on:click="selectedBlock.config.metrics = selectedBlock.config.metrics || []; selectedBlock.config.metrics.push({value: '10', label: 'New Metric'}); isDirty = true" variant="outline" size="xs" class="w-full">+ Add Metric</flux:button>
-                                </div>
                                 
                                 <template x-if="selectedBlock.variant === 'team-intro'">
                                     <div class="space-y-4">
                                         <flux:heading size="sm">{{ __('Manage Team') }}</flux:heading>
                                         <template x-for="(member, index) in selectedBlock.config.team_members" :key="index">
-                                            <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-2">
+                                            <div class="p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2">
                                                 <div class="flex justify-between items-center">
-                                                    <flux:input x-model="member.name" placeholder="Full Name" x-on:input="isDirty = true" size="sm" class="font-bold" />
+                                                    <flux:input x-model="member.name" placeholder="Name" x-on:input="isDirty = true" size="sm" />
                                                     <button x-on:click="selectedBlock.config.team_members.splice(index, 1); isDirty = true" class="text-red-500 hover:text-red-700">
                                                         <flux:icon.trash size="xs" />
                                                     </button>
                                                 </div>
-                                                <flux:input x-model="member.role" placeholder="Role / Position" x-on:input="isDirty = true" size="xs" />
-                                                <flux:input x-model="member.avatar_url" placeholder="Avatar URL" x-on:input="isDirty = true" size="xs" />
-                                                <flux:textarea x-model="member.bio" placeholder="Short bio..." x-on:input="isDirty = true" rows="2" size="xs" />
+                                                <flux:input x-model="member.role" placeholder="Role" x-on:input="isDirty = true" size="sm" />
                                             </div>
                                         </template>
-                                        <flux:button x-on:click="selectedBlock.config.team_members = selectedBlock.config.team_members || []; selectedBlock.config.team_members.push({name: 'New Member', role: 'Team Lead', avatar_url: '', bio: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
+                                        <flux:button x-on:click="selectedBlock.config.team_members = selectedBlock.config.team_members || []; selectedBlock.config.team_members.push({name: 'New Member', role: ''}); isDirty = true" variant="outline" size="xs" class="w-full">
                                             {{ __('+ Add Member') }}
                                         </flux:button>
                                     </div>
-                                </template>
-
-                                <template x-if="['image-right', 'image-left'].includes(selectedBlock.variant)">
-                                    <flux:field>
-                                        <flux:label>{{ __('Image URL') }}</flux:label>
-                                        <flux:input x-model="selectedBlock.config.image_url" placeholder="https://..." x-on:input="isDirty = true" />
-                                    </flux:field>
                                 </template>
                             </div>
                         </template>
 
                         <!-- Contact Editor -->
                         <template x-if="selectedBlock.type === 'contact'">
-                            <div class="space-y-6">
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Form Fields') }}</flux:heading>
-                                    <template x-for="(field, fIndex) in selectedBlock.config.fields" :key="fIndex">
-                                        <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
-                                            <div class="flex justify-between items-center">
-                                                <select x-model="field.type" class="text-xs bg-white dark:bg-zinc-800 border border-zinc-200 rounded p-1" x-on:change="isDirty = true">
-                                                    <option value="text">Text</option>
-                                                    <option value="email">Email</option>
-                                                    <option value="tel">Phone</option>
-                                                    <option value="textarea">Message</option>
-                                                </select>
-                                                <button x-on:click="selectedBlock.config.fields.splice(fIndex, 1); isDirty = true" class="text-red-500"><flux:icon.trash size="xs" /></button>
-                                            </div>
-                                            <flux:input x-model="field.label" placeholder="Label" size="xs" x-on:input="isDirty = true" />
-                                            <flux:input x-model="field.placeholder" placeholder="Placeholder" size="xs" x-on:input="isDirty = true" />
-                                            <div class="flex items-center justify-between">
-                                                <flux:label size="sm">{{ __('Required') }}</flux:label>
-                                                <flux:switch x-model="field.required" x-on:change="isDirty = true" />
-                                            </div>
-                                        </div>
-                                    </template>
-                                    <flux:button x-on:click="selectedBlock.config.fields = selectedBlock.config.fields || []; selectedBlock.config.fields.push({type: 'text', label: 'New Field', name: 'field_' + Date.now(), required: false}); isDirty = true" variant="outline" size="xs" class="w-full">+ Add Field</flux:button>
-                                </div>
-
-                                <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                    <flux:heading size="sm">{{ __('Submission Settings') }}</flux:heading>
-                                    <flux:input x-model="selectedBlock.config.submit_text" placeholder="Submit Button Label" x-on:input="isDirty = true" size="sm" />
-                                    <flux:textarea x-model="selectedBlock.config.success_message" placeholder="Success Message" x-on:input="isDirty = true" rows="2" size="sm" />
-                                </div>
-
-                                <div class="space-y-4">
-                                    <flux:heading size="sm">{{ __('Business Information') }}</flux:heading>
-                                    
-                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <flux:label size="sm">{{ __('Show Email') }}</flux:label>
-                                            <flux:switch x-model="selectedBlock.config.show_email" x-on:change="isDirty = true" />
-                                        </div>
-                                        <template x-if="selectedBlock.config.show_email">
-                                            <flux:input x-model="selectedBlock.config.email" placeholder="Email Address" size="xs" x-on:input="isDirty = true" />
-                                        </template>
-                                    </div>
-
-                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <flux:label size="sm">{{ __('Show Phone') }}</flux:label>
-                                            <flux:switch x-model="selectedBlock.config.show_phone" x-on:change="isDirty = true" />
-                                        </div>
-                                        <template x-if="selectedBlock.config.show_phone">
-                                            <flux:input x-model="selectedBlock.config.phone" placeholder="Phone Number" size="xs" x-on:input="isDirty = true" />
-                                        </template>
-                                    </div>
-
-                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <flux:label size="sm">{{ __('Show Address') }}</flux:label>
-                                            <flux:switch x-model="selectedBlock.config.show_address" x-on:change="isDirty = true" />
-                                        </div>
-                                        <template x-if="selectedBlock.config.show_address">
-                                            <flux:textarea x-model="selectedBlock.config.address" placeholder="Physical Address" size="xs" x-on:input="isDirty = true" rows="2" />
-                                        </template>
-                                    </div>
-                                </div>
-
+                            <div class="space-y-4">
+                                <flux:field>
+                                    <flux:label>{{ __('Email Address') }}</flux:label>
+                                    <flux:input x-model="selectedBlock.config.email" x-on:input="isDirty = true" size="sm" />
+                                </flux:field>
+                                <flux:field>
+                                    <flux:label>{{ __('Phone Number') }}</flux:label>
+                                    <flux:input x-model="selectedBlock.config.phone" x-on:input="isDirty = true" size="sm" />
+                                </flux:field>
+                                <flux:field>
+                                    <flux:label>{{ __('Physical Address') }}</flux:label>
+                                    <flux:textarea x-model="selectedBlock.config.address" x-on:input="isDirty = true" rows="2" size="sm" />
+                                </flux:field>
+                                
                                 <template x-if="selectedBlock.variant === 'map-included'">
-                                    <div class="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700">
-                                        <flux:heading size="sm">{{ __('Map Settings') }}</flux:heading>
-                                        <flux:input x-model="selectedBlock.config.map_embed_url" placeholder="Google Maps Embed URL" x-on:input="isDirty = true" size="sm" />
-                                    </div>
+                                    <flux:field>
+                                        <flux:label>{{ __('Google Maps Embed URL') }}</flux:label>
+                                        <flux:input x-model="selectedBlock.config.map_embed_url" x-on:input="isDirty = true" size="sm" placeholder="https://www.google.com/maps/embed?..." />
+                                    </flux:field>
                                 </template>
                             </div>
                         </template>
@@ -1136,29 +979,6 @@
                                         <option value="screen">{{ __('Full Screen (100vh)') }}</option>
                                     </flux:select>
                                 </flux:field>
-                            </div>
-                        </template>
-                        
-                        <!-- FAQ Advanced Styles -->
-                        <template x-if="selectedBlock.type === 'faq'">
-                            <div class="space-y-4 pt-4">
-                                <flux:field>
-                                    <flux:label>{{ __('Header Alignment') }}</flux:label>
-                                    <flux:select x-model="selectedBlock.styles.text_align" x-on:change="isDirty = true">
-                                        <option value="center">{{ __('Center') }}</option>
-                                        <option value="left">{{ __('Left') }}</option>
-                                    </flux:select>
-                                </flux:field>
-                                <template x-if="selectedBlock.variant === 'accordion'">
-                                    <flux:field>
-                                        <flux:label>{{ __('Item Style') }}</flux:label>
-                                        <flux:select x-model="selectedBlock.styles.item_style" x-on:change="isDirty = true">
-                                            <option value="boxed">{{ __('Boxed') }}</option>
-                                            <option value="separated">{{ __('Separated Cards') }}</option>
-                                            <option value="flat">{{ __('Flat (Divider only)') }}</option>
-                                        </flux:select>
-                                    </flux:field>
-                                </template>
                             </div>
                         </template>
                     </div>
