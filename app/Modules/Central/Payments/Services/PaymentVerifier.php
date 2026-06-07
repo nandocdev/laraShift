@@ -1,0 +1,130 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Central\Payments\Services;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Central\Payments\DTOs\PaymentResultData;
+use App\Modules\Central\Payments\Enums\PaymentStatus;
+use App\Modules\Central\Payments\Events\PaymentApproved;
+use App\Modules\Central\Payments\Events\PaymentDeclined;
+use App\Modules\Central\Payments\Events\PaymentWebhookReceived;
+use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
+use App\Modules\Central\Payments\Models\Payment;
+use App\Modules\Central\Payments\Models\PaymentAttempt;
+use App\Modules\Central\Payments\Models\PaymentWebhook;
+
+final readonly class PaymentVerifier
+{
+    public function __construct(
+        private PaymentGateway $gateway,
+    ) {}
+
+    /**
+     * Process an inbound webhook.
+     * Idempotent: duplicate gateway references are silently ignored.
+     *
+     * @throws WebhookVerificationException if signature is invalid
+     */
+    public function handleWebhook(
+        string $rawPayload,
+        string $signature,
+        string $webhookSecret,
+        string $tenantId,
+    ): void {
+        if (! $this->gateway->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
+            Log::warning('ClaveGateway: webhook signature mismatch', [
+                'tenant_id' => $tenantId,
+            ]);
+
+            throw new WebhookVerificationException('Invalid webhook signature');
+        }
+
+        $payload = json_decode($rawPayload, true);
+        $result  = $this->gateway->parseWebhookPayload($payload);
+
+        DB::transaction(function () use ($result, $rawPayload, $tenantId): void {
+            $this->recordWebhook($result, $rawPayload, $tenantId);
+            $this->reconcilePayment($result, $tenantId);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Internals
+    // -------------------------------------------------------------------------
+
+    private function recordWebhook(PaymentResultData $result, string $rawPayload, string $tenantId): void
+    {
+        // Idempotency guard: same gateway reference = already processed
+        $exists = PaymentWebhook::where('tenant_id', $tenantId)
+            ->where('gateway_reference', $result->gatewayReference)
+            ->exists();
+
+        if ($exists) {
+            Log::info('ClaveGateway: duplicate webhook ignored', [
+                'gateway_reference' => $result->gatewayReference,
+                'tenant_id'         => $tenantId,
+            ]);
+
+            return;
+        }
+
+        PaymentWebhook::create([
+            'tenant_id'          => $tenantId,
+            'gateway_reference'  => $result->gatewayReference,
+            'display_id'         => $result->displayId,
+            'status'             => $result->status->value,
+            'amount'             => $result->amount,
+            'gateway_code'       => $result->gatewayCode,
+            'authorization_code' => $result->authorizationCode,
+            'error_code'         => $result->errorCode,
+            'error_message'      => $result->errorMessage,
+            'raw_payload'        => $rawPayload,
+        ]);
+
+        PaymentWebhookReceived::dispatch($result, $tenantId);
+    }
+
+    private function reconcilePayment(PaymentResultData $result, string $tenantId): void
+    {
+        $payment = Payment::where('tenant_id', $tenantId)
+            ->where('display_id', $result->displayId)
+            ->lockForUpdate()
+            ->first();
+
+        if (! $payment) {
+            Log::warning('ClaveGateway: no payment found for webhook', [
+                'display_id' => $result->displayId,
+                'tenant_id'  => $tenantId,
+            ]);
+
+            return;
+        }
+
+        // Never regress a terminal status
+        if (PaymentStatus::from($payment->status)->isTerminal()) {
+            return;
+        }
+
+        $payment->update([
+            'status'             => $result->status->value,
+            'gateway_reference'  => $result->gatewayReference,
+            'authorization_code' => $result->authorizationCode,
+            'error_code'         => $result->errorCode,
+        ]);
+
+        PaymentAttempt::where('tenant_id', $tenantId)
+            ->where('payment_id', $payment->id)
+            ->whereIn('status', ['initiated', 'pending'])
+            ->update(['status' => $result->status->value]);
+
+        match ($result->status) {
+            PaymentStatus::Approved => PaymentApproved::dispatch($payment, $result),
+            PaymentStatus::Declined => PaymentDeclined::dispatch($payment, $result),
+            default                 => null,
+        };
+    }
+}

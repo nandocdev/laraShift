@@ -22,6 +22,8 @@ class Plan extends Model
         'amount',
         'currency',
         'interval',
+        'interval_count',
+        'provider_plan_id',
         'is_active',
         'features',
     ];

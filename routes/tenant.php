@@ -66,9 +66,6 @@ Route::middleware([
         Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
-        // PagueloFacil Internal Checkout for Tenants
-        Route::get('/billing/checkout/paguelofacil/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\PaguelofacilCheckout::class)->name('tenant.billing.checkout.paguelofacil');
-
         Route::get('/billing/success', function () {
             return view('billing::pages.success'); // Assuming I create this or use a generic one
         })->name('tenant.billing.success');

@@ -64,6 +64,8 @@ class PlanSeeder extends Seeder {
                'amount' => $p['price_monthly'] / 100,
                'currency' => 'USD',
                'interval' => 'month',
+               'interval_count' => 1,
+               'provider_plan_id' => $p['slug'] === 'free' ? null : "PF_".strtoupper($p['slug']),
                'is_active' => $p['is_active'],
                'features' => $p['features'],
             ]

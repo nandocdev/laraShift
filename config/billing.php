@@ -14,7 +14,7 @@ return [
         'cclw' => env('PAGUELOFACIL_CCLW', ''),
         'api_token' => env('PAGUELOFACIL_API', ''),
         'base_url' => env('PAGUELOFACIL_ENV', env('APP_ENV') === 'production' 
-            ? 'https://admin.paguelofacil.com/PFManagementServices/api/v1' 
-            : 'https://sandbox.paguelofacil.com/PFManagementServices/api/v1'),
+            ? 'https://secure.paguelofacil.com' 
+            : 'https://sandbox.paguelofacil.com'),
     ],
 ];

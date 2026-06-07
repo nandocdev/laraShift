@@ -12,6 +12,7 @@ return [
     App\Modules\Central\Features\Providers\FeaturesServiceProvider::class,
     App\Modules\Central\Landings\Providers\LandingServiceProvider::class,
     App\Modules\Central\Support\Providers\SupportServiceProvider::class,
+    App\Modules\Central\Payments\Providers\PaymentsServiceProvider::class,
     App\Modules\Central\Infrastructure\Providers\InfrastructureServiceProvider::class,
     App\Modules\Central\Marketing\Providers\MarketingServiceProvider::class,
     App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
