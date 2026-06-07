@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Support;
 
-use App\Modules\Central\Billing\Support\Drivers\PaguelofacilBillingProvider;
+use App\Modules\Central\Billing\Support\Drivers\InternalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
@@ -18,7 +18,7 @@ class BillingManager extends Manager implements BillingProvider
             return config('cashier.driver', 'stripe');
         }
 
-        return 'paguelofacil';
+        return config('payments.default', 'paguelofacil');
     }
 
     public function createStripeDriver(): StripeBillingProvider
@@ -26,10 +26,16 @@ class BillingManager extends Manager implements BillingProvider
         return new StripeBillingProvider();
     }
 
-    public function createPaguelofacilDriver(): PaguelofacilBillingProvider
+    public function createPaguelofacilDriver(): InternalBillingProvider
     {
-        return new PaguelofacilBillingProvider();
+        return new InternalBillingProvider();
     }
+
+    public function createDlocalDriver(): InternalBillingProvider
+    {
+        return new InternalBillingProvider();
+    }
+
 
     public function forTenant(Tenant $tenant): BillingProvider
     {

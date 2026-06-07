@@ -8,7 +8,7 @@ use App\Modules\Central\Billing\Support\PagueloFacilClient;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
 
-class PaguelofacilBillingProvider implements BillingProvider
+class InternalBillingProvider implements BillingProvider
 {
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
