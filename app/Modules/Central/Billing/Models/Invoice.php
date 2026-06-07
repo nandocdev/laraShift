@@ -17,22 +17,16 @@ class Invoice extends Model
         'id',
         'tenant_id',
         'subscription_id',
-        'external_id',
-        'number',
-        'status',
-        'amount_due',
-        'amount_paid',
+        'provider_invoice_id',
+        'amount',
         'currency',
-        'period_start',
-        'period_end',
-        'pdf_url',
+        'status',
+        'issued_at',
     ];
 
     protected $casts = [
-        'period_start' => 'datetime',
-        'period_end' => 'datetime',
-        'amount_due' => 'integer',
-        'amount_paid' => 'integer',
+        'issued_at' => 'datetime',
+        'amount' => 'integer',
     ];
 
     public function tenant(): BelongsTo

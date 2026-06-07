@@ -32,7 +32,7 @@ class EnforceTenantMfa
         // 2. Check tenant settings
         $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
         
-        if ($settings && $settings->mfa_required && ! $user->mfa_enrolled) {
+        if ($settings && $settings->mfa_required && ! $user->mfa_enabled) {
             return redirect()->route('tenant.settings.security.2fa')
                 ->with('error', __('MFA is mandatory for this organization. Please complete your setup.'));
         }

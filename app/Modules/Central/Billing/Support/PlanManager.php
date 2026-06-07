@@ -16,7 +16,11 @@ class PlanManager
 
     public static function find(string $id): ?Plan
     {
-        return Plan::find($id) ?? Plan::where('slug', $id)->first();
+        if (\Illuminate\Support\Str::isUuid($id)) {
+            return Plan::find($id);
+        }
+
+        return Plan::where('slug', $id)->first();
     }
 
     public static function getStripeId(string $id): ?string

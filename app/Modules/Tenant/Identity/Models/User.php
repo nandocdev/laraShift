@@ -32,8 +32,8 @@ class User extends Authenticatable implements PasskeyUser
         'name',
         'email',
         'password',
-        'is_active',
-        'mfa_enrolled',
+        'status',
+        'mfa_enabled',
         'last_login_at',
     ];
 
@@ -57,10 +57,14 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean',
-            'mfa_enrolled' => 'boolean',
+            'mfa_enabled' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->status === 'active';
     }
 
     public function mfa(): HasOne
