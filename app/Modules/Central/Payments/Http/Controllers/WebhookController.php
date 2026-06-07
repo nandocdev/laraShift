@@ -21,10 +21,17 @@ final class WebhookController extends Controller
 {
     public function handle(Request $request): Response
     {
-        $tenantId      = $this->resolveTenantId($request);
-        $rawPayload    = $request->getContent();
-        $signature     = $request->header('X-Clave-Signature', '');
-        $webhookSecret = config('payments.clave.webhook_secret');
+        $gateway = $this->resolveGateway($request);
+        $tenantId = $this->resolveTenantId($request);
+        $rawPayload = $request->getContent();
+        
+        $signature = match ($gateway) {
+            'clave'  => $request->header('X-Clave-Signature', ''),
+            'dlocal' => $request->header('X-Signature', ''),
+            default  => '',
+        };
+
+        $webhookSecret = config("payments.{$gateway}.webhook_secret");
 
         ProcessPaymentWebhookJob::dispatch(
             tenantId:      $tenantId,
@@ -35,6 +42,14 @@ final class WebhookController extends Controller
 
         // Always 200. Gateway must not retry due to our processing latency.
         return response()->noContent();
+    }
+
+    private function resolveGateway(Request $request): string
+    {
+        if ($request->is('*/clave')) return 'clave';
+        if ($request->is('*/dlocal')) return 'dlocal';
+        
+        return 'clave';
     }
 
     /**

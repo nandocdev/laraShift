@@ -70,6 +70,9 @@ final class CheckoutComponent extends Component
         $this->error   = null;
 
         try {
+            $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
+            $apiKey  = config("payments.{$gateway}.api_key") ?? config("payments.{$gateway}.login"); // dLocal uses login as ID
+
             $session = $action->execute(
                 data: new PaymentData(
                     amount:      $this->amount,
@@ -82,12 +85,12 @@ final class CheckoutComponent extends Component
                     customFieldValues: $this->customFieldValues,
                 ),
                 tenantId: tenancy()->tenant->id,
-                apiKey:   config('payments.clave.api_key'),
+                apiKey:   (string) $apiKey,
             );
 
             $this->checkoutUrl = $session->checkoutUrl;
             $this->dispatch('checkout-ready', url: $this->checkoutUrl);
-        } catch (ClaveGatewayException $e) {
+        } catch (\Exception $e) {
             $this->error = __('payments.checkout_error');
 
             logger()->error('Checkout initiation failed', [

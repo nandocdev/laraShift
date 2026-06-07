@@ -28,13 +28,15 @@ final class ProcessPaymentWebhookJob implements ShouldQueue
         public readonly string $webhookSecret,
     ) {}
 
-    public function handle(HandleWebhookAction $action): void
+    public function handle(): void
     {
         // Tenant context must be initialized before business logic.
         // This follows the mandatory queue isolation pattern in Architecture.md.
         tenancy()->initialize($this->tenantId);
 
         try {
+            $action = app(HandleWebhookAction::class);
+            
             $action->execute(
                 rawPayload:    $this->rawPayload,
                 signature:     $this->signature,

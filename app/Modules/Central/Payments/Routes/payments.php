@@ -24,6 +24,10 @@ Route::post('/webhooks/clave', [WebhookController::class, 'handle'])
     ->name('payments.webhooks.clave')
     ->withoutMiddleware(['web', 'auth', 'tenant']);
 
+Route::post('/webhooks/dlocal', [WebhookController::class, 'handle'])
+    ->name('payments.webhooks.dlocal')
+    ->withoutMiddleware(['web', 'auth', 'tenant']);
+
 // ── Tenant-scoped checkout ───────────────────────────────────────────────────
 Route::middleware(['web', 'tenant', 'auth', 'verified', 'subscription'])
     ->prefix('payments')
