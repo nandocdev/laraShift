@@ -12,14 +12,18 @@ class PaguelofacilBillingProvider implements BillingProvider
 {
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
-        // Resolve the correct route based on context (Tenant vs Central)
-        $routeName = \Route::has('tenant.billing.checkout.paguelofacil') 
-            ? 'tenant.billing.checkout.paguelofacil' 
-            : 'central.billing.checkout.paguelofacil';
+        $client = new PagueloFacilClient();
+        $plan = \App\Modules\Central\Billing\Models\Plan::findOrFail($planId);
 
-        return route($routeName, [
-            'tenant_uuid' => $tenant->id,
-            'plan_uuid' => $planId,
+        // Resolve the correct callback route
+        $returnUrl = route('central.billing.paguelofacil.callback');
+
+        return $client->generatePaymentLink([
+            'amount' => $plan->amount,
+            'description' => "Subscription to plan: {$plan->name}",
+            'return_url' => $returnUrl,
+            'tenant_id' => $tenant->id,
+            'plan_id' => $plan->id,
         ]);
     }
 

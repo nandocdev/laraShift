@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/central/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.stripe');
 Route::post('/central/webhooks/dlocal', [DlocalWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.dlocal');
 
+// PagueloFacil Public Callback (Browser Redirect)
+Route::get('/central/billing/paguelofacil/callback', [\App\Modules\Central\Billing\Http\Controllers\PaguelofacilCallbackController::class, 'handleReturn'])->name('central.billing.paguelofacil.callback');
+
 Route::middleware(['web', 'auth:central'])->group(function () {
     // API Endpoints
     Route::get('/central/plans', [BillingApiController::class, 'listPlans'])->name('central.billing.api.plans');
