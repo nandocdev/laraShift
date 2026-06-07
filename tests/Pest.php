@@ -18,24 +18,32 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)
     ->beforeEach(function () {
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
+        
         $class = get_class($this);
         if ((str_contains($class, 'Feature\\Auth') || str_contains($class, 'Feature\\Settings')) && ! str_contains($class, 'AuthenticationTest')) {
             $plan = Plan::firstOrCreate(['slug' => 'free'], [
                 'name' => 'Free Plan',
                 'price_monthly' => 0,
                 'price_yearly' => 0,
+                'amount' => 0,
+                'currency' => 'USD',
+                'is_active' => true,
                 'features' => [],
             ]);
 
-            $tenant = Tenant::firstOrCreate(['id' => 'test-tenant'], [
+            $tenant = Tenant::firstOrCreate(['id' => '00000000-0000-0000-0000-000000000001'], [
                 'slug' => 'test-tenant',
                 'name' => 'Test Tenant',
                 'email' => 'test@tenant.com',
                 'plan_id' => 'free',
                 'status' => 'active',
+                'billing_gateway' => 'paguelofacil',
             ]);
 
-            $domain = 'test-tenant.' . config('tenancy.central_domain');
+            $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
+            $domain = 'test-tenant.' . $centralDomain;
+            
             $tenant->domains()->firstOrCreate(['domain' => $domain]);
 
             tenancy()->initialize($tenant);

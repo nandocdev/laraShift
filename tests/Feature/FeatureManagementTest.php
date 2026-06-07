@@ -31,7 +31,7 @@ it('resolves features from the plan', function () {
     $plan->catalogFeatures()->attach($feature->id);
 
     $tenant = Tenant::create([
-        'id' => 'test-tenant',
+        'id' => '00000000-0000-0000-0000-000000000001',
         'slug' => 'test-tenant',
         'name' => 'Test Tenant',
         'email' => 'test@tenant.com',
@@ -61,7 +61,7 @@ it('can override plan features with deny type', function () {
     $plan->catalogFeatures()->attach($feature->id);
 
     $tenant = Tenant::create([
-        'id' => 'test-tenant',
+        'id' => '00000000-0000-0000-0000-000000000001',
         'slug' => 'test-tenant',
         'name' => 'Test Tenant',
         'email' => 'test@tenant.com',
@@ -102,7 +102,7 @@ it('can grant additional features via allow override', function () {
     ]);
 
     $tenant = Tenant::create([
-        'id' => 'free-tenant',
+        'id' => '00000000-0000-0000-0000-000000000002',
         'slug' => 'free-tenant',
         'name' => 'Free Tenant',
         'email' => 'free@tenant.com',

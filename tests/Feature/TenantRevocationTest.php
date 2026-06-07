@@ -28,7 +28,7 @@ it('kicks out an inactive user immediately via middleware', function () {
         'name' => 'Bad User',
         'email' => 'bad@test.com',
         'password' => 'password',
-        'is_active' => true,
+        'status' => 'active',
     ]);
 
     $this->actingAs($user);
@@ -42,7 +42,7 @@ it('kicks out an inactive user immediately via middleware', function () {
     $this->get('/test-active')->assertStatus(200);
 
     // 2. Revoke access
-    $user->update(['is_active' => false]);
+    $user->update(['status' => 'inactive']);
 
     // 3. Next request (kicked out)
     $response = $this->get('/test-active');

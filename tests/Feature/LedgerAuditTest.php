@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Plinth\MultiTenantBilling\Core\Models\LedgerEntry;
+use App\Modules\Central\Billing\Models\LedgerEntry;
 use App\Modules\Central\Billing\Livewire\LedgerAudit;
 use Livewire\Livewire;
 
@@ -40,19 +41,28 @@ test('ledger audit page lists ledger entries', function () {
 
     $this->actingAs($admin, 'central');
 
+    // Create the tenant first
+    Tenant::create([
+        'id' => '00000000-0000-0000-0000-0000000000ac',
+        'slug' => 'acme-tenant',
+        'name' => 'Acme Tenant',
+        'email' => 'acme@test.com',
+        'plan_id' => 'pro',
+    ]);
+
     // Create a dummy ledger entry
     $entry = LedgerEntry::create([
-        'tenant_id' => 'acme-tenant',
+        'tenant_id' => '00000000-0000-0000-0000-0000000000ac',
         'type' => 'CREDIT',
         'amount' => 150.00,
         'currency' => 'USD',
         'description' => 'Test Transaction Ledger Log',
         'reference_type' => 'App\Models\Order',
-        'reference_id' => 123,
+        'reference_id' => Str::uuid()->toString(),
     ]);
 
     Livewire::test(LedgerAudit::class)
         ->assertSee('Test Transaction Ledger Log')
-        ->assertSee('acme-tenant')
+        ->assertSee('00000000-0000-0000-0000-0000000000ac')
         ->assertSee('+150.00 USD');
 });

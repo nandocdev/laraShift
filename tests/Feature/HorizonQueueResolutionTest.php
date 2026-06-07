@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 it('resolves dynamic tenant queues for horizon', function () {
     // Create some tenants
     Tenant::create([
-        'id' => 'tenant-1',
+        'id' => '00000000-0000-0000-0000-000000000001',
         'slug' => 'acme',
         'name' => 'Acme Corp',
         'email' => 'acme@test.com',
@@ -21,7 +21,7 @@ it('resolves dynamic tenant queues for horizon', function () {
     ]);
 
     Tenant::create([
-        'id' => 'tenant-2',
+        'id' => '00000000-0000-0000-0000-000000000002',
         'slug' => 'globex',
         'name' => 'Globex',
         'email' => 'globex@test.com',
@@ -43,7 +43,7 @@ it('resolves dynamic tenant queues for horizon', function () {
 
 it('caches the resolved queues', function () {
     Tenant::create([
-        'id' => 'tenant-1',
+        'id' => '00000000-0000-0000-0000-000000000001',
         'slug' => 'acme',
         'name' => 'Acme Corp',
         'email' => 'acme@test.com',

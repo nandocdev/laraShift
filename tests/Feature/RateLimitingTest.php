@@ -12,7 +12,8 @@ use Illuminate\Support\Str;
 uses(RefreshDatabase::class);
 
 it('enforces rate limits based on the plan', function () {
-    $key = 'tenant_rate_limit:test-tenant-rate';
+    $tenantId = '00000000-0000-0000-0000-000000000012';
+    $key = 'tenant_rate_limit:' . $tenantId;
     \Illuminate\Support\Facades\RateLimiter::clear($key);
 
     $plan = Plan::create([
@@ -29,7 +30,7 @@ it('enforces rate limits based on the plan', function () {
     ]);
 
     $tenant = Tenant::create([
-        'id' => 'test-tenant-rate',
+        'id' => $tenantId,
         'slug' => 'rate-limit',
         'name' => 'Rate Limited Tenant',
         'email' => 'rate@tenant.com',

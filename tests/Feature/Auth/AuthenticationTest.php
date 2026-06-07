@@ -29,6 +29,7 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
+    $this->withoutExceptionHandling();
     $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
     $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
         name: 'Acme Test',

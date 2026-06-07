@@ -34,7 +34,7 @@ it('redirects to 2fa setup when mfa is mandatory and user has not enrolled', fun
         'name' => 'John Doe',
         'email' => 'john@test.com',
         'password' => 'password',
-        'mfa_enrolled' => false,
+        'mfa_enabled' => false,
     ]);
 
     $this->actingAs($user);
@@ -70,7 +70,7 @@ it('allows access when mfa is mandatory and user is enrolled', function () {
         'name' => 'John Enrolled',
         'email' => 'john@enrolled.com',
         'password' => 'password',
-        'mfa_enrolled' => true,
+        'mfa_enabled' => true,
     ]);
 
     $this->actingAs($user);

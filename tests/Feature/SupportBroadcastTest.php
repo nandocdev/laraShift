@@ -25,7 +25,7 @@ it('renders active banners for the target tenant', function () {
     $this->actingAs($admin, 'central');
 
     $tenant = Tenant::create([
-        'id' => 'acme-tenant',
+        'id' => '00000000-0000-0000-0000-0000000000ac',
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',
@@ -60,7 +60,7 @@ it('hides dismissed banners', function () {
     $this->actingAs($admin, 'central');
 
     $tenant = Tenant::create([
-        'id' => 'acme-tenant',
+        'id' => '00000000-0000-0000-0000-0000000000ac',
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',

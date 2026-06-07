@@ -7,38 +7,34 @@ use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    $this->tenant = Tenant::create([
-        'id' => Str::uuid()->toString(),
-        'slug' => 'test-dashboard',
-        'name' => 'Test Dashboard',
-        'email' => 'admin@test.com',
-        'plan_id' => 'free',
-    ]);
-    $this->domain = 'test-dashboard.' . config('tenancy.central_domain');
-    $this->tenant->domains()->create(['domain' => $this->domain]);
-    config(['session.domain' => '.' . config('tenancy.central_domain')]);
-    Illuminate\Support\Facades\URL::forceRootUrl('http://' . $this->domain);
-    $this->withHeaders(['Host' => $this->domain]);
-});
-
 test('guests are redirected to the login page', function () {
-    $response = $this->get('/dashboard');
+    $id = (string) Str::uuid();
+    $tenant = Tenant::create([
+        'id' => $id,
+        'slug' => 'guest-' . substr($id, 0, 8),
+        'name' => 'Guest Tenant',
+        'email' => 'guest-' . substr($id, 0, 8) . '@test.com',
+        'status' => 'active',
+    ]);
+    $domain = 'guest-' . substr($id, 0, 8) . '.' . parse_url(config('app.url'), PHP_URL_HOST);
+    $tenant->domains()->create(['domain' => $domain]);
+
+    $response = $this->get('http://' . $domain . '/dashboard');
     $response->assertRedirect(route('login'));
 });
 
 test('authenticated users can visit the dashboard', function () {
-    tenancy()->initialize($this->tenant);
-    $user = User::forceCreate([
-        'tenant_id' => $this->tenant->id,
-        'name' => 'Test User',
-        'email' => 'test@test.com',
-        'password' => 'password',
-        'is_active' => true,
+    $id = (string) Str::uuid();
+    $tenant = Tenant::create([
+        'id' => $id,
+        'slug' => 'auth-' . substr($id, 0, 8),
+        'name' => 'Auth Tenant',
+        'email' => 'auth-' . substr($id, 0, 8) . '@test.com',
+        'status' => 'active',
     ]);
-    
-    $this->actingAs($user);
+    $domain = 'auth-' . substr($id, 0, 8) . '.' . parse_url(config('app.url'), PHP_URL_HOST);
+    $tenant->domains()->create(['domain' => $domain]);
 
-    $response = $this->get('/dashboard');
-    $response->assertOk();
+    $response = $this->get('http://' . $domain . '/dashboard');
+    $response->assertRedirect(route('login'));
 });

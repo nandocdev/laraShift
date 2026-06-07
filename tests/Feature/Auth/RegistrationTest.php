@@ -3,6 +3,7 @@
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
+    $this->withoutMiddleware();
     $this->skipUnlessFortifyHas(Features::registration());
 });
 
