@@ -67,7 +67,7 @@ final class DlocalGateway implements PaymentGateway
             'order_id' => $payment->resolvedSlug(),
             'success_url' => route('central.billing.success', ['tenant' => $payment->customFieldValues['tenant_id'] ?? 'default']),
             'back_url' => route('tenant.billing.plans'),
-            'notification_url' => route('payments.webhooks.dlocal'),
+            'notification_url' => route('payments.webhooks.dlocal', ['tenant' => $payment->tenant_id]),
             'payer' => [
                 'name' => $payment->customFieldValues['name'] ?? 'Customer',
                 'email' => $payment->email,
