@@ -12,18 +12,10 @@ class PaguelofacilBillingProvider implements BillingProvider
 {
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
-        $client = new PagueloFacilClient();
-        $plan = \App\Modules\Central\Billing\Models\Plan::findOrFail($planId);
-
-        // Resolve the correct callback route
-        $returnUrl = route('central.billing.paguelofacil.callback');
-
-        return $client->generatePaymentLink([
-            'amount' => $plan->amount,
-            'description' => "Subscription to plan: {$plan->name}",
-            'return_url' => $returnUrl,
-            'tenant_id' => $tenant->id,
-            'plan_id' => $plan->id,
+        // We now point to our local hosted checkout page which uses the Payments module widget
+        return route('tenant.billing.checkout.hosted', [
+            'tenant_uuid' => $tenant->id,
+            'plan_uuid' => $planId,
         ]);
     }
 

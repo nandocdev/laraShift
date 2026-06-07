@@ -64,6 +64,7 @@ Route::middleware([
         
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
         Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
+        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
         Route::get('/billing/success', function () {
