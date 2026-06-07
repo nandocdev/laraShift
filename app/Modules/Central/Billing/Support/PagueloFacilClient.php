@@ -42,6 +42,12 @@ class PagueloFacilClient
             'address' => $data['address'] ?? '',
         ]);
 
+        $responseData = $response->json();
+        
+        if ($response->successful() && ($responseData['success'] ?? false) === false) {
+            throw new \Exception($responseData['message'] ?? 'Failed to create customer in PagueloFacil');
+        }
+
         return $response->throw()->json();
     }
 
@@ -50,7 +56,7 @@ class PagueloFacilClient
      */
     public function createSubscription(array $data): array
     {
-        $response = $this->client()->post('/CustomerSubscriptions', [
+        $payload = [
             'idPlan' => $data['plan_id'],
             'idCustomer' => $data['customer_id'],
             'startDate' => now()->format('Y-m-d\TH:i:s'),
@@ -69,7 +75,26 @@ class PagueloFacilClient
                     'cardType' => $this->detectCardType($data['card_number']),
                 ]
             ]
+        ];
+
+        \Log::info("PagueloFacil createSubscription Request", [
+            'url' => $this->baseUrl . '/CustomerSubscriptions',
+            'payload' => array_merge($payload, [
+                'requestPay' => ['cardInformation' => ['cardNumber' => 'REDACTED', 'cvv' => 'REDACTED']]
+            ])
         ]);
+
+        $response = $this->client()->post('/CustomerSubscriptions', $payload);
+        $data = $response->json();
+
+        \Log::info("PagueloFacil createSubscription Response", [
+            'status' => $response->status(),
+            'body' => $data
+        ]);
+
+        if ($response->successful() && ($data['success'] ?? false) === false) {
+            throw new \Exception($data['message'] ?? 'PagueloFacil API Error without message');
+        }
 
         return $response->throw()->json();
     }
