@@ -5,28 +5,67 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Actions;
 
 use App\Modules\Central\Billing\Models\Invoice;
+use App\Modules\Central\Billing\Support\BillingManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Laravel\Cashier\Invoice as CashierInvoice;
+use Illuminate\Support\Carbon;
 
 final readonly class SyncInvoicesAction
 {
     public function execute(Tenant $tenant): void
     {
-        $tenant->invoices()->each(function (CashierInvoice $cashierInvoice) use ($tenant) {
+        $gatewayInvoices = app(BillingManager::class)->getInvoices($tenant);
+
+        foreach ($gatewayInvoices as $gatewayInvoice) {
+            // Determine source format and map to local model
+            $this->mapAndStore($tenant, $gatewayInvoice);
+        }
+    }
+
+    private function mapAndStore(Tenant $tenant, mixed $data): void
+    {
+        // 1. Stripe (Cashier) format
+        if ($data instanceof \Laravel\Cashier\Invoice) {
             Invoice::updateOrCreate(
-                ['external_id' => $cashierInvoice->id],
+                ['provider_invoice_id' => $data->id],
                 [
                     'tenant_id' => $tenant->id,
-                    'number' => $cashierInvoice->number,
-                    'status' => $cashierInvoice->status,
-                    'amount_due' => $cashierInvoice->amount_due,
-                    'amount_paid' => $cashierInvoice->amount_paid,
-                    'currency' => $cashierInvoice->currency,
-                    'period_start' => $cashierInvoice->period_start,
-                    'period_end' => $cashierInvoice->period_end,
-                    'pdf_url' => $cashierInvoice->invoice_pdf,
+                    'amount' => $data->amount_due,
+                    'currency' => $data->currency,
+                    'status' => $data->status === 'paid' ? 'paid' : 'pending',
+                    'issued_at' => Carbon::createFromTimestamp($data->created),
                 ]
             );
-        });
+            return;
+        }
+
+        // 2. PagueloFacil (Clave) format
+        // Keys based on Discovery: codOper, totalPay, date, status
+        if (isset($data['codOper'])) {
+            Invoice::updateOrCreate(
+                ['provider_invoice_id' => $data['codOper']],
+                [
+                    'tenant_id' => $tenant->id,
+                    'amount' => (int) ((float)$data['totalPay'] * 100),
+                    'currency' => 'USD',
+                    'status' => (isset($data['status']) && $data['status'] == 1) ? 'paid' : 'pending',
+                    'issued_at' => Carbon::parse($data['date']),
+                ]
+            );
+            return;
+        }
+
+        // 3. dLocal format
+        if (isset($data['payment_id'])) {
+            Invoice::updateOrCreate(
+                ['provider_invoice_id' => (string)$data['payment_id']],
+                [
+                    'tenant_id' => $tenant->id,
+                    'amount' => (int) ($data['amount'] * 100),
+                    'currency' => $data['currency'] ?? 'USD',
+                    'status' => ($data['status'] ?? '') === 'PAID' ? 'paid' : 'pending',
+                    'issued_at' => Carbon::parse($data['created_date'] ?? now()),
+                ]
+            );
+        }
     }
 }

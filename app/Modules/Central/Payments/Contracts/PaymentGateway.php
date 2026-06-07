@@ -37,4 +37,9 @@ interface PaymentGateway
      * Unique gateway identifier (e.g. 'clave').
      */
     public function identifier(): string;
+
+    /**
+     * List historical transactions from the gateway.
+     */
+    public function listTransactions(string $apiKey, array $filters = []): array;
 }

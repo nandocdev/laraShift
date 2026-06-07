@@ -160,12 +160,25 @@ class PagueloFacilClient {
      */
     public function cancelSubscription(string $subscriptionId): array
     {
-        $response = $this->client()->post('/subscriptions-api/v1/CancelSubscription', [
+        $response = $this->client()->post('/CancelSubscription', [
             'idSubscription' => $subscriptionId,
         ]);
 
         return $response->throw()->json();
     }
+
+    /**
+     * List merchant transactions.
+     * Reference: /PFManagementServices/api/v1/MerchantTransactions
+     */
+    public function listTransactions(array $filters = []): array
+    {
+        // Resolve the prefix manually if baseUrl doesn't include it or ensure consistency
+        $response = $this->client()->get('/MerchantTransactions', $filters);
+
+        return $response->throw()->json();
+    }
+
 
 
     private function detectCardType(string $number): string {

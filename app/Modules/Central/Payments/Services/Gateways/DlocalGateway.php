@@ -37,6 +37,29 @@ final class DlocalGateway implements PaymentGateway
         return 'dlocal';
     }
 
+    public function listTransactions(string $apiKey, array $filters = []): array
+    {
+        $url = "{$this->baseUrl}/api_v1/payments";
+
+        try {
+            $response = Http::withHeaders([
+                'X-Login'       => $this->login,
+                'X-Trans-Key'   => $this->transKey,
+                'Authorization' => "Bearer {$this->secretKey}",
+                'Accept'        => 'application/json',
+            ])->get($url, $filters);
+
+            if ($response->failed()) {
+                return [];
+            }
+
+            return $response->json() ?? [];
+        } catch (\Exception $e) {
+            Log::error("dLocal listTransactions failure: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function loadMerchant(string $apiKey): MerchantData
     {
         // dLocal doesn't usually have a 'loadMerchant' like PagueloFacil

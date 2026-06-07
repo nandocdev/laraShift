@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Livewire;
 
+use App\Modules\Central\Billing\Actions\SyncInvoicesAction;
 use App\Modules\Central\Billing\Models\Invoice;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,13 @@ class ManageBilling extends Component
     {
         $tenant = tenant();
         $subscription = $tenant->subscription('default');
+
+        // Sync invoices from gateway
+        try {
+            app(SyncInvoicesAction::class)->execute($tenant);
+        } catch (\Exception $e) {
+            \Log::error("Failed to sync invoices for tenant {$tenant->id}: " . $e->getMessage());
+        }
         
         return view('billing::pages.manage-billing', [
             'tenant' => $tenant,

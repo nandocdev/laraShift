@@ -40,9 +40,9 @@ final class ClaveGateway implements PaymentGateway
         $response = $this->post('/loadMerchantServices', [
             'CCLW'        => $apiKey,
             'serviceCode' => self::SERVICE_CODE,
-        ]);
+        ], $apiKey);
 
-        if (! $response['success']) {
+        if (! ($response['success'] ?? false)) {
             throw new InvalidMerchantException(
                 $response['description'] ?? 'Invalid merchant response',
             );
@@ -110,7 +110,7 @@ final class ClaveGateway implements PaymentGateway
             throw new ClaveGatewayException($responseData['message'] ?? 'Failed to generate PagueloFacil payment link.');
         }
 
-        return $responseData['data']['url'];
+        return $responseData['data']['url'] ?? throw new ClaveGatewayException('No URL returned by PagueloFacil.');
     }
 
     public function verifyWebhook(string $payload, string $signature, string $secret): bool
@@ -131,6 +131,17 @@ final class ClaveGateway implements PaymentGateway
         return 'clave';
     }
 
+    public function listTransactions(string $apiKey, array $filters = []): array
+    {
+        $response = $this->get('/MerchantTransactions', $filters, $apiKey);
+
+        if (! ($response['success'] ?? false)) {
+            return [];
+        }
+
+        return $response['data'] ?? [];
+    }
+
     // -------------------------------------------------------------------------
     // Internal HTTP helpers
     // -------------------------------------------------------------------------
@@ -138,14 +149,15 @@ final class ClaveGateway implements PaymentGateway
     /**
      * @throws ClaveGatewayException
      */
-    private function post(string $path, array $body): array
+    private function post(string $path, array $body, ?string $apiKey = null): array
     {
         $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
 
         try {
             $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json',
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
+                'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
                 ->timeout(15)
                 ->retry(2, 500)
@@ -169,6 +181,41 @@ final class ClaveGateway implements PaymentGateway
             throw new ClaveGatewayException(
                 sprintf('Clave API returned HTTP %d', $response->status()),
             );
+        }
+
+        return $response->json() ?? [];
+    }
+
+    /**
+     * @throws ClaveGatewayException
+     */
+    private function get(string $path, array $query, ?string $apiKey = null): array
+    {
+        $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
+
+        try {
+            $response = Http::withHeaders([
+                'Accept'        => 'application/json',
+                'Authorization' => $apiKey ?? config('payments.clave.api_key'),
+            ])
+                ->timeout(15)
+                ->get($url, $query);
+        } catch (ConnectionException $e) {
+            Log::error('ClaveGateway: connection failure', [
+                'url'   => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new ClaveGatewayException('Clave gateway unreachable: ' . $e->getMessage(), previous: $e);
+        }
+
+        if ($response->failed()) {
+             Log::error('ClaveGateway GET: HTTP error', [
+                'url'    => $url,
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            return ['success' => false];
         }
 
         return $response->json() ?? [];

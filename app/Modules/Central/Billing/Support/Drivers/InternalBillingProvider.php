@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Support\Drivers;
 
+use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Billing\Support\PagueloFacilClient;
+use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
 
@@ -21,6 +23,9 @@ class InternalBillingProvider implements BillingProvider
 
     public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void
     {
+        // Logic to cancel via current gateway
+        // For simplicity, we keep PagueloFacilClient if we know it was PF, 
+        // but ideally we should use the Payments module too.
         $client = new PagueloFacilClient();
         
         try {
@@ -39,12 +44,23 @@ class InternalBillingProvider implements BillingProvider
 
     public function syncSubscription(Tenant $tenant): void
     {
-        // Implement if PagueloFacil provides a status sync endpoint
+        // Implement status sync
     }
 
     public function getInvoices(Tenant $tenant): array
     {
-        // Implement if PagueloFacil provides an invoice list endpoint
-        return [];
+        $gateway = app(PaymentGateway::class);
+        $apiKey = config("payments.{$gateway->identifier()}.api_key") 
+               ?? config("payments.{$gateway->identifier()}.login");
+
+        $transactions = $gateway->listTransactions((string) $apiKey, [
+            'PARM_1' => $tenant->id, // For Clave
+            'tenant_id' => $tenant->id, // For dLocal fallback
+        ]);
+
+        // Map gateway transactions to standard Invoice format if needed, 
+        // or just return the raw data for now. 
+        // The SyncInvoicesAction will handle the persistence.
+        return $transactions;
     }
 }
