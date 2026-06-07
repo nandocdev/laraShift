@@ -50,8 +50,8 @@ class EnableRlsCommand extends Command
             // Create policy
             DB::statement("
                 CREATE POLICY {$policyName} ON {$table}
-                USING (tenant_id = current_setting('app.current_tenant_id')::uuid)
-                WITH CHECK (tenant_id = current_setting('app.current_tenant_id')::uuid)
+                USING (tenant_id = current_setting('app.tenant_id')::uuid)
+                WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
             ");
 
             $this->info("RLS enabled and policy '{$policyName}' created successfully.");

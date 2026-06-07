@@ -23,7 +23,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
         try {
             $connection = DB::connection();
             if ($connection->getDriverName() === 'pgsql') {
-                $connection->statement("SELECT set_config('app.current_tenant_id', ?, false)", [(string) $tenantId]);
+                $connection->statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenantId]);
             }
         } catch (\Throwable $e) {
             // Log/Ignore to prevent bootstrapping from causing system-wide crash
@@ -38,7 +38,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
         try {
             $connection = DB::connection();
             if ($connection->getDriverName() === 'pgsql') {
-                $connection->statement("SELECT set_config('app.current_tenant_id', '', false)");
+                $connection->statement("SELECT set_config('app.tenant_id', '', false)");
             }
         } catch (\Throwable $e) {
             // Log/Ignore
