@@ -14,7 +14,11 @@ class BillingManager extends Manager implements BillingProvider
 {
     public function getDefaultDriver(): string
     {
-        return config('cashier.driver', 'stripe');
+        if (config('cashier.key') && config('cashier.secret')) {
+            return config('cashier.driver', 'stripe');
+        }
+
+        return 'paguelofacil';
     }
 
     public function createStripeDriver(): StripeBillingProvider

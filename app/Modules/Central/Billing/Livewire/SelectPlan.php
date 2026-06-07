@@ -13,10 +13,11 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class SelectPlan extends Component
 {
-    public function selectPlan(string $planId, CreateCheckoutSessionAction $action): void
+    public function selectPlan(string $planId): void
     {
         try {
             $tenant = tenant();
+            $action = app(CreateCheckoutSessionAction::class);
             
             // If they already have this plan, don't do anything
             if ($tenant->plan_id === $planId) {

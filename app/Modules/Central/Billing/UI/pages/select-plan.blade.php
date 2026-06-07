@@ -12,7 +12,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         @foreach($plans as $plan)
-            <flux:card class="relative flex flex-col p-8 {{ $plan->slug === $currentPlanId ? 'ring-2 ring-primary border-primary' : '' }}">
+            <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $plan->slug === $currentPlanId ? 'ring-2 ring-primary border-primary' : '' }}">
                 @if($plan->slug === $currentPlanId)
                     <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white bg-primary uppercase tracking-widest shadow-sm">
                         {{ __('Current Plan') }}
@@ -37,20 +37,21 @@
                 </ul>
 
                 <flux:button 
+                    type="button"
                     wire:click="selectPlan('{{ $plan->id }}')"
                     variant="{{ $plan->slug === $currentPlanId ? 'ghost' : 'primary' }}" 
                     class="w-full py-3"
                     :disabled="$plan->slug === $currentPlanId"
                     wire:loading.attr="disabled"
                 >
-                    <span wire:loading.remove wire:target="selectPlan('{{ $plan->id }}')">
+                    <span wire:loading.remove wire:target="selectPlan">
                         @if($plan->slug === $currentPlanId)
                             {{ __('Selected') }}
                         @else
                             {{ $plan->price_monthly > 0 ? __('Upgrade Now') : __('Select Plan') }}
                         @endif
                     </span>
-                    <span wire:loading wire:target="selectPlan('{{ $plan->id }}')">
+                    <span wire:loading wire:target="selectPlan">
                         {{ __('Redirecting...') }}
                     </span>
                 </flux:button>
