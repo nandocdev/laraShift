@@ -5,23 +5,6 @@
         completed: @entangle('completed'),
         error: @entangle('error')
     }"
-    x-init="
-        $watch('checkoutUrl', value => {
-            if (value) {
-                // Wait for the container to be in the DOM
-                $nextTick(() => {
-                    import('{{ Vite::asset('resources/js/payments/clave-adapter.js') }}').then(module => {
-                        const ClaveAdapter = module.default;
-                        ClaveAdapter.mount({
-                            checkoutUrl: value,
-                            containerId: 'clave-checkout-container',
-                            onClose: () => { checkoutUrl = null; }
-                        });
-                    });
-                });
-            }
-        })
-    "
 >
     <div x-show="error" class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800" role="alert">
         <span x-text="error"></span>
@@ -35,10 +18,30 @@
         <flux:text class="mt-2">{{ __('Your transaction has been processed.') }}</flux:text>
     </div>
 
-    <div x-show="checkoutUrl && !completed">
-        <div id="clave-checkout-container" class="w-full min-h-[500px] border border-zinc-200 rounded-xl overflow-hidden bg-white">
-            <!-- The iframe will be mounted here by JS -->
+    <div x-show="checkoutUrl && !completed" class="text-center py-16">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <flux:heading size="lg">{{ __('Redirecting to Secure Payment...') }}</flux:heading>
+            <flux:text class="max-w-xs mx-auto">
+                {{ __('Please wait while we transfer you to PagueloFacil to complete your transaction.') }}
+            </flux:text>
+            
+            <div class="mt-8">
+                <flux:button x-on:click="window.location.href = checkoutUrl" variant="primary">
+                    {{ __('Click here if you are not redirected') }}
+                </flux:button>
+            </div>
         </div>
+
+        <script>
+            document.addEventListener('livewire:initialized', () => {
+                @this.on('checkout-ready', (event) => {
+                    setTimeout(() => {
+                        window.location.href = event.url;
+                    }, 1000);
+                });
+            });
+        </script>
     </div>
 
     <div x-show="!checkoutUrl && !completed" class="flex flex-col items-center py-12">

@@ -37,6 +37,7 @@ final class CheckoutComponent extends Component
     public string $displayId   = '';
     public string $email       = '';
     public string $lang        = 'es';
+    public array  $customFieldValues = [];
 
     // -------------------------------------------------------------------------
     // State
@@ -78,12 +79,14 @@ final class CheckoutComponent extends Component
                     taxAmount:   $this->taxAmount,
                     discount:    $this->discount,
                     lang:        $this->lang,
+                    customFieldValues: $this->customFieldValues,
                 ),
                 tenantId: tenancy()->tenant->id,
                 apiKey:   config('payments.clave.api_key'),
             );
 
             $this->checkoutUrl = $session->checkoutUrl;
+            $this->dispatch('checkout-ready', url: $this->checkoutUrl);
         } catch (ClaveGatewayException $e) {
             $this->error = __('payments.checkout_error');
 

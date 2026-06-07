@@ -73,23 +73,44 @@ final class ClaveGateway implements PaymentGateway
 
     public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
     {
-        // The JS SDK embeds an iframe pointing to the gateway's hosted payment page.
-        // We construct that URL server-side instead of relying on the JS widget.
-        $params = http_build_query([
-            'CCLW'              => $apiKey,
-            'slug'              => $payment->resolvedSlug(),
-            'amount'            => $payment->amount,
-            'taxAmount'         => $payment->taxAmount,
-            'discount'          => $payment->discount,
-            'description'       => $payment->description,
-            'displayId'         => $payment->displayId,
-            'email'             => $payment->email,
-            'lang'              => $payment->lang,
-            'txChannel'         => $payment->txChannel,
-            'customFieldValues' => json_encode($payment->customFieldValues),
-        ]);
+        // We use the LinkDeamon.cfm endpoint which is proven to return a stable redirect URL
+        // for the "Enlace de Pago" (Hosted Checkout) flow.
+        
+        $payload = [
+            'CCLW'       => config('payments.clave.cclw', $apiKey),
+            'CMTN'       => number_format((float) $payment->netAmount(), 2, '.', ''),
+            'CDSC'       => substr($payment->description, 0, 150),
+            'RETURN_URL' => bin2hex(config('app.url') . '/central/billing/paguelofacil/callback'),
+            // We use PARM_1 for tenant_id and PARM_2 for internal reference if needed
+            'PARM_1'     => $payment->customFieldValues['tenant_id'] ?? tenant('id'),
+            'PARM_2'     => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
+        ];
 
-        return rtrim($this->environment->checkoutBaseUrl(), '/') . '/pf/widget/clave?' . $params;
+        if (!empty($payment->customFieldValues)) {
+            $payload['PF_CF'] = bin2hex(json_encode($payment->customFieldValues));
+        }
+
+        // Resolve root domain for LinkDeamon.cfm
+        $baseUrl = $this->environment->apiBaseUrl();
+        $domain  = parse_url($baseUrl, PHP_URL_HOST);
+        $scheme  = parse_url($baseUrl, PHP_URL_SCHEME);
+        $url     = "{$scheme}://{$domain}/LinkDeamon.cfm";
+
+        Log::info("PagueloFacil: Requesting Enlace de Pago", ['url' => $url, 'payload' => $payload]);
+
+        $response = Http::asForm()->timeout(15)->post($url, $payload);
+        
+        if ($response->failed()) {
+            throw new ClaveGatewayException("Failed to connect to PagueloFacil LinkDeamon: " . $response->status());
+        }
+
+        $responseData = $response->json();
+
+        if (!($responseData['success'] ?? false)) {
+            throw new ClaveGatewayException($responseData['message'] ?? 'Failed to generate PagueloFacil payment link.');
+        }
+
+        return $responseData['data']['url'];
     }
 
     public function verifyWebhook(string $payload, string $signature, string $secret): bool
