@@ -34,6 +34,11 @@ return new class extends Migration
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
+
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_settings ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON tenant_settings USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+        }
     }
 
     /**

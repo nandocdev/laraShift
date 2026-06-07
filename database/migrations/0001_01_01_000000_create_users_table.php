@@ -34,6 +34,12 @@ return new class extends Migration
             $table->unique(['tenant_id', 'email']);
         });
 
+        // Enable RLS for users
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE users ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON users USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+        }
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');

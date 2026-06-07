@@ -75,14 +75,16 @@ return new class extends Migration
 
         // RLS policies — tenant isolation at the DB layer
         // These complement (never replace) the Eloquent TenantScope
-        DB::statement("ALTER TABLE payments ENABLE ROW LEVEL SECURITY;");
-        DB::statement("ALTER TABLE payment_attempts ENABLE ROW LEVEL SECURITY;");
-        DB::statement("ALTER TABLE payment_webhooks ENABLE ROW LEVEL SECURITY;");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("ALTER TABLE payments ENABLE ROW LEVEL SECURITY;");
+            DB::statement("ALTER TABLE payment_attempts ENABLE ROW LEVEL SECURITY;");
+            DB::statement("ALTER TABLE payment_webhooks ENABLE ROW LEVEL SECURITY;");
 
-        // Policies are applied per-connection in the tenancy middleware via SET app.tenant_id
-        DB::statement("CREATE POLICY tenant_isolation ON payments USING (tenant_id = current_setting('app.tenant_id')::uuid);");
-        DB::statement("CREATE POLICY tenant_isolation ON payment_attempts USING (tenant_id = current_setting('app.tenant_id')::uuid);");
-        DB::statement("CREATE POLICY tenant_isolation ON payment_webhooks USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            // Policies are applied per-connection in the tenancy middleware via SET app.tenant_id
+            DB::statement("CREATE POLICY tenant_isolation ON payments USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            DB::statement("CREATE POLICY tenant_isolation ON payment_attempts USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            DB::statement("CREATE POLICY tenant_isolation ON payment_webhooks USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+        }
     }
 
     public function down(): void

@@ -52,6 +52,7 @@ return new class extends Migration
 
         Schema::create('subscription_items', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->uuid('tenant_id');
             $table->uuid('subscription_id');
             $table->string('name');
             $table->integer('amount')->default(0);
@@ -63,6 +64,7 @@ return new class extends Migration
 
             $table->timestamps();
 
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('subscription_id')->references('id')->on('subscriptions')->onDelete('cascade');
         });
 
@@ -80,6 +82,27 @@ return new class extends Migration
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('subscription_id')->references('id')->on('subscriptions')->onDelete('set null');
         });
+
+        Schema::create('ledger_entries', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('tenant_id');
+            $table->string('type'); // CREDIT, DEBIT
+            $table->decimal('amount', 12, 2);
+            $table->string('currency', 3)->default('USD');
+            $table->string('description');
+            $table->nullableUuidMorphs('reference'); // External reference
+            $table->timestamps();
+
+            $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+        });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            foreach (['subscriptions', 'subscription_items', 'invoices', 'ledger_entries'] as $table) {
+                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            }
+        }
     }
 
     /**
@@ -87,6 +110,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('ledger_entries');
         Schema::dropIfExists('invoices');
         Schema::dropIfExists('subscription_items');
         Schema::dropIfExists('subscriptions');
