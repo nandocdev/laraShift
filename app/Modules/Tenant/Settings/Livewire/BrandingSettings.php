@@ -118,6 +118,7 @@ class BrandingSettings extends Component
         );
 
         session()->flash('status', __('Landing page initialized!'));
+        $this->dispatch('toast', heading: __('Landing Page'), text: __('Landing page initialized!'), variant: 'success');
     }
 
     public function updatedLogo(): void
@@ -237,6 +238,7 @@ class BrandingSettings extends Component
         }
 
         session()->flash('status', __('Branding updated successfully.'));
+        $this->dispatch('toast', heading: __('Settings Updated'), text: __('Branding updated successfully.'), variant: 'success');
     }
 
     public function render(): View

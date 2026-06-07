@@ -26,6 +26,8 @@ class HostedCheckout extends Component
     #[On('payment-approved')]
     public function handleSuccess(): void
     {
+        $this->dispatch('toast', variant: 'success', heading: __('Payment Approved'), text: __('Your subscription has been activated successfully.'));
+        
         session()->flash('success', __('Your subscription has been activated successfully.'));
         $this->redirect(route('tenant.billing.success'), navigate: true);
     }

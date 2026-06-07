@@ -90,8 +90,10 @@ final class CheckoutComponent extends Component
 
             $this->checkoutUrl = $session->checkoutUrl;
             $this->dispatch('checkout-ready', url: $this->checkoutUrl);
+            $this->dispatch('toast', text: __('Redirecting to secure gateway...'));
         } catch (\Exception $e) {
             $this->error = __('payments.checkout_error');
+            $this->dispatch('toast', variant: 'danger', heading: __('Checkout Failed'), text: $e->getMessage());
 
             logger()->error('Checkout initiation failed', [
                 'tenant_id'  => tenancy()->tenant->id,

@@ -21,10 +21,11 @@ class SelectPlan extends Component
             
             // If they already have this plan, don't do anything
             if ($tenant->plan_id === $planId) {
-                session()->flash('status', __('You are already on this plan.'));
+                $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));
                 return;
             }
 
+            $this->dispatch('toast', text: __('Preparing secure checkout...'));
             $checkoutUrl = $action->execute($tenant, $planId);
             
             $this->redirect($checkoutUrl, navigate: false);

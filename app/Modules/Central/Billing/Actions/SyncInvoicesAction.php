@@ -11,21 +11,26 @@ use Illuminate\Support\Carbon;
 
 final readonly class SyncInvoicesAction
 {
-    public function execute(Tenant $tenant): void
+    public function execute(Tenant $tenant): int
     {
         $gatewayInvoices = app(BillingManager::class)->getInvoices($tenant);
+        $syncedCount = 0;
 
         foreach ($gatewayInvoices as $gatewayInvoice) {
             // Determine source format and map to local model
-            $this->mapAndStore($tenant, $gatewayInvoice);
+            if ($this->mapAndStore($tenant, $gatewayInvoice)) {
+                $syncedCount++;
+            }
         }
+
+        return $syncedCount;
     }
 
-    private function mapAndStore(Tenant $tenant, mixed $data): void
+    private function mapAndStore(Tenant $tenant, mixed $data): bool
     {
         // 1. Stripe (Cashier) format
         if ($data instanceof \Laravel\Cashier\Invoice) {
-            Invoice::updateOrCreate(
+            $invoice = Invoice::updateOrCreate(
                 ['provider_invoice_id' => $data->id],
                 [
                     'tenant_id' => $tenant->id,
@@ -35,13 +40,13 @@ final readonly class SyncInvoicesAction
                     'issued_at' => Carbon::createFromTimestamp($data->created),
                 ]
             );
-            return;
+            return $invoice->wasRecentlyCreated || $invoice->wasChanged();
         }
 
         // 2. PagueloFacil (Clave) format
         // Keys based on Discovery: codOper, totalPay, date, status
         if (isset($data['codOper'])) {
-            Invoice::updateOrCreate(
+            $invoice = Invoice::updateOrCreate(
                 ['provider_invoice_id' => $data['codOper']],
                 [
                     'tenant_id' => $tenant->id,
@@ -51,12 +56,12 @@ final readonly class SyncInvoicesAction
                     'issued_at' => Carbon::parse($data['date']),
                 ]
             );
-            return;
+            return $invoice->wasRecentlyCreated || $invoice->wasChanged();
         }
 
         // 3. dLocal format
         if (isset($data['payment_id'])) {
-            Invoice::updateOrCreate(
+            $invoice = Invoice::updateOrCreate(
                 ['provider_invoice_id' => (string)$data['payment_id']],
                 [
                     'tenant_id' => $tenant->id,
@@ -66,6 +71,9 @@ final readonly class SyncInvoicesAction
                     'issued_at' => Carbon::parse($data['created_date'] ?? now()),
                 ]
             );
+            return $invoice->wasRecentlyCreated || $invoice->wasChanged();
         }
+
+        return false;
     }
 }

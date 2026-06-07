@@ -20,7 +20,11 @@ class ManageBilling extends Component
 
         // Sync invoices from gateway
         try {
-            app(SyncInvoicesAction::class)->execute($tenant);
+            $syncedCount = app(SyncInvoicesAction::class)->execute($tenant);
+            
+            if ($syncedCount > 0) {
+                 $this->dispatch('toast', heading: __('Billing Sync'), text: trans_choice('{1} :count new invoice synchronized.|[2,*] :count new invoices synchronized.', $syncedCount, ['count' => $syncedCount]), variant: 'success');
+            }
         } catch (\Exception $e) {
             \Log::error("Failed to sync invoices for tenant {$tenant->id}: " . $e->getMessage());
         }
