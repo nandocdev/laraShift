@@ -22,6 +22,7 @@ return new class extends Migration
             
             $table->jsonb('theme')->default('{}');
             $table->jsonb('blocks')->default('[]');
+            $table->text('published_html')->nullable();
             
             $table->string('status', 20)->default('draft');
             $table->timestamp('published_at')->nullable();

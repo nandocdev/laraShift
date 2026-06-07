@@ -18,8 +18,18 @@ return new class extends Migration
             $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            
+            // Two Factor Authentication & Security
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
+            $table->boolean('mfa_enabled')->default(false);
+            
+            $table->string('status')->default('active'); // active, inactive, suspended
+            
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(['tenant_id', 'email']);
         });

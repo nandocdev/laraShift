@@ -26,6 +26,7 @@ return new class extends Migration
 
             $table->index(['tenant_id', 'created_at']);
             $table->index(['user_id', 'created_at']);
+            $table->index('action');
             
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });

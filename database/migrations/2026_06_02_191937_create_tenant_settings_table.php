@@ -29,6 +29,7 @@ return new class extends Migration
             $table->text('smtp_password')->nullable(); // Encrypted
             $table->string('smtp_from_email')->nullable();
             $table->string('smtp_from_name')->nullable();
+            $table->boolean('smtp_verified')->default(false);
             $table->timestamps();
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
