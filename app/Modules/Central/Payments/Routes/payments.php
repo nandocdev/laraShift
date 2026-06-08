@@ -22,10 +22,12 @@ use App\Modules\Central\Payments\Http\Controllers\WebhookController;
 // ── Webhook (no auth, no tenant middleware — raw HTTP) ───────────────────────
 Route::post('/webhooks/clave', [WebhookController::class, 'handle'])
     ->name('payments.webhooks.clave')
+    ->middleware('throttle:webhooks')
     ->withoutMiddleware(['web', 'auth', 'tenant']);
 
 Route::post('/webhooks/dlocal', [WebhookController::class, 'handle'])
     ->name('payments.webhooks.dlocal')
+    ->middleware('throttle:webhooks')
     ->withoutMiddleware(['web', 'auth', 'tenant']);
 
 // ── Tenant-scoped checkout ───────────────────────────────────────────────────

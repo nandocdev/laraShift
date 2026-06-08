@@ -26,6 +26,10 @@ final class PaymentsServiceProvider extends ServiceProvider {
     }
 
     public function boot(): void {
+        \Illuminate\Support\Facades\RateLimiter::for('webhooks', function ($request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->ip());
+        });
+
         $this->loadRoutesFrom(__DIR__ . '/../Routes/payments.php');
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'payments');
 
