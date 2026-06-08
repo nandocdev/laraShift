@@ -20,6 +20,11 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
+        // 1. Allow login/auth routes and support/auth routes
+        if ($request->routeIs(['login', 'login.challenge', 'tenant.invitations.accept', 'tenant.support.auth'])) {
+            return $next($request);
+        }
+
         // Prime Features Cache (Redis-first)
         app(ResolveTenantFeaturesAction::class)->execute(tenant());
 
@@ -31,12 +36,15 @@ class EnsureTenantIsActive
             abort(404); // Architecture rule: preserved isolation/404 for non-active
         }
 
-        if (tenant('status') === 'suspended') {
+        // 2. Allow access to dashboard for authenticated users even if payment is required
+        $isDashboard = $request->routeIs('dashboard');
+
+        if (tenant('status') === 'suspended' && ! $isDashboard) {
             abort(402, 'Payment Required');
         }
 
         // Check subscription for paid plans
-        if (tenant('plan_id') !== 'free') {
+        if (tenant('plan_id') !== 'free' && ! $isDashboard) {
             $subscription = tenant()->subscription('default');
             
             if (! $subscription || ! $subscription->active()) {
