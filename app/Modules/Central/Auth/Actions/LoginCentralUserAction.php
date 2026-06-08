@@ -8,6 +8,7 @@ use App\Modules\Central\Auth\DTOs\LoginData;
 use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Auth\Models\CentralSession;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
