@@ -17,11 +17,11 @@ use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\Models\PaymentAttempt;
 use App\Modules\Central\Payments\Models\PaymentWebhook;
 
-final readonly class PaymentVerifier
-{
+final readonly class PaymentVerifier {
     public function __construct(
         private PaymentGateway $gateway,
-    ) {}
+    ) {
+    }
 
     /**
      * Process an inbound webhook.
@@ -35,7 +35,7 @@ final readonly class PaymentVerifier
         string $webhookSecret,
         string $tenantId,
     ): void {
-        if (! $this->gateway->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
+        if (!$this->gateway->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
             Log::warning('ClaveGateway: webhook signature mismatch', [
                 'tenant_id' => $tenantId,
             ]);
@@ -44,7 +44,7 @@ final readonly class PaymentVerifier
         }
 
         $payload = json_decode($rawPayload, true);
-        $result  = $this->gateway->parseWebhookPayload($payload);
+        $result = $this->gateway->parseWebhookPayload($payload);
 
         DB::transaction(function () use ($result, $rawPayload, $tenantId): void {
             $this->recordWebhook($result, $rawPayload, $tenantId);
@@ -56,8 +56,7 @@ final readonly class PaymentVerifier
     // Internals
     // -------------------------------------------------------------------------
 
-    private function recordWebhook(PaymentResultData $result, string $rawPayload, string $tenantId): void
-    {
+    private function recordWebhook(PaymentResultData $result, string $rawPayload, string $tenantId): void {
         // Idempotency guard: same gateway reference = already processed
         $exists = PaymentWebhook::where('tenant_id', $tenantId)
             ->where('gateway_reference', $result->gatewayReference)
@@ -66,39 +65,38 @@ final readonly class PaymentVerifier
         if ($exists) {
             Log::info('ClaveGateway: duplicate webhook ignored', [
                 'gateway_reference' => $result->gatewayReference,
-                'tenant_id'         => $tenantId,
+                'tenant_id' => $tenantId,
             ]);
 
             return;
         }
 
         PaymentWebhook::create([
-            'tenant_id'          => $tenantId,
-            'gateway_reference'  => $result->gatewayReference,
-            'display_id'         => $result->displayId,
-            'status'             => $result->status->value,
-            'amount'             => $result->amount,
-            'gateway_code'       => $result->gatewayCode,
+            'tenant_id' => $tenantId,
+            'gateway_reference' => $result->gatewayReference,
+            'display_id' => $result->displayId,
+            'status' => $result->status->value,
+            'amount' => $result->amount,
+            'gateway_code' => $result->gatewayCode,
             'authorization_code' => $result->authorizationCode,
-            'error_code'         => $result->errorCode,
-            'error_message'      => $result->errorMessage,
-            'raw_payload'        => $rawPayload,
+            'error_code' => $result->errorCode,
+            'error_message' => $result->errorMessage,
+            'raw_payload' => $rawPayload,
         ]);
 
         PaymentWebhookReceived::dispatch($result, $tenantId);
     }
 
-    private function reconcilePayment(PaymentResultData $result, string $tenantId): void
-    {
+    private function reconcilePayment(PaymentResultData $result, string $tenantId): void {
         $payment = Payment::where('tenant_id', $tenantId)
             ->where('display_id', $result->displayId)
             ->lockForUpdate()
             ->first();
 
-        if (! $payment) {
+        if (!$payment) {
             Log::warning('ClaveGateway: no payment found for webhook', [
                 'display_id' => $result->displayId,
-                'tenant_id'  => $tenantId,
+                'tenant_id' => $tenantId,
             ]);
 
             return;
@@ -110,10 +108,10 @@ final readonly class PaymentVerifier
         }
 
         $payment->update([
-            'status'             => $result->status->value,
-            'gateway_reference'  => $result->gatewayReference,
+            'status' => $result->status->value,
+            'gateway_reference' => $result->gatewayReference,
             'authorization_code' => $result->authorizationCode,
-            'error_code'         => $result->errorCode,
+            'error_code' => $result->errorCode,
         ]);
 
         PaymentAttempt::where('tenant_id', $tenantId)
@@ -124,7 +122,7 @@ final readonly class PaymentVerifier
         match ($result->status) {
             PaymentStatus::Approved => PaymentApproved::dispatch($payment, $result),
             PaymentStatus::Declined => PaymentDeclined::dispatch($payment, $result),
-            default                 => null,
+            default => null,
         };
     }
 }

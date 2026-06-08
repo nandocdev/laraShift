@@ -15,8 +15,7 @@ use App\Modules\Central\Payments\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Payments\Exceptions\InvalidMerchantException;
 use App\Modules\Central\Payments\Exceptions\ServiceNotFoundException;
 
-final class ClaveGateway implements PaymentGateway
-{
+final class ClaveGateway implements PaymentGateway {
     /**
      * Gateway codes accepted as Clave services.
      */
@@ -29,20 +28,16 @@ final class ClaveGateway implements PaymentGateway
 
     public function __construct(
         private readonly ClaveEnvironment $environment,
-    ) {}
+    ) {
+    }
 
-    // -------------------------------------------------------------------------
-    // PaymentGateway contract
-    // -------------------------------------------------------------------------
-
-    public function loadMerchant(string $apiKey): MerchantData
-    {
+    public function loadMerchant(string $apiKey): MerchantData {
         $response = $this->post('/loadMerchantServices', [
-            'CCLW'        => $apiKey,
+            'CCLW' => $apiKey,
             'serviceCode' => self::SERVICE_CODE,
         ], $apiKey);
 
-        if (! ($response['success'] ?? false)) {
+        if (!($response['success'] ?? false)) {
             throw new InvalidMerchantException(
                 $response['description'] ?? 'Invalid merchant response',
             );
@@ -71,19 +66,18 @@ final class ClaveGateway implements PaymentGateway
         return MerchantData::fromApiResponse($merchantFields, $claveServices);
     }
 
-    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
-    {
+    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string {
         // We use the LinkDeamon.cfm endpoint which is proven to return a stable redirect URL
         // for the "Enlace de Pago" (Hosted Checkout) flow.
-        
+
         $payload = [
-            'CCLW'       => config('payments.clave.cclw', $apiKey),
-            'CMTN'       => number_format((float) $payment->netAmount(), 2, '.', ''),
-            'CDSC'       => substr($payment->description, 0, 150),
+            'CCLW' => config('payments.clave.cclw', $apiKey),
+            'CMTN' => number_format((float) $payment->netAmount(), 2, '.', ''),
+            'CDSC' => substr($payment->description, 0, 150),
             'RETURN_URL' => bin2hex(config('app.url') . '/central/billing/paguelofacil/callback'),
             // We use PARM_1 for tenant_id and PARM_2 for internal reference if needed
-            'PARM_1'     => $payment->customFieldValues['tenant_id'] ?? tenant('id'),
-            'PARM_2'     => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
+            'PARM_1' => $payment->customFieldValues['tenant_id'] ?? tenant('id'),
+            'PARM_2' => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
         ];
 
         if (!empty($payment->customFieldValues)) {
@@ -92,14 +86,14 @@ final class ClaveGateway implements PaymentGateway
 
         // Resolve root domain for LinkDeamon.cfm
         $baseUrl = $this->environment->apiBaseUrl();
-        $domain  = parse_url($baseUrl, PHP_URL_HOST);
-        $scheme  = parse_url($baseUrl, PHP_URL_SCHEME);
-        $url     = "{$scheme}://{$domain}/LinkDeamon.cfm";
+        $domain = parse_url($baseUrl, PHP_URL_HOST);
+        $scheme = parse_url($baseUrl, PHP_URL_SCHEME);
+        $url = "{$scheme}://{$domain}/LinkDeamon.cfm";
 
         Log::info("PagueloFacil: Requesting Enlace de Pago", ['url' => $url, 'payload' => $payload]);
 
         $response = Http::asForm()->timeout(15)->post($url, $payload);
-        
+
         if ($response->failed()) {
             throw new ClaveGatewayException("Failed to connect to PagueloFacil LinkDeamon: " . $response->status());
         }
@@ -113,29 +107,25 @@ final class ClaveGateway implements PaymentGateway
         return $responseData['data']['url'] ?? throw new ClaveGatewayException('No URL returned by PagueloFacil.');
     }
 
-    public function verifyWebhook(string $payload, string $signature, string $secret): bool
-    {
+    public function verifyWebhook(string $payload, string $signature, string $secret): bool {
         // PagueLo Fácil signs webhooks with HMAC-SHA256
         $expected = hash_hmac('sha256', $payload, $secret);
 
         return hash_equals($expected, $signature);
     }
 
-    public function parseWebhookPayload(array $payload): PaymentResultData
-    {
+    public function parseWebhookPayload(array $payload): PaymentResultData {
         return PaymentResultData::fromClavePayload($payload);
     }
 
-    public function identifier(): string
-    {
+    public function identifier(): string {
         return 'clave';
     }
 
-    public function listTransactions(string $apiKey, array $filters = []): array
-    {
+    public function listTransactions(string $apiKey, array $filters = []): array {
         $response = $this->get('/MerchantTransactions', $filters, $apiKey);
 
-        if (! ($response['success'] ?? false)) {
+        if (!($response['success'] ?? false)) {
             return [];
         }
 
@@ -149,14 +139,13 @@ final class ClaveGateway implements PaymentGateway
     /**
      * @throws ClaveGatewayException
      */
-    private function post(string $path, array $body, ?string $apiKey = null): array
-    {
+    private function post(string $path, array $body, ?string $apiKey = null): array {
         $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
 
         try {
             $response = Http::withHeaders([
-                'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json',
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
                 ->timeout(15)
@@ -164,7 +153,7 @@ final class ClaveGateway implements PaymentGateway
                 ->post($url, $body);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [
-                'url'   => $url,
+                'url' => $url,
                 'error' => $e->getMessage(),
             ]);
 
@@ -173,9 +162,9 @@ final class ClaveGateway implements PaymentGateway
 
         if ($response->failed()) {
             Log::error('ClaveGateway: HTTP error', [
-                'url'    => $url,
+                'url' => $url,
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
 
             throw new ClaveGatewayException(
@@ -189,20 +178,19 @@ final class ClaveGateway implements PaymentGateway
     /**
      * @throws ClaveGatewayException
      */
-    private function get(string $path, array $query, ?string $apiKey = null): array
-    {
+    private function get(string $path, array $query, ?string $apiKey = null): array {
         $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
 
         try {
             $response = Http::withHeaders([
-                'Accept'        => 'application/json',
+                'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
                 ->timeout(15)
                 ->get($url, $query);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [
-                'url'   => $url,
+                'url' => $url,
                 'error' => $e->getMessage(),
             ]);
 
@@ -210,10 +198,10 @@ final class ClaveGateway implements PaymentGateway
         }
 
         if ($response->failed()) {
-             Log::error('ClaveGateway GET: HTTP error', [
-                'url'    => $url,
+            Log::error('ClaveGateway GET: HTTP error', [
+                'url' => $url,
                 'status' => $response->status(),
-                'body'   => $response->body(),
+                'body' => $response->body(),
             ]);
             return ['success' => false];
         }
