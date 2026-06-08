@@ -14,11 +14,10 @@ use App\Modules\Central\Payments\Actions\HandleWebhookAction;
 use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use Throwable;
 
-final class ProcessPaymentWebhookJob implements ShouldQueue
-{
+final class ProcessPaymentWebhookJob implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
     public int $timeout = 60;
 
     public function __construct(
@@ -26,35 +25,34 @@ final class ProcessPaymentWebhookJob implements ShouldQueue
         public readonly string $rawPayload,
         public readonly string $signature,
         public readonly string $webhookSecret,
-    ) {}
+    ) {
+    }
 
-    public function handle(): void
-    {
+    public function handle(): void {
         // Tenant context must be initialized before business logic.
         // This follows the mandatory queue isolation pattern in Architecture.md.
         tenancy()->initialize($this->tenantId);
 
         try {
             $action = app(HandleWebhookAction::class);
-            
+
             $action->execute(
-                rawPayload:    $this->rawPayload,
-                signature:     $this->signature,
+                rawPayload: $this->rawPayload,
+                signature: $this->signature,
                 webhookSecret: $this->webhookSecret,
-                tenantId:      $this->tenantId,
+                tenantId: $this->tenantId,
             );
         } finally {
             tenancy()->end();
         }
     }
 
-    public function failed(Throwable $e): void
-    {
+    public function failed(Throwable $e): void {
         // Signature failures are not retryable. Exhaust immediately.
         if ($e instanceof WebhookVerificationException) {
             Log::critical('ClaveGateway: webhook signature failure — not retrying', [
                 'tenant_id' => $this->tenantId,
-                'error'     => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             $this->fail($e);
@@ -64,7 +62,7 @@ final class ProcessPaymentWebhookJob implements ShouldQueue
 
         Log::error('ProcessPaymentWebhookJob failed', [
             'tenant_id' => $this->tenantId,
-            'error'     => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

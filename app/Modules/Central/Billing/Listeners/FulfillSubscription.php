@@ -10,13 +10,11 @@ use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Payments\Events\PaymentApproved;
 use Illuminate\Support\Facades\Log;
 
-class FulfillSubscription
-{
+class FulfillSubscription {
     /**
      * Handle the event.
      */
-    public function handle(PaymentApproved $event): void
-    {
+    public function handle(PaymentApproved $event): void {
         $payment = $event->payment;
         $result = $event->result;
         $metadata = $payment->attempts()->latest()->first()?->payload ?? [];

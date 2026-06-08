@@ -9,6 +9,7 @@ use App\Modules\Central\Billing\Models\Invoice;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Log;
 
 #[Layout('layouts.app')]
 class ManageBilling extends Component
@@ -26,7 +27,7 @@ class ManageBilling extends Component
                  $this->dispatch('toast', heading: __('Billing Sync'), text: trans_choice('{1} :count new invoice synchronized.|[2,*] :count new invoices synchronized.', $syncedCount, ['count' => $syncedCount]), variant: 'success');
             }
         } catch (\Exception $e) {
-            \Log::error("Failed to sync invoices for tenant {$tenant->id}: " . $e->getMessage());
+            Log::error("Failed to sync invoices for tenant {$tenant->id}: " . $e->getMessage());
         }
         
         return view('billing::pages.manage-billing', [

@@ -9,12 +9,12 @@ use Illuminate\Queue\SerializesModels;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
 use App\Modules\Central\Payments\Models\Payment;
 
-final class PaymentApproved
-{
+final class PaymentApproved {
     use Dispatchable, SerializesModels;
 
     public function __construct(
         public readonly Payment $payment,
         public readonly PaymentResultData $result,
-    ) {}
+    ) {
+    }
 }

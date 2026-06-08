@@ -17,26 +17,24 @@ use App\Modules\Central\Payments\Jobs\ProcessPaymentWebhookJob;
  *   - Verification and processing happen async in the job
  *   - Tenant is resolved from the payload's displayId or a dedicated URL param
  */
-final class WebhookController extends Controller
-{
-    public function handle(Request $request): Response
-    {
+final class WebhookController extends Controller {
+    public function handle(Request $request): Response {
         $gateway = $this->resolveGateway($request);
         $tenantId = $this->resolveTenantId($request);
         $rawPayload = $request->getContent();
-        
+
         $signature = match ($gateway) {
-            'clave'  => $request->header('X-Clave-Signature', ''),
+            'clave' => $request->header('X-Clave-Signature', ''),
             'dlocal' => $request->header('X-Signature', ''),
-            default  => '',
+            default => '',
         };
 
         $webhookSecret = config("payments.{$gateway}.webhook_secret");
 
         ProcessPaymentWebhookJob::dispatch(
-            tenantId:      $tenantId,
-            rawPayload:    $rawPayload,
-            signature:     $signature,
+            tenantId: $tenantId,
+            rawPayload: $rawPayload,
+            signature: $signature,
             webhookSecret: $webhookSecret,
         );
 
@@ -44,11 +42,12 @@ final class WebhookController extends Controller
         return response()->noContent();
     }
 
-    private function resolveGateway(Request $request): string
-    {
-        if ($request->is('*/clave')) return 'clave';
-        if ($request->is('*/dlocal')) return 'dlocal';
-        
+    private function resolveGateway(Request $request): string {
+        if ($request->is('*/clave'))
+            return 'clave';
+        if ($request->is('*/dlocal'))
+            return 'dlocal';
+
         return 'clave';
     }
 
@@ -56,8 +55,7 @@ final class WebhookController extends Controller
      * Tenant can be encoded in the webhook URL as a query param
      * or derived from the payload. Adjust to match the gateway's behavior.
      */
-    private function resolveTenantId(Request $request): string
-    {
+    private function resolveTenantId(Request $request): string {
         // Option A: URL query param ?tenant={id} (simplest, configure on gateway)
         if ($request->query('tenant')) {
             return (string) $request->query('tenant');

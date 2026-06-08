@@ -13,8 +13,7 @@ use Livewire\WithPagination;
 use Plinth\MultiTenantBilling\Core\Models\LedgerEntry;
 
 #[Layout('layouts.central')]
-class LedgerAudit extends Component
-{
+class LedgerAudit extends Component {
     use WithPagination;
 
     #[Url(as: 'tenant')]
@@ -35,8 +34,7 @@ class LedgerAudit extends Component
     /**
      * Reset pagination when filters change.
      */
-    public function updatingFilters(): void
-    {
+    public function updatingFilters(): void {
         $this->resetPage();
     }
 
@@ -45,8 +43,7 @@ class LedgerAudit extends Component
      *
      * @param string $field The field name.
      */
-    public function sort(string $field): void
-    {
+    public function sort(string $field): void {
         if ($this->sortBy === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -62,8 +59,7 @@ class LedgerAudit extends Component
      * - Pagination of large datasets -> Mitigated by using paginate(25).
      * - N+1 Query on polymorphic relations -> Polymorphic references are loaded on-demand.
      */
-    public function render(): View
-    {
+    public function render(): View {
         $query = LedgerEntry::query();
 
         // Filters
@@ -78,9 +74,9 @@ class LedgerAudit extends Component
         if ($this->search !== '') {
             $query->where(function ($q) {
                 $q->where('description', 'like', '%' . $this->search . '%')
-                  ->orWhere('reference_type', 'like', '%' . $this->search . '%')
-                  ->orWhere('reference_id', 'like', '%' . $this->search . '%')
-                  ->orWhere('tenant_id', 'like', '%' . $this->search . '%');
+                    ->orWhere('reference_type', 'like', '%' . $this->search . '%')
+                    ->orWhere('reference_id', 'like', '%' . $this->search . '%')
+                    ->orWhere('tenant_id', 'like', '%' . $this->search . '%');
             });
         }
 

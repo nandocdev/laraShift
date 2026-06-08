@@ -48,9 +48,9 @@ class Payment extends Model {
     ];
 
     protected $casts = [
-        'amount'     => 'float',
+        'amount' => 'float',
         'tax_amount' => 'float',
-        'discount'   => 'float',
+        'discount' => 'float',
     ];
 
     // -------------------------------------------------------------------------

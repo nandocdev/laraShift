@@ -6,11 +6,11 @@ namespace App\Modules\Central\Payments\Actions;
 
 use App\Modules\Central\Payments\Services\PaymentVerifier;
 
-final readonly class HandleWebhookAction
-{
+final readonly class HandleWebhookAction {
     public function __construct(
         private PaymentVerifier $verifier,
-    ) {}
+    ) {
+    }
 
     public function execute(
         string $rawPayload,

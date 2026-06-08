@@ -7,8 +7,7 @@ namespace App\Modules\Central\Payments\DTOs;
 use Spatie\LaravelData\Data;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
 
-final class PaymentResultData extends Data
-{
+final class PaymentResultData extends Data {
     public function __construct(
         public readonly string $gatewayReference,
         public readonly string $displayId,
@@ -19,10 +18,10 @@ final class PaymentResultData extends Data
         public readonly ?string $errorCode,
         public readonly ?string $errorMessage,
         public readonly array $raw = [],
-    ) {}
+    ) {
+    }
 
-    public static function fromClavePayload(array $payload): self
-    {
+    public static function fromClavePayload(array $payload): self {
         $status = match (true) {
             isset($payload['approved']) && $payload['approved'] => PaymentStatus::Approved,
             isset($payload['declined']) && $payload['declined'] => PaymentStatus::Declined,
