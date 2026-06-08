@@ -38,8 +38,9 @@ class IdentityServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('tenant-login-challenge', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class);
         \Livewire\Livewire::component('tenant-2fa-enrollment', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class);
         \Livewire\Livewire::component('tenant-team-management', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class);
-        \Livewire\Livewire::component('tenant-role-management', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class);
-        \Livewire\Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class);
+        Livewire::component('tenant-role-management', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class);
+        Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class);
+        Livewire::component('tenant-notification-center', \App\Modules\Tenant\Identity\Livewire\NotificationCenter::class);
 
         // 4. Register Event Subscriber
         Event::subscribe(\App\Modules\Tenant\Identity\Listeners\TenantIdentityEventSubscriber::class);

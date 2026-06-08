@@ -6,6 +6,7 @@ namespace App\Modules\Tenant\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
+use App\Modules\Tenant\Identity\Models\Concerns\HasTenantNotifications;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable implements PasskeyUser
 {
-    use BelongsToTenant, HasFactory, HasRoles, HasUuids, Notifiable, SoftDeletes, TwoFactorAuthenticatable, PasskeyAuthenticatable;
+    use BelongsToTenant, HasFactory, HasRoles, HasTenantNotifications, HasUuids, Notifiable, SoftDeletes, TwoFactorAuthenticatable, PasskeyAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
