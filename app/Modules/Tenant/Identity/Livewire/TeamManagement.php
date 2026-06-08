@@ -114,7 +114,7 @@ class TeamManagement extends Component
             return;
         }
 
-        $user->update(['is_active' => false]);
+        $user->update(['status' => 'inactive']);
         $user->delete(); // Soft delete as per US-T103
 
         activity('identity')

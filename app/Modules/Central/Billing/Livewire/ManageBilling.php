@@ -19,16 +19,8 @@ class ManageBilling extends Component
         $tenant = tenant();
         $subscription = $tenant->subscription('default');
 
-        // Sync invoices from gateway
-        try {
-            $syncedCount = app(SyncInvoicesAction::class)->execute($tenant);
-            
-            if ($syncedCount > 0) {
-                 $this->dispatch('toast', heading: __('Billing Sync'), text: trans_choice('{1} :count new invoice synchronized.|[2,*] :count new invoices synchronized.', $syncedCount, ['count' => $syncedCount]), variant: 'success');
-            }
-        } catch (\Exception $e) {
-            Log::error("Failed to sync invoices for tenant {$tenant->id}: " . $e->getMessage());
-        }
+        // Dispatch sync as background job
+        \App\Modules\Central\Billing\Jobs\SyncTenantInvoicesJob::dispatch($tenant);
         
         return view('billing::pages.manage-billing', [
             'tenant' => $tenant,

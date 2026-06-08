@@ -16,7 +16,6 @@ class PagueloFacilClient {
         $this->cclw = config('billing.paguelofacil.cclw');
         $this->apiToken = config('billing.paguelofacil.api_token');
         $this->baseUrl = config('billing.paguelofacil.base_url');
-        logger()->info("PagueloFacilClient initialized with base URL: {$this->apiToken} and CCLW: {$this->cclw}");
     }
 
     private function client(): PendingRequest {

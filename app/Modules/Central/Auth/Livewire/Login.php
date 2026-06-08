@@ -36,10 +36,8 @@ class Login extends Component {
         $result = $action->execute($data);
 
         if ($result === 'success') {
-            session()->regenerate();
-            
             // Record tracking session with the NEW regenerated ID
-            $action->recordSession(auth('central')->user());
+            $action->completeLogin(auth('central')->user(), $data->remember);
 
             $this->redirectIntended(default: route('central.dashboard'));
             return;

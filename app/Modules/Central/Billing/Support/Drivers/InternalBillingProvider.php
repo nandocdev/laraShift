@@ -12,9 +12,12 @@ use App\Modules\Shared\Contracts\BillingProvider;
 
 class InternalBillingProvider implements BillingProvider
 {
+    public function __construct(
+        private PagueloFacilClient $client
+    ) {}
+
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
-        // We now point to our local hosted checkout page which uses the Payments module widget
         return route('tenant.billing.checkout.hosted', [
             'tenant_uuid' => $tenant->id,
             'plan_uuid' => $planId,
@@ -23,15 +26,9 @@ class InternalBillingProvider implements BillingProvider
 
     public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void
     {
-        // Logic to cancel via current gateway
-        // For simplicity, we keep PagueloFacilClient if we know it was PF, 
-        // but ideally we should use the Payments module too.
-        $client = new PagueloFacilClient();
-        
         try {
-            $client->cancelSubscription($subscriptionId);
+            $this->client->cancelSubscription($subscriptionId);
             
-            // Local update of subscription status
             $tenant->subscriptions()
                 ->where('provider_subscription_id', $subscriptionId)
                 ->update(['status' => 'cancelled']);

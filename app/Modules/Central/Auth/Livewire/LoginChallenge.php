@@ -36,12 +36,14 @@ class LoginChallenge extends Component
         $secret = $user->twoFactorAuth->secret;
 
         if ($google2fa->verifyKey($secret, $this->code)) {
-            Auth::guard('central')->login($user, Session::get('login.remember', false));
+            $action = app(\App\Modules\Central\Auth\Actions\LoginCentralUserAction::class);
             
-            Session::forget(['login.id', 'login.remember']);
-            session()->regenerate();
-
-            app(\App\Modules\Central\Auth\Actions\LoginCentralUserAction::class)->recordSession($user);
+            DB::transaction(function () use ($user, $action) {
+                Auth::guard('central')->login($user, Session::get('login.remember', false));
+                Session::forget(['login.id', 'login.remember']);
+                session()->regenerate();
+                $action->recordSession($user);
+            });
 
             activity('auth')
                 ->performedOn($user)

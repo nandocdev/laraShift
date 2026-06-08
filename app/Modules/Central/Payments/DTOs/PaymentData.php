@@ -20,6 +20,8 @@ final class PaymentData extends Data {
 
         public readonly string $email,
 
+        public readonly string $tenantId,
+
         public readonly float $taxAmount = 0.0,
 
         public readonly float $discount = 0.0,

@@ -48,6 +48,15 @@ final readonly class LoginCentralUserAction {
         return 'success';
     }
 
+    public function completeLogin(CentralUser $user, bool $remember = false): void
+    {
+        DB::transaction(function () use ($user, $remember) {
+            Auth::guard('central')->login($user, $remember);
+            session()->regenerate();
+            $this->recordSession($user);
+        });
+    }
+
     public function recordSession(CentralUser $user): void
     {
         // 1. Create tracking record

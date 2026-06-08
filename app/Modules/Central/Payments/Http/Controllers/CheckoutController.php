@@ -37,6 +37,7 @@ final class CheckoutController extends Controller {
                     description: $data['description'],
                     displayId: $data['display_id'],
                     email: $data['email'],
+                    tenantId: tenant('id'),
                     taxAmount: (float) ($data['taxAmount'] ?? 0),
                     discount: (float) ($data['discount'] ?? 0),
                     lang: $data['lang'] ?? 'es',
