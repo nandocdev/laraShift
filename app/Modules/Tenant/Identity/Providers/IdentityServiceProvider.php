@@ -8,6 +8,7 @@ use App\Modules\Shared\Events\TenantProvisioned;
 use App\Modules\Tenant\Identity\Listeners\CreateInitialAdminUser;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Stancl\Tenancy\Events\TenancyInitialized;
 
 class IdentityServiceProvider extends ServiceProvider
