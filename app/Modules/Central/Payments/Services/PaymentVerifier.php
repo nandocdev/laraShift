@@ -81,10 +81,26 @@ final readonly class PaymentVerifier {
             'authorization_code' => $result->authorizationCode,
             'error_code' => $result->errorCode,
             'error_message' => $result->errorMessage,
-            'raw_payload' => $rawPayload,
+            'raw_payload' => $this->maskSensitiveData($rawPayload),
         ]);
 
         PaymentWebhookReceived::dispatch($result, $tenantId);
+    }
+
+    private function maskSensitiveData(string $rawPayload): string
+    {
+        $payload = json_decode($rawPayload, true);
+        if (!is_array($payload)) return $rawPayload;
+
+        $sensitiveFields = ['cardNumber', 'cvv', 'card_number', 'card_cvv', 'password'];
+        
+        array_walk_recursive($payload, function (&$value, $key) use ($sensitiveFields) {
+            if (in_array($key, $sensitiveFields, true)) {
+                $value = '****';
+            }
+        });
+
+        return json_encode($payload);
     }
 
     private function reconcilePayment(PaymentResultData $result, string $tenantId): void {

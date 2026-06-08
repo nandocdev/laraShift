@@ -56,14 +56,16 @@ final class WebhookController extends Controller {
      * or derived from the payload. Adjust to match the gateway's behavior.
      */
     private function resolveTenantId(Request $request): string {
-        // Option A: URL query param ?tenant={id} (simplest, configure on gateway)
-        if ($request->query('tenant')) {
-            return (string) $request->query('tenant');
-        }
-
-        // Option B: Extract from JSON payload field
         $payload = json_decode($request->getContent(), true);
 
-        return (string) ($payload['tenantId'] ?? $payload['merchantId'] ?? '');
+        // Security: Prioritize payload data over untrusted query params
+        $tenantId = $payload['tenantId'] ?? $payload['merchantId'] ?? $request->query('tenant');
+
+        if (empty($tenantId)) {
+            Log::warning('Webhook received without tenant identifier');
+            abort(400, 'Missing tenant identifier');
+        }
+
+        return (string) $tenantId;
     }
 }
