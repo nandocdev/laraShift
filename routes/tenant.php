@@ -53,6 +53,7 @@ Route::middleware([
         Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
         Route::get('/settings/localization', \App\Modules\Tenant\Settings\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
         Route::get('/settings/smtp', \App\Modules\Tenant\Settings\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
+        Route::get('/settings/export', \App\Modules\Tenant\Identity\Livewire\DataExport::class)->name('tenant.settings.export');
         Route::get('/settings/security/2fa', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', function (Illuminate\Http\Request $request) {

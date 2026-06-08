@@ -31,7 +31,7 @@ Los compradores de boilerplates pagan por resolver los problemas complejos de es
 | Módulo | Componente | Estado |
 | :--- | :--- | :--- |
 | **Tenant** | Notifications | Implementado |
-| **Tenant** | DataExport | Pendiente |
+| **Tenant** | DataExport | Implementado |
 | **Tenant** | SMTP | Implementado |
 | **Tenant** | Domains | Implementado |
 
@@ -48,5 +48,4 @@ Los compradores de boilerplates pagan por resolver los problemas complejos de es
 
 ## 🛠️ Próximos pasos (Fase Roadmap)
 
-1.  **Data Export (Prioridad Media)**: Implementar exportación masiva de datos de inquilinos para asegurar la portabilidad y cumplimiento (GDPR/Compliance).
-2.  **Mantenimiento del Core**: Estabilización continua de `Payments` y `Provisioning` según los hallazgos de seguridad.
+1.  **Mantenimiento del Core**: Estabilización continua de `Payments` y `Provisioning` según los hallazgos de seguridad.
