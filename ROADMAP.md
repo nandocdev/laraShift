@@ -30,7 +30,7 @@ Los compradores de boilerplates pagan por resolver los problemas complejos de es
 
 | Módulo | Componente | Estado |
 | :--- | :--- | :--- |
-| **Tenant** | Notifications | Pendiente |
+| **Tenant** | Notifications | Implementado |
 | **Tenant** | DataExport | Pendiente |
 | **Tenant** | SMTP | Implementado |
 | **Tenant** | Domains | Implementado |
@@ -48,6 +48,5 @@ Los compradores de boilerplates pagan por resolver los problemas complejos de es
 
 ## 🛠️ Próximos pasos (Fase Roadmap)
 
-1.  **Refuerzo de Notificaciones (Prioridad Media)**: Desarrollar el sistema centralizado de notificaciones (Mail/In-app) para mejorar el engagement del tenant.
-2.  **Data Export (Prioridad Media)**: Implementar exportación masiva de datos de inquilinos para asegurar la portabilidad y cumplimiento (GDPR/Compliance).
-3.  **Mantenimiento del Core**: Estabilización continua de `Payments` y `Provisioning` según los hallazgos de seguridad.
+1.  **Data Export (Prioridad Media)**: Implementar exportación masiva de datos de inquilinos para asegurar la portabilidad y cumplimiento (GDPR/Compliance).
+2.  **Mantenimiento del Core**: Estabilización continua de `Payments` y `Provisioning` según los hallazgos de seguridad.
