@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Actions;
 
 use App\Modules\Central\Billing\Actions\RegisterPaymentMethodAction;
-use App\Modules\Central\Billing\Actions\SetupTenantPaymentProviderAction;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
@@ -54,7 +53,7 @@ final readonly class CreateTenantAction {
                     TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
                 });
 
-                // Step 4: Billing Setup (Plinth) — only for paid plans
+                // Step 4: Billing Setup — only for paid plans
                 $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
                     $plan = null;
                     if (\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {

@@ -14,7 +14,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
- * Wizard de registro multi-step con integración de pago vía Plinth.
+ * Wizard de registro multi-step con integración de pago.
  *
  * Step 1: Datos de organización (nombre, email, compañía, slug, password)
  * Step 2: Selección visual de plan (cards con features y precios)
