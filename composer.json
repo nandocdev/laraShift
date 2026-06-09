@@ -111,6 +111,14 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.5.7",
+            "ext-bcmath": "1",
+            "ext-exif": "1",
+            "ext-gd": "1",
+            "ext-intl": "1",
+            "ext-pcntl": "1"
         }
     },
     "minimum-stability": "stable",

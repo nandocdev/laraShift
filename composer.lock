@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6bbaf37a7abea30cf670a3a53c40f94f",
+    "content-hash": "558d1d3b101191cb86d813568eabcbb2",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3436,7 +3436,7 @@
             "dist": {
                 "type": "path",
                 "url": "../plinth-multitenant-billing",
-                "reference": "927efc2fa056f38ce6fea8424174fa730ae0e607"
+                "reference": "14fe3a5ace10d3b94ade877d493ea88a32c92833"
             },
             "require": {
                 "illuminate/http": "^11.0 || ^12.0 || ^13.0",
@@ -13089,8 +13089,16 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.3"
+        "php": "^8.4"
     },
     "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.5.7",
+        "ext-bcmath": "1",
+        "ext-exif": "1",
+        "ext-gd": "1",
+        "ext-intl": "1",
+        "ext-pcntl": "1"
+    },
     "plugin-api-version": "2.9.0"
 }
