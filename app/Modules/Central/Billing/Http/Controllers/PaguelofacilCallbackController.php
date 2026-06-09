@@ -31,7 +31,15 @@ class PaguelofacilCallbackController extends Controller
             
             // Try to redirect back to the tenant's cancel page if we have the tenant
             if ($tenantId && $tenant = Tenant::find($tenantId)) {
-                return redirect()->away($tenant->central_domain . '/billing/cancel');
+                $primaryDomain = $tenant->domains()->first()?->domain;
+                if ($primaryDomain) {
+                    $protocol = $request->secure() ? 'https://' : 'http://';
+                    // Respect the port from APP_URL if present
+                    $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
+                    $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
+                    
+                    return redirect()->away($protocol . $primaryDomain . $portSuffix . '/billing/cancel');
+                }
             }
 
             return redirect()->route('home')->with('error', __('Payment was denied or cancelled.'));
@@ -62,8 +70,12 @@ class PaguelofacilCallbackController extends Controller
 
             // Redirect to success page on tenant domain
             // Note: Since we are in Central context, we need to build the tenant URL
+            $primaryDomain = $tenant->domains()->first()?->domain;
             $protocol = $request->secure() ? 'https://' : 'http://';
-            $successUrl = $protocol . $tenant->slug . '.' . parse_url(config('app.url'), PHP_URL_HOST) . '/billing/success';
+            $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
+            $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
+
+            $successUrl = $protocol . ($primaryDomain ?? $tenant->slug . '.localhost') . $portSuffix . '/billing/success';
 
             return redirect()->away($successUrl);
 

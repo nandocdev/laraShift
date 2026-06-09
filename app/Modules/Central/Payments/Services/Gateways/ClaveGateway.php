@@ -74,7 +74,7 @@ final class ClaveGateway implements PaymentGateway {
             'CCLW' => config('payments.clave.cclw', $apiKey),
             'CMTN' => number_format((float) $payment->netAmount(), 2, '.', ''),
             'CDSC' => substr($payment->description, 0, 150),
-            'RETURN_URL' => bin2hex(config('app.url') . '/central/billing/paguelofacil/callback'),
+            'RETURN_URL' => bin2hex(route('central.billing.paguelofacil.callback')),
             // We use PARM_1 for tenant_id and PARM_2 for internal reference if needed
             'PARM_1' => $payment->customFieldValues['tenant_id'] ?? tenant('id'),
             'PARM_2' => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
