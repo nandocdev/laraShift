@@ -178,7 +178,7 @@
                 <div class="space-y-6" wire:key="step-3">
                     <div>
                         <flux:heading size="lg" class="mb-1">{{ __('Confirm & Launch') }}</flux:heading>
-                        <flux:subheading class="text-zinc-500">{{ __('Review your details and set up billing') }}</flux:subheading>
+                        <flux:subheading class="text-zinc-500">{{ __('Review your details and finalize registration') }}</flux:subheading>
                     </div>
 
                     {{-- Order Summary --}}
@@ -203,6 +203,9 @@
                                     ${{ number_format($selectedPlan->price_monthly / 100, 2) }}
                                 </span>
                             </div>
+                            <p class="text-xs text-zinc-500 mt-2">
+                                {{ __('You will be redirected to our secure payment gateway (PagueloFacil) to complete your subscription.') }}
+                            </p>
                         @else
                             <div class="flex justify-between text-sm pt-2 border-t border-zinc-200 dark:border-zinc-800">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ __('Monthly Total') }}</span>
@@ -211,53 +214,18 @@
                         @endif
                     </div>
 
-                    {{-- Card Form (only for paid plans) --}}
-                    @if(!$isPlanFree)
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="text-sm font-bold text-zinc-900 dark:text-white mb-1">{{ __('Payment Method') }}</h4>
-                                <p class="text-xs text-zinc-500">{{ __('Your card will be charged at the start of each billing cycle.') }}</p>
-                            </div>
-
-                            <div class="rounded-lg border border-zinc-300 dark:border-zinc-700 p-4 bg-white dark:bg-zinc-900">
-                                <div id="card-element" class="min-h-[40px]">
-                                    {{-- Stripe Elements mounts here --}}
-                                </div>
-                                <div id="card-errors" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert"></div>
-                            </div>
-
-                            @error('payment_token')
-                                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-
-                            <div class="flex items-center gap-2 text-xs text-zinc-400">
-                                <flux:icon icon="shield-check" class="w-4 h-4 text-emerald-500" />
-                                {{ __('Secured by Stripe. We never store your card details.') }}
-                            </div>
-                        </div>
-                    @endif
-
                     <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between">
                         <flux:button wire:click="previousStep" variant="ghost">
                             <flux:icon icon="arrow-left" class="w-4 h-4 mr-2" />
                             {{ __('Back') }}
                         </flux:button>
 
-                        @if($isPlanFree)
-                            <flux:button wire:click="register" variant="primary" class="px-8" wire:loading.attr="disabled">
-                                <span wire:loading.remove wire:target="register">{{ __('Create Organization') }}</span>
-                                <span wire:loading wire:target="register">{{ __('Creating...') }}</span>
-                            </flux:button>
-                        @else
-                            <flux:button
-                                type="button"
-                                id="submit-payment-btn"
-                                variant="primary"
-                                class="px-8"
-                            >
-                                {{ __('Create Organization & Pay') }}
-                            </flux:button>
-                        @endif
+                        <flux:button wire:click="register" variant="primary" class="px-8" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="register">
+                                {{ $isPlanFree ? __('Create Organization') : __('Create Organization & Pay') }}
+                            </span>
+                            <span wire:loading wire:target="register">{{ __('Processing...') }}</span>
+                        </flux:button>
                     </div>
                 </div>
             @endif
@@ -265,70 +233,3 @@
         </flux:card>
     </div>
 </div>
-
-@if($step === 3 && !$isPlanFree)
-    @push('scripts')
-        <script src="https://js.stripe.com/v3/"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const stripeKey = @js($stripeKey);
-
-                if (!stripeKey) {
-                    console.error('Stripe publishable key not configured');
-                    return;
-                }
-
-                const stripe = Stripe(stripeKey);
-                const elements = stripe.elements();
-
-                const style = {
-                    base: {
-                        color: document.documentElement.classList.contains('dark') ? '#e4e4e7' : '#18181b',
-                        fontFamily: '"Inter", system-ui, sans-serif',
-                        fontSmoothing: 'antialiased',
-                        fontSize: '16px',
-                        '::placeholder': {
-                            color: '#a1a1aa',
-                        },
-                    },
-                    invalid: {
-                        color: '#ef4444',
-                        iconColor: '#ef4444',
-                    },
-                };
-
-                const cardElement = elements.create('card', { style, hidePostalCode: true });
-                cardElement.mount('#card-element');
-
-                cardElement.on('change', function (event) {
-                    const displayError = document.getElementById('card-errors');
-                    if (event.error) {
-                        displayError.textContent = event.error.message;
-                    } else {
-                        displayError.textContent = '';
-                    }
-                });
-
-                const submitBtn = document.getElementById('submit-payment-btn');
-                if (submitBtn) {
-                    submitBtn.addEventListener('click', async function () {
-                        submitBtn.disabled = true;
-                        submitBtn.textContent = 'Processing...';
-
-                        const { token, error } = await stripe.createToken(cardElement);
-
-                        if (error) {
-                            const displayError = document.getElementById('card-errors');
-                            displayError.textContent = error.message;
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = '{{ __("Create Organization & Pay") }}';
-                        } else {
-                            @this.set('payment_token', token.id);
-                            @this.call('register');
-                        }
-                    });
-                }
-            });
-        </script>
-    @endpush
-@endif

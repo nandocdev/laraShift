@@ -130,29 +130,38 @@ class RegisterTenant extends Component
     }
 
     /**
-     * Ejecuta el registro completo: provisioning + billing (si aplica).
+     * Ejecuta el registro completo: provisioning + billing (via redirect).
      */
     public function register(CreateTenantAction $action): void
     {
-        // Validar payment_token si el plan es de pago
-        if (! $this->isPlanFree() && empty($this->payment_token)) {
-            $this->addError('payment_token', __('Please add a valid payment method.'));
-            return;
-        }
-
         $tenant = $action->execute(new CreateTenantData(
             name: $this->company,
             slug: $this->slug,
             email: $this->email,
             plan_id: $this->plan_id,
             password: $this->password,
-            payment_token: $this->isPlanFree() ? null : $this->payment_token,
+            payment_token: null, // No longer using client-side tokens for Paguelofacil link flow
         ));
+
+        // If it's a paid plan, redirect to the hosted checkout page within the tenant context
+        if (! $this->isPlanFree()) {
+            $domain = $this->slug . '.' . config('tenancy.central_domain');
+            $protocol = app()->environment('local') ? 'http' : 'https';
+            $port = parse_url(config('app.url'), PHP_URL_PORT);
+            $portSuffix = $port ? ":$port" : '';
+
+            $checkoutUrl = "$protocol://$domain$portSuffix/billing/checkout/hosted/{$tenant->id}/{$this->selectedPlan->id}";
+
+            $this->redirect($checkoutUrl, navigate: false);
+            return;
+        }
 
         $domain   = $this->slug . '.' . config('tenancy.central_domain');
         $protocol = app()->environment('local') ? 'http' : 'https';
+        $port = parse_url(config('app.url'), PHP_URL_PORT);
+        $portSuffix = $port ? ":$port" : '';
 
-        $this->redirect("$protocol://$domain/auth/login", navigate: false);
+        $this->redirect("$protocol://$domain$portSuffix/auth/login", navigate: false);
     }
 
     /**
@@ -179,7 +188,6 @@ class RegisterTenant extends Component
             'plans'        => PlanManager::all(),
             'selectedPlan' => $this->selectedPlan,
             'isPlanFree'   => $this->isPlanFree(),
-            'stripeKey'    => config('plinth.platform_credentials.publishable_key', ''),
         ]);
     }
 }
