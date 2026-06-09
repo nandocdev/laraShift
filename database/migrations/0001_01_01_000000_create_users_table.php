@@ -37,7 +37,7 @@ return new class extends Migration
         // Enable RLS for users
         if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
             \Illuminate\Support\Facades\DB::statement("ALTER TABLE users ENABLE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON users USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON users USING (tenant_id::text = current_setting('app.tenant_id'));");
         }
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

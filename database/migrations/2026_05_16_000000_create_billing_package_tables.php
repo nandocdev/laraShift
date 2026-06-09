@@ -100,7 +100,7 @@ return new class extends Migration
         if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
             foreach (['subscriptions', 'subscription_items', 'invoices', 'ledger_entries'] as $table) {
                 \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id'));");
             }
         }
     }

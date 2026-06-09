@@ -11,6 +11,7 @@ use Laravel\Fortify\Features;
 uses(RefreshDatabase::class);
 
 test('login screen can be rendered', function () {
+    $this->seed(\Database\Seeders\PlanSeeder::class);
     $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
     $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
         name: 'Acme Test',
@@ -20,6 +21,8 @@ test('login screen can be rendered', function () {
     );
 
     $tenant = $create->execute($data);
+    $this->assertNotNull($tenant);
+
     $domain = $tenant->domains()->first()->domain;
     URL::forceRootUrl('http://' . $domain);
 
@@ -29,7 +32,7 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $this->withoutExceptionHandling();
+    $this->seed(\Database\Seeders\PlanSeeder::class);
     $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
     $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
         name: 'Acme Test',
@@ -62,6 +65,7 @@ test('users can authenticate using the login screen', function () {
 });
 
 test('users can not authenticate with invalid password', function () {
+    $this->seed(\Database\Seeders\PlanSeeder::class);
     $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
     $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
         name: 'Acme Test',
@@ -92,6 +96,7 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
+    $this->seed(\Database\Seeders\PlanSeeder::class);
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 
     Features::twoFactorAuthentication([
@@ -131,6 +136,7 @@ test('users with two factor enabled are redirected to two factor challenge', fun
 });
 
 test('users can logout', function () {
+    $this->seed(\Database\Seeders\PlanSeeder::class);
     $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
     $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
         name: 'Acme Test',

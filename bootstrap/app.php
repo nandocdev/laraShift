@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectGuestsTo(fn (Request $request) => (function_exists('tenant') && tenant()) ? route('login') : route('central.login'));
         $middleware->appendToGroup('universal', []);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

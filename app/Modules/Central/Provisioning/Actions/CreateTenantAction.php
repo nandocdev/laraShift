@@ -25,18 +25,19 @@ final readonly class CreateTenantAction {
      * - Triggers automatic cleanup on critical failure.
      */
     public function execute(CreateTenantData $data): Tenant {
-        return DB::transaction(function () use ($data) {
-            /** @var Tenant $tenant */
-            $tenant = Tenant::create([
-                'id' => Str::uuid()->toString(),
-                'slug' => $data->slug,
-                'name' => $data->name,
-                'email' => $data->email,
-                'plan_id' => $data->plan_id,
-                'status' => 'provisioning',
-            ]);
+        $tenant = null;
+        try {
+            return DB::transaction(function () use ($data, &$tenant) {
+                /** @var Tenant $tenant */
+                $tenant = Tenant::create([
+                    'id' => Str::uuid()->toString(),
+                    'slug' => $data->slug,
+                    'name' => $data->name,
+                    'email' => $data->email,
+                    'plan_id' => $data->plan_id,
+                    'status' => 'provisioning',
+                ]);
 
-            try {
                 // Step 1: Subdomain / Domain Reservation
                 $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
                     $domain = $data->slug . '.' . config('tenancy.central_domain', 'larashift.test');
@@ -88,11 +89,13 @@ final readonly class CreateTenantAction {
                     ->log('tenant_provisioned_successfully');
 
                 return $tenant;
-            } catch (\Exception $e) {
+            });
+        } catch (\Exception $e) {
+            if ($tenant) {
                 $this->handleFailure($tenant, $e);
-                throw $e;
             }
-        });
+            throw $e;
+        }
     }
 
     private function logStep(Tenant $tenant, string $step, callable $callback): void {

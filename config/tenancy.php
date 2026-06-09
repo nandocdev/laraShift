@@ -37,7 +37,7 @@ return [
     'bootstrappers' => array_filter([
         \App\Modules\Shared\Tenancy\Bootstrappers\PostgresRlsBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        env('TENANCY_CACHE_BOOTSTRAPPER', true) ? Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class : null,
+        // env('TENANCY_CACHE_BOOTSTRAPPER', true) ? Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class : null,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
