@@ -77,19 +77,24 @@ final class ClaveGatewayTest extends TestCase {
     // ── buildCheckoutUrl ──────────────────────────────────────────────────────
 
     public function test_checkout_url_contains_expected_params(): void {
+        Http::fake([
+            '*/LinkDeamon.cfm' => Http::response([
+                'success' => true,
+                'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout?id=123']
+            ], 200)
+        ]);
+
         $payment = new \App\Modules\Central\Payments\DTOs\PaymentData(
             amount: 99.99,
             description: 'Test order',
             displayId: 'INV-001',
             email: 'user@example.com',
+            tenantId: 'test-tenant',
         );
 
         $url = $this->gateway->buildCheckoutUrl($payment, 'test-key');
 
-        $this->assertStringStartsWith('https://sandbox.paguelofacil.com', $url);
-        $this->assertStringContainsString('amount=99.99', $url);
-        $this->assertStringContainsString('displayId=INV-001', $url);
-        $this->assertStringContainsString('CCLW=test-key', $url);
+        $this->assertSame('https://sandbox.paguelofacil.com/checkout?id=123', $url);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

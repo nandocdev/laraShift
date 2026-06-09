@@ -70,6 +70,7 @@ it('generates a PagueloFacil hosted checkout URL', function () {
         description: 'Test',
         displayId: '123',
         email: 'user@test.com',
+        tenantId: $this->tenant->id,
         customFieldValues: ['tenant_id' => $this->tenant->id, 'plan_id' => $plan->id]
     ), 'test-key');
 

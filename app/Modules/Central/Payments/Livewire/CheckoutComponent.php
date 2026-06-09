@@ -76,6 +76,7 @@ final class CheckoutComponent extends Component {
                     description: $this->description,
                     displayId: $this->displayId,
                     email: $this->email,
+                    tenantId: (string) tenancy()->tenant->id,
                     taxAmount: $this->taxAmount,
                     discount: $this->discount,
                     lang: $this->lang,

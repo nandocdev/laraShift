@@ -14,26 +14,17 @@ class BillingManager extends Manager implements BillingProvider
 {
     public function getDefaultDriver(): string
     {
-        if (config('cashier.key') && config('cashier.secret')) {
-            return config('cashier.driver', 'stripe');
-        }
-
         return config('payments.default', 'paguelofacil');
-    }
-
-    public function createStripeDriver(): StripeBillingProvider
-    {
-        return new StripeBillingProvider();
     }
 
     public function createPaguelofacilDriver(): InternalBillingProvider
     {
-        return new InternalBillingProvider();
+        return $this->container->make(InternalBillingProvider::class);
     }
 
-    public function createDlocalDriver(): InternalBillingProvider
+    public function createClaveDriver(): InternalBillingProvider
     {
-        return new InternalBillingProvider();
+        return $this->createPaguelofacilDriver();
     }
 
 
