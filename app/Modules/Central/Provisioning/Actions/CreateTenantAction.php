@@ -66,15 +66,12 @@ final readonly class CreateTenantAction {
                     }
 
                     if ($plan && (data_get($plan, 'price_monthly', 0) > 0) && $data->payment_token) {
-                        // Register payment method + subscription
+                        // Register payment method + subscription via Cashier
                         app(RegisterPaymentMethodAction::class)->execute(
                             $tenant,
                             $data->payment_token,
                             $data->plan_id
                         );
-
-                        // Copy platform gateway credentials to tenant
-                        app(SetupTenantPaymentProviderAction::class)->execute($tenant);
                     }
                 });
 
