@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('plinth_ledger_entries', function (Blueprint $table) {
+        Schema::create('ledger_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('tenant_id')->index();
             $table->string('type');
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('plinth_ledger_entries');
+        Schema::dropIfExists('ledger_entries');
     }
 };
