@@ -52,6 +52,15 @@ class HealthCheckController extends Controller
     protected function checkRedis(): array
     {
         try {
+            // Check if the Redis class or the phpredis extension is actually available
+            // to avoid fatal "Class Redis not found" errors
+            if (! class_exists('Redis') && config('database.redis.client') === 'phpredis') {
+                return [
+                    'status' => 'fail', 
+                    'message' => 'PHP Extension "phpredis" is missing. Install it or switch to "predis".'
+                ];
+            }
+
             Redis::connection()->ping();
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {
