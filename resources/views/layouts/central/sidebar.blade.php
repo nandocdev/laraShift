@@ -49,10 +49,12 @@
                     :current="request()->routeIs('central.billing.invoices.global')" wire:navigate>
                     {{ __('Global Invoices') }}
                 </flux:sidebar.item>
+{{-- 
                 <flux:sidebar.item icon="book-open" :href="route('central.billing.ledger')"
                     :current="request()->routeIs('central.billing.ledger')" wire:navigate>
                     {{ __('Ledger Audit') }}
                 </flux:sidebar.item>
+                --}}
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Settings')" class="grid">
