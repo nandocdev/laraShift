@@ -36,7 +36,7 @@ it('automatically records an audit log when an identity event is fired', functio
     expect(AuditLog::count())->toBe(1);
     
     $log = AuditLog::first();
-    expect($log->action)->toBe('user.revoked');
+    expect($log->action->value)->toBe('user.revoked');
     expect($log->resource)->toBe('users');
     expect($log->resource_id)->toBe($user->id);
     expect($log->metadata['revoked_by'])->toBe('admin-uuid');

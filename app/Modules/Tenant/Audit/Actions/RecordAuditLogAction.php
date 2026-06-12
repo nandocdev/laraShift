@@ -4,29 +4,24 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Audit\Actions;
 
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
 use App\Modules\Tenant\Audit\Models\AuditLog;
-use Illuminate\Support\Str;
 
 final readonly class RecordAuditLogAction
 {
     /**
      * Records an audit log entry within the current tenant context.
+     * Strategy: Rely on BelongsToTenant and HasUuids traits.
      */
-    public function execute(
-        string $action,
-        ?string $resource = null,
-        ?string $resourceId = null,
-        ?array $metadata = null
-    ): AuditLog {
+    public function execute(AuditLogData $data): AuditLog
+    {
         return AuditLog::create([
-            'id' => Str::uuid()->toString(),
-            'tenant_id' => tenant('id'),
-            'user_id' => auth()->id(),
-            'action' => $action,
-            'resource' => $resource,
-            'resource_id' => $resourceId,
-            'metadata' => $metadata,
-            'ip' => request()->ip(),
+            'user_id' => $data->userId ?? auth()->id(),
+            'action' => is_string($data->action) ? $data->action : $data->action->value,
+            'resource' => $data->resource,
+            'resource_id' => $data->resourceId,
+            'metadata' => $data->metadata,
+            'ip' => $data->ip ?? request()->ip(),
         ]);
     }
 }
