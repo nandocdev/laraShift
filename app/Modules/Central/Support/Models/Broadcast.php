@@ -13,6 +13,8 @@ class Broadcast extends Model
 {
     use HasUuids;
 
+    protected $connection = 'central';
+
     protected $fillable = [
         'id',
         'created_by',

@@ -14,6 +14,8 @@ class SupportSession extends Model
 {
     use HasUuids;
 
+    protected $connection = 'central';
+
     protected $fillable = [
         'id',
         'tenant_id',
