@@ -28,44 +28,57 @@ class ExportAuditLogsJob implements ShouldQueue
 
     public function handle(): void
     {
-        $user = User::withoutGlobalScope(\App\Modules\Shared\Tenancy\Models\Concerns\TenantScope::class)->find($this->userId);
-        
-        if (! $user) return;
+        tenancy()->initialize($this->tenantId);
 
-        $logs = AuditLog::withoutGlobalScope(\App\Modules\Shared\Tenancy\Models\Concerns\TenantScope::class)
-            ->with('user')
-            ->where('tenant_id', $this->tenantId)
-            ->whereDate('created_at', '>=', $this->dateFrom)
-            ->whereDate('created_at', '<=', $this->dateTo)
-            ->oldest()
-            ->get();
+        try {
+            $user = User::find($this->userId);
+            
+            if (! $user) return;
 
-        $fileName = "exports/audit/audit_log_{$this->tenantId}_" . Str::random(8) . ".csv";
-        $handle = fopen('php://temp', 'r+');
-        
-        // CSV Headers
-        fputcsv($handle, ['ID', 'Date', 'Action', 'Member', 'Resource', 'Resource ID', 'IP', 'Metadata']);
+            $diff = \Carbon\Carbon::parse($this->dateFrom)->diffInDays($this->dateTo);
+            if ($diff > 90) {
+                \Illuminate\Support\Facades\Log::error('ExportAuditLogsJob: Range exceeded security policy.', [
+                    'tenant_id' => $this->tenantId,
+                    'user_id' => $this->userId,
+                ]);
+                return;
+            }
 
-        foreach ($logs as $log) {
-            fputcsv($handle, [
-                $log->id,
-                $log->created_at->toDateTimeString(),
-                $log->action,
-                $log->user?->name ?? 'System',
-                $log->resource,
-                $log->resource_id,
-                $log->ip,
-                json_encode($log->metadata),
-            ]);
+            $logs = AuditLog::with('user')
+                ->whereDate('created_at', '>=', $this->dateFrom)
+                ->whereDate('created_at', '<=', $this->dateTo)
+                ->oldest()
+                ->get();
+
+            $fileName = "exports/audit/audit_log_{$this->tenantId}_" . Str::random(8) . ".csv";
+            $handle = fopen('php://temp', 'r+');
+            
+            // CSV Headers
+            fputcsv($handle, ['ID', 'Date', 'Action', 'Member', 'Resource', 'Resource ID', 'IP', 'Metadata']);
+
+            foreach ($logs as $log) {
+                fputcsv($handle, [
+                    $log->id,
+                    $log->created_at->toDateTimeString(),
+                    $log->action,
+                    $log->user?->name ?? 'System',
+                    $log->resource,
+                    $log->resource_id,
+                    $log->ip,
+                    json_encode($log->metadata),
+                ]);
+            }
+
+            rewind($handle);
+            $content = stream_get_contents($handle);
+            fclose($handle);
+
+            Storage::disk('private')->put($fileName, $content);
+
+            // Notify User
+            $user->notify(new AuditLogExportNotification($fileName));
+        } finally {
+            tenancy()->end();
         }
-
-        rewind($handle);
-        $content = stream_get_contents($handle);
-        fclose($handle);
-
-        Storage::disk('private')->put($fileName, $content);
-
-        // Notify User
-        $user->notify(new AuditLogExportNotification($fileName));
     }
 }
