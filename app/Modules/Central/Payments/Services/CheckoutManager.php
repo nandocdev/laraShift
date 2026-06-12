@@ -50,7 +50,9 @@ final readonly class CheckoutManager {
 
             $checkoutUrl = $this->gateway->buildCheckoutUrl($data, $apiKey);
 
-            CheckoutSessionCreated::dispatch($payment, $attempt);
+            DB::afterCommit(function () use ($payment, $attempt) {
+                CheckoutSessionCreated::dispatch($payment, $attempt);
+            });
 
             return new CheckoutSession(
                 payment: $payment,
