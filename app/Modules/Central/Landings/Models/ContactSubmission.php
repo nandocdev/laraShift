@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Landings\Models;
 
+use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContactSubmission extends Model
 {
-    use HasUuids;
+    use HasUuids, BelongsToTenant;
 
     protected $fillable = [
         'id',
