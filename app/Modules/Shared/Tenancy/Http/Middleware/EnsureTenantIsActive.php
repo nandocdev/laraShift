@@ -20,8 +20,8 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
-        // 1. Allow login/auth routes and support/auth routes
-        if ($request->routeIs(['login', 'login.challenge', 'tenant.invitations.accept', 'tenant.support.auth'])) {
+        // 1. Allow login/auth routes, support/auth routes, and payment routes
+        if ($request->routeIs(['login', 'login.challenge', 'tenant.invitations.accept', 'tenant.support.auth', 'payments.checkout.initiate'])) {
             return $next($request);
         }
 
