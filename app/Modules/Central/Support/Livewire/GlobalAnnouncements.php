@@ -19,7 +19,7 @@ class GlobalAnnouncements extends Component
     {
         if (! auth()->check()) return;
 
-        DB::table('broadcast_dismissals')->updateOrInsert(
+        DB::connection('central')->table('broadcast_dismissals')->updateOrInsert(
             [
                 'broadcast_id' => $broadcastId,
                 'user_id' => auth()->id(),
@@ -47,7 +47,7 @@ class GlobalAnnouncements extends Component
         // 3. Match tenant filters (all, same plan, or same status)
         // 4. Have NOT been dismissed by this user
         
-        $dismissedIds = DB::table('broadcast_dismissals')
+        $dismissedIds = DB::connection('central')->table('broadcast_dismissals')
             ->where('user_id', auth()->id())
             ->pluck('broadcast_id');
 

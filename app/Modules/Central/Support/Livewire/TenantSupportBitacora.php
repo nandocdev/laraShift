@@ -13,12 +13,12 @@ use Livewire\Component;
 
 class TenantSupportBitacora extends Component
 {
-    public Tenant $tenant;
+    public string $tenantId;
     public string $newNote = '';
 
     public function mount(Tenant $tenant): void
     {
-        $this->tenant = $tenant;
+        $this->tenantId = $tenant->id;
     }
 
     public function addNote(CreateSupportNoteAction $action): void
@@ -28,7 +28,8 @@ class TenantSupportBitacora extends Component
         ]);
 
         try {
-            $action->execute($this->tenant, $this->newNote);
+            $tenant = Tenant::findOrFail($this->tenantId);
+            $action->execute($tenant, $this->newNote);
             $this->reset('newNote');
             session()->flash('status', __('Note added to bitacora.'));
         } catch (\Exception $e) {
@@ -39,8 +40,8 @@ class TenantSupportBitacora extends Component
     public function render(): View
     {
         return view('support::livewire.tenant-support-bitacora', [
-            'notes' => SupportNote::with('author')->where('tenant_id', $this->tenant->id)->latest()->get(),
-            'sessions' => SupportSession::with('operator')->where('tenant_id', $this->tenant->id)->latest()->get(),
+            'notes' => SupportNote::with('author')->where('tenant_id', $this->tenantId)->latest()->get(),
+            'sessions' => SupportSession::with('operator')->where('tenant_id', $this->tenantId)->latest()->get(),
         ]);
     }
 }
