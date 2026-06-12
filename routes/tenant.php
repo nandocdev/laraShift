@@ -83,19 +83,9 @@ Route::middleware([
         Route::get('/settings/export', \App\Modules\Tenant\Identity\Livewire\DataExport::class)->name('tenant.settings.export');
         Route::get('/settings/security/2fa', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
-        Route::get('/audit/download', function (Illuminate\Http\Request $request) {
-            if (! $request->hasValidSignature()) {
-                abort(403);
-            }
-            return Illuminate\Support\Facades\Storage::disk('private')->download($request->path);
-        })->name('tenant.audit.download');
+        Route::get('/audit/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.audit.download');
 
-        Route::get('/data/download', function (Illuminate\Http\Request $request) {
-            if (! $request->hasValidSignature()) {
-                abort(403);
-            }
-            return Illuminate\Support\Facades\Storage::disk('private')->download($request->path);
-        })->name('tenant.data.download');
+        Route::get('/data/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.data.download');
         
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
         Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
