@@ -36,13 +36,4 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {
         return $action->download($invoice);
     })->name('central.billing.invoices.pdf');
-    
-    // Placeholder routes for checkout success/cancel
-    Route::get('/central/billing/success/{tenant}', function () {
-        return 'Success';
-    })->name('central.billing.success');
-
-    Route::get('/central/billing/cancel/{tenant}', function () {
-        return 'Cancelled';
-    })->name('central.billing.cancel');
 });

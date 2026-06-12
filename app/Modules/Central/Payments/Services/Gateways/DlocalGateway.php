@@ -77,13 +77,21 @@ final class DlocalGateway implements PaymentGateway {
         // Usually it involves Login + Amount + Currency + Secret
         // Check actual dLocal Go docs for exact signature if needed
 
+        $tenantDomain = \App\Modules\Central\Provisioning\Models\Domain::where('tenant_id', $payment->tenantId)->first()?->domain 
+            ?? $payment->tenantId . '.' . config('tenancy.central_domain');
+            
+        $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
+        $port = parse_url(config('app.url'), PHP_URL_PORT);
+        $portSuffix = $port ? ":$port" : '';
+        $baseUrl = "$scheme://$tenantDomain$portSuffix";
+
         $payload = [
             'amount' => $payment->amount,
             'currency' => 'USD',
             'description' => $payment->description,
             'order_id' => $payment->resolvedSlug(),
-            'success_url' => route('central.billing.success', ['tenant' => $payment->customFieldValues['tenant_id'] ?? 'default']),
-            'back_url' => route('tenant.billing.plans'),
+            'success_url' => "$baseUrl/billing/success",
+            'back_url' => "$baseUrl/billing/cancel",
             'notification_url' => route('payments.webhooks.dlocal', ['tenant' => $payment->tenantId]),
             'payer' => [
                 'name' => $payment->customFieldValues['name'] ?? 'Customer',

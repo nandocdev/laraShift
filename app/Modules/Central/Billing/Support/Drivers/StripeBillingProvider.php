@@ -19,10 +19,16 @@ class StripeBillingProvider implements BillingProvider
             throw new \InvalidArgumentException("Plan [{$planId}] has no Stripe ID configured.");
         }
 
+        $tenantDomain = $tenant->domains()->first()?->domain ?? $tenant->slug . '.' . config('tenancy.central_domain');
+        $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
+        $port = parse_url(config('app.url'), PHP_URL_PORT);
+        $portSuffix = $port ? ":$port" : '';
+        $baseUrl = "$scheme://$tenantDomain$portSuffix";
+
         return $tenant->newSubscription('default', $stripeId)
             ->checkout([
-                'success_url' => route('central.billing.success', ['tenant' => $tenant->id]),
-                'cancel_url' => route('central.billing.cancel', ['tenant' => $tenant->id]),
+                'success_url' => "$baseUrl/billing/success",
+                'cancel_url' => "$baseUrl/billing/cancel",
             ])->url;
     }
 
