@@ -34,8 +34,10 @@ it('allows a user to accept an invitation and join the tenant', function () {
 
     // 1. Send Invitation
     $invitation = app(SendInvitationAction::class)->execute(
-        email: 'new-user@test.com',
-        roleName: 'member',
+        new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+            email: 'new-user@test.com',
+            roleName: 'member'
+        ),
         inviter: $admin
     );
 

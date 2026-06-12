@@ -81,7 +81,12 @@ class TenantIdentityEventSubscriber
             action: AuditAction::API_KEY_CREATED,
             resource: 'api_keys',
             resourceId: (string) $event->apiKey->id,
-            metadata: ['name' => $event->apiKey->name, 'scopes' => $event->scopes]
+            metadata: [
+                'name' => $event->apiKey->name, 
+                'scopes' => $event->scopes,
+                'ua' => request()->userAgent()
+            ],
+            ip: request()->ip()
         ));
     }
 
@@ -90,7 +95,9 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::API_KEY_REVOKED,
             resource: 'api_keys',
-            resourceId: (string) $event->apiKey->id
+            resourceId: (string) $event->apiKey->id,
+            metadata: ['ua' => request()->userAgent()],
+            ip: request()->ip()
         ));
     }
 

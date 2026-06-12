@@ -30,7 +30,10 @@ class TeamManagement extends Component
         ]);
 
         try {
-            $action->execute($this->inviteEmail, $this->inviteRole, auth()->user());
+            $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+                email: $this->inviteEmail,
+                roleName: $this->inviteRole
+            ), auth()->user());
             
             $this->reset(['inviteEmail', 'inviteRole']);
             session()->flash('status', __('Invitation sent.'));
@@ -45,11 +48,10 @@ class TeamManagement extends Component
         
         try {
             // Re-execute sending using same email and role
-            $action->execute(
-                $oldInvite->email,
-                $oldInvite->role->name,
-                auth()->user()
-            );
+            $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+                email: $oldInvite->email,
+                roleName: $oldInvite->role->name
+            ), auth()->user());
 
             // Delete the old one
             $oldInvite->delete();

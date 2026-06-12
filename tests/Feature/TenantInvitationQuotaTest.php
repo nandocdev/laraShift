@@ -50,7 +50,10 @@ it('enforces a limit of pending invitations based on plan', function () {
 
     // Create 5 invitations
     for ($i = 0; $i < 5; $i++) {
-        $action->execute("user{$i}@test.com", 'member', $admin);
+        $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+            email: "user{$i}@test.com",
+            roleName: 'member'
+        ), $admin);
     }
 
     expect(Invitation::count())->toBe(5);
@@ -59,7 +62,10 @@ it('enforces a limit of pending invitations based on plan', function () {
     $this->expectException(\Exception::class);
     $this->expectExceptionMessage('Maximum limit of pending invitations reached for your plan.');
     
-    $action->execute("extra@test.com", 'member', $admin);
+    $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+        email: "extra@test.com",
+        roleName: 'member'
+    ), $admin);
 });
 
 it('aborts with 410 if invitation is expired', function () {

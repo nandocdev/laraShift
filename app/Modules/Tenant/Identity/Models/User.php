@@ -75,7 +75,7 @@ class User extends Authenticatable implements PasskeyUser
 
     public function hasTwoFactorEnabled(): bool
     {
-        return $this->mfa()->exists();
+        return $this->mfa_enabled;
     }
 
     /**

@@ -81,7 +81,10 @@ it('allows inviting an email that belongs to another tenant', function () {
     $action = app(\App\Modules\Tenant\Identity\Actions\SendInvitationAction::class);
 
     // This should NOT throw an exception anymore
-    $invitation = $action->execute('shared@test.com', 'member', $userA);
+    $invitation = $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+        email: 'shared@test.com',
+        roleName: 'member'
+    ), $userA);
 
     expect($invitation->email)->toBe('shared@test.com');
     expect($invitation->tenant_id)->toBe($tenantB->id);

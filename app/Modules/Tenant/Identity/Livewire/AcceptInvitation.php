@@ -50,11 +50,11 @@ class AcceptInvitation extends Component
     {
         $this->validate();
 
-        $user = $action->execute(
-            $this->token,
-            $this->name,
-            $this->password
-        );
+        $user = $action->execute(new \App\Modules\Tenant\Identity\DTOs\UserAcceptanceData(
+            token: $this->token,
+            name: $this->name,
+            password: $this->password
+        ));
 
         auth()->login($user);
 

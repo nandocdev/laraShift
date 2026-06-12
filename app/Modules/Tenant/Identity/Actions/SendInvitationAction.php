@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Identity\Actions;
 
 use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use App\Modules\Tenant\Identity\DTOs\InvitationData;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Models\User;
@@ -18,8 +19,7 @@ final readonly class SendInvitationAction
      * Sends an invitation to a new or existing user.
      */
     public function execute(
-        string $email,
-        string $roleName,
+        InvitationData $data,
         User $inviter
     ): Invitation {
         $tenant = tenant();
@@ -32,7 +32,7 @@ final readonly class SendInvitationAction
         }
         
         // 2. Resolve Role
-        $role = Role::where('name', $roleName)->firstOrFail();
+        $role = Role::where('name', $data->roleName)->firstOrFail();
 
         // 3. Generate token
         $token = Str::random(64);
@@ -41,7 +41,7 @@ final readonly class SendInvitationAction
         $invitation = Invitation::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => $tenant->id,
-            'email' => $email,
+            'email' => $data->email,
             'role_id' => $role->id,
             'token_hash' => hash('sha256', $token),
             'invited_by' => $inviter->id,
@@ -49,7 +49,7 @@ final readonly class SendInvitationAction
         ]);
 
         // 5. Send Notification
-        Notification::route('mail', $email)
+        Notification::route('mail', $data->email)
             ->notify(new TenantInvitationNotification($token, $tenant->name));
 
         activity('identity')

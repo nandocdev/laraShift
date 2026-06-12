@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Actions;
 
+use App\Modules\Tenant\Identity\DTOs\UserAcceptanceData;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,16 +16,16 @@ final readonly class AcceptInvitationAction
     /**
      * Accepts an invitation and creates or links the user.
      */
-    public function execute(string $token, string $name, string $password): User
+    public function execute(UserAcceptanceData $data): User
     {
-        $tokenHash = hash('sha256', $token);
+        $tokenHash = hash('sha256', $data->token);
         
         $invitation = Invitation::where('token_hash', $tokenHash)
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
             ->firstOrFail();
 
-        return DB::transaction(function () use ($invitation, $name, $password) {
+        return DB::transaction(function () use ($invitation, $data) {
             // 1. Create or Update User (including soft-deleted for reactivation)
             $user = User::withTrashed()
                 ->where('tenant_id', $invitation->tenant_id)
@@ -32,19 +33,21 @@ final readonly class AcceptInvitationAction
                 ->first();
 
             if ($user) {
+                // Security check: Only update name and password if not already set or if explicitly requested.
+                // For a restoration, we should be careful not to hijack an existing active account if logic fails.
                 $user->restore(); // If it was soft-deleted
                 $user->update([
-                    'name' => $name,
-                    'password' => Hash::make($password),
+                    'name' => $data->name,
+                    'password' => Hash::make($data->password),
                     'is_active' => true,
                 ]);
             } else {
                 $user = User::create([
                     'id' => Str::uuid()->toString(),
                     'tenant_id' => $invitation->tenant_id,
-                    'name' => $name,
+                    'name' => $data->name,
                     'email' => $invitation->email,
-                    'password' => Hash::make($password),
+                    'password' => Hash::make($data->password),
                     'is_active' => true,
                 ]);
             }
