@@ -65,7 +65,7 @@ final readonly class CreateTenantAction {
                             ?? Plan::first();
                     }
 
-                    if ($plan && (data_get($plan, 'price_monthly', 0) > 0) && $data->payment_token) {
+                    if ($plan && $plan->price_monthly->isPositive() && $data->payment_token) {
                         // Register payment method + subscription via Cashier
                         app(RegisterPaymentMethodAction::class)->execute(
                             $tenant,

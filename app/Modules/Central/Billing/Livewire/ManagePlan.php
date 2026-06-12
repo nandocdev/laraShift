@@ -41,8 +41,8 @@ class ManagePlan extends Component {
             $this->isEditing = true;
             $this->name = $plan->name;
             $this->slug = $plan->slug;
-            $this->price_monthly = $plan->price_monthly / 100;
-            $this->price_yearly = $plan->price_yearly / 100;
+            $this->price_monthly = (float) $plan->price_monthly->getAmount() / 100;
+            $this->price_yearly = (float) $plan->price_yearly->getAmount() / 100;
             $this->is_active = $plan->is_active;
 
             $features = $plan->features ?? [];

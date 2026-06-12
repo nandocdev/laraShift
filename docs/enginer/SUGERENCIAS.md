@@ -1,30 +1,128 @@
-# Central
 
-## Auth
 
-  🛠️ Puntos de Mejora (Refactorización Proactiva)
-  Aunque la ingeniería es excelente, para llegar a la perfección sugiero:
-   * Configuración del Límite: El límite de sesiones int $limit = 3 en RevokeOldestSessionAction debería leerse de un archivo de configuración
-     (config('auth.central.session_limit')) para evitar "magic numbers" en el código.
-   * Tipado de Retorno: En LoginCentralUserAction::execute, el retorno es un string ('success', 'requires_2fa'). Para una ingeniería más robusta, un Enum de
-     PHP 8.3 sería ideal para evitar errores de typo en comparaciones futuras.
+---
 
-## Provisioning
+Revisa exhaustivamente el módulo **Central/Infrastructure**.
 
-  🛠️ Puntos de Mejora (Refactorización Proactiva)
-  Aunque la ingeniería es excelente, para llegar a la perfección sugiero:
-   * Validación de Datos: En CreateCentralUserAction, agregar validación de datos antes de crear el usuario para asegurar que los datos sean correctos y evitar errores en tiempo de ejecución.
-   * Manejo de Excepciones: Implementar manejo de excepciones más robusto en caso de errores durante la creación del usuario, como problemas de conexión a la base de datos o violaciones de integridad.
+Valida:
 
-## Billing
+* Vulnerabilidades de seguridad (autorización, validación, exposición de datos, escalamiento de privilegios, acceso cross-tenant).
+* Errores de lógica de negocio.
+* Casos borde no contemplados.
+* Código incompleto, TODOs, stubs, implementaciones parciales o comportamientos no finalizados.
+* Cumplimiento de la arquitectura definida (Modular Monolith, Actions, DTOs, tenant isolation, RLS, políticas, Jobs tenant-aware, etc.).
+* Deuda técnica, duplicación, complejidad innecesaria y posibles simplificaciones.
 
-🛠️ Recomendaciones del Master para Robustez Total
+Genera un informe con:
 
-   1. Transacciones Atómicas: Envolver cada fulfillment y registro de pago en DB::transaction().
-   2. Sistema de Reconciliación (Anti-Drift): Implementar un comando programado (billing:reconcile) que compare una vez al día el estado de todas las
-      suscripciones locales contra sus respectivos gateways.
-   3. Throttling de Sincronización: Modificar SyncTenantInvoicesJob para que solo se ejecute si la última sincronización fue hace más de X minutos (usando
-      un flag en cache o una columna last_synced_at en el tenant).
-   4. Uso de Librería de Dinero: Migrar los montos a Money objects para manejar precisiones y divisas de forma profesional.
-   5. Soft Deletes para Planes: En lugar de impedir el borrado, usar SoftDeletes para que los registros históricos sigan siendo válidos pero el plan ya no
-      esté disponible para nuevos clientes.
+1. Hallazgos críticos.
+2. Hallazgos importantes.
+3. Hallazgos menores.
+4. Riesgos arquitectónicos.
+5. Recomendaciones concretas de corrección.
+
+Incluye referencia exacta a archivos, clases y métodos afectados.
+
+
+---
+
+ Recomendaciones de Corrección
+
+   1. Seguridad: Envolver la ruta /central/health en el middleware auth:central o restringirla a IPs específicas (como las del Load Balancer).
+   2. Arquitectura de Colas: Reevaluar el uso de colas dinámicas. Se recomienda usar un número fijo de "Bucket Queues" (ej. tenant.bucket-1,
+      tenant.bucket-2) y asignar tenants a estas, o migrar a una estrategia donde el TenantAwareJob maneje la prioridad internamente sin multiplicar colas
+      físicas en Redis.
+   3. Horizon: Implementar un comando horizon:update o una tarea programada que detecte cambios en el catálogo de colas y envíe una señal de reinicio suave
+      (horizon:terminate) para refrescar la monitorización.
+   4. Consistencia: Mover la definición de la ruta de salud a app/Modules/Central/Infrastructure/Routes/web.php.
+
+---
+
+Implementa todas las recomendaciones aprobadas del informe de revisión para el módulo **Central/Infrastructure**.
+
+Proceso obligatorio:
+
+1. Crear una nueva rama desde `main`:
+
+   * Nombre: `fix/[nombre-modulo]` o `refactor/[nombre-modulo]`.
+
+2. Analizar cada hallazgo y clasificarlo:
+
+   * Seguridad
+   * Lógica de negocio
+   * Arquitectura
+   * Código incompleto
+   * Rendimiento
+   * Refactorización
+
+3. Implementar las correcciones respetando:
+
+   * Architecture.md
+   * CodingStandards.md
+   * Tenant Isolation
+   * Action Pattern
+   * DTOs tipados
+   * Controllers delgados
+   * Jobs tenant-aware
+   * RLS y políticas
+
+4. Antes de modificar código:
+
+   * Identificar impacto funcional.
+   * Identificar riesgos de regresión.
+   * Evitar sobreingeniería.
+   * Preferir la solución más simple que resuelva el problema.
+
+5. Durante la implementación:
+
+   * Corregir la causa raíz, no los síntomas.
+   * Eliminar código muerto.
+   * Completar implementaciones parciales.
+   * Agregar validaciones faltantes.
+   * Corregir problemas de seguridad.
+   * Mantener compatibilidad cuando sea posible.
+
+6. Crear o actualizar pruebas:
+
+   * Feature Tests
+   * Security Tests
+   * Isolation Tests
+   * Idempotency Tests
+   * Tests de regresión para cada corrección relevante
+
+7. Realizar commits atómicos.
+   Cada commit debe representar una única intención de cambio.
+
+   Formato Conventional Commits (español):
+
+   * `fix(seguridad): corregir acceso cross-tenant en evaluaciones`
+   * `fix(logica): validar estado antes de aprobar evaluación`
+   * `refactor(arquitectura): mover lógica de negocio a Action`
+   * `test(aislamiento): agregar pruebas de acceso entre tenants`
+   * `perf(reportes): eliminar consulta N+1`
+   * `chore(limpieza): eliminar código muerto`
+
+8. Verificar antes de finalizar:
+
+   * Todas las pruebas pasan.
+   * No existen TODO, FIXME o código comentado innecesario.
+   * No existen regresiones evidentes.
+   * No existen violaciones arquitectónicas.
+   * No existen riesgos de fuga de datos entre tenants.
+
+9. Generar un resumen final:
+
+   * Hallazgos corregidos.
+   * Archivos modificados.
+   * Riesgos identificados.
+   * Pruebas agregadas o actualizadas.
+   * Commits realizados.
+
+10. Una vez validado todo:
+
+    * Rebase sobre `main`.
+    * Resolver conflictos si existen.
+    * Ejecutar nuevamente la suite de pruebas.
+    * Realizar merge hacia `main`.
+
+No solicitar confirmación para cada hallazgo. Ejecutar el trabajo completo de forma secuencial y documentar todas las decisiones técnicas relevantes.

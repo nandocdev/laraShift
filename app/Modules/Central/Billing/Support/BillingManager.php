@@ -22,6 +22,16 @@ class BillingManager extends Manager implements BillingProvider
         return $this->container->make(InternalBillingProvider::class);
     }
 
+    public function createStripeDriver(): StripeBillingProvider
+    {
+        return $this->container->make(StripeBillingProvider::class);
+    }
+
+    public function createDlocalDriver(): InternalBillingProvider
+    {
+        return $this->container->make(InternalBillingProvider::class);
+    }
+
     public function createClaveDriver(): InternalBillingProvider
     {
         return $this->createPaguelofacilDriver();

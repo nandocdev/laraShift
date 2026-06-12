@@ -48,7 +48,7 @@
                         @if($plan->slug === $currentPlanId)
                             {{ __('Selected') }}
                         @else
-                            {{ $plan->price_monthly > 0 ? __('Upgrade Now') : __('Select Plan') }}
+                            {{ $plan->price_monthly->isPositive() ? __('Upgrade Now') : __('Select Plan') }}
                         @endif
                     </span>
                     <span wire:loading wire:target="selectPlan">

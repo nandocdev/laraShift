@@ -171,7 +171,7 @@ class RegisterTenant extends Component
     {
         $plan = Plan::where('slug', $this->plan_id)->first();
 
-        return ! $plan || $plan->price_monthly <= 0;
+        return ! $plan || ! $plan->price_monthly->isPositive();
     }
 
     /**

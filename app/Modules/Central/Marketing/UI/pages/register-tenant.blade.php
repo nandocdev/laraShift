@@ -126,7 +126,7 @@
                                     <h3 class="text-lg font-bold text-zinc-900 dark:text-white">{{ $plan->name }}</h3>
                                     <div class="flex items-baseline gap-1 mt-2">
                                         <span class="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
-                                            ${{ number_format($plan->price_monthly / 100, 2) }}
+                                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_monthly) }}
                                         </span>
                                         <span class="text-zinc-500 text-sm">/{{ __('month') }}</span>
                                     </div>
@@ -196,11 +196,11 @@
                             <span class="text-zinc-600 dark:text-zinc-400">{{ __('Plan') }}</span>
                             <span class="font-medium text-zinc-900 dark:text-white">{{ $selectedPlan?->name ?? 'Free' }}</span>
                         </div>
-                        @if($selectedPlan && $selectedPlan->price_monthly > 0)
+                        @if($selectedPlan && $selectedPlan->price_monthly->isPositive())
                             <div class="flex justify-between text-sm pt-2 border-t border-zinc-200 dark:border-zinc-800">
                                 <span class="font-bold text-zinc-900 dark:text-white">{{ __('Monthly Total') }}</span>
                                 <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">
-                                    ${{ number_format($selectedPlan->price_monthly / 100, 2) }}
+                                    {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($selectedPlan->price_monthly) }}
                                 </span>
                             </div>
                             <p class="text-xs text-zinc-500 mt-2">

@@ -26,6 +26,8 @@ class BillingFlowTest extends TestCase
     {
         parent::setUp();
 
+        config(['payments.default' => 'clave']);
+
         // 1. Create a tenant and its domain
         $this->tenant = Tenant::create([
             'id' => Str::uuid()->toString(),
