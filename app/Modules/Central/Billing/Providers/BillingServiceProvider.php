@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Providers;
 
 use App\Modules\Central\Billing\Support\BillingManager;
+use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
