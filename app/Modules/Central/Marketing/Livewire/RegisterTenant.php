@@ -8,8 +8,10 @@ use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
+use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -18,13 +20,11 @@ use Livewire\Component;
  *
  * Step 1: Datos de organización (nombre, email, compañía, slug, password)
  * Step 2: Selección visual de plan (cards con features y precios)
- * Step 3: Método de pago (Stripe Elements si plan.price > 0, o resumen si free)
+ * Step 3: Resumen y Pago
  *
  * [RIESGOS]
  * - Race condition en slug: validación `unique:tenants,slug` puede fallar si dos
  *   usuarios registran el mismo slug simultáneamente. Mitigado: constraint DB unique.
- * - Token de Stripe expira (~5 min): si el usuario demora mucho en step 3,
- *   el submit fallará. Mitigado: el token se genera al momento del submit.
  */
 #[Layout('layouts.marketing')]
 class RegisterTenant extends Component
@@ -38,9 +38,6 @@ class RegisterTenant extends Component
 
     // Step 2: Plan
     public string $plan_id = 'free';
-
-    // Step 3: Payment
-    public string $payment_token = '';
 
     // Wizard state
     public int $step = 1;
@@ -59,10 +56,10 @@ class RegisterTenant extends Component
                 'slug'     => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:www,api,admin,central,app',
+                    'not_in:' . implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
-                'password' => 'required|string|min:12',
+                'password' => ['required', 'string', Password::defaults()],
             ],
             2 => [
                 'plan_id' => 'required|exists:plans,slug',
@@ -104,11 +101,6 @@ class RegisterTenant extends Component
         if ($this->step < 3) {
             $this->step++;
         }
-
-        // Si plan es free, saltar de step 2 directo a submit
-        if ($this->step === 3 && $this->isPlanFree()) {
-            // No saltamos, mostramos resumen sin card form
-        }
     }
 
     /**
@@ -134,34 +126,32 @@ class RegisterTenant extends Component
      */
     public function register(CreateTenantAction $action): void
     {
+        $this->validate($this->rulesForStep($this->step));
+
         $tenant = $action->execute(new CreateTenantData(
             name: $this->company,
             slug: $this->slug,
             email: $this->email,
             plan_id: $this->plan_id,
             password: $this->password,
-            payment_token: null, // No longer using client-side tokens for Paguelofacil link flow
+            payment_token: null,
         ));
+
+        $domain = $this->slug . '.' . config('tenancy.central_domain');
+        $baseUrl = config('app.url');
+        $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
+        $port = parse_url($baseUrl, PHP_URL_PORT);
+        $portSuffix = $port ? ":$port" : '';
 
         // If it's a paid plan, redirect to the hosted checkout page within the tenant context
         if (! $this->isPlanFree()) {
-            $domain = $this->slug . '.' . config('tenancy.central_domain');
-            $protocol = app()->environment('local') ? 'http' : 'https';
-            $port = parse_url(config('app.url'), PHP_URL_PORT);
-            $portSuffix = $port ? ":$port" : '';
-
-            $checkoutUrl = "$protocol://$domain$portSuffix/billing/checkout/hosted/{$tenant->id}/{$this->selectedPlan->id}";
+            $checkoutUrl = "$scheme://$domain$portSuffix/billing/checkout/hosted/{$tenant->id}/{$this->selectedPlan->id}";
 
             $this->redirect($checkoutUrl, navigate: false);
             return;
         }
 
-        $domain   = $this->slug . '.' . config('tenancy.central_domain');
-        $protocol = app()->environment('local') ? 'http' : 'https';
-        $port = parse_url(config('app.url'), PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-
-        $this->redirect("$protocol://$domain$portSuffix/auth/login", navigate: false);
+        $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
     }
 
     /**
