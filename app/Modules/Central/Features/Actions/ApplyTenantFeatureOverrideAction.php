@@ -7,6 +7,8 @@ namespace App\Modules\Central\Features\Actions;
 use App\Modules\Central\Features\Models\Feature;
 use App\Modules\Central\Features\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 final readonly class ApplyTenantFeatureOverrideAction
@@ -26,31 +28,35 @@ final readonly class ApplyTenantFeatureOverrideAction
         ?string $reason = null, 
         ?string $expiresAt = null
     ): TenantFeatureOverride {
-        $feature = Feature::where('key', $featureKey)->firstOrFail();
+        Gate::authorize('features:manage');
 
-        $override = TenantFeatureOverride::updateOrCreate(
-            ['tenant_id' => $tenant->id, 'feature_id' => $feature->id],
-            [
-                'id' => Str::uuid()->toString(),
-                'type' => $type,
-                'reason' => $reason,
-                'expires_at' => $expiresAt ? \Carbon\Carbon::parse($expiresAt) : null,
-                'created_by' => auth('central')->id(),
-            ]
-        );
+        return DB::transaction(function () use ($tenant, $featureKey, $type, $reason, $expiresAt) {
+            $feature = Feature::where('key', $featureKey)->firstOrFail();
 
-        // Invalidate cache to reflect changes immediately
-        app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
+            $override = TenantFeatureOverride::updateOrCreate(
+                ['tenant_id' => $tenant->id, 'feature_id' => $feature->id],
+                [
+                    'id' => Str::uuid()->toString(),
+                    'type' => $type,
+                    'reason' => $reason,
+                    'expires_at' => $expiresAt ? \Carbon\Carbon::parse($expiresAt) : null,
+                    'created_by' => auth('central')->id(),
+                ]
+            );
 
-        activity('features')
-            ->performedOn($tenant)
-            ->withProperties([
-                'feature' => $featureKey,
-                'type' => $type,
-                'expires_at' => $expiresAt,
-            ])
-            ->log('tenant_feature_override_applied');
+            // Invalidate cache to reflect changes immediately
+            app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
 
-        return $override;
+            activity('features')
+                ->performedOn($tenant)
+                ->withProperties([
+                    'feature' => $featureKey,
+                    'type' => $type,
+                    'expires_at' => $expiresAt,
+                ])
+                ->log('tenant_feature_override_applied');
+
+            return $override;
+        });
     }
 }
