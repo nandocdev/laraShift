@@ -46,25 +46,40 @@ final readonly class PaymentVerifier {
         $payload = json_decode($rawPayload, true);
         $result = $this->gateway->parseWebhookPayload($payload);
 
-        DB::transaction(function () use ($result, $rawPayload, $tenantId): void {
-            // Security: Ensure the payment actually belongs to the resolved tenant
-            // before recording anything to prevent cross-tenant log pollution.
-            $paymentExists = Payment::withoutGlobalScopes()
-                ->where('tenant_id', $tenantId)
-                ->where('display_id', $result->displayId)
-                ->exists();
+        $lockKey = "webhook_processing_{$tenantId}_{$result->gatewayReference}";
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
 
-            if (!$paymentExists) {
-                Log::warning('ClaveGateway: Webhook received for non-existent payment or tenant mismatch', [
-                    'tenant_id' => $tenantId,
-                    'display_id' => $result->displayId,
-                ]);
-                return;
-            }
+        if (!$lock->get()) {
+            Log::info('Webhook is already being processed', [
+                'gateway_reference' => $result->gatewayReference,
+                'tenant_id' => $tenantId,
+            ]);
+            return;
+        }
 
-            $this->recordWebhook($result, $rawPayload, $tenantId);
-            $this->reconcilePayment($result, $tenantId);
-        });
+        try {
+            DB::transaction(function () use ($result, $rawPayload, $tenantId): void {
+                // Security: Ensure the payment actually belongs to the resolved tenant
+                // before recording anything to prevent cross-tenant log pollution.
+                $paymentExists = Payment::withoutGlobalScopes()
+                    ->where('tenant_id', $tenantId)
+                    ->where('display_id', $result->displayId)
+                    ->exists();
+
+                if (!$paymentExists) {
+                    Log::warning('ClaveGateway: Webhook received for non-existent payment or tenant mismatch', [
+                        'tenant_id' => $tenantId,
+                        'display_id' => $result->displayId,
+                    ]);
+                    return;
+                }
+
+                $this->recordWebhook($result, $rawPayload, $tenantId);
+                $this->reconcilePayment($result, $tenantId);
+            });
+        } finally {
+            $lock->release();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -138,6 +153,23 @@ final readonly class PaymentVerifier {
             return;
         }
 
+        if ($result->status === PaymentStatus::Approved && $payment->amount > $result->amount) {
+            Log::alert('Monto insuficiente reportado por pasarela', ['payment' => $payment->id]);
+            $payment->update([
+                'status' => PaymentStatus::PartialPayment->value,
+                'gateway_reference' => $result->gatewayReference,
+                'authorization_code' => $result->authorizationCode,
+                'error_code' => 'INSUFFICIENT_AMOUNT',
+            ]);
+
+            PaymentAttempt::where('tenant_id', $tenantId)
+                ->where('payment_id', $payment->id)
+                ->whereIn('status', ['initiated', 'pending'])
+                ->update(['status' => PaymentStatus::PartialPayment->value]);
+
+            return;
+        }
+
         $payment->update([
             'status' => $result->status->value,
             'gateway_reference' => $result->gatewayReference,
@@ -151,8 +183,8 @@ final readonly class PaymentVerifier {
             ->update(['status' => $result->status->value]);
 
         match ($result->status) {
-            PaymentStatus::Approved => PaymentApproved::dispatch($payment, $result),
-            PaymentStatus::Declined => PaymentDeclined::dispatch($payment, $result),
+            PaymentStatus::Approved => DB::afterCommit(fn () => PaymentApproved::dispatch($payment, $result)),
+            PaymentStatus::Declined => DB::afterCommit(fn () => PaymentDeclined::dispatch($payment, $result)),
             default => null,
         };
     }

@@ -11,9 +11,10 @@ enum PaymentStatus: string {
     case Cancelled = 'cancelled';
     case Refunded = 'refunded';
     case Failed = 'failed';
+    case PartialPayment = 'partial_payment';
 
     public function isTerminal(): bool {
-        return in_array($this, [self::Approved, self::Declined, self::Cancelled, self::Refunded, self::Failed], true);
+        return in_array($this, [self::Approved, self::Declined, self::Cancelled, self::Refunded, self::Failed, self::PartialPayment], true);
     }
 
     public function isSuccessful(): bool {
