@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Settings\Livewire;
 
+use App\Modules\Tenant\Settings\Actions\UpdateTenantSmtpAction;
+use App\Modules\Tenant\Settings\DTOs\SmtpConfigData;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
+use App\Modules\Tenant\Settings\Services\TenantMailerService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -38,8 +41,11 @@ class SmtpSettings extends Component
         }
     }
 
-    public function save(): void
+    public function save(UpdateTenantSmtpAction $action): void
     {
+        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
+        Gate::authorize('update', $settings);
+
         $this->validate([
             'smtp_host' => 'required|string',
             'smtp_port' => 'required|integer',
@@ -48,30 +54,23 @@ class SmtpSettings extends Component
             'smtp_from_name' => 'required|string',
         ]);
 
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-
-        $data = [
-            'smtp_host' => $this->smtp_host,
-            'smtp_port' => $this->smtp_port,
-            'smtp_user' => $this->smtp_user,
-            'smtp_from_email' => $this->smtp_from_email,
-            'smtp_from_name' => $this->smtp_from_name,
-            'smtp_verified' => false, // Reset on save
-        ];
-
-        if (! empty($this->smtp_password)) {
-            $data['smtp_password'] = $this->smtp_password; // Automatically encrypted by model cast
-        }
-
-        $settings->update($data);
-
-        event(new \App\Modules\Shared\Events\TenantSmtpConfigured(tenant('id'), $this->smtp_from_email));
+        $action->execute(new SmtpConfigData(
+            host: $this->smtp_host,
+            port: $this->smtp_port,
+            user: $this->smtp_user,
+            password: ! empty($this->smtp_password) ? $this->smtp_password : null,
+            fromEmail: $this->smtp_from_email,
+            fromName: $this->smtp_from_name,
+        ));
 
         session()->flash('status', __('SMTP settings updated successfully. Connection must be verified.'));
     }
 
-    public function testConnection(): void
+    public function testConnection(TenantMailerService $mailerService): void
     {
+        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
+        Gate::authorize('update', $settings);
+
         $this->validate([
             'test_email' => 'required|email',
         ]);
@@ -80,27 +79,24 @@ class SmtpSettings extends Component
         $this->test_error = null;
 
         try {
-            $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
             $dbPassword = $settings->smtp_password ? decrypt($settings->smtp_password) : '';
+            $password = ! empty($this->smtp_password) ? $this->smtp_password : $dbPassword;
 
-            // Configuration for the temporary mailer
-            $config = [
-                'transport' => 'smtp',
-                'host' => $this->smtp_host,
-                'port' => $this->smtp_port,
-                'encryption' => $this->smtp_port === 465 ? 'ssl' : 'tls',
-                'username' => $this->smtp_user,
-                'password' => ! empty($this->smtp_password) ? $this->smtp_password : $dbPassword,
-                'timeout' => 5,
-            ];
+            $config = new SmtpConfigData(
+                host: $this->smtp_host,
+                port: $this->smtp_port,
+                user: $this->smtp_user,
+                password: $password,
+                fromEmail: $this->smtp_from_email,
+                fromName: $this->smtp_from_name,
+            );
 
-            // Note: In a production app, we would use a dynamic mailer resolver
-            // For this boilerplate, we simulate the test.
-            
-            Mail::raw(__('This is a test email from LaraShift to verify your SMTP configuration.'), function ($message) {
-                $message->to($this->test_email)
-                    ->from($this->smtp_from_email, $this->smtp_from_name)
-                    ->subject(__('LaraShift SMTP Test'));
+            $mailerService->withConfig($config, function ($mailer) {
+                $mailer->raw(__('This is a test email from LaraShift to verify your SMTP configuration.'), function ($message) {
+                    $message->to($this->test_email)
+                        ->from($this->smtp_from_email, $this->smtp_from_name)
+                        ->subject(__('LaraShift SMTP Test'));
+                });
             });
 
             $settings->update(['smtp_verified' => true]);
