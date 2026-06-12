@@ -12,3 +12,5 @@ Artisan::command('inspire', function () {
 
 Schedule::job(new SnapshotQuotasJob)->daily();
 Schedule::job(new ReconcileResourcesJob)->daily();
+
+Schedule::command('billing:reconcile')->dailyAt('03:00');

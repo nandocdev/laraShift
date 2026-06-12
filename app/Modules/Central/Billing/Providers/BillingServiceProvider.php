@@ -33,6 +33,12 @@ class BillingServiceProvider extends ServiceProvider
         Cashier::useSubscriptionModel(\App\Modules\Central\Billing\Models\Subscription::class);
         Cashier::useSubscriptionItemModel(\App\Modules\Central\Billing\Models\SubscriptionItem::class);
         
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Modules\Central\Billing\Console\Commands\ReconcileSubscriptionsCommand::class,
+            ]);
+        }
+
         $this->loadViewsFrom(__DIR__ . '/../UI', 'billing');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
 

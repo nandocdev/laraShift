@@ -43,6 +43,11 @@ class BillingManager extends Manager implements BillingProvider
         $this->forTenant($tenant)->cancelSubscription($tenant, $subscriptionId, $immediately);
     }
 
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    {
+        return $this->forTenant($tenant)->getSubscriptionData($tenant, $subscriptionId);
+    }
+
     public function syncSubscription(Tenant $tenant): void
     {
         $this->forTenant($tenant)->syncSubscription($tenant);

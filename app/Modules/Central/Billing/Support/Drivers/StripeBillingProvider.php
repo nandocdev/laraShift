@@ -45,8 +45,30 @@ class StripeBillingProvider implements BillingProvider
     {
         $tenant->updateStripeCustomer();
         
+        $subscription = $tenant->subscription('default');
+        if ($subscription) {
+            $subscription->syncStripeStatus();
+        }
+
         // Sync invoices as well
         app(SyncInvoicesAction::class)->execute($tenant);
+    }
+
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    {
+        $subscription = $tenant->subscriptions()->where('stripe_id', $subscriptionId)->first();
+
+        if (! $subscription) {
+            return null;
+        }
+
+        $stripeSubscription = $subscription->asStripeSubscription();
+
+        return [
+            'status' => $stripeSubscription->status,
+            'current_period_end' => $stripeSubscription->current_period_end,
+            'cancel_at_period_end' => $stripeSubscription->cancel_at_period_end,
+        ];
     }
 
     public function getInvoices(Tenant $tenant): array

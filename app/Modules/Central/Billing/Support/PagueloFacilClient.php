@@ -155,6 +155,16 @@ class PagueloFacilClient {
     }
 
     /**
+     * Get details of a subscription.
+     */
+    public function getSubscription(string $subscriptionId): array
+    {
+        $response = $this->client()->get("/subscriptions-api/v1/CustomerSubscriptions/{$subscriptionId}");
+
+        return $response->throw()->json();
+    }
+
+    /**
      * Cancel an active subscription.
      */
     public function cancelSubscription(string $subscriptionId): array

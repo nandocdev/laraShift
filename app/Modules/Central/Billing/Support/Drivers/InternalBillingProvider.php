@@ -41,7 +41,38 @@ class InternalBillingProvider implements BillingProvider
 
     public function syncSubscription(Tenant $tenant): void
     {
-        // Implement status sync
+        $subscription = $tenant->subscriptions()->latest()->first();
+
+        if ($subscription && $subscription->provider_subscription_id) {
+            try {
+                $data = $this->getSubscriptionData($tenant, $subscription->provider_subscription_id);
+
+                if ($data) {
+                    $subscription->update([
+                        'status' => strtolower($data['status'] ?? $subscription->status),
+                        'current_period_end' => isset($data['nextPaymentDate']) ? \Illuminate\Support\Carbon::parse($data['nextPaymentDate']) : $subscription->current_period_end,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to sync PagueloFacil subscription for tenant {$tenant->id}: {$e->getMessage()}");
+            }
+        }
+    }
+
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    {
+        try {
+            $response = $this->client->getSubscription($subscriptionId);
+            
+            if ($response['success'] ?? false) {
+                return $response['data'];
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            \Log::error("PagueloFacil getSubscriptionData Error: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getInvoices(Tenant $tenant): array
