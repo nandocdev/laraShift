@@ -29,14 +29,24 @@ final class CheckoutComponent extends Component {
     // Props
     // -------------------------------------------------------------------------
 
+    #[\Livewire\Attributes\Locked]
     public float $amount = 0.0;
+
+    #[\Livewire\Attributes\Locked]
     public float $taxAmount = 0.0;
+
+    #[\Livewire\Attributes\Locked]
     public float $discount = 0.0;
-    public string $description = '';
+
+    #[\Livewire\Attributes\Locked]
     public string $displayId = '';
+
+    #[\Livewire\Attributes\Locked]
+    public array $customFieldValues = [];
+
+    public string $description = '';
     public string $email = '';
     public string $lang = 'es';
-    public array $customFieldValues = [];
 
     // -------------------------------------------------------------------------
     // State

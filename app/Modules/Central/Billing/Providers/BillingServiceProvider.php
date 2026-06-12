@@ -14,9 +14,14 @@ class BillingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(BillingManager::class, function ($app) {
-            return new BillingManager($app);
+        $this->app->singleton(PlanManager::class, function ($app) {
+            return new PlanManager();
         });
+
+        $this->app->bind(
+            \App\Modules\Shared\Contracts\PaymentAmountResolverContract::class,
+            \App\Modules\Central\Billing\Services\PaymentAmountResolver::class
+        );
 
         $this->app->alias(BillingManager::class, 'billing');
 
