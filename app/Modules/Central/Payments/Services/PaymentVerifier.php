@@ -47,6 +47,21 @@ final readonly class PaymentVerifier {
         $result = $this->gateway->parseWebhookPayload($payload);
 
         DB::transaction(function () use ($result, $rawPayload, $tenantId): void {
+            // Security: Ensure the payment actually belongs to the resolved tenant
+            // before recording anything to prevent cross-tenant log pollution.
+            $paymentExists = Payment::withoutGlobalScopes()
+                ->where('tenant_id', $tenantId)
+                ->where('display_id', $result->displayId)
+                ->exists();
+
+            if (!$paymentExists) {
+                Log::warning('ClaveGateway: Webhook received for non-existent payment or tenant mismatch', [
+                    'tenant_id' => $tenantId,
+                    'display_id' => $result->displayId,
+                ]);
+                return;
+            }
+
             $this->recordWebhook($result, $rawPayload, $tenantId);
             $this->reconcilePayment($result, $tenantId);
         });

@@ -20,7 +20,6 @@ use App\Modules\Central\Payments\Jobs\ProcessPaymentWebhookJob;
 final class WebhookController extends Controller {
     public function handle(Request $request): Response {
         $gateway = $this->resolveGateway($request);
-        $tenantId = $this->resolveTenantId($request);
         $rawPayload = $request->getContent();
 
         $signature = match ($gateway) {
@@ -30,6 +29,23 @@ final class WebhookController extends Controller {
         };
 
         $webhookSecret = config("payments.{$gateway}.webhook_secret");
+
+        // Verify signature synchronously to prevent DoS via queue exhaustion
+        $verifier = app(\App\Modules\Central\Payments\Contracts\PaymentGateway::class);
+        // We temporarily swap the implementation to the correct gateway for verification
+        $gatewayService = match ($gateway) {
+            'dlocal' => app(\App\Modules\Central\Payments\Services\Gateways\DlocalGateway::class),
+            default => app(\App\Modules\Central\Payments\Services\Gateways\ClaveGateway::class),
+        };
+
+        if (!$gatewayService->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
+            \Illuminate\Support\Facades\Log::warning("{$gateway} Webhook: signature mismatch. Rejecting.", [
+                'ip' => $request->ip()
+            ]);
+            abort(401, 'Invalid webhook signature');
+        }
+
+        $tenantId = $this->resolveTenantId($request);
 
         ProcessPaymentWebhookJob::dispatch(
             tenantId: $tenantId,
