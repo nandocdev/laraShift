@@ -6,6 +6,7 @@ namespace App\Modules\Central\Features\Livewire;
 
 use App\Modules\Central\Features\Actions\ApplyTenantFeatureOverrideAction;
 use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
+use App\Modules\Central\Features\DTOs\TenantSummaryData;
 use App\Modules\Central\Features\Models\Feature;
 use App\Modules\Central\Features\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
@@ -16,7 +17,8 @@ use Livewire\Component;
 #[Layout('layouts.central')]
 class TenantOverrides extends Component
 {
-    public Tenant $tenant;
+    public TenantSummaryData $tenantData;
+    public string $tenantId;
     
     // Form state for new override
     public string $selectedFeatureKey = '';
@@ -26,11 +28,14 @@ class TenantOverrides extends Component
 
     public function mount(Tenant $tenant): void
     {
-        $this->tenant = $tenant;
+        $this->tenantId = $tenant->id;
+        $this->tenantData = TenantSummaryData::from($tenant);
     }
 
     public function applyOverride(ApplyTenantFeatureOverrideAction $action): void
     {
+        $tenant = Tenant::findOrFail($this->tenantId);
+
         $this->validate([
             'selectedFeatureKey' => 'required|exists:features,key',
             'type' => 'required|in:allow,deny',
@@ -40,7 +45,7 @@ class TenantOverrides extends Component
 
         try {
             $action->execute(
-                $this->tenant,
+                $tenant,
                 $this->selectedFeatureKey,
                 $this->type,
                 $this->reason,
@@ -56,19 +61,22 @@ class TenantOverrides extends Component
 
     public function removeOverride(string $id): void
     {
-        $override = TenantFeatureOverride::where('tenant_id', $this->tenant->id)->findOrFail($id);
+        $tenant = Tenant::findOrFail($this->tenantId);
+        $override = TenantFeatureOverride::where('tenant_id', $this->tenantId)->findOrFail($id);
         $override->delete();
 
         // Refresh cache
-        app(ResolveTenantFeaturesAction::class)->execute($this->tenant, true);
+        app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
 
         session()->flash('status', __('Override removed.'));
     }
 
     public function render(): View
     {
+        $tenant = Tenant::findOrFail($this->tenantId);
+
         $overrides = TenantFeatureOverride::with('feature')
-            ->where('tenant_id', $this->tenant->id)
+            ->where('tenant_id', $this->tenantId)
             ->get();
 
         $availableFeatures = Feature::where('is_active', true)
@@ -79,7 +87,7 @@ class TenantOverrides extends Component
         return view('features::pages.tenant-overrides', [
             'overrides' => $overrides,
             'availableFeatures' => $availableFeatures,
-            'effectiveFeatures' => app(ResolveTenantFeaturesAction::class)->execute($this->tenant),
+            'effectiveFeatures' => app(ResolveTenantFeaturesAction::class)->execute($tenant),
         ]);
     }
 }
