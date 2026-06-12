@@ -148,8 +148,8 @@ final class ClaveGateway implements PaymentGateway {
                 'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
-                ->timeout(15)
-                ->retry(2, 500)
+                ->timeout(5)
+                ->retry(1, 100)
                 ->post($url, $body);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [
@@ -186,7 +186,7 @@ final class ClaveGateway implements PaymentGateway {
                 'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
-                ->timeout(15)
+                ->timeout(5)
                 ->get($url, $query);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [

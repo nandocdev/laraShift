@@ -10,7 +10,10 @@ class ProvisioningServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Modules\Shared\Contracts\TenantDomainResolverContract::class,
+            \App\Modules\Central\Provisioning\Services\TenantDomainResolver::class
+        );
     }
 
     public function boot(): void

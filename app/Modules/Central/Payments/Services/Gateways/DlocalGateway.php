@@ -77,7 +77,8 @@ final class DlocalGateway implements PaymentGateway {
         // Usually it involves Login + Amount + Currency + Secret
         // Check actual dLocal Go docs for exact signature if needed
 
-        $tenantDomain = \App\Modules\Central\Provisioning\Models\Domain::where('tenant_id', $payment->tenantId)->first()?->domain 
+        $domainResolver = app(\App\Modules\Shared\Contracts\TenantDomainResolverContract::class);
+        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId) 
             ?? $payment->tenantId . '.' . config('tenancy.central_domain');
             
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
@@ -98,7 +99,7 @@ final class DlocalGateway implements PaymentGateway {
                 'email' => $payment->email,
             ],
             // Pass metadata for fulfillment
-            'metadata' => $payment->customFieldValues,
+            'metadata' => array_merge($payment->customFieldValues, ['tenant_id' => $payment->tenantId]),
         ];
 
         Log::info("dLocal: Creating payment session", ['payload' => $payload]);
