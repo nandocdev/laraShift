@@ -11,9 +11,6 @@ class InfrastructureServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->app->booted(function () {
-            Route::get('/central/health', \App\Modules\Central\Infrastructure\Http\Controllers\HealthCheckController::class)
-                ->name('central.health');
-        });
+        $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
     }
 }
