@@ -74,11 +74,11 @@ final class WebhookController extends Controller {
     private function resolveTenantId(Request $request): string {
         $payload = json_decode($request->getContent(), true);
 
-        // Security: Prioritize payload data over untrusted query params
-        $tenantId = $payload['tenantId'] ?? $payload['merchantId'] ?? $request->query('tenant');
+        // Security: Prioritize payload data over untrusted query params.
+        $tenantId = $payload['tenant_id'] ?? $payload['tenantId'] ?? $payload['merchantId'] ?? ($payload['metadata']['tenant_id'] ?? null);
 
         if (empty($tenantId)) {
-            Log::warning('Webhook received without tenant identifier');
+            \Illuminate\Support\Facades\Log::warning('Webhook received without tenant identifier');
             abort(400, 'Missing tenant identifier');
         }
 
