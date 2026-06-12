@@ -87,8 +87,8 @@
     <flux:modal name="delete-plan" class="min-w-[22rem]">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Delete Plan?') }}</flux:heading>
-                <flux:subheading>{{ __('This action cannot be undone if no tenants are using it.') }}</flux:subheading>
+                <flux:heading size="lg">{{ __('Retire Plan?') }}</flux:heading>
+                <flux:subheading>{{ __('The plan will be hidden for new subscriptions. Existing tenants using this plan will remain unaffected and historical records will be preserved.') }}</flux:subheading>
             </div>
 
             <div class="flex gap-2">

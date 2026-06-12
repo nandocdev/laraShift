@@ -38,7 +38,7 @@ class SelectPlan extends Component
     public function render(): View
     {
         return view('billing::pages.select-plan', [
-            'plans' => Plan::where('is_active', true)->orderBy('price_monthly', 'asc')->get(),
+            'plans' => Plan::where('is_active', true)->withoutTrashed()->orderBy('price_monthly', 'asc')->get(),
             'currentPlanId' => tenant()->plan_id,
         ]);
     }
