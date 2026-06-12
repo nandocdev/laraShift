@@ -20,29 +20,13 @@ class HorizonQueueResolver
      */
     public static function resolve(): array
     {
-        $baseQueues = ['default', 'notifications', 'broadcasts'];
-
-        try {
-            // Safety check for CLI/Migrations
-            if (! Schema::hasTable('tenants')) {
-                return $baseQueues;
-            }
-
-            $tenantQueues = Cache::remember('horizon_tenant_queues', 60, function () {
-                return Tenant::whereIn('status', ['active', 'suspended', 'past_due'])
-                    ->pluck('slug')
-                    ->flatMap(function ($slug) {
-                        return [
-                            "tenant.{$slug}.default",
-                            "tenant.{$slug}.low",
-                        ];
-                    })
-                    ->toArray();
-            });
-
-            return array_merge($baseQueues, $tenantQueues);
-        } catch (\Exception $e) {
-            return $baseQueues;
-        }
+        return [
+            'default', 
+            'notifications', 
+            'broadcasts',
+            'tenant.high',
+            'tenant.default',
+            'tenant.low',
+        ];
     }
 }

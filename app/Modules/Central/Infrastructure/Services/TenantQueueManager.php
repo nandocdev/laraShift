@@ -11,7 +11,8 @@ class TenantQueueManager
 {
     /**
      * Resolves the queue name for a specific tenant.
-     * Rule: tenant.{slug}.{priority}
+     * Strategy: Use shared buckets to ensure Redis scalability and Horizon monitoring.
+     * Buckets: tenant.high, tenant.default, tenant.low
      */
     public static function resolve(Tenant $tenant, string $priority = 'default'): string
     {
@@ -20,7 +21,7 @@ class TenantQueueManager
             $priority = 'low';
         }
 
-        return "tenant.{$tenant->slug}.{$priority}";
+        return "tenant.{$priority}";
     }
 
     /**
