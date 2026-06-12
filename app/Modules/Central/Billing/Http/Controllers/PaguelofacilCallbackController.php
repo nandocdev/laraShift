@@ -49,22 +49,24 @@ class PaguelofacilCallbackController extends Controller
             $tenant = Tenant::findOrFail($tenantId);
             $plan = Plan::findOrFail($planId);
 
-            // Create or update subscription record
-            Subscription::updateOrCreate(
-                [
-                    'tenant_id' => $tenant->id,
-                    'provider_subscription_id' => $operationId,
-                ],
-                [
-                    'plan_id' => $plan->id,
-                    'status' => 'active',
-                    'gateway' => 'paguelofacil',
-                    'current_period_end' => now()->addMonth(), // Assuming monthly for this flow
-                ]
-            );
+            \Illuminate\Support\Facades\DB::transaction(function () use ($tenant, $plan, $operationId) {
+                // Create or update subscription record
+                Subscription::updateOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'provider_subscription_id' => $operationId,
+                    ],
+                    [
+                        'plan_id' => $plan->id,
+                        'status' => 'active',
+                        'gateway' => 'paguelofacil',
+                        'current_period_end' => now()->addMonth(), // Assuming monthly for this flow
+                    ]
+                );
 
-            // Update tenant's current plan
-            $tenant->update(['plan_id' => $plan->slug]);
+                // Update tenant's current plan
+                $tenant->update(['plan_id' => $plan->slug]);
+            });
 
             Log::info("PagueloFacil Subscription activated", ['tenant' => $tenant->id, 'plan' => $plan->slug]);
 
