@@ -38,8 +38,11 @@ describe('Tenant Queue Management', function () {
             'status' => 'active'
         ]);
         
-        expect(TenantQueueManager::resolve($tenant, 'default'))->toBe('tenant.default');
-        expect(TenantQueueManager::resolve($tenant, 'high'))->toBe('tenant.high');
+        $resolved = TenantQueueManager::resolve($tenant, 'default');
+        expect($resolved)->toMatch('/^tenant\.b[1-5]\.default$/');
+        
+        $resolvedHigh = TenantQueueManager::resolve($tenant, 'high');
+        expect($resolvedHigh)->toMatch('/^tenant\.b[1-5]\.high$/');
     });
 
     it('forces low priority for suspended tenants', function () {
@@ -51,6 +54,7 @@ describe('Tenant Queue Management', function () {
             'status' => 'suspended'
         ]);
         
-        expect(TenantQueueManager::resolve($tenant, 'high'))->toBe('tenant.low');
+        $resolved = TenantQueueManager::resolve($tenant, 'high');
+        expect($resolved)->toMatch('/^tenant\.b[1-5]\.low$/');
     });
 });

@@ -14,7 +14,9 @@ it('resolves static bucket queues for horizon', function () {
     expect($queues)->toContain('default');
     expect($queues)->toContain('notifications');
     expect($queues)->toContain('broadcasts');
-    expect($queues)->toContain('tenant.high');
-    expect($queues)->toContain('tenant.default');
-    expect($queues)->toContain('tenant.low');
+    expect($queues)->toContain('webhooks-priority');
+    
+    // Verify at least one bucket queue exists
+    expect($queues)->toContain('tenant.b1.default');
+    expect($queues)->toContain('tenant.b5.low');
 });

@@ -20,13 +20,20 @@ class HorizonQueueResolver
      */
     public static function resolve(): array
     {
-        return [
+        $queues = [
             'default', 
             'notifications', 
             'broadcasts',
-            'tenant.high',
-            'tenant.default',
-            'tenant.low',
+            'webhooks-priority',
         ];
+
+        // Add 5 buckets for each priority
+        foreach (range(1, 5) as $bucket) {
+            foreach (['high', 'default', 'low'] as $priority) {
+                $queues[] = "tenant.b{$bucket}.{$priority}";
+            }
+        }
+
+        return $queues;
     }
 }
