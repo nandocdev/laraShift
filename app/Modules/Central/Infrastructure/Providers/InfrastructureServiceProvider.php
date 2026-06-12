@@ -12,5 +12,11 @@ class InfrastructureServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Modules\Central\Infrastructure\Console\Commands\HorizonUpdateCommand::class,
+            ]);
+        }
     }
 }
