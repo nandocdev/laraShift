@@ -29,15 +29,17 @@
                             <div class="text-xs text-neutral-500">{{ $plan->slug }}</div>
                         </flux:table.cell>
                         <flux:table.cell>
-                            {{ number_format($plan->price_monthly / 100, 2) }} USD
+                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_monthly) }}
                         </flux:table.cell>
                         <flux:table.cell>
-                            {{ number_format($plan->price_yearly / 100, 2) }} USD
+                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_yearly) }}
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" :variant="$plan->is_active ? 'success' : 'neutral'">
-                                {{ $plan->is_active ? __('ACTIVE') : __('INACTIVE') }}
-                            </flux:badge>
+                            <div class="flex items-center gap-2">
+                                <flux:badge size="sm" :variant="$plan->is_active && ! $plan->trashed() ? 'success' : 'neutral'">
+                                    {{ $plan->trashed() ? __('RETIRED') : ($plan->is_active ? __('ACTIVE') : __('INACTIVE')) }}
+                                </flux:badge>
+                            </div>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown>
@@ -50,9 +52,30 @@
                                     </flux:modal.trigger>
 
                                     <flux:menu.separator />
-                                    <flux:menu.item variant="danger" icon="trash" disabled>{{ __('Delete') }}</flux:menu.item>
+                                    @if(! $plan->trashed())
+                                        <flux:modal.trigger name="delete-plan-{{ $plan->id }}">
+                                            <flux:menu.item variant="danger" icon="trash">{{ __('Retire Plan') }}</flux:menu.item>
+                                        </flux:modal.trigger>
+                                    @endif
                                 </flux:menu>
                             </flux:dropdown>
+
+                            <flux:modal name="delete-plan-{{ $plan->id }}" class="min-w-[22rem]">
+                                <div class="space-y-6">
+                                    <div>
+                                        <flux:heading size="lg">{{ __('Retire :name?', ['name' => $plan->name]) }}</flux:heading>
+                                        <flux:subheading>{{ __('The plan will be hidden for new subscriptions. Historical records will be preserved.') }}</flux:subheading>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <flux:spacer />
+                                        <flux:modal.close>
+                                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                                        </flux:modal.close>
+                                        <flux:button wire:click="delete('{{ $plan->id }}')" variant="danger">{{ __('Confirm') }}</flux:button>
+                                    </div>
+                                </div>
+                            </flux:modal>
                         </flux:table.cell>
                     </flux:table.row>
                 @endforeach

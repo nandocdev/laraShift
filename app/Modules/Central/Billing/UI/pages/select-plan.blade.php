@@ -22,7 +22,7 @@
                 <div class="mb-8">
                     <flux:heading size="lg" class="text-2xl mb-1">{{ $plan->name }}</flux:heading>
                     <div class="flex items-baseline gap-1 mt-4">
-                        <span class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">${{ number_format($plan->price_monthly / 100, 2) }}</span>
+                        <span class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_monthly) }}</span>
                         <span class="text-zinc-500 text-sm">/{{ __('month') }}</span>
                     </div>
                 </div>
