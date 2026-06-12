@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Settings\Livewire;
 
+use App\Modules\Tenant\Settings\Actions\UpdateTenantLocalizationAction;
+use App\Modules\Tenant\Settings\DTOs\LocalizationData;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -27,26 +31,22 @@ class LocalizationSettings extends Component
         }
     }
 
-    public function save(): void
+    public function save(UpdateTenantLocalizationAction $action): void
     {
+        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
+        Gate::authorize('update', $settings);
+
         $this->validate([
-            'timezone' => 'required|string', // Should ideally validate against timezone_identifiers_list()
+            'timezone' => ['required', 'string', Rule::in(timezone_identifiers_list())],
             'locale' => 'required|in:en,es',
             'currency' => 'required|string|size:3',
         ]);
 
-        $data = [
-            'timezone' => $this->timezone,
-            'locale' => $this->locale,
-            'currency' => $this->currency,
-        ];
-
-        TenantSetting::updateOrCreate(
-            ['tenant_id' => tenant('id')],
-            $data
-        );
-
-        event(new \App\Modules\Shared\Events\TenantSettingsUpdated(tenant('id'), array_keys($data)));
+        $action->execute(new LocalizationData(
+            timezone: $this->timezone,
+            locale: $this->locale,
+            currency: $this->currency,
+        ));
 
         session()->flash('status', __('Localization settings updated successfully.'));
     }
