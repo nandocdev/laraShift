@@ -2,7 +2,7 @@
 
 ---
 
-Revisa exhaustivamente el módulo **Central/Settings**.
+Revisa exhaustivamente el módulo **Central/Support**.
 
 Valida:
 
@@ -38,7 +38,7 @@ Incluye referencia exacta a archivos, clases y métodos afectados.
 
 ---
 
-Implementa todas las recomendaciones aprobadas del informe de revisión para el módulo **Central/Marketing**.
+Implementa todas las recomendaciones aprobadas del informe de revisión para el módulo **Central/Support**.
 
 Proceso obligatorio:
 
@@ -115,10 +115,10 @@ Proceso obligatorio:
    * Hallazgos corregidos.
    * Archivos modificados.
    * Riesgos identificados.
-   * Pruebas agregadas o actualizadas.
+* Pruebas agregadas o actualizadas.
    * Commits realizados.
 
-10. Una vez validado todo:
+1.  Una vez validado todo:
 
     * Rebase sobre `main`.
     * Resolver conflictos si existen.
