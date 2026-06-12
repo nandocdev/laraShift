@@ -63,12 +63,19 @@ class AuditLogViewer extends Component
 
         $diff = \Carbon\Carbon::parse($this->exportFrom)->diffInDays($this->exportTo);
 
+        // Security Policy: Range limit enforced at application level.
         if ($diff > 90) {
             $this->addError('exportFrom', __('Export range cannot exceed 90 days.'));
             return;
         }
 
         $this->exporting = true;
+
+        // Record the export request in audit log
+        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+            action: \App\Modules\Tenant\Audit\Enums\AuditAction::EXPORT_STARTED,
+            metadata: ['from' => $this->exportFrom, 'to' => $this->exportTo]
+        ));
 
         \App\Modules\Tenant\Audit\Jobs\ExportAuditLogsJob::dispatch(
             tenant('id'),
@@ -80,7 +87,7 @@ class AuditLogViewer extends Component
         $this->showingExportModal = false;
         $this->exporting = false;
 
-        session()->flash('status', __('The export has been queued. You will receive an email with the download link shortly.'));
+        $this->dispatch('notify', message: __('The export has been queued. You will receive an email shortly.'));
     }
 
     public function render(): View
@@ -105,7 +112,9 @@ class AuditLogViewer extends Component
 
         return view('audit::pages.viewer', [
             'logs' => $query->paginate(50),
-            'users' => User::all(),
+            // Performance: Only fetch users that actually have logs or use a subset.
+            // For now, let's at least pluck ID and Name to avoid hydration of full objects.
+            'users' => User::select(['id', 'name'])->get(),
         ]);
     }
 }
