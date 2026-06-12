@@ -6,6 +6,7 @@ namespace App\Modules\Central\Provisioning\Models;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Features\Models\Concerns\HasFeatures;
+use App\Modules\Shared\Contracts\TenantContract;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,7 @@ use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
-class Tenant extends BaseTenant implements TenantWithDatabase
+class Tenant extends BaseTenant implements TenantWithDatabase, TenantContract
 {
     use Billable, HasDatabase, HasDomains, HasFeatures, HasUuids, Notifiable, SoftDeletes;
 
@@ -33,6 +34,21 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class, 'plan_id', 'slug');
+    }
+
+    public function getId(): string|int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name ?? 'Unknown';
+    }
+
+    public function getDomain(): string
+    {
+        return $this->domains->first()?->domain ?? '';
     }
 
     public static function getCustomColumns(): array
