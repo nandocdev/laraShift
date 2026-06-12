@@ -36,6 +36,11 @@ class AuditImpersonationActions
             });
         }
 
-        return $next($request);
+        try {
+            return $next($request);
+        } finally {
+            // Security: Clear the static hook to prevent leakage in persistent environments like Octane.
+            PendingActivityLog::beforeLogging(fn() => null);
+        }
     }
 }
