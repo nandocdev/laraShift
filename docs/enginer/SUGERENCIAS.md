@@ -2,7 +2,7 @@
 
 ---
 
-Revisa exhaustivamente el módulo **Central/Marketing**.
+Revisa exhaustivamente el módulo **Central/Settings**.
 
 Valida:
 
