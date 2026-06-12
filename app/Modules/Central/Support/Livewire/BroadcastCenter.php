@@ -34,13 +34,13 @@ class BroadcastCenter extends Component
         ]);
 
         try {
-            $action->execute(
-                $this->title,
-                $this->body,
-                $this->filterType,
-                $this->filterValue ?: null,
-                $this->channels
-            );
+            $action->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
+                title: $this->title,
+                body: $this->body,
+                filterType: $this->filterType,
+                filterValue: $this->filterValue ?: null,
+                channels: $this->channels
+            ));
 
             $this->reset(['title', 'body', 'filterType', 'filterValue', 'channels']);
             session()->flash('status', __('Broadcast sent successfully.'));
