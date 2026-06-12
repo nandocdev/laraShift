@@ -2,7 +2,7 @@
 
 ---
 
-Revisa exhaustivamente el módulo **Tenant/Audit**.
+Revisa exhaustivamente el módulo **Tenant/Settings**.
 
 Valida:
 
@@ -38,7 +38,7 @@ Incluye referencia exacta a archivos, clases y métodos afectados.
 
 ---
 
-Implementa todas las recomendaciones aprobadas del informe de revisión para el módulo **Tenant/Audit**.
+Implementa todas las recomendaciones aprobadas del informe de revisión para el módulo **Tenant/Settings**.
 
 Proceso obligatorio:
 
