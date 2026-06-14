@@ -156,7 +156,8 @@ class RegisterTenant extends Component
 
         // If it's a paid plan, redirect to the hosted checkout page within the tenant context
         if (! $this->isPlanFree()) {
-            $checkoutUrl = "$scheme://$domain$portSuffix/billing/checkout/hosted/{$tenant->id}/{$this->selectedPlan->id}";
+            $checkoutUrl = app(\App\Modules\Central\Billing\Support\BillingManager::class)
+                ->createCheckoutSession($tenant, $this->selectedPlan->id);
 
             $this->redirect($checkoutUrl, navigate: false);
             return;
