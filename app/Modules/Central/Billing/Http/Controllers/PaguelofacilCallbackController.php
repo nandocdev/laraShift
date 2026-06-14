@@ -26,20 +26,19 @@ class PaguelofacilCallbackController extends Controller
         $tenantId = $request->input('PARM_1');
         $planId = $request->input('PARM_2');
 
+        // Protocol and Port logic for environment-safe redirects
+        $protocol = $request->secure() ? 'https://' : 'http://';
+        $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
+        $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
+
         if ($status !== 'Aprobada' || (float) $totalPaid <= 0) {
             Log::warning("PagueloFacil Payment failed or denied", ['status' => $status, 'reason' => $request->input('Razon')]);
             
             // Try to redirect back to the tenant's cancel page if we have the tenant
             if ($tenantId && $tenant = Tenant::find($tenantId)) {
-                $primaryDomain = $tenant->domains()->first()?->domain;
-                if ($primaryDomain) {
-                    $protocol = $request->secure() ? 'https://' : 'http://';
-                    // Respect the port from APP_URL if present
-                    $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
-                    $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
-                    
-                    return redirect()->away($protocol . $primaryDomain . $portSuffix . '/billing/cancel');
-                }
+                $primaryDomain = $tenant->domains()->first()?->domain ?? $tenant->slug . '.' . config('tenancy.central_domain');
+                
+                return redirect()->away($protocol . $primaryDomain . $portSuffix . '/billing/cancel');
             }
 
             return redirect()->route('home')->with('error', __('Payment was denied or cancelled.'));
@@ -71,13 +70,9 @@ class PaguelofacilCallbackController extends Controller
             Log::info("PagueloFacil Subscription activated", ['tenant' => $tenant->id, 'plan' => $plan->slug]);
 
             // Redirect to success page on tenant domain
-            // Note: Since we are in Central context, we need to build the tenant URL
-            $primaryDomain = $tenant->domains()->first()?->domain;
-            $protocol = $request->secure() ? 'https://' : 'http://';
-            $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
-            $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
+            $primaryDomain = $tenant->domains()->first()?->domain ?? $tenant->slug . '.' . config('tenancy.central_domain');
 
-            $successUrl = $protocol . ($primaryDomain ?? $tenant->slug . '.localhost') . $portSuffix . '/billing/success';
+            $successUrl = $protocol . $primaryDomain . $portSuffix . '/billing/success';
 
             return redirect()->away($successUrl);
 
