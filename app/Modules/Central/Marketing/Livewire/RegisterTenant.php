@@ -41,7 +41,7 @@ class RegisterTenant extends Component
 
     // Wizard state
     public int $step = 1;
-    protected bool $autoGenerateSlug = true;
+    public bool $autoGenerateSlug = true;
 
     /**
      * @var array<string, array> Reglas de validación por step.
@@ -96,7 +96,11 @@ class RegisterTenant extends Component
      */
     public function nextStep(): void
     {
-        $this->validate($this->rulesForStep($this->step));
+        $rules = $this->rulesForStep($this->step);
+
+        if (! empty($rules)) {
+            $this->validate($rules);
+        }
 
         if ($this->step < 3) {
             $this->step++;
@@ -126,7 +130,14 @@ class RegisterTenant extends Component
      */
     public function register(CreateTenantAction $action): void
     {
-        $this->validate($this->rulesForStep($this->step));
+        // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
+        $allRules = array_merge(
+            $this->rulesForStep(1),
+            $this->rulesForStep(2),
+            $this->rulesForStep(3)
+        );
+
+        $this->validate($allRules);
 
         $tenant = $action->execute(new CreateTenantData(
             name: $this->company,
