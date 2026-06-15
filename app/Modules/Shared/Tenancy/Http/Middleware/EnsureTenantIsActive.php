@@ -20,37 +20,57 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
-        // 1. Allow login/auth routes, support/auth routes, and payment routes
-        if ($request->routeIs(['login', 'login.challenge', 'tenant.invitations.accept', 'tenant.support.auth', 'payments.checkout.initiate'])) {
+        // 1. Whitelist critical routes
+        if ($request->routeIs([
+            'tenant.home',
+            'login', 
+            'login.store', 
+            'logout',
+            'two-factor.login', 
+            'two-factor.login.store',
+            'tenant.invitations.accept', 
+            'tenant.support.auth', 
+            'payments.checkout.initiate',
+            'tenant.billing.plans',
+            'tenant.billing.manage',
+            'tenant.billing.checkout.hosted',
+            'tenant.billing.success',
+            'tenant.billing.cancel',
+            'tenant.billing.update-payment'
+        ]) || $request->is('livewire/*', 'dashboard', 'auth/*', 'billing/*')) {
             return $next($request);
         }
 
         // Prime Features Cache (Redis-first)
-        app(ResolveTenantFeaturesAction::class)->execute(tenant());
-
-        if (tenant('maintenance_mode')) {
-            abort(503, 'Tenant is undergoing maintenance.');
+        try {
+            app(ResolveTenantFeaturesAction::class)->execute(tenant());
+        } catch (\Exception $e) {
+            // Log and continue if features can't be resolved
+            \Log::warning("Could not resolve features for tenant: " . tenant('id'));
         }
 
+        // 2. Hard block for archived tenants
         if (tenant('status') === 'archived') {
-            abort(404); // Architecture rule: preserved isolation/404 for non-active
+            abort(404);
         }
 
-        // 2. Allow access to dashboard for authenticated users even if payment is required
-        $isDashboard = $request->routeIs('dashboard');
-
-        if (tenant('status') === 'suspended' && ! $isDashboard) {
-            abort(402, 'Payment Required');
+        // 3. Block for maintenance
+        if (tenant('maintenance_mode')) {
+            abort(503);
         }
 
-        // Check subscription for paid plans
-        if (tenant('plan_id') !== 'free' && ! $isDashboard) {
-            $subscription = tenant()->subscription('default');
-            
-            if (! $subscription || ! $subscription->active()) {
-                // If it's not active but on grace period, allow it
-                if (! $subscription?->onGracePeriod()) {
-                    abort(402, 'Active subscription required.');
+        // 4. Enforce subscription/payment rules for AUTHENTICATED users
+        if (auth()->check()) {
+            $isSuspended = tenant('status') === 'suspended';
+            $isPaidPlan = tenant('plan_id') !== 'free';
+
+            if ($isSuspended || $isPaidPlan) {
+                $subscription = tenant()->subscription('default');
+                $hasActiveSubscription = $subscription && ($subscription->active() || $subscription->onGracePeriod());
+
+                if ($isSuspended || ! $hasActiveSubscription) {
+                    // Redirect to plans page instead of blocking
+                    return redirect()->route('tenant.billing.plans');
                 }
             }
         }

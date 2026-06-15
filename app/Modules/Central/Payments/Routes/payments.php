@@ -31,7 +31,7 @@ Route::post('/webhooks/dlocal', [WebhookController::class, 'handle'])
     ->withoutMiddleware(['web', 'auth', 'tenant']);
 
 // ── Tenant-scoped checkout ───────────────────────────────────────────────────
-Route::middleware(['web', 'tenant', 'auth', 'verified', 'subscription'])
+Route::middleware(['web', 'tenant', 'auth', 'verified'])
     ->prefix('payments')
     ->name('payments.')
     ->group(function (): void {
