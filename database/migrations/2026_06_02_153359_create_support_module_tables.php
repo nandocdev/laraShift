@@ -50,6 +50,15 @@ return new class extends Migration
             $table->integer('recipient_count')->nullable();
             $table->timestamps();
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            foreach (['support_sessions', 'support_notes'] as $table) {
+                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
+                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+            }
+        }
     }
 
     /**

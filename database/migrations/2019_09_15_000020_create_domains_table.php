@@ -23,6 +23,13 @@ class CreateDomainsTable extends Migration
             $table->timestamps();
             $table->foreign('tenant_id')->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE domains ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE domains FORCE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON domains USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

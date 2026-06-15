@@ -25,6 +25,13 @@ class CreateTenantUserImpersonationTokensTable extends Migration
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_user_impersonation_tokens ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_user_impersonation_tokens FORCE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON tenant_user_impersonation_tokens USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

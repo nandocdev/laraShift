@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -15,11 +16,16 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('tenant_id')->index();
             $table->string('type');
-            $table->morphs('notifiable');
-            $table->json('data');
+            $table->jsonb('data');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE tenant_notifications ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE tenant_notifications FORCE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON tenant_notifications USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

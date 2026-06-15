@@ -26,6 +26,13 @@ return new class extends Migration
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE user_mfa ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE user_mfa FORCE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON user_mfa USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

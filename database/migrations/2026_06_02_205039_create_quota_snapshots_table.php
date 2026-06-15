@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -16,15 +17,21 @@ return new class extends Migration
         Schema::create('quota_snapshots', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('tenant_id');
-            $table->string('metric'); // 'users', 'api_calls', 'storage_bytes'
-            $table->bigInteger('value');
-            $table->string('period', 7); // '2026-06'
-            $table->timestamp('captured_at');
+            $table->string('metric');
+            $table->integer('usage');
+            $table->integer('limit');
+            $table->string('period'); // e.g., '2026-06'
             $table->timestamps();
 
             $table->index(['tenant_id', 'metric', 'period']);
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
+
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE quota_snapshots ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE quota_snapshots FORCE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON quota_snapshots USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**
