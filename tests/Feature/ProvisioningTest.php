@@ -52,5 +52,13 @@ it('creates the initial admin user via the listener', function () {
         $user = User::where('email', 'admin@acme.com')->first();
         expect($user)->not->toBeNull();
         expect($user->name)->toBe('Administrator');
+
+        // Check for core data initialized by TenantDataSeeder
+        $rolesCount = \App\Modules\Tenant\Identity\Models\Role::count();
+        expect($rolesCount)->toBeGreaterThanOrEqual(2);
+        
+        $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::first();
+        expect($settings)->not->toBeNull();
+        expect($settings->locale)->toBe('en');
     });
 });
