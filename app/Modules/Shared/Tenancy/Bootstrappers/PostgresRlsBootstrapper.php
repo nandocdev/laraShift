@@ -26,7 +26,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
                 $connection->statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenantId]);
             }
         } catch (\Throwable $e) {
-            // Log/Ignore to prevent bootstrapping from causing system-wide crash
+            \Log::critical("RLS Bootstrapping failed for tenant {$tenantId}: " . $e->getMessage());
         }
     }
 
@@ -41,7 +41,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
                 $connection->statement("SELECT set_config('app.tenant_id', '', false)");
             }
         } catch (\Throwable $e) {
-            // Log/Ignore
+            \Log::error("RLS Revert failed: " . $e->getMessage());
         }
     }
 }

@@ -31,7 +31,7 @@ final readonly class GenerateApiKeyAction
             'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $name,
-            'key_hash' => hash('sha256', $plainKey),
+            'key_hash' => hash_hmac('sha256', $plainKey, config('app.key')),
             'scopes' => $scopes,
             'created_by' => $creator?->id,
         ]);
