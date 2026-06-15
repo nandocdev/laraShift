@@ -1,54 +1,69 @@
-# Analisisis de Auditoría: RLS y Provisioning
+# Auditoría Técnica y Estado de Madurez de LaraShift
 
-LaraShift ha completado su transición de un boilerplate funcional a una **Línea Base Arquitectónica de nivel empresarial**. Se han resuelto todas las deudas técnicas críticas identificadas en las revisiones anteriores, estableciendo un estándar de seguridad, provisionamiento y operabilidad listo para producción.
+LaraShift ha completado su transición de un boilerplate funcional a una **Línea Base Arquitectónica B2B de nivel empresarial**. Las recientes iteraciones han resuelto las deudas técnicas más críticas, estableciendo un estándar de seguridad, provisionamiento y operabilidad listo para producción y escalamiento.
 
-### Estado actual (15 de Junio 2026)
+### Resumen Ejecutivo (15 de Junio 2026)
 
-*   **Arquitectura:** Modular Monolith (RUP Oriented) con desacoplamiento total y uso de DTOs.
-*   **Seguridad:** PostgreSQL RLS habilitado y validado en el 100% de las tablas de Tenant. API Keys endurecidas con HMAC.
+*   **Arquitectura:** Modular Monolith (RUP Oriented) altamente desacoplado mediante DTOs y Actions.
+*   **Seguridad:** Aislamiento de grado bancario (PostgreSQL RLS validado) y API Keys endurecidas (HMAC).
+*   **Gestión de Producto:** Motor dinámico de Features y Quotas implementado a nivel de Middlewares y Traits.
 *   **Provisioning:** Ciclo de vida atómico, modular e idempotente.
-*   **Billing:** Motor unificado con dunning centralizado y webhooks robustos.
+*   **Compliance:** Auditoría de seguridad y configuraciones aislada por tenant.
 
 ---
 
-# Hitos Alcanzados (Sprint 1 - Finalizado)
+# Hitos Alcanzados (Sprint 1 - Seguridad y Fundación)
 
-### 1. Seguridad y Aislamiento de Grado Bancario [RESUELTO]
-Anteriormente se sospechaba de un aislamiento débil. Ahora, el sistema cuenta con **doble capa de defensa**:
-*   **Eloquent Scopes:** Filtrado automático en la capa de aplicación.
-*   **PostgreSQL RLS:** Defensa en profundidad a nivel de DB, impidiendo el acceso cruzado incluso si se manipula la aplicación.
-*   **Validación:** Suite `RLSIsolationTest` verifica el bloqueo efectivo.
+### 1. Aislamiento de Datos de Grado Bancario [RESUELTO]
+El sistema superó su dependencia exclusiva del ORM (Eloquent Scopes).
+*   **PostgreSQL RLS:** Habilitado en el 100% de las tablas sensibles del inquilino, forzando la política de aislamiento (`tenant_isolation`) a nivel de DB.
+*   **Validación:** La suite `RLSIsolationTest` asegura el bloqueo efectivo ante fallos lógicos en la aplicación.
 
-### 2. Endurecimiento de API Keys [RESUELTO]
-Se corrigieron vulnerabilidades críticas en la gestión de tokens:
-*   **HMAC-SHA256:** Las claves se almacenan usando HMAC con la `APP_KEY`, protegiendo contra ataques offline si la DB se ve comprometida.
-*   **Estabilidad de Memoria:** Se eliminó el uso de `Gate::define` dinámico, evitando fugas de memoria en servidores como Octane o Swoole.
-*   **Optimización de I/O:** La actualización de `last_used_at` ahora tiene throttling (cada 15 min), reduciendo drásticamente las escrituras en DB bajo alta carga.
+### 2. Endurecimiento de API Keys y Performance [RESUELTO]
+Se eliminaron vulnerabilidades y cuellos de botella:
+*   **HMAC-SHA256:** Protección contra ataques offline vinculando los hashes al `APP_KEY`.
+*   **Fugas de Memoria:** Se eliminó la inyección dinámica de `Gate::define` que amenazaba entornos como Octane/Swoole, usando ahora `Gate::before`.
+*   **Optimización de I/O:** Actualizaciones cacheadas (throttled) de `last_used_at` para resistir altos volúmenes de peticiones.
 
-### 3. Provisioning Robusto y Profesional [RESUELTO]
-El proceso de onboarding ha sido profesionalizado:
-*   **Descomposición:** `CreateTenantAction` ahora orquestra micro-acciones inyectables y testeables.
-*   **Core Data:** Automatización de roles (Admin/Member) y settings mediante `TenantDataSeeder`.
-*   **Idempotencia:** Capacidad de reintentar provisionamientos fallidos sin generar basura técnica.
-
-### 4. Observabilidad de Infraestructura [RESUELTO]
-Se eliminó el silenciamiento de errores en el `PostgresRlsBootstrapper`. Ahora, cualquier fallo en la configuración de la sesión RLS se reporta como `Log::critical`, asegurando que los fallos de seguridad sean visibles de inmediato.
+### 3. Provisioning Profesional e Idempotente [RESUELTO]
+El onboarding ahora es seguro ante fallos y reintentos:
+*   **Descomposición:** Sustitución del `CreateTenantAction` monolítico por una orquestación de acciones inyectables (`ReserveTenantDomainAction`, `SetupTenantCoreDataAction`, etc.).
+*   **Core Data:** Inicialización predecible mediante `TenantDataSeeder` (Roles y Configuraciones Base).
+*   **Resiliencia:** Soporte nativo para retomar o reiniciar provisionamientos fallidos sin conflictos de clave única.
 
 ---
 
-# Próximos Desafíos (Roadmap Sprint 2)
+# Hitos Alcanzados (Sprint 2 - Lógica de Negocio y Compliance)
 
-## 1. Motor de Features y Quotas [COMPLETADO]
-*   **Logro:** Implementados `$tenant->hasFeature()` y `$tenant->withinQuota()` mediante traits `HasFeatures` y `HasQuotas`.
-*   **Control de Acceso:** Creados middlewares `feature` y `quota` registrados globalmente. El middleware de cuotas lanza un `QuotaExceededException` (HTTP 429) y el de features aborta con HTTP 403.
-*   **Integración:** Refactorizados los componentes de negocio (ej. `SendInvitationAction`, `ManageApiKeys`) para usar el sistema centralizado de cuotas.
+### 1. Motor de Features y Quotas [RESUELTO]
+La base técnica ahora es un producto SaaS comercializable capaz de restringir recursos.
+*   **Control de Acceso:** Middlewares `feature` (403 Forbidden) y `quota` (429 Too Many Requests, vía `QuotaExceededException`) registrados en la aplicación.
+*   **Integración:** Validaciones activas en flujos críticos (límite de invitaciones, generación de API keys).
 
-## 2. Integración Real de Infraestructura
-*   **Acción:** Implementar la mutación GraphQL real en `RailwayService` para automatizar dominios personalizados.
+### 2. Auditoría y Cumplimiento [RESUELTO]
+Sistema de trazabilidad preparado para compliance corporativo.
+*   **Registro Inmutable:** Implementación del modelo `AuditLog` independiente por inquilino.
+*   **Integración Crítica:** Los eventos de seguridad (creación/revocación de API Keys, modificación de roles) y de configuración (cambios SMTP/Localización) ahora escriben automáticamente en el log de auditoría del tenant correspondiente.
 
-## 3. Auditoría y Cumplimiento [COMPLETADO]
-*   **Logro:** Integrado el modelo de auditoría segregado por inquilino (`tenant_audit_logs`).
-*   **Trazabilidad:** Inyectado `RecordAuditLogAction` en flujos de negocio críticos (creación/revocación de API Keys, gestión de roles de usuarios, y actualización de configuraciones SMTP/Localización), garantizando total auditoría sobre la seguridad y configuraciones.
+### 3. Unificación del Motor de Billing [RESUELTO]
+*   **Dunning Centralizado:** La lógica de suspensión por impagos se extrajo a eventos (`HandlePaymentFailure`), uniformando el comportamiento sin importar la pasarela (Stripe, PagueloFacil).
+*   **Infraestructura:** Creación del hook de integración para dominios automatizados (`ProvisionInfrastructureAction`).
+
+---
+
+# Próximos Desafíos (Roadmap Sprint 3)
+
+Habiendo asegurado el backend y la lógica central, el enfoque debe moverse hacia la infraestructura externa y el producto final.
+
+## 1. Automatización de Infraestructura (Railway/DNS)
+*   **Acción:** Reemplazar los métodos "placeholder" en `RailwayService` por la integración real de la API GraphQL de Railway para crear dominios de forma automática durante el provisioning.
+
+## 2. Consolidación de Webhooks (Salida)
+*   **Objetivo:** Permitir que los inquilinos reaccionen a eventos internos.
+*   **Acción:** Implementar un sistema despachador de webhooks salientes (con reintentos, firmas criptográficas y seguimiento de entregas) para notificar sistemas externos.
+
+## 3. Experiencia de Usuario y Frontend
+*   **Acción:** Construir las vistas necesarias para que los inquilinos puedan visualizar sus `quota_snapshots` (uso actual vs. límites del plan) y su historial en los `tenant_audit_logs`.
 
 ---
 
@@ -56,16 +71,16 @@ Se eliminó el silenciamiento de errores en el `PostgresRlsBootstrapper`. Ahora,
 
 | Área           | Estado | Tendencia | Nota                                                |
 | -------------- | ------ | --------- | --------------------------------------------------- |
-| Arquitectura   | 9.5/10 | ↑         | Modularidad impecable.                              |
-| Multi-tenancy  | 9.5/10 | ↑         | RLS 100% cobertura y validado.                      |
-| Seguridad      | 9.0/10 | ↑         | API Keys seguras y aislamiento DB garantizado.      |
-| Billing        | 8.5/10 | ↑         | Dunning unificado; webhooks robustos.               |
-| Provisioning   | 9.5/10 | ↑         | Idempotente y modular.                              |
-| Operabilidad   | 9.0/10 | ↑         | Reporte de errores crítico activado.                |
-| SaaS Readiness | 9.0/10 | ↑         | Base técnica cerrada; listo para lógica de negocio. |
+| Arquitectura   | 9.5/10 | ↑         | Modularidad impecable y orientada a RUP.            |
+| Multi-tenancy  | 9.5/10 | ↑         | Aislamiento RLS 100% validado.                      |
+| Seguridad      | 9.0/10 | ↑         | API Keys HMAC; Auditoría integrada.                 |
+| Billing        | 8.5/10 | ↑         | Dunning unificado; webhooks resilientes.            |
+| Provisioning   | 9.5/10 | ↑         | Orquestación atómica, idempotente y escalable.      |
+| Operabilidad   | 9.0/10 | ↑         | Logs de infraestructura y auditorías operativas.    |
+| SaaS Readiness | 9.0/10 | ↑         | Base técnica cerrada; listo para iterar UI/UX.      |
 
-### Conclusión de Auditoría:
-LaraShift ha superado satisfactoriamente la fase de "Elaboración" de RLS y Provisioning. La línea base arquitectónica está cerrada y es excepcionalmente sólida.
+### Conclusión de la Auditoría:
+LaraShift ha finalizado las fases más complejas de infraestructura, aislamiento de datos, y cumplimiento normativo. El proyecto ya no está en fase de "estructuración", sino de **extensión y construcción de producto**. La fundación es excepcionalmente sólida.
 
 ---
-*Análisis generado por el Arquitecto de IA para el repositorio LaraShift.*
+*Documento estratégico actualizado el 15 de Junio de 2026.*
