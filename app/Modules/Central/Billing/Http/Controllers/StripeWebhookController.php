@@ -90,31 +90,8 @@ class StripeWebhookController extends CashierController
 
         if ($tenant) {
             $attemptCount = $payload['data']['object']['attempt_count'] ?? 1;
-            $amount = (int) $payload['data']['object']['amount_due'];
-            $currency = $payload['data']['object']['currency'];
             
-            $money = new \Money\Money($amount, new \Money\Currency($currency));
-            $formattedAmount = \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($money);
-
             PaymentFailed::dispatch($tenant->id, $payload['data']['object']['id'], $attemptCount);
-
-            if ($attemptCount < 3) {
-                $tenant->notify(new \App\Modules\Central\Billing\Notifications\PaymentFailedNotification($attemptCount, $formattedAmount, $currency));
-            } else {
-                $tenant->update([
-                    'status' => 'suspended',
-                    'suspended_at' => now(),
-                ]);
-                
-                TenantSuspendedByDunning::dispatch($tenant->id, $payload['data']['object']['id']);
-
-                $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification($formattedAmount, $currency));
-
-                activity('billing')
-                    ->performedOn($tenant)
-                    ->withProperties(['invoice_id' => $payload['data']['object']['id']])
-                    ->log('tenant_suspended_by_dunning');
-            }
         }
 
         return $this->successMethod();

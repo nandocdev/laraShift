@@ -31,6 +31,11 @@ class BillingServiceProvider extends ServiceProvider
             \App\Modules\Central\Payments\Events\PaymentApproved::class,
             \App\Modules\Central\Billing\Listeners\FulfillSubscription::class
         );
+
+        Event::listen(
+            \App\Modules\Shared\Events\PaymentFailed::class,
+            \App\Modules\Central\Billing\Listeners\HandlePaymentFailure::class
+        );
     }
 
     public function boot(): void
