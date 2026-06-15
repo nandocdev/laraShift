@@ -10,20 +10,29 @@ enum ClaveEnvironment: string {
     case Dev = 'dev';
 
     /**
-     * Hosted Fields / REST API base URL.
-     * Used for server-side calls (loadMerchantServices, etc.)
+     * Hosted Fields / LinkDeamon base URL.
      */
     public function apiBaseUrl(): string {
         return match ($this) {
-            self::Production => 'https://secure.paguelofacil.com/HostedFields',
-            self::Sandbox => 'https://sandbox.paguelofacil.com/HostedFields',
-            self::Dev => 'https://middleapidev.pfserver.net/HostedFields',
+            self::Production => 'https://secure.paguelofacil.com',
+            self::Sandbox => 'https://sandbox.paguelofacil.com',
+            self::Dev => 'https://middleapidev.pfserver.net',
+        };
+    }
+
+    /**
+     * Management API base URL (Transactions, Customers, etc.)
+     */
+    public function managementBaseUrl(): string {
+        return match ($this) {
+            self::Production => 'https://admin.paguelofacil.com/PFManagementServices/api/v1',
+            self::Sandbox => 'https://sandbox.paguelofacil.com/PFManagementServices/api/v1',
+            self::Dev => 'https://middleapidev.pfserver.net/PFManagementServices/api/v1',
         };
     }
 
     /**
      * Checkout frontend base URL.
-     * Used to build the iframe src for the hosted payment widget.
      */
     public function checkoutBaseUrl(): string {
         return match ($this) {
