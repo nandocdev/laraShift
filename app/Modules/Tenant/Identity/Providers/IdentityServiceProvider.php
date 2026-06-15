@@ -46,5 +46,14 @@ class IdentityServiceProvider extends ServiceProvider
 
         // 4. Register Event Subscriber
         Event::subscribe(\App\Modules\Tenant\Identity\Listeners\TenantIdentityEventSubscriber::class);
+
+        // 5. Map API Scopes to Gates safely (Integration)
+        \Illuminate\Support\Facades\Gate::before(function ($user, string $ability) {
+            $scopes = request()->attributes->get('api_scopes');
+            if (is_array($scopes) && in_array($ability, $scopes)) {
+                return true;
+            }
+            return null; // Continue to other checks
+        });
     }
 }
