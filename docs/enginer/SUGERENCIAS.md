@@ -46,8 +46,9 @@ Se eliminó el silenciamiento de errores en el `PostgresRlsBootstrapper`. Ahora,
 ## 2. Integración Real de Infraestructura
 *   **Acción:** Implementar la mutación GraphQL real en `RailwayService` para automatizar dominios personalizados.
 
-## 3. Auditoría y Cumplimiento
-*   **Acción:** Empezar a poblar `tenant_audit_logs` desde los Actions críticos para trazabilidad total del usuario.
+## 3. Auditoría y Cumplimiento [COMPLETADO]
+*   **Logro:** Integrado el modelo de auditoría segregado por inquilino (`tenant_audit_logs`).
+*   **Trazabilidad:** Inyectado `RecordAuditLogAction` en flujos de negocio críticos (creación/revocación de API Keys, gestión de roles de usuarios, y actualización de configuraciones SMTP/Localización), garantizando total auditoría sobre la seguridad y configuraciones.
 
 ---
 
