@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Actions;
 
 use App\Modules\Central\Billing\Actions\RegisterPaymentMethodAction;
+use App\Modules\Central\Infrastructure\Actions\ProvisionInfrastructureAction;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
 use App\Modules\Shared\Events\TenantProvisioned;
-use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final readonly class CreateTenantAction {
+    public function __construct(
+        private ReserveTenantDomainAction $reserveDomain,
+        private SetupTenantCoreDataAction $setupCoreData,
+        private ProvisionInfrastructureAction $provisionInfra,
+        private RegisterPaymentMethodAction $registerPaymentMethod,
+    ) {}
+
     /**
      * Executes the atomic provisioning of a new tenant with Step-based tracking and Rollback.
      * 
@@ -25,36 +31,58 @@ final readonly class CreateTenantAction {
      * - Triggers automatic cleanup on critical failure.
      */
     public function execute(CreateTenantData $data): Tenant {
-        $tenant = null;
+        /** @var Tenant|null $tenant */
+        $tenant = Tenant::where('slug', $data->slug)->first();
+
+        if ($tenant && $tenant->status !== 'failed') {
+            throw new \Exception("Tenant with slug {$data->slug} already exists and is not in a failed state.");
+        }
+
         try {
             return DB::transaction(function () use ($data, &$tenant) {
-                /** @var Tenant $tenant */
-                $tenant = Tenant::create([
-                    'id' => Str::uuid()->toString(),
-                    'slug' => $data->slug,
-                    'name' => $data->name,
-                    'email' => $data->email,
-                    'plan_id' => $data->plan_id,
-                    'status' => 'provisioning',
-                ]);
+                if ($tenant) {
+                    // Reset failed tenant for retry
+                    $tenant->update([
+                        'name' => $data->name,
+                        'email' => $data->email,
+                        'plan_id' => $data->plan_id,
+                        'status' => 'provisioning',
+                    ]);
 
+                    // Clean up partial logs to avoid confusion
+                    $tenant->provisioningLogs()->delete();
+                } else {
+                    $tenant = Tenant::create([
+                        'id' => Str::uuid()->toString(),
+                        'slug' => $data->slug,
+                        'name' => $data->name,
+                        'email' => $data->email,
+                        'plan_id' => $data->plan_id,
+                        'status' => 'provisioning',
+                    ]);
+                }
+    ...
                 // Step 1: Subdomain / Domain Reservation
                 $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
-                    $domain = $data->slug . '.' . config('tenancy.central_domain', 'larashift.test');
-                    $tenant->domains()->create(['domain' => $domain]);
+                    $this->reserveDomain->execute($tenant, $data->slug);
                 });
 
                 // Step 2: Database Schema & Core Data
-                $this->logStep($tenant, 'db_schema', function () {
-                    // Manual migration logic would go here.
+                $this->logStep($tenant, 'db_schema', function () use ($tenant) {
+                    $this->setupCoreData->execute($tenant);
                 });
 
-                // Step 3: Initial Admin User
+                // Step 3: Infrastructure (DNS, Cloud, etc)
+                $this->logStep($tenant, 'infrastructure', function () use ($tenant) {
+                    $this->provisionInfra->execute($tenant);
+                });
+
+                // Step 4: Initial Admin User
                 $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
                     TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
                 });
 
-                // Step 4: Billing Setup — only for paid plans
+                // Step 5: Billing Setup — only for paid plans
                 $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
                     $plan = null;
                     if (\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {
@@ -67,7 +95,7 @@ final readonly class CreateTenantAction {
 
                     if ($plan && $plan->price_monthly->isPositive() && $data->payment_token) {
                         // Register payment method + subscription via Cashier
-                        app(RegisterPaymentMethodAction::class)->execute(
+                        $this->registerPaymentMethod->execute(
                             $tenant,
                             $data->payment_token,
                             $data->plan_id
