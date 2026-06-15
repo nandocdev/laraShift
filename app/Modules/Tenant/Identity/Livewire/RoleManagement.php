@@ -96,6 +96,15 @@ class RoleManagement extends Component
         // Explicitly flush Spatie permission cache to ensure < 5s effectiveness
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
+        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                action: \App\Modules\Tenant\Audit\Enums\AuditAction::ROLE_UPDATED,
+                resource: 'role',
+                resourceId: $this->editingRole->id,
+                metadata: ['name' => $this->editName, 'permissions' => $this->editPermissions]
+            )
+        );
+
         activity('identity')
             ->performedOn($this->editingRole)
             ->log('role_updated');

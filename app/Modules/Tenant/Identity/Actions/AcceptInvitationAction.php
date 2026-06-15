@@ -59,6 +59,16 @@ final readonly class AcceptInvitationAction
             // 3. Mark invitation as accepted
             $invitation->update(['accepted_at' => now()]);
 
+            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::USER_JOINED,
+                    resource: 'user',
+                    resourceId: $user->id,
+                    metadata: ['email' => $user->email, 'role' => $invitation->role->name],
+                    userId: $user->id // Ensure the log registers the new user
+                )
+            );
+
             activity('identity')
                 ->performedOn($user)
                 ->log('user_joined_via_invite');
