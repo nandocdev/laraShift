@@ -18,8 +18,9 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('tenant_id');
             $table->string('email');
-            $table->string('role')->default('member');
-            $table->string('token', 64)->unique();
+            $table->foreignUuid('role_id')->constrained('roles')->onDelete('cascade');
+            $table->string('token_hash', 64)->unique();
+            $table->foreignUuid('invited_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('expires_at');
             $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
