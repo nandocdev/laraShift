@@ -19,10 +19,13 @@ class SelectPlan extends Component
             $tenant = tenant();
             $action = app(CreateCheckoutSessionAction::class);
             
-            // If they already have this plan, don't do anything
+            // If they already have this plan and it's active, don't do anything
             if ($tenant->plan_id === $planId) {
-                $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));
-                return;
+                $subscription = $tenant->subscription('default');
+                if ($subscription && ($subscription->active() || $subscription->onGracePeriod())) {
+                    $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));
+                    return;
+                }
             }
 
             $this->dispatch('toast', text: __('Preparing secure checkout...'));
@@ -37,9 +40,14 @@ class SelectPlan extends Component
 
     public function render(): View
     {
+        $tenant = tenant();
+        $subscription = $tenant->subscription('default');
+        $isCurrentPlanActive = $subscription && ($subscription->active() || $subscription->onGracePeriod());
+
         return view('billing::pages.select-plan', [
             'plans' => Plan::where('is_active', true)->withoutTrashed()->orderBy('price_monthly', 'asc')->get(),
-            'currentPlanId' => tenant()->plan_id,
+            'currentPlanId' => $tenant->plan_id,
+            'isCurrentPlanActive' => $isCurrentPlanActive,
         ]);
     }
 }

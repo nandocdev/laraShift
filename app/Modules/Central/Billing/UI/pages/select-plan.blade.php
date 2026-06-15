@@ -12,10 +12,14 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         @foreach($plans as $plan)
-            <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $plan->slug === $currentPlanId ? 'ring-2 ring-primary border-primary' : '' }}">
-                @if($plan->slug === $currentPlanId)
+            @php
+                $isCurrent = $plan->slug === $currentPlanId;
+                $needsPayment = $isCurrent && ! $isCurrentPlanActive;
+            @endphp
+            <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $isCurrent ? 'ring-2 ring-primary border-primary' : '' }}">
+                @if($isCurrent)
                     <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white bg-primary uppercase tracking-widest shadow-sm">
-                        {{ __('Current Plan') }}
+                        {{ $isCurrentPlanActive ? __('Current Plan') : __('Pending Payment') }}
                     </div>
                 @endif
 
@@ -39,14 +43,18 @@
                 <flux:button 
                     type="button"
                     wire:click="selectPlan('{{ $plan->id }}')"
-                    variant="{{ $plan->slug === $currentPlanId ? 'ghost' : 'primary' }}" 
+                    variant="{{ $isCurrent && ! $needsPayment ? 'ghost' : 'primary' }}" 
                     class="w-full py-3"
-                    :disabled="$plan->slug === $currentPlanId"
+                    :disabled="$isCurrent && ! $needsPayment"
                     wire:loading.attr="disabled"
                 >
                     <span wire:loading.remove wire:target="selectPlan">
-                        @if($plan->slug === $currentPlanId)
-                            {{ __('Selected') }}
+                        @if($isCurrent)
+                            @if($needsPayment)
+                                {{ __('Proceed to Payment') }}
+                            @else
+                                {{ __('Selected') }}
+                            @endif
                         @else
                             {{ $plan->price_monthly->isPositive() ? __('Upgrade Now') : __('Select Plan') }}
                         @endif
