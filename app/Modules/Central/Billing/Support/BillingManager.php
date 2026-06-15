@@ -14,7 +14,7 @@ class BillingManager extends Manager implements BillingProvider
 {
     public function getDefaultDriver(): string
     {
-        return config('payments.default', 'paguelofacil');
+        return config('payments.default', 'clave');
     }
 
     public function createPaguelofacilDriver(): InternalBillingProvider
