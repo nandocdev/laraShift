@@ -72,10 +72,15 @@ final class WebhookController extends Controller {
      * or derived from the payload. Adjust to match the gateway's behavior.
      */
     private function resolveTenantId(Request $request): string {
-        $payload = json_decode($request->getContent(), true);
+        $payload = json_decode($request->getContent(), true) ?? $request->all();
 
         // Security: Prioritize payload data over untrusted query params.
-        $tenantId = $payload['tenant_id'] ?? $payload['tenantId'] ?? $payload['merchantId'] ?? ($payload['metadata']['tenant_id'] ?? null);
+        // PagueloFacil often uses PARM_1 for tenant_id if configured in the redirect/webhook setup.
+        $tenantId = $payload['tenant_id'] 
+            ?? $payload['tenantId'] 
+            ?? $payload['merchantId'] 
+            ?? $payload['PARM_1'] 
+            ?? ($payload['metadata']['tenant_id'] ?? null);
 
         if (empty($tenantId)) {
             \Illuminate\Support\Facades\Log::warning('Webhook received without tenant identifier');
