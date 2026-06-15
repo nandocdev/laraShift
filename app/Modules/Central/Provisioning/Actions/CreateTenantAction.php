@@ -21,7 +21,8 @@ final readonly class CreateTenantAction {
         private SetupTenantCoreDataAction $setupCoreData,
         private ProvisionInfrastructureAction $provisionInfra,
         private RegisterPaymentMethodAction $registerPaymentMethod,
-    ) {}
+    ) {
+    }
 
     /**
      * Executes the atomic provisioning of a new tenant with Step-based tracking and Rollback.
@@ -61,7 +62,6 @@ final readonly class CreateTenantAction {
                         'status' => 'provisioning',
                     ]);
                 }
-    ...
                 // Step 1: Subdomain / Domain Reservation
                 $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
                     $this->reserveDomain->execute($tenant, $data->slug);
