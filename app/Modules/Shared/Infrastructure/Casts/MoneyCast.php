@@ -32,7 +32,16 @@ class MoneyCast implements CastsAttributes
 
         $currency = $attributes[$this->currencyColumn] ?? 'USD';
 
-        return new Money($value, new Currency($currency));
+        // The Money library requires an integer or a string representing an integer (minor units/cents).
+        // If the database accidentally has a decimal (e.g. 29.99), this would fail.
+        // We ensure we pass a clean string to the constructor.
+        if (is_float($value) || (is_string($value) && str_contains($value, '.'))) {
+            // Safety: if it looks like a decimal, we convert to cents to prevent hard failure,
+            // but this indicates a schema/model mismatch.
+            $value = (string) (int) round(((float) $value) * 100);
+        }
+
+        return new Money((string) $value, new Currency($currency));
     }
 
     /**

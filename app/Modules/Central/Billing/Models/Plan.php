@@ -35,7 +35,7 @@ class Plan extends Model
         'features' => 'array',
         'price_monthly' => MoneyCast::class,
         'price_yearly' => MoneyCast::class,
-        'amount' => MoneyCast::class,
+        'amount' => 'float',
     ];
 
     public function catalogFeatures(): BelongsToMany
