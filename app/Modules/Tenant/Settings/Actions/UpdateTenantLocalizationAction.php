@@ -32,6 +32,15 @@ final readonly class UpdateTenantLocalizationAction
                 ]
             );
 
+            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::SETTINGS_UPDATED,
+                    resource: 'settings',
+                    resourceId: $settings->id,
+                    metadata: ['updated' => ['timezone' => $data->timezone, 'locale' => $data->locale, 'currency' => $data->currency]]
+                )
+            );
+
             event(new TenantSettingsUpdated(tenant('id'), ['timezone', 'locale', 'currency']));
 
             return $settings;

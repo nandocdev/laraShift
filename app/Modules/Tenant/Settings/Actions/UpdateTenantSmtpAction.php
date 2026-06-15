@@ -34,6 +34,15 @@ final readonly class UpdateTenantSmtpAction
 
             $settings->update($updateData);
 
+            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::SETTINGS_SMTP_CONFIGURED,
+                    resource: 'settings',
+                    resourceId: $settings->id,
+                    metadata: ['from_email' => $data->fromEmail]
+                )
+            );
+
             event(new TenantSmtpConfigured(tenant('id'), $data->fromEmail));
 
             return $settings;
