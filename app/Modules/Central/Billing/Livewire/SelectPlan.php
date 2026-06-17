@@ -18,9 +18,10 @@ class SelectPlan extends Component
         try {
             $tenant = tenant();
             $action = app(CreateCheckoutSessionAction::class);
+            $plan = \App\Modules\Central\Billing\Models\Plan::findOrFail($planId);
             
             // If they already have this plan and it's active, don't do anything
-            if ($tenant->plan_id === $planId) {
+            if ($tenant->plan_id === $plan->slug) {
                 $subscription = $tenant->subscription('default');
                 if ($subscription && ($subscription->active() || $subscription->onGracePeriod())) {
                     $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));

@@ -11,10 +11,19 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        @php
+            $currentPlanPrice = $plans->firstWhere('slug', $currentPlanId)?->price_monthly?->getAmount() ?? 0;
+        @endphp
         @foreach($plans as $plan)
             @php
                 $isCurrent = $plan->slug === $currentPlanId;
                 $needsPayment = $isCurrent && ! $isCurrentPlanActive;
+                $planPrice = $plan->price_monthly?->getAmount() ?? 0;
+                
+                $buttonText = __('Select Plan');
+                if ($planPrice > 0) {
+                    $buttonText = $planPrice < $currentPlanPrice ? __('Downgrade') : __('Upgrade Now');
+                }
             @endphp
             <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $isCurrent ? 'ring-2 ring-primary border-primary' : '' }}">
                 @if($isCurrent)
@@ -48,7 +57,7 @@
                     :disabled="$isCurrent && ! $needsPayment"
                     wire:loading.attr="disabled"
                 >
-                    <span wire:loading.remove wire:target="selectPlan">
+                    <span wire:loading.remove wire:target="selectPlan('{{ $plan->id }}')">
                         @if($isCurrent)
                             @if($needsPayment)
                                 {{ __('Proceed to Payment') }}
@@ -56,10 +65,10 @@
                                 {{ __('Selected') }}
                             @endif
                         @else
-                            {{ $plan->price_monthly->isPositive() ? __('Upgrade Now') : __('Select Plan') }}
+                            {{ $buttonText }}
                         @endif
                     </span>
-                    <span wire:loading wire:target="selectPlan">
+                    <span wire:loading wire:target="selectPlan('{{ $plan->id }}')">
                         {{ __('Redirecting...') }}
                     </span>
                 </flux:button>
