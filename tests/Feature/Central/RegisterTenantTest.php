@@ -155,4 +155,40 @@ it('requires a strong password for tenant registration', function (string $passw
     'all numbers' => '12345678!',
 ]);
 
+it('detects an already approved payment and allows retry without payment token', function () {
+    // 1. Manually seed an approved payment for the given slug & email combination
+    $slug = 'acme-corp';
+    $email = 'admin@acme.com';
+    $checkoutSlug = 'checkout_' . md5($slug . $email);
+    
+    \App\Modules\Central\Payments\Models\Payment::create([
+        'tenant_id' => \Illuminate\Support\Str::uuid()->toString(),
+        'display_id' => 'SUB-123456',
+        'slug' => $checkoutSlug,
+        'amount' => 29.0, // e.g. pro plan price
+        'description' => 'Subscription for pro',
+        'email' => $email,
+        'currency' => 'USD',
+        'status' => 'approved',
+        'gateway' => 'dlocal',
+    ]);
+
+    // 2. Test the Livewire wizard
+    $component = Livewire::test(RegisterTenant::class)
+        ->set('step', 3)
+        ->set('name', 'John Doe')
+        ->set('company', 'Acme Corp')
+        ->set('slug', $slug)
+        ->set('email', $email)
+        ->set('password', 'Password123!')
+        ->set('plan_id', 'pro') // Paid plan
+        // Note: payment_token is NOT set!
+        ->assertSet('paymentAlreadyApproved', true); // Assert it dynamically detected the approved payment
+
+    // 3. Trigger register - should succeed and not require payment_token
+    $component->call('register')
+        ->assertHasNoErrors();
+});
+
+
 

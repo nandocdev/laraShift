@@ -46,6 +46,7 @@ public int $step = 1;
 public bool $autoGenerateSlug = true;
 public bool $loading = false;
 public ?string $error = null;
+public bool $paymentAlreadyApproved = false;
 
 /**
  * @var array<string, array> Reglas de validación por step.
@@ -77,7 +78,7 @@ public ?string $error = null;
                 'plan_id' => 'required|exists:plans,slug',
             ],
             3 => [
-                'payment_token' => $this->isPlanFree() ? 'nullable|string' : 'required|string',
+                'payment_token' => ($this->isPlanFree() || $this->paymentAlreadyApproved) ? 'nullable|string' : 'required|string',
             ],
             default => [],
         };
@@ -90,6 +91,8 @@ public ?string $error = null;
         if ($planFromQuery && Plan::where('slug', $planFromQuery)->exists()) {
             $this->plan_id = $planFromQuery;
         }
+
+        $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
     }
 
     public function updatedCompany(): void
@@ -126,6 +129,10 @@ public ?string $error = null;
             }
             
             \Illuminate\Support\Facades\Cache::put($lockKey, $this->email, now()->addMinutes(15));
+        }
+
+        if ($this->step === 2) {
+            $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
         }
 
         if ($this->step < 3) {
@@ -196,6 +203,7 @@ public ?string $error = null;
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
+            $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
             $this->error = $e->getMessage();
             $this->addError('payment_token', $e->getMessage());
         } finally {
@@ -221,8 +229,27 @@ public ?string $error = null;
         return Plan::where('slug', $this->plan_id)->first();
     }
 
+    public function isPaymentAlreadyApproved(): bool
+    {
+        if ($this->isPlanFree()) {
+            return false;
+        }
+
+        if (empty($this->slug) || empty($this->email)) {
+            return false;
+        }
+
+        $checkoutSlug = 'checkout_' . md5($this->slug . $this->email);
+
+        return \App\Modules\Central\Payments\Models\Payment::where('slug', $checkoutSlug)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
     public function render(): View
     {
+        $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
+
         return view('marketing::pages.register-tenant', [
             'plans'        => PlanManager::all(),
             'selectedPlan' => $this->selectedPlan,

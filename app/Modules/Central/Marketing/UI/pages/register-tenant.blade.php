@@ -239,37 +239,78 @@
                                     <span x-text="error || $wire.error"></span>
                                 </div>
 
-                                <div class="relative space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm min-h-[200px]">
-                                    {{-- Loading Overlay for Fields --}}
-                                    <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white/80 dark:bg-zinc-900/80 rounded-xl flex flex-col items-center justify-center space-y-2">
-                                        <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                                        <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">{{ __('Loading secure fields...') }}</span>
-                                    </div>
-
-                                    <div class="space-y-1">
-                                        <flux:label size="sm">{{ __('Card Number') }}</flux:label>
-                                        <div wire:ignore id="reg-card-number" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                        <p x-show="fieldErrors.card_number" x-text="fieldErrors.card_number" class="text-[10px] text-red-500 mt-1"></p>
-                                    </div>
-
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="space-y-1">
-                                            <flux:label size="sm">{{ __('Expiry Date') }}</flux:label>
-                                            <div wire:ignore id="reg-card-expiry" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                            <p x-show="fieldErrors.card_expiry" x-text="fieldErrors.card_expiry" class="text-[10px] text-red-500 mt-1"></p>
+                                @if ($paymentAlreadyApproved)
+                                    <div class="flex flex-col items-center justify-center p-6 text-center bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl space-y-3 min-h-[200px]">
+                                        <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                            <flux:icon icon="check" variant="mini" class="w-6 h-6" />
                                         </div>
+                                        <flux:heading size="sm" class="text-emerald-700 dark:text-emerald-400">{{ __('Payment Completed') }}</flux:heading>
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                            {{ __('Your payment has been successfully processed. You can safely retry provisioning your workspace without being charged again.') }}
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="relative space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm min-h-[200px]">
+                                        {{-- Loading Overlay with Structured Skeletons --}}
+                                        <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white dark:bg-zinc-900 rounded-xl p-5 space-y-4 select-none pointer-events-none">
+                                            {{-- Card Number Skeleton --}}
+                                            <div class="space-y-2">
+                                                <div class="h-3 w-20 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
+                                            </div>
+                                            
+                                            {{-- Expiry & CVV Grid Skeleton --}}
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div class="space-y-2">
+                                                    <div class="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                    <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
+                                                </div>
+                                                <div class="space-y-2">
+                                                    <div class="h-3 w-10 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                    <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Cardholder Name Skeleton --}}
+                                            <div class="space-y-2">
+                                                <div class="h-3 w-28 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
+                                            </div>
+
+                                            <div class="flex items-center justify-between pt-1">
+                                                <div class="h-2 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                <div class="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
+                                                    <div class="w-3 h-3 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-600 rounded-full animate-spin"></div>
+                                                    <span class="text-[9px] font-bold uppercase tracking-wider animate-pulse">{{ __('Loading secure inputs...') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="space-y-1">
-                                            <flux:label size="sm">{{ __('CVV') }}</flux:label>
-                                            <div wire:ignore id="reg-card-cvv" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                            <p x-show="fieldErrors.card_cvv" x-text="fieldErrors.card_cvv" class="text-[10px] text-red-500 mt-1"></p>
+                                            <flux:label size="sm">{{ __('Card Number') }}</flux:label>
+                                            <div wire:ignore id="reg-card-number" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                            <p x-show="fieldErrors.card_number" x-text="fieldErrors.card_number" class="text-[10px] text-red-500 mt-1"></p>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="space-y-1">
+                                                <flux:label size="sm">{{ __('Expiry Date') }}</flux:label>
+                                                <div wire:ignore id="reg-card-expiry" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                                <p x-show="fieldErrors.card_expiry" x-text="fieldErrors.card_expiry" class="text-[10px] text-red-500 mt-1"></p>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <flux:label size="sm">{{ __('CVV') }}</flux:label>
+                                                <div wire:ignore id="reg-card-cvv" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                                <p x-show="fieldErrors.card_cvv" x-text="fieldErrors.card_cvv" class="text-[10px] text-red-500 mt-1"></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <flux:label size="sm">{{ __('Cardholder Name') }}</flux:label>
+                                            <flux:input x-model="cardholderName" size="sm" placeholder="As shown on card" />
                                         </div>
                                     </div>
-
-                                    <div class="space-y-1">
-                                        <flux:label size="sm">{{ __('Cardholder Name') }}</flux:label>
-                                        <flux:input x-model="cardholderName" size="sm" placeholder="As shown on card" />
-                                    </div>
-                                </div>
+                                @endif
                                 
                                 <div class="flex items-center justify-center gap-2 text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
                                     <flux:icon icon="lock-closed" variant="mini" class="w-3 h-3" />
@@ -291,9 +332,9 @@
                             {{ __('Back') }}
                         </flux:button>
 
-                        <flux:button x-on:click="handleSubmit" variant="primary" class="px-12 py-3" x-bind:disabled="loading || (!isPlanFree && (!isFormValid || !fieldsMounted))" wire:loading.attr="disabled">
+                        <flux:button x-on:click="handleSubmit" variant="primary" class="px-12 py-3" x-bind:disabled="loading || (!isPlanFree && (!isFormValid || !fieldsMounted) && !$wire.paymentAlreadyApproved)" wire:loading.attr="disabled">
                             <span x-show="!loading" wire:loading.remove wire:target="register">
-                                {{ $isPlanFree ? __('Create Organization') : __('Create Organization & Pay') }}
+                                {{ $isPlanFree ? __('Create Organization') : ($paymentAlreadyApproved ? __('Retry Provisioning') : __('Create Organization & Pay')) }}
                             </span>
                             <span x-show="loading || $wire.loading" class="flex items-center gap-2">
                                 <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -318,7 +359,7 @@
                                 fieldErrors: { card_number: '', card_expiry: '', card_cvv: '' },
 
                                 init() {
-                                    if (this.isPlanFree) return;
+                                    if (this.isPlanFree || this.$wire.paymentAlreadyApproved) return;
                                     
                                     this.$nextTick(() => {
                                         this.initDlocal();
@@ -403,7 +444,7 @@
                                 },
 
                                 async handleSubmit() {
-                                    if (this.isPlanFree) {
+                                    if (this.isPlanFree || this.$wire.paymentAlreadyApproved) {
                                         this.$wire.register();
                                         return;
                                     }
