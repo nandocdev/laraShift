@@ -85,6 +85,9 @@ Route::middleware([
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.audit.download');
 
+        Route::get('/payouts', \App\Modules\Central\Payments\Livewire\PayoutRequests::class)->name('tenant.payouts.index');
+        Route::get('/settings/payouts', \App\Modules\Central\Payments\Livewire\PayoutSettings::class)->name('tenant.settings.payouts');
+
         Route::get('/data/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.data.download');
         
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');

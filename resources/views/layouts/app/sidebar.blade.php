@@ -70,6 +70,10 @@
                     :current="request()->routeIs('tenant.billing.*')" wire:navigate>
                     {{ __('Billing') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="banknotes" :href="route('tenant.payouts.index')"
+                    :current="request()->routeIs('tenant.payouts.*')" wire:navigate>
+                    {{ __('Withdrawals') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>
 

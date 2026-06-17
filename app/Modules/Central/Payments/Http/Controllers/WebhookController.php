@@ -61,10 +61,12 @@ final class WebhookController extends Controller {
     private function resolveGateway(Request $request): string {
         if ($request->is('*/clave'))
             return 'clave';
+        if ($request->is('*/dlocal/payout'))
+            return 'dlocal'; // Payouts use same secret/verification
         if ($request->is('*/dlocal'))
             return 'dlocal';
 
-        return 'clave';
+        return 'dlocal';
     }
 
     /**
