@@ -22,6 +22,13 @@ class TenantDataSeeder extends Seeder
             [
                 'id' => (string) Str::uuid(),
                 'tenant_id' => $tenantId,
+                'name' => 'Owner',
+                'guard_name' => 'web',
+                'is_system' => true,
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenantId,
                 'name' => 'Administrator',
                 'guard_name' => 'web',
                 'is_system' => true,

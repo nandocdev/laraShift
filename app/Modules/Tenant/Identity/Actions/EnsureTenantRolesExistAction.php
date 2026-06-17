@@ -17,6 +17,15 @@ final readonly class EnsureTenantRolesExistAction
     {
         $tenantId = $tenant->getTenantKey();
 
+        // Owner Role
+        Role::updateOrCreate(
+            ['tenant_id' => $tenantId, 'name' => 'Owner', 'guard_name' => 'web'],
+            [
+                'id' => Str::uuid()->toString(),
+                'is_system' => true,
+            ]
+        );
+
         // Admin Role
         Role::updateOrCreate(
             ['tenant_id' => $tenantId, 'name' => 'admin', 'guard_name' => 'web'],

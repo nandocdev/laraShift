@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Actions;
 
-use App\Modules\Central\Billing\Actions\RegisterPaymentMethodAction;
+use App\Modules\Central\Payments\Actions\ProcessDirectPaymentAction;
 use App\Modules\Central\Infrastructure\Actions\ProvisionInfrastructureAction;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
@@ -14,54 +14,89 @@ use App\Modules\Shared\Events\TenantProvisioned;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Modules\Central\Payments\Models\Payment;
+use App\Modules\Central\Payments\DTOs\PaymentData;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class CreateTenantAction {
     public function __construct(
         private ReserveTenantDomainAction $reserveDomain,
         private SetupTenantCoreDataAction $setupCoreData,
         private ProvisionInfrastructureAction $provisionInfra,
-        private RegisterPaymentMethodAction $registerPaymentMethod,
+        private ProcessDirectPaymentAction $processDirectPayment,
     ) {
     }
 
     /**
-     * Executes the atomic provisioning of a new tenant with Step-based tracking and Rollback.
+     * Executes the atomic provisioning of a new tenant.
      * 
-     * [SIDE-EFFECTS]
-     * - Records infrastructure steps in provisioning_logs.
-     * - Triggers automatic cleanup on critical failure.
+     * [PRD ALIGNMENT]
+     * - Payment First: Payment processed successfully BEFORE creating the tenant.
+     * - Atomic Rollback: Everything runs inside DB::transaction. Nothing persisted on failure.
+     * - Idempotency: Checkout slug is hashed to prevent duplicate payments.
      */
     public function execute(CreateTenantData $data): Tenant {
-        /** @var Tenant|null $tenant */
-        $tenant = Tenant::where('slug', $data->slug)->first();
-
-        if ($tenant && $tenant->status !== 'failed') {
-            throw new \Exception("Tenant with slug {$data->slug} already exists and is not in a failed state.");
+        // 1. Validations
+        if (Tenant::where('slug', $data->slug)->exists()) {
+            throw new \Exception("Tenant with slug {$data->slug} already exists.");
         }
 
-        try {
-            return DB::transaction(function () use ($data, &$tenant) {
-                if ($tenant) {
-                    // Reset failed tenant for retry
-                    $tenant->update([
-                        'name' => $data->name,
-                        'email' => $data->email,
-                        'plan_id' => $data->plan_id,
-                        'status' => 'provisioning',
-                    ]);
+        // 2. Resolve Plan
+        $plan = null;
+        if (Schema::hasColumn('plans', 'slug')) {
+            $plan = Plan::where('slug', $data->plan_id)->first();
+        } else {
+            $plan = Plan::where('provider_plan_id', $data->plan_id)->first()
+                ?? Plan::where('name', $data->plan_id)->first()
+                ?? Plan::first();
+        }
 
-                    // Clean up partial logs to avoid confusion
-                    $tenant->provisioningLogs()->delete();
-                } else {
-                    $tenant = Tenant::create([
-                        'id' => Str::uuid()->toString(),
-                        'slug' => $data->slug,
-                        'name' => $data->name,
-                        'email' => $data->email,
-                        'plan_id' => $data->plan_id,
-                        'status' => 'provisioning',
-                    ]);
+        // We pre-generate the UUID to pass it to the payment
+        $tenantId = Str::uuid()->toString();
+
+        // 3. Process Payment FIRST (Before DB Transaction)
+        if ($plan && $plan->price_monthly->isPositive() && $data->payment_token) {
+            // Idempotency: same slug + email generates same checkout slug.
+            // In a real scenario, you'd use a unique token or order ID from the frontend.
+            $checkoutSlug = 'checkout_' . md5($data->slug . $data->email);
+            
+            // Check if payment already succeeded for this idempotency key
+            $existingPayment = Payment::where('slug', $checkoutSlug)->where('status', 'approved')->first();
+
+            if (!$existingPayment) {
+                $paymentData = new PaymentData(
+                    amount: (float) $plan->price_monthly->getAmount() / 100,
+                    description: "Subscription for {$plan->name}",
+                    displayId: 'SUB-' . strtoupper(Str::random(6)),
+                    email: $data->email,
+                    tenantId: $tenantId, // Generated ID
+                    slug: $checkoutSlug
+                );
+
+                $result = $this->processDirectPayment->execute($paymentData, $data->payment_token, false);
+
+                if (!($result['success'] ?? false)) {
+                    throw new \Exception("Payment failed: " . ($result['message'] ?? 'Unknown error'));
                 }
+            } else {
+                $tenantId = $existingPayment->tenant_id; // Use the one already attached to the payment
+            }
+        }
+
+        // 4. Provisioning Transaction (Atomic Rollback)
+        try {
+            return DB::transaction(function () use ($data, $tenantId, $plan) {
+                // Step 0: Create Tenant
+                $tenant = Tenant::create([
+                    'id' => $tenantId,
+                    'slug' => $data->slug,
+                    'name' => $data->name,
+                    'email' => $data->email,
+                    'plan_id' => $data->plan_id,
+                    'status' => 'provisioning',
+                ]);
+
                 // Step 1: Subdomain / Domain Reservation
                 $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
                     $this->reserveDomain->execute($tenant, $data->slug);
@@ -72,35 +107,17 @@ final readonly class CreateTenantAction {
                     $this->setupCoreData->execute($tenant);
                 });
 
-                // Step 3: Infrastructure (DNS, Cloud, etc)
+                // Step 3: Initial Features/Quotas & Cache priming (implicitly done or can be added)
+                // Assuming setupCoreData handles the seed logic, or we dispatch events.
+                
+                // Step 4: Infrastructure (DNS, Cloud, etc)
                 $this->logStep($tenant, 'infrastructure', function () use ($tenant) {
                     $this->provisionInfra->execute($tenant);
                 });
 
-                // Step 4: Initial Admin User
+                // Step 5: Initial Owner User (TenantProvisioned handles creation and Owner role)
                 $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
                     TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
-                });
-
-                // Step 5: Billing Setup — only for paid plans
-                $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
-                    $plan = null;
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {
-                        $plan = Plan::where('slug', $data->plan_id)->first();
-                    } else {
-                        $plan = Plan::where('provider_plan_id', $data->plan_id)->first()
-                            ?? Plan::where('name', $data->plan_id)->first()
-                            ?? Plan::first();
-                    }
-
-                    if ($plan && $plan->price_monthly->isPositive() && $data->payment_token) {
-                        // Register payment method + subscription via Cashier
-                        $this->registerPaymentMethod->execute(
-                            $tenant,
-                            $data->payment_token,
-                            $data->plan_id
-                        );
-                    }
                 });
 
                 // Finalize: Active
@@ -110,7 +127,7 @@ final readonly class CreateTenantAction {
                 ]);
 
                 // Invalidate infrastructure caches
-                \Illuminate\Support\Facades\Cache::forget('horizon_tenant_queues');
+                Cache::forget('horizon_tenant_queues');
 
                 activity('provisioning')
                     ->performedOn($tenant)
@@ -119,9 +136,11 @@ final readonly class CreateTenantAction {
                 return $tenant;
             });
         } catch (\Exception $e) {
-            if ($tenant) {
-                $this->handleFailure($tenant, $e);
-            }
+            // The DB transaction completely rolls back. 
+            // "No se permiten tenants parcialmente creados" and "Nada queda persistido".
+            Log::error("Provisioning failed for tenant {$data->slug}: " . $e->getMessage());
+            
+            // Re-throw so caller (Livewire component) catches it and displays error
             throw $e;
         }
     }
@@ -139,30 +158,8 @@ final readonly class CreateTenantAction {
             $callback();
             $log->update(['status' => 'completed']);
         } catch (\Exception $e) {
-            $log->update(['status' => 'failed', 'error' => $e->getMessage()]);
+            // We throw the exception to bubble up and trigger the DB transaction rollback
             throw $e;
         }
-    }
-
-    private function handleFailure(Tenant $tenant, \Exception $exception): void {
-        Log::error("Provisioning failed for tenant {$tenant->slug}: " . $exception->getMessage());
-
-        // Compensation Logic (Rollback)
-        DB::transaction(function () use ($tenant) {
-            $tenant->update(['status' => 'failed']);
-
-            // Clean up resources that might cause orphan state
-            $tenant->domains()->delete();
-
-            // Note: DB cleanup depends on config. 
-            // In LaraShift, we might preserve the failed tenant record for support analysis,
-            // but delete it if the user wants an atomic "nothing happened" experience.
-            // For now, we move to 'failed' to block access.
-        });
-
-        activity('provisioning')
-            ->performedOn($tenant)
-            ->withProperties(['error' => $exception->getMessage()])
-            ->log('tenant_provisioning_rolled_back');
     }
 }

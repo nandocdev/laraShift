@@ -35,17 +35,19 @@ class RegisterTenant extends Component
     public string $company = '';
     public string $slug = '';
     public string $password = '';
+// Step 2: Plan
+public string $plan_id = 'free';
 
-    // Step 2: Plan
-    public string $plan_id = 'free';
+// Step 3: Payment
+public ?string $payment_token = null;
 
-    // Wizard state
-    public int $step = 1;
-    public bool $autoGenerateSlug = true;
+// Wizard state
+public int $step = 1;
+public bool $autoGenerateSlug = true;
 
-    /**
-     * @var array<string, array> Reglas de validación por step.
-     */
+/**
+ * @var array<string, array> Reglas de validación por step.
+ */
     private function rulesForStep(int $step): array
     {
         return match ($step) {
@@ -64,7 +66,9 @@ class RegisterTenant extends Component
             2 => [
                 'plan_id' => 'required|exists:plans,slug',
             ],
-            3 => [],
+            3 => [
+                'payment_token' => $this->isPlanFree() ? 'nullable|string' : 'required|string',
+            ],
             default => [],
         };
     }
@@ -126,7 +130,7 @@ class RegisterTenant extends Component
     }
 
     /**
-     * Ejecuta el registro completo: provisioning + billing (via redirect).
+     * Ejecuta el registro completo: provisioning + billing (via direct integration).
      */
     public function register(CreateTenantAction $action): void
     {
@@ -139,14 +143,19 @@ class RegisterTenant extends Component
 
         $this->validate($allRules);
 
-        $tenant = $action->execute(new CreateTenantData(
-            name: $this->company,
-            slug: $this->slug,
-            email: $this->email,
-            plan_id: $this->plan_id,
-            password: $this->password,
-            payment_token: null,
-        ));
+        try {
+            $tenant = $action->execute(new CreateTenantData(
+                name: $this->company,
+                slug: $this->slug,
+                email: $this->email,
+                plan_id: $this->plan_id,
+                password: $this->password,
+                payment_token: $this->payment_token,
+            ));
+        } catch (\Exception $e) {
+            $this->addError('payment_token', $e->getMessage());
+            return;
+        }
 
         $domain = $this->slug . '.' . config('tenancy.central_domain');
         $baseUrl = config('app.url');
@@ -154,15 +163,7 @@ class RegisterTenant extends Component
         $port = parse_url($baseUrl, PHP_URL_PORT);
         $portSuffix = $port ? ":$port" : '';
 
-        // If it's a paid plan, redirect to the hosted checkout page within the tenant context
-        if (! $this->isPlanFree()) {
-            $checkoutUrl = app(\App\Modules\Central\Billing\Support\BillingManager::class)
-                ->createCheckoutSession($tenant, $this->selectedPlan->id);
-
-            $this->redirect($checkoutUrl, navigate: false);
-            return;
-        }
-
+        // Immediate login redirection
         $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
     }
 
