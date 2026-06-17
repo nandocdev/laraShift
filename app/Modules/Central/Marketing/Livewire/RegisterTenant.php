@@ -63,7 +63,15 @@ public ?string $error = null;
                     'not_in:' . implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
-                'password' => ['required', 'string', Password::defaults()],
+                'password' => [
+                    'required',
+                    'string',
+                    Password::min(8)
+                        ->letters()
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols(),
+                ],
             ],
             2 => [
                 'plan_id' => 'required|exists:plans,slug',
@@ -108,6 +116,18 @@ public ?string $error = null;
             $this->validate($rules);
         }
 
+        if ($this->step === 1) {
+            $lockKey = 'reserved_slug_' . $this->slug;
+            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+            
+            if ($currentLock && $currentLock !== $this->email) {
+                $this->addError('slug', __('This workspace URL is temporarily reserved by another user.'));
+                return;
+            }
+            
+            \Illuminate\Support\Facades\Cache::put($lockKey, $this->email, now()->addMinutes(15));
+        }
+
         if ($this->step < 3) {
             $this->step++;
         }
@@ -146,6 +166,13 @@ public ?string $error = null;
         try {
             $this->validate($allRules);
 
+            // Final lock check to prevent race conditions during checkout
+            $lockKey = 'reserved_slug_' . $this->slug;
+            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+            if ($currentLock && $currentLock !== $this->email) {
+                throw new \Exception(__('This workspace URL is temporarily reserved by another user.'));
+            }
+
             $tenant = $action->execute(new CreateTenantData(
                 name: $this->company,
                 slug: $this->slug,
@@ -154,6 +181,9 @@ public ?string $error = null;
                 password: $this->password,
                 payment_token: $this->payment_token,
             ));
+
+            // Release lock on success
+            \Illuminate\Support\Facades\Cache::forget($lockKey);
 
             $domain = $this->slug . '.' . config('tenancy.central_domain');
             $baseUrl = config('app.url');
