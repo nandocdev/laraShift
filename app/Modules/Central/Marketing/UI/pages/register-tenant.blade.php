@@ -1,4 +1,7 @@
 <div class="min-h-screen bg-zinc-50 dark:bg-zinc-950 py-12 flex flex-col justify-center sm:px-6 lg:px-8">
+    {{-- Global dLocal Script --}}
+    <script src="https://js.dlocal.com/v1/"></script>
+
     {{-- Header --}}
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <a href="/" class="flex justify-center text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
@@ -175,56 +178,271 @@
             {{-- STEP 3: Payment & Confirmation                         --}}
             {{-- ═══════════════════════════════════════════════════════ --}}
             @if($step === 3)
-                <div class="space-y-6" wire:key="step-3">
+                <div class="space-y-6" wire:key="step-3"
+                    x-data="{
+                        loading: false,
+                        fieldsMounted: false,
+                        error: null,
+                        cardholderName: '{{ $name }}',
+                        isFormValid: false,
+                        dlocalInstance: null,
+                        fields: null,
+                        fieldErrors: { card_number: '', card_expiry: '', card_cvv: '' },
+
+                        init() {
+                            if ({{ $this->isPlanFree() ? 'true' : 'false' }}) return;
+
+                            this.$nextTick(() => {
+                                this.initDlocal();
+                            });
+                        },
+
+                        initDlocal() {
+                            console.log('dLocal: Initializing secure fields...');
+                            
+                            const attemptSetup = () => {
+                                // 1. Check if script is loaded
+                                if (typeof dlocal === 'undefined') {
+                                    console.warn('dLocal: Global dlocal object not found yet, retrying...');
+                                    setTimeout(attemptSetup, 200);
+                                    return;
+                                }
+
+                                // 2. Check if containers are available in the DOM
+                                const containers = ['reg-card-number', 'reg-card-expiry', 'reg-card-cvv'];
+                                const allExist = containers.every(id => document.getElementById(id));
+
+                                if (!allExist) {
+                                    console.warn('dLocal: Containers not found in DOM yet, retrying...');
+                                    setTimeout(attemptSetup, 100);
+                                    return;
+                                }
+
+                                this.setupFields();
+                            };
+
+                            attemptSetup();
+                            
+                            // Safety timeout: If it takes more than 10 seconds, show error
+                            setTimeout(() => {
+                                if (!this.fieldsMounted && !this.error) {
+                                    this.error = 'Payment gateway timed out. Please refresh the page.';
+                                }
+                            }, 10000);
+                        },
+
+                        setupFields() {
+                            try {
+                                const apiKey = '{{ config('payments.dlocal.login') }}';
+                                if (!apiKey) {
+                                    this.error = 'dLocal configuration missing (Login ID).';
+                                    return;
+                                }
+
+                                this.dlocalInstance = dlocal(apiKey);
+                                this.fields = this.dlocalInstance.fields({
+                                    locale: '{{ app()->getLocale() }}',
+                                    fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }]
+                                });
+
+                                const style = {
+                                    base: {
+                                        fontSize: '14px',
+                                        lineHeight: '24px',
+                                        color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000',
+                                        '::placeholder': { color: '#a1a1aa' }
+                                    },
+                                    invalid: { color: '#ef4444' }
+                                };
+
+                                const cardNumber = this.fields.create('cardNumber', { style });
+                                const cardExpiry = this.fields.create('cardExpiry', { style });
+                                const cardCvv = this.fields.create('cardCvv', { style });
+
+                                // Mount with a forced stable frame
+                                Promise.all([
+                                    cardNumber.mount('#reg-card-number'),
+                                    cardExpiry.mount('#reg-card-expiry'),
+                                    cardCvv.mount('#reg-card-cvv')
+                                ]).then(() => {
+                                    console.log('dLocal: All fields mounted successfully.');
+                                    this.fieldsMounted = true;
+                                }).catch(err => {
+                                    console.error('dLocal Mount Error:', err);
+                                    this.error = 'Failed to mount secure fields.';
+                                });
+
+                                const validate = () => {
+                                    this.isFormValid = this.cardholderName.length > 2;
+                                };
+
+                                [cardNumber, cardExpiry, cardCvv].forEach(f => {
+                                    f.on('change', (e) => {
+                                        this.fieldErrors[e.fieldType] = e.error ? e.error.message : '';
+                                        validate();
+                                    });
+                                });
+                            } catch (err) {
+                                console.error('dLocal Reg Exception:', err);
+                                this.error = 'Initialization error: ' + err.message;
+                            }
+                        },
+
+                        async handleSubmit() {
+                            @if($this->isPlanFree())
+                                $wire.register();
+                                return;
+                            @endif
+
+                            this.loading = true;
+                            this.error = null;
+
+                            try {
+                                const result = await this.dlocalInstance.createToken(this.fields, {
+                                    name: this.cardholderName
+                                });
+
+                                if (result.error) {
+                                    this.error = result.error.message;
+                                    this.loading = false;
+                                    return;
+                                }
+
+                                @this.set('payment_token', result.token);
+                                $wire.register();
+                            } catch (e) {
+                                this.error = 'An unexpected error occurred';
+                                this.loading = false;
+                            }
+                        }
+                    }"
+                >
                     <div>
                         <flux:heading size="lg" class="mb-1">{{ __('Confirm & Launch') }}</flux:heading>
                         <flux:subheading class="text-zinc-500">{{ __('Review your details and finalize registration') }}</flux:subheading>
                     </div>
 
-                    {{-- Order Summary --}}
-                    <div class="rounded-lg bg-zinc-100 dark:bg-zinc-900 p-5 space-y-3">
-                        <h4 class="text-sm font-bold uppercase tracking-wider text-zinc-500">{{ __('Summary') }}</h4>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-zinc-600 dark:text-zinc-400">{{ __('Organization') }}</span>
-                            <span class="font-medium text-zinc-900 dark:text-white">{{ $company }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-zinc-600 dark:text-zinc-400">{{ __('Workspace') }}</span>
-                            <span class="font-medium text-zinc-900 dark:text-white">{{ $slug }}.{{ config('tenancy.central_domain') }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-zinc-600 dark:text-zinc-400">{{ __('Plan') }}</span>
-                            <span class="font-medium text-zinc-900 dark:text-white">{{ $selectedPlan?->name ?? 'Free' }}</span>
-                        </div>
-                        @if($selectedPlan && $selectedPlan->price_monthly->isPositive())
-                            <div class="flex justify-between text-sm pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                                <span class="font-bold text-zinc-900 dark:text-white">{{ __('Monthly Total') }}</span>
-                                <span class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">
-                                    {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($selectedPlan->price_monthly) }}
-                                </span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {{-- Left: Order Summary --}}
+                        <div class="space-y-6">
+                            <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-4">
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ __('Registration Summary') }}</h4>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-zinc-500">{{ __('Organization') }}</span>
+                                        <span class="font-semibold text-zinc-900 dark:text-white">{{ $company }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-zinc-500">{{ __('Workspace URL') }}</span>
+                                        <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $slug }}.{{ config('tenancy.central_domain') }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-zinc-500">{{ __('Email') }}</span>
+                                        <span class="font-medium text-zinc-900 dark:text-white">{{ $email }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-xs font-bold uppercase text-zinc-400 tracking-wider">{{ __('Selected Plan') }}</span>
+                                            <div class="text-lg font-bold text-zinc-900 dark:text-white">{{ $selectedPlan?->name ?? 'Free' }}</div>
+                                        </div>
+                                        <div class="text-right">
+                                            @if($selectedPlan && $selectedPlan->price_monthly->isPositive())
+                                                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                                                    {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($selectedPlan->price_monthly) }}
+                                                </div>
+                                                <div class="text-[10px] uppercase text-zinc-500 font-bold">{{ __('per month') }}</div>
+                                            @else
+                                                <div class="text-2xl font-black text-emerald-500">{{ __('Free') }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="text-xs text-zinc-500 mt-2">
-                                {{ __('You will be redirected to our secure payment gateway (PagueloFacil) to complete your subscription.') }}
-                            </p>
-                        @else
-                            <div class="flex justify-between text-sm pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                                <span class="font-bold text-zinc-900 dark:text-white">{{ __('Monthly Total') }}</span>
-                                <span class="font-bold text-emerald-600 text-lg">{{ __('Free') }}</span>
-                            </div>
-                        @endif
+                        </div>
+
+                        {{-- Right: Payment Details (if applicable) --}}
+                        <div class="space-y-4">
+                            @if(!$this->isPlanFree())
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ __('Payment Information') }}</h4>
+                                
+                                <div x-show="error || ($wire.payment_token === null && $wire.error)" style="display: none;" class="p-3 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
+                                    <span x-text="error || $wire.error"></span>
+                                </div>
+
+                                <div class="relative space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm min-h-[200px]">
+                                    {{-- Loading Overlay for Fields --}}
+                                    <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white/80 dark:bg-zinc-900/80 rounded-xl flex flex-col items-center justify-center space-y-2">
+                                        <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">{{ __('Loading secure fields...') }}</span>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <flux:label size="sm">{{ __('Card Number') }}</flux:label>
+                                        <div wire:ignore id="reg-card-number" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                        <p x-show="fieldErrors.card_number" x-text="fieldErrors.card_number" class="text-[10px] text-red-500 mt-1"></p>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="space-y-1">
+                                            <flux:label size="sm">{{ __('Expiry Date') }}</flux:label>
+                                            <div wire:ignore id="reg-card-expiry" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                            <p x-show="fieldErrors.card_expiry" x-text="fieldErrors.card_expiry" class="text-[10px] text-red-500 mt-1"></p>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <flux:label size="sm">{{ __('CVV') }}</flux:label>
+                                            <div wire:ignore id="reg-card-cvv" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                            <p x-show="fieldErrors.card_cvv" x-text="fieldErrors.card_cvv" class="text-[10px] text-red-500 mt-1"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <flux:label size="sm">{{ __('Cardholder Name') }}</flux:label>
+                                        <flux:input x-model="cardholderName" size="sm" placeholder="As shown on card" />
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-center gap-2 text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
+                                    <flux:icon icon="lock-closed" variant="mini" class="w-3 h-3" />
+                                    {{ __('Securely processed by dLocal') }}
+                                </div>
+                            @else
+                                <div class="flex flex-col items-center justify-center h-full p-8 text-center bg-emerald-50/30 dark:bg-emerald-950/10 border border-dashed border-emerald-200 dark:border-emerald-900 rounded-xl">
+                                    <flux:icon icon="check-circle" class="w-12 h-12 text-emerald-500 mb-3" />
+                                    <flux:heading size="sm">{{ __('Ready to launch') }}</flux:heading>
+                                    <flux:text size="sm" class="mt-1">{{ __('Your free organization is one click away.') }}</flux:text>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
-                    <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-between">
+                    @if($errors->any())
+                        <div class="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+                            <ul class="list-disc list-inside text-xs text-red-600 dark:text-red-400">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800 flex justify-between">
                         <flux:button wire:click="previousStep" variant="ghost">
                             <flux:icon icon="arrow-left" class="w-4 h-4 mr-2" />
                             {{ __('Back') }}
                         </flux:button>
 
-                        <flux:button wire:click="register" variant="primary" class="px-8" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="register">
+                        <flux:button x-on:click="handleSubmit" variant="primary" class="px-12 py-3" x-bind:disabled="loading || ({{ !$this->isPlanFree() ? 'true' : 'false' }} && (!isFormValid || !fieldsMounted))" wire:loading.attr="disabled">
+                            <span x-show="!loading" wire:loading.remove wire:target="register">
                                 {{ $isPlanFree ? __('Create Organization') : __('Create Organization & Pay') }}
                             </span>
-                            <span wire:loading wire:target="register">{{ __('Processing...') }}</span>
+                            <span x-show="loading || $wire.loading" class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                {{ __('Processing...') }}
+                            </span>
                         </flux:button>
                     </div>
                 </div>
