@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default' => env('PAYMENTS_DEFAULT', 'clave'),
+    'default' => env('PAYMENTS_DEFAULT', 'dlocal'),
 
     'clave' => [
         /*
