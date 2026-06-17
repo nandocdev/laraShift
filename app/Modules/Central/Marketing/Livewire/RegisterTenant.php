@@ -44,6 +44,8 @@ public ?string $payment_token = null;
 // Wizard state
 public int $step = 1;
 public bool $autoGenerateSlug = true;
+public bool $loading = false;
+public ?string $error = null;
 
 /**
  * @var array<string, array> Reglas de validación por step.
@@ -129,11 +131,11 @@ public bool $autoGenerateSlug = true;
         $this->plan_id = $slug;
     }
 
-    /**
-     * Ejecuta el registro completo: provisioning + billing (via direct integration).
-     */
     public function register(CreateTenantAction $action): void
     {
+        $this->loading = true;
+        $this->error = null;
+
         // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
         $allRules = array_merge(
             $this->rulesForStep(1),
@@ -141,9 +143,9 @@ public bool $autoGenerateSlug = true;
             $this->rulesForStep(3)
         );
 
-        $this->validate($allRules);
-
         try {
+            $this->validate($allRules);
+
             $tenant = $action->execute(new CreateTenantData(
                 name: $this->company,
                 slug: $this->slug,
@@ -152,19 +154,23 @@ public bool $autoGenerateSlug = true;
                 password: $this->password,
                 payment_token: $this->payment_token,
             ));
+
+            $domain = $this->slug . '.' . config('tenancy.central_domain');
+            $baseUrl = config('app.url');
+            $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
+            $port = parse_url($baseUrl, PHP_URL_PORT);
+            $portSuffix = $port ? ":$port" : '';
+
+            // Immediate login redirection
+            $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
+            $this->error = $e->getMessage();
             $this->addError('payment_token', $e->getMessage());
-            return;
+        } finally {
+            $this->loading = false;
         }
-
-        $domain = $this->slug . '.' . config('tenancy.central_domain');
-        $baseUrl = config('app.url');
-        $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
-        $port = parse_url($baseUrl, PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-
-        // Immediate login redirection
-        $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
     }
 
     /**
