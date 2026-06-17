@@ -27,9 +27,9 @@ class BillingManager extends Manager implements BillingProvider
         return $this->container->make(StripeBillingProvider::class);
     }
 
-    public function createDlocalDriver(): InternalBillingProvider
+    public function createDlocalDriver(): \App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider
     {
-        return $this->container->make(InternalBillingProvider::class);
+        return $this->container->make(\App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider::class);
     }
 
     public function createClaveDriver(): InternalBillingProvider
