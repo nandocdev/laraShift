@@ -344,137 +344,138 @@
                     </div>
                 </div>
 
-                <script>
-                    (function() {
-                        window.registrationCheckout = function(config) {
-                            return {
-                                loading: false,
-                                fieldsMounted: false,
-                                error: null,
-                                cardholderName: config.cardholderName,
-                                isFormValid: false,
-                                isPlanFree: config.isPlanFree,
-                                dlocalInstance: null,
-                                fields: null,
-                                fieldErrors: { card_number: '', card_expiry: '', card_cvv: '' },
-
-                                init() {
-                                    if (this.isPlanFree || this.$wire.paymentAlreadyApproved) return;
-                                    
-                                    this.$nextTick(() => {
-                                        this.initDlocal();
-                                    });
-                                },
-
-                                initDlocal() {
-                                    if (typeof dlocal === 'undefined') {
-                                        if (!document.querySelector('script[src*="js.dlocal.com"]')) {
-                                            const script = document.createElement('script');
-                                            script.src = 'https://js.dlocal.com/v1/';
-                                            script.async = true;
-                                            script.onload = () => this.initDlocal();
-                                            document.head.appendChild(script);
-                                            return;
-                                        }
-                                        setTimeout(() => this.initDlocal(), 200);
-                                        return;
-                                    }
-
-                                    const containers = ['reg-card-number', 'reg-card-expiry', 'reg-card-cvv'];
-                                    const allExist = containers.every(id => document.getElementById(id));
-
-                                    if (!allExist) {
-                                        setTimeout(() => this.initDlocal(), 100);
-                                        return;
-                                    }
-
-                                    this.setupFields();
-                                },
-
-                                setupFields() {
-                                    try {
-                                        if (!config.apiKey) {
-                                            this.error = 'dLocal configuration missing.';
-                                            return;
-                                        }
-
-                                        this.dlocalInstance = dlocal(config.apiKey);
-                                        this.fields = this.dlocalInstance.fields({
-                                            locale: config.locale,
-                                            fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }]
-                                        });
-
-                                        const style = {
-                                            base: {
-                                                fontSize: '14px',
-                                                lineHeight: '24px',
-                                                color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000',
-                                                '::placeholder': { color: '#a1a1aa' }
-                                            },
-                                            invalid: { color: '#ef4444' }
-                                        };
-
-                                        const cardNumber = this.fields.create('cardNumber', { style });
-                                        const cardExpiry = this.fields.create('cardExpiry', { style });
-                                        const cardCvv = this.fields.create('cardCvv', { style });
-
-                                        Promise.all([
-                                            cardNumber.mount('#reg-card-number'),
-                                            cardExpiry.mount('#reg-card-expiry'),
-                                            cardCvv.mount('#reg-card-cvv')
-                                        ]).then(() => {
-                                            this.fieldsMounted = true;
-                                        }).catch(err => {
-                                            this.error = 'Failed to mount secure fields.';
-                                        });
-
-                                        const validate = () => {
-                                            this.isFormValid = this.cardholderName.length > 2;
-                                        };
-
-                                        [cardNumber, cardExpiry, cardCvv].forEach(f => {
-                                            f.on('change', (e) => {
-                                                this.fieldErrors[e.fieldType] = e.error ? e.error.message : '';
-                                                validate();
-                                            });
-                                        });
-                                    } catch (err) {
-                                        this.error = 'Initialization error.';
-                                    }
-                                },
-
-                                async handleSubmit() {
-                                    if (this.isPlanFree || this.$wire.paymentAlreadyApproved) {
-                                        this.$wire.register();
-                                        return;
-                                    }
-
-                                    this.loading = true;
-                                    this.error = null;
-
-                                    try {
-                                        const result = await this.dlocalInstance.createToken(this.fields, {
-                                            name: this.cardholderName
-                                        });
-
-                                        if (result.error) {
-                                            this.error = result.error.message;
-                                            this.loading = false;
-                                            return;
-                                        }
-
-                                        this.$wire.set('payment_token', result.token);
-                                        this.$wire.register();
-                                    } catch (e) {
-                                        this.error = 'An unexpected error occurred';
-                                        this.loading = false;
-                                    }
-                                }
-                            };
-                        }
-                    })();
-                </script>
             @endif
+
+            <script>
+                (function() {
+                    window.registrationCheckout = function(config) {
+                        return {
+                            loading: false,
+                            fieldsMounted: false,
+                            error: null,
+                            cardholderName: config.cardholderName,
+                            isFormValid: false,
+                            isPlanFree: config.isPlanFree,
+                            dlocalInstance: null,
+                            fields: null,
+                            fieldErrors: { card_number: '', card_expiry: '', card_cvv: '' },
+
+                            init() {
+                                if (this.isPlanFree || this.$wire.paymentAlreadyApproved) return;
+                                
+                                this.$nextTick(() => {
+                                    this.initDlocal();
+                                });
+                            },
+
+                            initDlocal() {
+                                if (typeof dlocal === 'undefined') {
+                                    if (!document.querySelector('script[src*="js.dlocal.com"]')) {
+                                        const script = document.createElement('script');
+                                        script.src = 'https://js.dlocal.com/v1/';
+                                        script.async = true;
+                                        script.onload = () => this.initDlocal();
+                                        document.head.appendChild(script);
+                                        return;
+                                    }
+                                    setTimeout(() => this.initDlocal(), 200);
+                                    return;
+                                }
+
+                                const containers = ['reg-card-number', 'reg-card-expiry', 'reg-card-cvv'];
+                                const allExist = containers.every(id => document.getElementById(id));
+
+                                if (!allExist) {
+                                    setTimeout(() => this.initDlocal(), 100);
+                                    return;
+                                }
+
+                                this.setupFields();
+                            },
+
+                            setupFields() {
+                                try {
+                                    if (!config.apiKey) {
+                                        this.error = 'dLocal configuration missing.';
+                                        return;
+                                    }
+
+                                    this.dlocalInstance = dlocal(config.apiKey);
+                                    this.fields = this.dlocalInstance.fields({
+                                        locale: config.locale,
+                                        fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }]
+                                    });
+
+                                    const style = {
+                                        base: {
+                                            fontSize: '14px',
+                                            lineHeight: '24px',
+                                            color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#000000',
+                                            '::placeholder': { color: '#a1a1aa' }
+                                        },
+                                        invalid: { color: '#ef4444' }
+                                    };
+
+                                    const cardNumber = this.fields.create('cardNumber', { style });
+                                    const cardExpiry = this.fields.create('cardExpiry', { style });
+                                    const cardCvv = this.fields.create('cardCvv', { style });
+
+                                    Promise.all([
+                                        cardNumber.mount('#reg-card-number'),
+                                        cardExpiry.mount('#reg-card-expiry'),
+                                        cardCvv.mount('#reg-card-cvv')
+                                    ]).then(() => {
+                                        this.fieldsMounted = true;
+                                    }).catch(err => {
+                                        this.error = 'Failed to mount secure fields.';
+                                    });
+
+                                    const validate = () => {
+                                        this.isFormValid = this.cardholderName.length > 2;
+                                    };
+
+                                    [cardNumber, cardExpiry, cardCvv].forEach(f => {
+                                        f.on('change', (e) => {
+                                            this.fieldErrors[e.fieldType] = e.error ? e.error.message : '';
+                                            validate();
+                                        });
+                                    });
+                                } catch (err) {
+                                    this.error = 'Initialization error.';
+                                }
+                            },
+
+                            async handleSubmit() {
+                                if (this.isPlanFree || this.$wire.paymentAlreadyApproved) {
+                                    this.$wire.register();
+                                    return;
+                                }
+
+                                this.loading = true;
+                                this.error = null;
+
+                                try {
+                                    const result = await this.dlocalInstance.createToken(this.fields, {
+                                        name: this.cardholderName
+                                    });
+
+                                    if (result.error) {
+                                        this.error = result.error.message;
+                                        this.loading = false;
+                                        return;
+                                    }
+
+                                    this.$wire.set('payment_token', result.token);
+                                    this.$wire.register();
+                                } catch (e) {
+                                    this.error = 'An unexpected error occurred';
+                                    this.loading = false;
+                                }
+                            }
+                        };
+                    }
+                })();
+            </script>
 
         </flux:card>
     </div>
