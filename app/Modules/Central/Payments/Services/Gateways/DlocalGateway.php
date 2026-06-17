@@ -291,6 +291,76 @@ final class DlocalGateway implements PaymentGateway {
         );
     }
 
+    public function createEnrollment(array $payload): array {
+        $url = "{$this->baseUrl}/enrollments";
+        $date = $this->getDlocalDate();
+        $idempotencyKey = ($payload['external_id'] ?? 'enroll_') . '_' . time();
+
+        $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $headers = $this->buildHeaders($date, $jsonPayload, $idempotencyKey);
+
+        Log::info("dLocal: Creating enrollment", ['external_id' => $payload['external_id'] ?? '']);
+
+        $response = Http::withHeaders($headers)
+            ->withBody($jsonPayload, 'application/json')
+            ->send('POST', $url);
+
+        if ($response->failed()) {
+            Log::error("dLocal Create Enrollment Failed", [
+                'status' => $response->status(),
+                'body' => $response->json(),
+                'payload' => $payload
+            ]);
+            throw new DlocalGatewayException("dLocal enrollment creation failed: " . ($response->json()['message'] ?? 'Unknown error'));
+        }
+
+        return $response->json() ?? [];
+    }
+
+    public function cancelEnrollment(string $enrollmentId): array {
+        $url = "{$this->baseUrl}/enrollments/{$enrollmentId}/cancel";
+        $date = $this->getDlocalDate();
+
+        $headers = $this->buildHeaders($date);
+
+        Log::info("dLocal: Cancelling enrollment", ['enrollment_id' => $enrollmentId]);
+
+        $response = Http::withHeaders($headers)->send('POST', $url);
+
+        if ($response->failed()) {
+            Log::error("dLocal Cancel Enrollment Failed", [
+                'status' => $response->status(),
+                'body' => $response->json(),
+                'enrollment_id' => $enrollmentId
+            ]);
+            throw new DlocalGatewayException("dLocal enrollment cancellation failed: " . ($response->json()['message'] ?? 'Unknown error'));
+        }
+
+        return $response->json() ?? [];
+    }
+
+    public function getEnrollment(string $enrollmentId): array {
+        $url = "{$this->baseUrl}/enrollments/{$enrollmentId}";
+        $date = $this->getDlocalDate();
+
+        $headers = $this->buildHeaders($date);
+
+        Log::info("dLocal: Retrieving enrollment", ['enrollment_id' => $enrollmentId]);
+
+        $response = Http::withHeaders($headers)->get($url);
+
+        if ($response->failed()) {
+            Log::error("dLocal Get Enrollment Failed", [
+                'status' => $response->status(),
+                'body' => $response->json(),
+                'enrollment_id' => $enrollmentId
+            ]);
+            throw new DlocalGatewayException("Failed to retrieve enrollment: " . ($response->json()['message'] ?? 'Unknown error'));
+        }
+
+        return $response->json() ?? [];
+    }
+
     private function getDlocalDate(): string {
         return now()->format('Y-m-d\TH:i:s.v\Z');
     }
