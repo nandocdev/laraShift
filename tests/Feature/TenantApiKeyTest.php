@@ -32,7 +32,7 @@ it('generates a secure api key with specific scopes', function () {
     $model = $result['model'];
     expect($model->name)->toBe('Test Key');
     expect($model->scopes)->toBe(['orders:read', 'orders:write']);
-    expect($model->key_hash)->toBe(hash('sha256', $result['key']));
+    expect($model->key_hash)->toBe(hash_hmac('sha256', $result['key'], config('app.key')));
 });
 
 it('revokes an api key immediately', function () {

@@ -31,15 +31,15 @@ it('scopes roles and permissions per tenant', function () {
     $ensureRoles->execute($tenantB);
 
     // Count roles in DB
-    expect(Role::count())->toBe(4); // 2 per tenant
+    expect(Role::count())->toBe(6); // 3 per tenant
 
     // Test scoping
     tenancy()->initialize($tenantA);
-    expect(Role::count())->toBe(2);
+    expect(Role::count())->toBe(3);
     expect(Role::where('name', 'admin')->first()->tenant_id)->toBe($tenantA->id);
 
     tenancy()->initialize($tenantB);
-    expect(Role::count())->toBe(2);
+    expect(Role::count())->toBe(3);
     expect(Role::where('name', 'admin')->first()->tenant_id)->toBe($tenantB->id);
 });
 
