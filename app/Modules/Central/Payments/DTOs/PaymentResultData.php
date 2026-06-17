@@ -27,9 +27,9 @@ final class PaymentResultData extends Data {
         #[Required, StringType]
         public readonly string $gatewayCode,
 
-        public readonly ?string $authorizationCode,
-        public readonly ?string $errorCode,
-        public readonly ?string $errorMessage,
+        public readonly ?string $authorizationCode = null,
+        public readonly ?string $errorCode = null,
+        public readonly ?string $errorMessage = null,
         public readonly array $raw = [],
     ) {
     }

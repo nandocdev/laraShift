@@ -33,6 +33,21 @@ interface PaymentGateway {
     public function parseWebhookPayload(array $payload): PaymentResultData;
 
     /**
+     * Process a direct payment using a token or card details.
+     */
+    public function processDirectPayment(PaymentData $payment, string $apiKey, ?string $token = null): PaymentResultData;
+
+    /**
+     * Submit a payout request.
+     */
+    public function submitPayout(\App\Modules\Central\Payments\DTOs\PayoutData $payout): \App\Modules\Central\Payments\DTOs\PayoutResultData;
+
+    /**
+     * Get the status of a payout.
+     */
+    public function getPayoutStatus(string $payoutId): \App\Modules\Central\Payments\DTOs\PayoutResultData;
+
+    /**
      * Unique gateway identifier (e.g. 'clave').
      */
     public function identifier(): string;

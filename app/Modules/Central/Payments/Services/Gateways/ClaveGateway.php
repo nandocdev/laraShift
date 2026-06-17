@@ -130,6 +130,18 @@ final class ClaveGateway implements PaymentGateway {
         return PaymentResultData::fromClavePayload($payload);
     }
 
+    public function processDirectPayment(PaymentData $payment, string $apiKey, ?string $token = null): PaymentResultData {
+        throw new \Exception("Direct payment not supported for Clave gateway.");
+    }
+
+    public function submitPayout(\App\Modules\Central\Payments\DTOs\PayoutData $payout): \App\Modules\Central\Payments\DTOs\PayoutResultData {
+        throw new \Exception("Payouts not supported for Clave gateway.");
+    }
+
+    public function getPayoutStatus(string $payoutId): \App\Modules\Central\Payments\DTOs\PayoutResultData {
+        throw new \Exception("Payouts not supported for Clave gateway.");
+    }
+
     public function identifier(): string {
         return 'clave';
     }

@@ -16,10 +16,10 @@ final class PaymentsServiceProvider extends ServiceProvider {
         $this->app->bind(ClaveEnvironment::class, fn() => ClaveEnvironment::fromConfig());
 
         $this->app->bind(PaymentGateway::class, function ($app) {
-            $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
+            $gateway = tenant('billing_gateway') ?? config('payments.default', 'dlocal');
 
             return match ($gateway) {
-                'dlocal' => new DlocalGateway(),
+                'dlocal' => $app->make(DlocalGateway::class),
                 default => $app->make(ClaveGateway::class),
             };
         });
@@ -34,5 +34,7 @@ final class PaymentsServiceProvider extends ServiceProvider {
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'payments');
 
         Livewire::component('payments.checkout', \App\Modules\Central\Payments\Livewire\CheckoutComponent::class);
+        Livewire::component('payments.payout-settings', \App\Modules\Central\Payments\Livewire\PayoutSettings::class);
+        Livewire::component('payments.payout-requests', \App\Modules\Central\Payments\Livewire\PayoutRequests::class);
     }
 }
