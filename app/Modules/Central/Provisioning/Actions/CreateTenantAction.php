@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\DTOs\PaymentData;
+use App\Modules\Central\Payments\Enums\PaymentContext;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
 
@@ -66,6 +67,7 @@ final readonly class CreateTenantAction {
 
             if (!$existingPayment) {
                 $paymentData = new PaymentData(
+                    context: PaymentContext::Subscription,
                     amount: (float) $plan->price_monthly->getAmount() / 100,
                     description: "Subscription for {$plan->name}",
                     displayId: 'SUB-' . strtoupper(Str::random(6)),
