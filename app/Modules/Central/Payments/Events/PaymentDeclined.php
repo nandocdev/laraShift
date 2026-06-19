@@ -9,6 +9,13 @@ use Illuminate\Queue\SerializesModels;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
 use App\Modules\Central\Payments\Models\Payment;
 
+/**
+ * @deprecated Utilizar App\Modules\Shared\Events\PaymentCompleted.
+ * Este evento se mantiene temporalmente para referencia. No está registrado en ningún listener.
+ * Será eliminado en la siguiente iteración de limpieza.
+ *
+ * @see \App\Modules\Shared\Events\PaymentCompleted
+ */
 final class PaymentDeclined {
     use Dispatchable, SerializesModels;
 

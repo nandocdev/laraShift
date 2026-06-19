@@ -26,16 +26,8 @@ class BillingServiceProvider extends ServiceProvider
 
         $this->app->alias(BillingManager::class, 'billing');
 
-        // Event Listeners
-        Event::listen(
-            \App\Modules\Central\Payments\Events\PaymentApproved::class,
-            \App\Modules\Central\Billing\Listeners\FulfillSubscription::class
-        );
-
-        Event::listen(
-            \App\Modules\Shared\Events\PaymentFailed::class,
-            \App\Modules\Central\Billing\Listeners\HandlePaymentFailure::class
-        );
+        // Legacy event listeners removed (migrated to SubscriptionPaymentHandler).
+        // Post-payment logic is now handled via PaymentHandlerDispatcher strategy pattern.
     }
 
     public function boot(): void
