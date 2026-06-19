@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Actions;
 
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
+use App\Modules\Central\Payments\Enums\PaymentStatus;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\Models\PaymentAttempt;
-use App\Modules\Central\Payments\Events\PaymentApproved;
-use App\Modules\Shared\Events\PaymentFailed;
+use App\Modules\Central\Payments\Services\PaymentHandlerDispatcher;
+use App\Modules\Shared\Events\PaymentCompleted;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +21,8 @@ use Illuminate\Support\Facades\DB;
 final readonly class ProcessDirectPaymentAction
 {
     public function __construct(
-        private PaymentGateway $gateway
+        private PaymentGatewayContract $gateway,
+        private PaymentHandlerDispatcher $dispatcher,
     ) {}
 
     public function execute(PaymentData $data, string $token, ?bool $saveCard = false): array
@@ -31,6 +33,7 @@ final readonly class ProcessDirectPaymentAction
             // Create Payment record
             $payment = Payment::create([
                 'tenant_id' => $data->tenantId,
+                'context' => $data->context->value,
                 'display_id' => $data->displayId,
                 'slug' => $slug,
                 'amount' => $data->amount,
@@ -65,19 +68,39 @@ final readonly class ProcessDirectPaymentAction
                 'response_payload' => $result->raw,
             ]);
 
-            if ($result->status->isSuccessful()) {
-                PaymentApproved::dispatch($payment, $result);
-                return [
-                    'success' => true,
-                    'displayId' => $data->displayId,
-                    'message' => 'Payment approved'
-                ];
-            }
+            // Dispatch to context-aware handler
+            $metadata = array_merge($data->customFieldValues, [
+                'gateway_reference' => $result->gatewayReference,
+                'gateway'           => $this->gateway->identifier(),
+                'error_message'     => $result->errorMessage,
+            ]);
 
-            PaymentFailed::dispatch($payment, $result);
+            DB::afterCommit(function () use ($data, $result, $metadata) {
+                $this->dispatcher->dispatch(
+                    context: $data->context,
+                    tenantId: $data->tenantId,
+                    displayId: $data->displayId,
+                    amount: $result->amount,
+                    success: $result->status->isSuccessful(),
+                    metadata: $metadata,
+                );
+
+                PaymentCompleted::dispatch(
+                    tenantId: $data->tenantId,
+                    displayId: $data->displayId,
+                    context: $data->context,
+                    status: $result->status,
+                    amount: $result->amount,
+                    gatewayReference: $result->gatewayReference,
+                );
+            });
+
             return [
-                'success' => false,
-                'message' => $result->errorMessage ?? 'Payment declined'
+                'success' => $result->status->isSuccessful(),
+                'displayId' => $data->displayId,
+                'message' => $result->status->isSuccessful()
+                    ? 'Payment approved'
+                    : ($result->errorMessage ?? 'Payment declined'),
             ];
         });
     }

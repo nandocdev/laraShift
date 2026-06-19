@@ -6,20 +6,21 @@ namespace App\Modules\Central\Payments\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
+use App\Modules\Central\Payments\Enums\PaymentContext;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Central\Payments\Events\PaymentApproved;
-use App\Modules\Central\Payments\Events\PaymentDeclined;
 use App\Modules\Central\Payments\Events\PaymentWebhookReceived;
 use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\Models\PaymentAttempt;
 use App\Modules\Central\Payments\Models\PaymentWebhook;
+use App\Modules\Shared\Events\PaymentCompleted;
 
 final readonly class PaymentVerifier {
     public function __construct(
-        private PaymentGateway $gateway,
+        private PaymentGatewayContract $gateway,
+        private PaymentHandlerDispatcher $dispatcher,
     ) {
     }
 
@@ -183,8 +184,33 @@ final readonly class PaymentVerifier {
             ->update(['status' => $result->status->value]);
 
         match ($result->status) {
-            PaymentStatus::Approved => DB::afterCommit(fn () => PaymentApproved::dispatch($payment, $result)),
-            PaymentStatus::Declined => DB::afterCommit(fn () => PaymentDeclined::dispatch($payment, $result)),
+            PaymentStatus::Approved,
+            PaymentStatus::Declined => DB::afterCommit(function () use ($payment, $result, $tenantId) {
+                $context = $payment->context ?? PaymentContext::Subscription;
+                $metadata = $payment->attempts()->latest()->first()?->payload ?? [];
+
+                $this->dispatcher->dispatch(
+                    context: $context,
+                    tenantId: $tenantId,
+                    displayId: $result->displayId,
+                    amount: $result->amount,
+                    success: $result->status === PaymentStatus::Approved,
+                    metadata: array_merge($metadata, [
+                        'gateway_reference' => $result->gatewayReference,
+                        'gateway'           => $this->gateway->identifier(),
+                        'error_message'     => $result->errorMessage,
+                    ]),
+                );
+
+                PaymentCompleted::dispatch(
+                    tenantId: $tenantId,
+                    displayId: $result->displayId,
+                    context: $context,
+                    status: $result->status,
+                    amount: $result->amount,
+                    gatewayReference: $result->gatewayReference,
+                );
+            }),
             default => null,
         };
     }
