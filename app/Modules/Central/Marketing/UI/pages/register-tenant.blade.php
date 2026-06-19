@@ -398,10 +398,11 @@
 
                                     this.cardFieldInstance = this.fields.create('card', { style });
 
-                                    this.cardFieldInstance.mount('#reg-card-field').then(() => {
+                                    this.cardFieldInstance.mount(document.getElementById('reg-card-field')).then(() => {
                                         this.fieldsMounted = true;
                                     }).catch(err => {
                                         this.error = 'Failed to mount secure field.';
+                                        console.error('Mount error:', err);
                                     });
 
                                     const validate = () => {
@@ -413,7 +414,8 @@
                                         validate();
                                     });
                                 } catch (err) {
-                                    this.error = 'Initialization error.';
+                                    console.error('dLocal setup error:', err);
+                                    this.error = 'Initialization error. Please try again.';
                                 }
                             },
 
