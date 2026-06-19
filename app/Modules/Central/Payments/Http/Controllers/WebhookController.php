@@ -31,7 +31,7 @@ final class WebhookController extends Controller {
         $webhookSecret = config("payments.{$gateway}.webhook_secret");
 
         // Verify signature synchronously to prevent DoS via queue exhaustion
-        $verifier = app(\App\Modules\Central\Payments\Contracts\PaymentGateway::class);
+        $verifier = app(\App\Modules\Shared\Contracts\PaymentGatewayContract::class);
         // We temporarily swap the implementation to the correct gateway for verification
         $gatewayService = match ($gateway) {
             'dlocal' => app(\App\Modules\Central\Payments\Services\Gateways\DlocalGateway::class),

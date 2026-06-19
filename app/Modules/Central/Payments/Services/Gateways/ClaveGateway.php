@@ -7,7 +7,7 @@ namespace App\Modules\Central\Payments\Services\Gateways;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\MerchantData;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
@@ -15,7 +15,7 @@ use App\Modules\Central\Payments\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Payments\Exceptions\InvalidMerchantException;
 use App\Modules\Central\Payments\Exceptions\ServiceNotFoundException;
 
-final class ClaveGateway implements PaymentGateway {
+final class ClaveGateway implements PaymentGatewayContract {
     /**
      * Gateway codes accepted as Clave services.
      */

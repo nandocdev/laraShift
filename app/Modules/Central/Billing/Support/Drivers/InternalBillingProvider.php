@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Support\Drivers;
 
 use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Billing\Support\PagueloFacilClient;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
 
@@ -79,7 +79,7 @@ class InternalBillingProvider implements BillingProvider
 
     public function getInvoices(Tenant $tenant): array
     {
-        $gateway = app(PaymentGateway::class);
+        $gateway = app(PaymentGatewayContract::class);
         $apiKey = config("payments.{$gateway->identifier()}.api_key") 
                ?? config("payments.{$gateway->identifier()}.login");
 
