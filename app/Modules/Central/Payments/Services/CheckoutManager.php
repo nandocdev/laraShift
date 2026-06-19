@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Payments\Services;
 
 use Illuminate\Support\Facades\DB;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Events\CheckoutSessionCreated;
 use App\Modules\Central\Payments\Models\Payment;
@@ -13,7 +13,7 @@ use App\Modules\Central\Payments\Models\PaymentAttempt;
 
 final readonly class CheckoutManager {
     public function __construct(
-        private PaymentGateway $gateway,
+        private PaymentGatewayContract $gateway,
     ) {
     }
 
@@ -28,6 +28,7 @@ final readonly class CheckoutManager {
 
             $payment = Payment::create([
                 'tenant_id' => $tenantId,
+                'context' => $data->context->value,
                 'display_id' => $data->displayId,
                 'slug' => $slug,
                 'amount' => $data->amount,
