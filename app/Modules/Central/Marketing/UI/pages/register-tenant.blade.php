@@ -253,22 +253,10 @@
                                     <div class="relative space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm min-h-[200px]">
                                         {{-- Loading Overlay with Structured Skeletons --}}
                                         <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white dark:bg-zinc-900 rounded-xl p-5 space-y-4 select-none pointer-events-none">
-                                            {{-- Card Number Skeleton --}}
+                                            {{-- Card Input Skeleton --}}
                                             <div class="space-y-2">
-                                                <div class="h-3 w-20 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                <div class="h-3 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
                                                 <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
-                                            </div>
-                                            
-                                            {{-- Expiry & CVV Grid Skeleton --}}
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div class="space-y-2">
-                                                    <div class="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
-                                                    <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
-                                                </div>
-                                                <div class="space-y-2">
-                                                    <div class="h-3 w-10 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
-                                                    <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
-                                                </div>
                                             </div>
 
                                             {{-- Cardholder Name Skeleton --}}
@@ -287,22 +275,9 @@
                                         </div>
 
                                         <div class="space-y-1">
-                                            <flux:label size="sm">{{ __('Card Number') }}</flux:label>
-                                            <div wire:ignore id="reg-card-number" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                            <p x-show="fieldErrors.card_number" x-text="fieldErrors.card_number" class="text-[10px] text-red-500 mt-1"></p>
-                                        </div>
-
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div class="space-y-1">
-                                                <flux:label size="sm">{{ __('Expiry Date') }}</flux:label>
-                                                <div wire:ignore id="reg-card-expiry" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                                <p x-show="fieldErrors.card_expiry" x-text="fieldErrors.card_expiry" class="text-[10px] text-red-500 mt-1"></p>
-                                            </div>
-                                            <div class="space-y-1">
-                                                <flux:label size="sm">{{ __('CVV') }}</flux:label>
-                                                <div wire:ignore id="reg-card-cvv" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                                <p x-show="fieldErrors.card_cvv" x-text="fieldErrors.card_cvv" class="text-[10px] text-red-500 mt-1"></p>
-                                            </div>
+                                            <flux:label size="sm">{{ __('Card Information') }}</flux:label>
+                                            <div wire:ignore id="reg-card-field" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
+                                            <p x-show="fieldError" x-text="fieldError" class="text-[10px] text-red-500 mt-1"></p>
                                         </div>
 
                                         <div class="space-y-1">
@@ -316,6 +291,9 @@
                                     <flux:icon icon="lock-closed" variant="mini" class="w-3 h-3" />
                                     {{ __('Securely processed by dLocal') }}
                                 </div>
+                                <p class="text-[10px] text-zinc-500 leading-tight">
+                                    {{ config('app.name', 'LaraShift') }} is powered by dLocal, which has been appointed by {{ config('app.name', 'LaraShift') }} to provide payment services on its behalf, including the collection of the data necessary to facilitate and remit your payments. As such, you are now providing your personal data to dLocal. For more information, please visit dLocal’s <a href="https://www.dlocal.com/legal/privacy-hub/" target="_blank" class="text-indigo-500 hover:underline">Privacy Hub</a>.
+                                </p>
                             @else
                                 <div class="flex flex-col items-center justify-center h-full p-8 text-center bg-emerald-50/30 dark:bg-emerald-950/10 border border-dashed border-emerald-200 dark:border-emerald-900 rounded-xl">
                                     <flux:icon icon="check-circle" class="w-12 h-12 text-emerald-500 mb-3" />
@@ -358,7 +336,8 @@
                             isPlanFree: config.isPlanFree,
                             dlocalInstance: null,
                             fields: null,
-                            fieldErrors: { card_number: '', card_expiry: '', card_cvv: '' },
+                            cardFieldInstance: null,
+                            fieldError: '',
 
                             init() {
                                 if (this.isPlanFree || this.$wire.paymentAlreadyApproved) return;
@@ -372,7 +351,7 @@
                                 if (typeof dlocal === 'undefined') {
                                     if (!document.querySelector('script[src*="js.dlocal.com"]')) {
                                         const script = document.createElement('script');
-                                        script.src = 'https://js.dlocal.com/v1/';
+                                        script.src = 'https://js.dlocal.com/';
                                         script.async = true;
                                         script.onload = () => this.initDlocal();
                                         document.head.appendChild(script);
@@ -382,10 +361,9 @@
                                     return;
                                 }
 
-                                const containers = ['reg-card-number', 'reg-card-expiry', 'reg-card-cvv'];
-                                const allExist = containers.every(id => document.getElementById(id));
+                                const container = document.getElementById('reg-card-field');
 
-                                if (!allExist) {
+                                if (!container) {
                                     setTimeout(() => this.initDlocal(), 100);
                                     return;
                                 }
@@ -416,29 +394,21 @@
                                         invalid: { color: '#ef4444' }
                                     };
 
-                                    const cardNumber = this.fields.create('cardNumber', { style });
-                                    const cardExpiry = this.fields.create('cardExpiry', { style });
-                                    const cardCvv = this.fields.create('cardCvv', { style });
+                                    this.cardFieldInstance = this.fields.create('card', { style });
 
-                                    Promise.all([
-                                        cardNumber.mount('#reg-card-number'),
-                                        cardExpiry.mount('#reg-card-expiry'),
-                                        cardCvv.mount('#reg-card-cvv')
-                                    ]).then(() => {
+                                    this.cardFieldInstance.mount('#reg-card-field').then(() => {
                                         this.fieldsMounted = true;
                                     }).catch(err => {
-                                        this.error = 'Failed to mount secure fields.';
+                                        this.error = 'Failed to mount secure field.';
                                     });
 
                                     const validate = () => {
-                                        this.isFormValid = this.cardholderName.length > 2;
+                                        this.isFormValid = this.cardholderName.length > 2 && !this.fieldError;
                                     };
 
-                                    [cardNumber, cardExpiry, cardCvv].forEach(f => {
-                                        f.on('change', (e) => {
-                                            this.fieldErrors[e.fieldType] = e.error ? e.error.message : '';
-                                            validate();
-                                        });
+                                    this.cardFieldInstance.on('change', (e) => {
+                                        this.fieldError = e.error ? e.error.message : '';
+                                        validate();
                                     });
                                 } catch (err) {
                                     this.error = 'Initialization error.';
@@ -455,7 +425,7 @@
                                 this.error = null;
 
                                 try {
-                                    const result = await this.dlocalInstance.createToken(this.fields, {
+                                    const result = await this.dlocalInstance.createToken(this.cardFieldInstance, {
                                         name: this.cardholderName
                                     });
 
