@@ -179,6 +179,7 @@
                     x-data="registrationCheckout({
                         apiKey: '{{ config('payments.dlocal.login') }}',
                         locale: '{{ app()->getLocale() }}',
+                        country: 'US',
                         isPlanFree: {{ $this->isPlanFree() ? 'true' : 'false' }},
                         cardholderName: '{{ $name }}'
                     })"
@@ -381,6 +382,7 @@
                                     this.dlocalInstance = dlocal(config.apiKey);
                                     this.fields = this.dlocalInstance.fields({
                                         locale: config.locale,
+                                        country: config.country,
                                         fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }]
                                     });
 
