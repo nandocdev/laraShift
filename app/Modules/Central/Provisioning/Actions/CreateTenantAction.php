@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Actions;
 
 use App\Modules\Central\Payments\Actions\ProcessDirectPaymentAction;
-use App\Modules\Central\Infrastructure\Actions\ProvisionInfrastructureAction;
-use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Provisioning\Models\ProvisioningLog;
-use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Central\Provisioning\Jobs\ProvisionTenantJob;
+use App\Modules\Central\Billing\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,9 +20,6 @@ use Illuminate\Support\Facades\Cache;
 
 final readonly class CreateTenantAction {
     public function __construct(
-        private ReserveTenantDomainAction $reserveDomain,
-        private SetupTenantCoreDataAction $setupCoreData,
-        private ProvisionInfrastructureAction $provisionInfra,
         private ProcessDirectPaymentAction $processDirectPayment,
     ) {
     }
@@ -86,11 +81,10 @@ final readonly class CreateTenantAction {
             }
         }
 
-        // 4. Provisioning Transaction (Atomic Rollback)
+        // 4. Create Tenant and Dispatch Job
         try {
-            return DB::transaction(function () use ($data, $tenantId, $plan) {
-                // Step 0: Create Tenant
-                $tenant = Tenant::create([
+            $tenant = DB::transaction(function () use ($data, $tenantId, $plan) {
+                return Tenant::create([
                     'id' => $tenantId,
                     'slug' => $data->slug,
                     'name' => $data->name,
@@ -98,69 +92,19 @@ final readonly class CreateTenantAction {
                     'plan_id' => $data->plan_id,
                     'status' => 'provisioning',
                 ]);
-
-                // Step 1: Subdomain / Domain Reservation
-                $this->logStep($tenant, 'subdomain', function () use ($tenant, $data) {
-                    $this->reserveDomain->execute($tenant, $data->slug);
-                });
-
-                // Step 2: Database Schema & Core Data
-                $this->logStep($tenant, 'db_schema', function () use ($tenant) {
-                    $this->setupCoreData->execute($tenant);
-                });
-
-                // Step 3: Initial Features/Quotas & Cache priming (implicitly done or can be added)
-                // Assuming setupCoreData handles the seed logic, or we dispatch events.
-                
-                // Step 4: Infrastructure (DNS, Cloud, etc)
-                $this->logStep($tenant, 'infrastructure', function () use ($tenant) {
-                    $this->provisionInfra->execute($tenant);
-                });
-
-                // Step 5: Initial Owner User (TenantProvisioned handles creation and Owner role)
-                $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
-                    TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
-                });
-
-                // Finalize: Active
-                $tenant->update([
-                    'status' => 'active',
-                    'provisioned_at' => now(),
-                ]);
-
-                // Invalidate infrastructure caches
-                Cache::forget('horizon_tenant_queues');
-
-                activity('provisioning')
-                    ->performedOn($tenant)
-                    ->log('tenant_provisioned_successfully');
-
-                return $tenant;
             });
-        } catch (\Exception $e) {
-            // The DB transaction completely rolls back. 
-            // "No se permiten tenants parcialmente creados" and "Nada queda persistido".
-            Log::error("Provisioning failed for tenant {$data->slug}: " . $e->getMessage());
-            
-            // Re-throw so caller (Livewire component) catches it and displays error
-            throw $e;
-        }
-    }
 
-    private function logStep(Tenant $tenant, string $step, callable $callback): void {
-        $log = ProvisioningLog::create([
-            'id' => Str::uuid()->toString(),
-            'tenant_id' => $tenant->id,
-            'step' => $step,
-            'status' => 'pending',
-            'executed_at' => now(),
-        ]);
+            // Dispatch async job
+            ProvisionTenantJob::dispatch(
+                $tenant,
+                $data->email,
+                $data->password,
+                $data->slug
+            );
 
-        try {
-            $callback();
-            $log->update(['status' => 'completed']);
+            return $tenant;
         } catch (\Exception $e) {
-            // We throw the exception to bubble up and trigger the DB transaction rollback
+            Log::error("Failed to create tenant record for {$data->slug}: " . $e->getMessage());
             throw $e;
         }
     }
