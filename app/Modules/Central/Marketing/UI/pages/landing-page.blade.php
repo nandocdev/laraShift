@@ -7,7 +7,7 @@
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" class="h-8 w-auto">
                     @else
-                        <span class="text-xl font-bold tracking-tight text-zinc-900 dark:text-white" style="color: {{ $primaryColor }}">{{ $platformName }}</span>
+                        <span class="text-xl font-bold tracking-tight text-primary">{{ $platformName }}</span>
                     @endif
                 </div>
                 
@@ -27,8 +27,8 @@
     <!-- Hero Section -->
     <header class="relative pt-20 pb-32 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <flux:heading size="xl" class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
-                {{ __('Scale your business with') }} <span style="color: {{ $primaryColor }}">LaraShift</span>
+            <flux:heading size="xl" class="text-5xl md:text-7xl font-extrabold tracking-tighter mb-6">
+                {{ __('Scale your business with') }} <span class="text-primary">LaraShift</span>
             </flux:heading>
             <flux:subheading class="text-xl md:text-2xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto mb-10 leading-relaxed">
                 {{ __('The ultimate production-grade SaaS multi-tenant boilerplate. Built for speed, security, and operational simplicity.') }}
@@ -42,8 +42,8 @@
         
         <!-- Abstract Background Shape -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-0 opacity-20 dark:opacity-10 pointer-events-none">
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl" style="background-color: {{ $primaryColor }}"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl bg-indigo-500"></div>
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl bg-primary animate-pulse"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full blur-3xl bg-indigo-500 animate-pulse" style="animation-delay: 2s;"></div>
         </div>
     </header>
 
@@ -57,7 +57,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg" style="background-color: {{ $primaryColor }}">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg bg-primary">
                         <flux:icon icon="shield-check" variant="solid" />
                     </div>
                     <flux:heading size="lg">{{ __('Tenant Isolation') }}</flux:heading>
@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg" style="background-color: {{ $primaryColor }}">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg bg-primary">
                         <flux:icon icon="credit-card" variant="solid" />
                     </div>
                     <flux:heading size="lg">{{ __('Multi-gateway Billing') }}</flux:heading>
@@ -73,7 +73,7 @@
                 </div>
 
                 <div class="space-y-4">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg" style="background-color: {{ $primaryColor }}">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg bg-primary">
                         <flux:icon icon="server-stack" variant="solid" />
                     </div>
                     <flux:heading size="lg">{{ __('Queue Isolation') }}</flux:heading>
@@ -93,9 +93,9 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 @foreach($plans as $plan)
-                    <flux:card class="relative flex flex-col p-8 {{ $plan->slug === 'pro' ? 'ring-2' : '' }}" style="{{ $plan->slug === 'pro' ? 'border-color: ' . $primaryColor : '' }}">
+                    <flux:card class="relative flex flex-col p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 dark:ring-1 dark:ring-white/10 {{ $plan->slug === 'pro' ? 'ring-2 ring-primary border-primary' : '' }}">
                         @if($plan->slug === 'pro')
-                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-widest shadow-sm" style="background-color: {{ $primaryColor }}">
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-widest shadow-sm bg-primary">
                                 {{ __('Most Popular') }}
                             </div>
                         @endif
@@ -135,7 +135,6 @@
                             href="/register?plan={{ $plan->slug }}"
                             variant="{{ $plan->slug === 'pro' ? 'primary' : 'ghost' }}" 
                             class="w-full py-3"
-                            style="{{ $plan->slug === 'pro' ? 'background-color: ' . $primaryColor : '' }}"
                         >
                             {{ $plan->price_monthly->isPositive() ? __('Get Started') : __('Start for Free') }}
                         </flux:button>
@@ -153,7 +152,7 @@
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" class="h-6 w-auto">
                     @else
-                        <span class="font-bold tracking-tight text-zinc-900 dark:text-white" style="color: {{ $primaryColor }}">{{ $platformName }}</span>
+                        <span class="font-bold tracking-tight text-primary">{{ $platformName }}</span>
                     @endif
                 </div>
                 <p class="text-xs text-zinc-500">© 2026 {{ $platformName }}. {{ __('All rights reserved.') }}</p>

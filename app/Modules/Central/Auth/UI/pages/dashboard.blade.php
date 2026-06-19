@@ -6,7 +6,7 @@
 
     {{-- Key Metrics --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <flux:card class="flex flex-col gap-2">
+        <flux:card class="flex flex-col gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <flux:text size="sm" variant="subtle" class="flex items-center gap-2">
                 <flux:icon name="users" variant="micro" />
                 {{ __('Total Tenants') }}
@@ -14,7 +14,7 @@
             <flux:heading size="xl">{{ $tenantCount }}</flux:heading>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2">
+        <flux:card class="flex flex-col gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <flux:text size="sm" variant="subtle" class="flex items-center gap-2">
                 <flux:icon name="credit-card" variant="micro" />
                 {{ __('Active Subs') }}
@@ -22,7 +22,7 @@
             <flux:heading size="xl">{{ $activeSubscriptionsCount }}</flux:heading>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2">
+        <flux:card class="flex flex-col gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <flux:text size="sm" variant="subtle" class="flex items-center gap-2">
                 <flux:icon name="banknotes" variant="micro" />
                 {{ __('Revenue (30d)') }}
@@ -30,7 +30,7 @@
             <flux:heading size="xl">${{ number_format($totalRevenue, 2) }}</flux:heading>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2">
+        <flux:card class="flex flex-col gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <flux:text size="sm" variant="subtle" class="flex items-center gap-2">
                 <flux:icon name="cpu-chip" variant="micro" />
                 {{ __('System Status') }}
@@ -43,7 +43,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {{-- Recent Tenants --}}
-        <flux:card class="flex flex-col gap-4">
+        <flux:card class="flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <div class="flex items-center justify-between">
                 <flux:heading size="lg">{{ __('Recent Tenants') }}</flux:heading>
                 <flux:button variant="ghost" size="sm" :href="route('central.provisioning.index')" wire:navigate>
@@ -75,17 +75,17 @@
         </flux:card>
 
         {{-- Audit Trail --}}
-        <flux:card class="flex flex-col gap-4">
+        <flux:card class="flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 dark:ring-1 dark:ring-white/10">
             <flux:heading size="lg">{{ __('Platform Activity') }}</flux:heading>
 
             <div class="space-y-4">
                 @foreach($recentActivities as $activity)
-                    <div class="flex items-start gap-3 text-sm">
+                    <div class="flex items-start gap-3 text-sm p-2 -mx-2 rounded-lg transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                         <div class="mt-1">
                             @if($activity->log_name === 'auth')
-                                <flux:icon name="key" variant="micro" class="text-blue-500" />
+                                <flux:icon name="key" variant="micro" class="text-primary" />
                             @elseif($activity->log_name === 'provisioning')
-                                <flux:icon name="server" variant="micro" class="text-green-500" />
+                                <flux:icon name="server" variant="micro" class="text-success" />
                             @else
                                 <flux:icon name="information-circle" variant="micro" class="text-zinc-400" />
                             @endif
