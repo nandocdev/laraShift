@@ -421,13 +421,19 @@
                             },
 
                             async handleSubmit() {
-                                if (this.isPlanFree || this.$wire.paymentAlreadyApproved) {
-                                    this.$wire.register();
-                                    return;
-                                }
-
                                 this.loading = true;
                                 this.error = null;
+
+                                if (this.isPlanFree || this.$wire.paymentAlreadyApproved) {
+                                    try {
+                                        await this.$wire.register();
+                                    } catch (e) {
+                                        this.error = 'An unexpected error occurred';
+                                    } finally {
+                                        this.loading = false;
+                                    }
+                                    return;
+                                }
 
                                 try {
                                     const result = await this.dlocalInstance.createToken(this.cardFieldInstance, {
@@ -441,9 +447,10 @@
                                     }
 
                                     this.$wire.set('payment_token', result.token);
-                                    this.$wire.register();
+                                    await this.$wire.register();
                                 } catch (e) {
                                     this.error = 'An unexpected error occurred';
+                                } finally {
                                     this.loading = false;
                                 }
                             }
