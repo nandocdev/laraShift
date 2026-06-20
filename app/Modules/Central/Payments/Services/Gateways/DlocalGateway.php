@@ -142,14 +142,30 @@ final class DlocalGateway implements PaymentGatewayContract {
     }
 
     public function parseWebhookPayload(array $payload): PaymentResultData {
-        $status = match ((int) ($payload['status'] ?? 0)) {
-            200 => PaymentStatus::Approved,
-            100 => PaymentStatus::Pending,
-            300 => PaymentStatus::Declined,
-            400 => PaymentStatus::Cancelled,
-            700 => PaymentStatus::Refunded,
-            default => PaymentStatus::Failed,
+        $rawStatus = $payload['status'] ?? '';
+        $statusCode = $payload['status_code'] ?? '';
+
+        // Normalize status check. Support both string status codes (like 'PAID') and numeric codes (like 200).
+        $status = match (strtoupper((string) $rawStatus)) {
+            'PAID' => PaymentStatus::Approved,
+            'PENDING' => PaymentStatus::Pending,
+            'REJECTED', 'FAILED' => PaymentStatus::Declined,
+            'CANCELLED' => PaymentStatus::Cancelled,
+            'REFUNDED' => PaymentStatus::Refunded,
+            default => null,
         };
+
+        if ($status === null) {
+            $code = (int) (!empty($statusCode) ? $statusCode : $rawStatus);
+            $status = match ($code) {
+                200 => PaymentStatus::Approved,
+                100 => PaymentStatus::Pending,
+                300 => PaymentStatus::Declined,
+                400 => PaymentStatus::Cancelled,
+                700 => PaymentStatus::Refunded,
+                default => PaymentStatus::Failed,
+            };
+        }
 
         return new PaymentResultData(
             gatewayReference: (string) ($payload['id'] ?? ''),
