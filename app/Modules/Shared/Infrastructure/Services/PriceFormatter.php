@@ -11,9 +11,14 @@ use NumberFormatter;
 
 class PriceFormatter
 {
-    public static function format(Money $money, string $locale = 'en_US'): string
+    public static function format(Money $money, string $locale = 'en'): string
     {
         $currencies = new ISOCurrencies();
+        
+        if (!extension_loaded('intl')) {
+            $locale = 'en';
+        }
+
         $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
         $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
 
