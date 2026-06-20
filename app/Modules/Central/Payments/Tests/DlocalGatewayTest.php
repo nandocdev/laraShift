@@ -43,6 +43,7 @@ final class DlocalGatewayTest extends TestCase {
         ]);
 
         $payment = new PaymentData(
+            context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
             amount: 100.50,
             description: 'Subscription Plan',
             displayId: 'SUBS-123',
@@ -80,6 +81,7 @@ final class DlocalGatewayTest extends TestCase {
         ]);
 
         $payment = new PaymentData(
+            context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
             amount: 100.50,
             description: 'Test',
             displayId: 'INV-1',
@@ -137,6 +139,7 @@ final class DlocalGatewayTest extends TestCase {
         ]);
 
         $payment = new PaymentData(
+            context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
             amount: 100.0,
             description: 'Direct Test',
             displayId: 'INV-DIR',
