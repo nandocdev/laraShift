@@ -48,4 +48,23 @@ class Subscription extends CashierSubscription
     {
         return $this->status;
     }
+
+    /**
+     * Returns next payment date information as a wrapper object for billing views.
+     */
+    public function nextPayment(): ?object
+    {
+        if (!$this->current_period_end) {
+            return null;
+        }
+
+        return new class($this->current_period_end) {
+            public function __construct(private $date) {}
+
+            public function date()
+            {
+                return $this->date;
+            }
+        };
+    }
 }
