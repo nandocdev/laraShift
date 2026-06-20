@@ -179,7 +179,7 @@ final class DlocalGateway implements PaymentGatewayContract {
             'payer' => [
                 'name' => $payment->customFieldValues['name'] ?? 'Customer',
                 'email' => $payment->email,
-                'document' => $payment->customFieldValues['document'] ?? 'NA',
+                'document' => $payment->customFieldValues['document'] ?? ($this->baseUrl === 'https://sandbox.dlocal.com' ? '12345678' : 'NA'),
             ],
             'card' => [
                 'token' => $token,
