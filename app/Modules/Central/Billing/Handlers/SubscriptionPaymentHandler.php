@@ -6,6 +6,7 @@ namespace App\Modules\Central\Billing\Handlers;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Models\Subscription;
+use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Payments\Enums\PaymentContext;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\PaymentHandlerContract;
@@ -46,7 +47,7 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
         $tenant = Tenant::findOrFail($tenantId);
         $plan = Plan::findOrFail($planId);
 
-        Subscription::updateOrCreate(
+        $subscription = Subscription::updateOrCreate(
             [
                 'tenant_id'                => $tenant->id,
                 'provider_subscription_id' => $metadata['gateway_reference'] ?? $displayId,
@@ -60,6 +61,21 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
         );
 
         $tenant->update(['plan_id' => $plan->slug]);
+
+        // Generate Invoice for the tenant
+        Invoice::updateOrCreate(
+            [
+                'provider_invoice_id' => $metadata['gateway_reference'] ?? $displayId,
+            ],
+            [
+                'tenant_id'       => $tenant->id,
+                'subscription_id' => $subscription->id,
+                'amount'          => (int) ($amount * 100),
+                'currency'        => $metadata['currency'] ?? 'USD',
+                'status'          => 'paid',
+                'issued_at'       => now(),
+            ]
+        );
 
         Log::info('SubscriptionPaymentHandler: subscription fulfilled', [
             'tenant'     => $tenantId,
