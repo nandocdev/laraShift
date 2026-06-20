@@ -98,7 +98,7 @@ final readonly class CreateTenantAction {
             ProvisionTenantJob::dispatch(
                 $tenant,
                 $data->email,
-                $data->password,
+                $data->password ?? Str::random(12),
                 $data->slug
             );
 
