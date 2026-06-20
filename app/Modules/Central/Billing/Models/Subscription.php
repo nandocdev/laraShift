@@ -30,4 +30,22 @@ class Subscription extends CashierSubscription
         'ends_at' => 'datetime',
         'trial_ends_at' => 'datetime',
     ];
+
+    /**
+     * Compatibility accessor for Laravel Cashier's type column.
+     * Cashier defaults the type of standard subscriptions to 'default'.
+     */
+    public function getTypeAttribute(): string
+    {
+        return 'default';
+    }
+
+    /**
+     * Compatibility accessor for Laravel Cashier's stripe_status column.
+     * Maps our local status column to stripe_status for active() verification.
+     */
+    public function getStripeStatusAttribute(): ?string
+    {
+        return $this->status;
+    }
 }
