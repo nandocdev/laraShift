@@ -32,6 +32,11 @@ return [
         'environment' => env('DLOCAL_ENV', env('APP_ENV') === 'production' ? 'production' : 'sandbox'),
 
         /*
+         * Smart Fields API Key (public key for frontend tokenization)
+         */
+        'smart_fields' => env('DLOCAL_SMART_FIELDS'),
+
+        /*
          * X-Login from dLocal Go dashboard.
          */
         'login' => env('DLOCAL_LOGIN'),

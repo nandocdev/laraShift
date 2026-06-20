@@ -4,6 +4,7 @@ return [
     'environment' => env('BILLING_ENV', env('APP_ENV') === 'production' ? 'production' : 'sandbox'),
 
     'dlocal' => [
+        'smart_fields' => env('DLOCAL_SMART_FIELDS', ''),
         'login' => env('DLOCAL_LOGIN', ''),
         'trans_key' => env('DLOCAL_TRANS_KEY', ''),
         'secret_key' => env('DLOCAL_SECRET_KEY', ''),

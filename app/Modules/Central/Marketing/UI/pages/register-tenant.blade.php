@@ -177,9 +177,9 @@
             @if($step === 3)
                 <div class="space-y-6" wire:key="step-3"
                     x-data="registrationCheckout({
-                        apiKey: '{{ config('payments.dlocal.login') }}',
+                        apiKey: '{{ config('payments.dlocal.smart_fields') }}',
                         locale: '{{ app()->getLocale() }}',
-                        country: 'US',
+                        country: 'UY',
                         isPlanFree: {{ $this->isPlanFree() ? 'true' : 'false' }},
                         cardholderName: '{{ $name }}'
                     })"
@@ -350,9 +350,9 @@
 
                             initDlocal() {
                                 if (typeof dlocal === 'undefined') {
-                                    if (!document.querySelector('script[src*="js.dlocal.com"]')) {
+                                    if (!document.querySelector('script[src*="dlocal.com"]')) {
                                         const script = document.createElement('script');
-                                        script.src = 'https://js.dlocal.com/';
+                                        script.src = '{{ config('payments.dlocal.environment') === 'production' ? 'https://js.dlocal.com/' : 'https://js-sandbox.dlocal.com/' }}';
                                         script.async = true;
                                         script.onload = () => this.initDlocal();
                                         document.head.appendChild(script);
@@ -398,12 +398,13 @@
 
                                     this.cardFieldInstance = this.fields.create('card', { style });
 
-                                    this.cardFieldInstance.mount(document.getElementById('reg-card-field')).then(() => {
+                                    try {
+                                        this.cardFieldInstance.mount(document.getElementById('reg-card-field'));
                                         this.fieldsMounted = true;
-                                    }).catch(err => {
+                                    } catch (err) {
                                         this.error = 'Failed to mount secure field.';
                                         console.error('Mount error:', err);
-                                    });
+                                    }
 
                                     const validate = () => {
                                         this.isFormValid = this.cardholderName.length > 2 && !this.fieldError;

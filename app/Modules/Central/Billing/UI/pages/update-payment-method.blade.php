@@ -82,7 +82,7 @@
     @elseif($gateway === 'dlocal')
         <flux:card>
             <div x-data="{
-                apiKey: '{{ config('payments.dlocal.login') }}',
+                apiKey: '{{ config('payments.dlocal.smart_fields') }}',
                 locale: '{{ app()->getLocale() }}',
                 dlocalInstance: null,
                 fields: null,
@@ -232,7 +232,7 @@
                     </div>
                 </div>
 
-                <script src="https://js.dlocal.com/v1/"></script>
+                <script src="{{ config('payments.dlocal.environment') === 'production' ? 'https://js.dlocal.com/v1/' : 'https://js-sandbox.dlocal.com/v1/' }}"></script>
             </div>
         </flux:card>
     @else
