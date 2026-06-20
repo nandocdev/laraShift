@@ -236,7 +236,7 @@
                             @if(!$this->isPlanFree())
                                 <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ __('Payment Information') }}</h4>
                                 
-                                <div x-show="error || ($wire.payment_token === null && $wire.error)" style="display: none;" class="p-3 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
+                                <div x-show="error || $wire.error" style="display: none;" class="p-3 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
                                     <span x-text="error || $wire.error"></span>
                                 </div>
 
