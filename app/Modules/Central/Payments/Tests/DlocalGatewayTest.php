@@ -126,6 +126,21 @@ final class DlocalGatewayTest extends TestCase {
         $this->assertSame('DLOC-123', $result->gatewayReference);
         $this->assertTrue($result->status->isSuccessful());
         $this->assertSame(50.0, $result->amount);
+
+        // Test string PAID status mapping
+        $payloadString = [
+            'id' => 'DLOC-456',
+            'order_id' => 'INV-002',
+            'status' => 'PAID',
+            'status_code' => '200',
+            'amount' => 29.99,
+            'status_detail' => 'The payment was paid.'
+        ];
+
+        $resultString = $this->gateway->parseWebhookPayload($payloadString);
+        $this->assertSame('DLOC-456', $resultString->gatewayReference);
+        $this->assertTrue($resultString->status->isSuccessful());
+        $this->assertSame(29.99, $resultString->amount);
     }
 
     public function test_process_direct_payment_sends_correct_payload(): void {
