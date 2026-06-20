@@ -51,6 +51,8 @@ final readonly class CreateTenantAction {
         // We pre-generate the UUID to pass it to the payment
         $tenantId = Str::uuid()->toString();
 
+        $tenant = null;
+
         // 3. Process Payment FIRST (Before DB Transaction)
         if ($plan && $plan->price_monthly->isPositive() && $data->payment_token) {
             // Idempotency: same slug + email generates same checkout slug.
@@ -61,38 +63,63 @@ final readonly class CreateTenantAction {
             $existingPayment = Payment::where('slug', $checkoutSlug)->where('status', 'approved')->first();
 
             if (!$existingPayment) {
-                $paymentData = new PaymentData(
-                    context: PaymentContext::Subscription,
-                    amount: (float) $plan->price_monthly->getAmount() / 100,
-                    description: "Subscription for {$plan->name}",
-                    displayId: 'SUB-' . strtoupper(Str::random(6)),
-                    email: $data->email,
-                    tenantId: $tenantId, // Generated ID
-                    slug: $checkoutSlug
-                );
-
-                $result = $this->processDirectPayment->execute($paymentData, $data->payment_token, false);
-
-                if (!($result['success'] ?? false)) {
-                    throw new \Exception("Payment failed: " . ($result['message'] ?? 'Unknown error'));
-                }
-            } else {
-                $tenantId = $existingPayment->tenant_id; // Use the one already attached to the payment
-            }
-        }
-
-        // 4. Create Tenant and Dispatch Job
-        try {
-            $tenant = DB::transaction(function () use ($data, $tenantId, $plan) {
-                return Tenant::create([
+                // To prevent race conditions and satisfy SubscriptionPaymentHandler's search for the Tenant model
+                // on DB::afterCommit, we create the Tenant record with 'pending_payment' status beforehand.
+                $tenant = Tenant::create([
                     'id' => $tenantId,
                     'slug' => $data->slug,
                     'name' => $data->name,
                     'email' => $data->email,
                     'plan_id' => $data->plan_id,
-                    'status' => 'provisioning',
+                    'status' => 'pending_payment',
                 ]);
-            });
+
+                try {
+                    $paymentData = new PaymentData(
+                        context: PaymentContext::Subscription,
+                        amount: (float) $plan->price_monthly->getAmount() / 100,
+                        description: "Subscription for {$plan->name}",
+                        displayId: 'SUB-' . strtoupper(Str::random(6)),
+                        email: $data->email,
+                        tenantId: $tenantId, // Generated ID
+                        customFieldValues: [
+                            'plan_id' => $plan->id,
+                        ],
+                        slug: $checkoutSlug
+                    );
+
+                    $result = $this->processDirectPayment->execute($paymentData, $data->payment_token, false);
+
+                    if (!($result['success'] ?? false)) {
+                        throw new \Exception("Payment failed: " . ($result['message'] ?? 'Unknown error'));
+                    }
+                } catch (\Exception $e) {
+                    // Rollback: delete the provisionally created tenant if payment failed
+                    $tenant->delete();
+                    throw $e;
+                }
+            } else {
+                $tenantId = $existingPayment->tenant_id; // Use the one already attached to the payment
+                $tenant = Tenant::find($tenantId);
+            }
+        }
+
+        // 4. Create Tenant and Dispatch Job
+        try {
+            if (!$tenant) {
+                $tenant = DB::transaction(function () use ($data, $tenantId) {
+                    return Tenant::create([
+                        'id' => $tenantId,
+                        'slug' => $data->slug,
+                        'name' => $data->name,
+                        'email' => $data->email,
+                        'plan_id' => $data->plan_id,
+                        'status' => 'provisioning',
+                    ]);
+                });
+            } else {
+                $tenant->update(['status' => 'provisioning']);
+            }
 
             // Dispatch async job
             ProvisionTenantJob::dispatch(
