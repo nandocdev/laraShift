@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Services\Gateways;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use App\Modules\Shared\Contracts\PaymentGatewayContract;
+use App\Modules\Central\Payments\Actions\GenerateDLocalSignature;
 use App\Modules\Central\Payments\DTOs\MerchantData;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
 use App\Modules\Central\Payments\DTOs\PayoutData;
 use App\Modules\Central\Payments\DTOs\PayoutResultData;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Central\Payments\Exceptions\ClaveGatewayException; // We might want to rename this to a generic PaymentGatewayException later
-
-use App\Modules\Central\Payments\Actions\GenerateDLocalSignature;
 use App\Modules\Central\Payments\Exceptions\DlocalGatewayException;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
+// We might want to rename this to a generic PaymentGatewayException later
 
-final class DlocalGateway implements PaymentGatewayContract {
+use App\Modules\Shared\Contracts\TenantDomainResolverContract;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+final class DlocalGateway implements PaymentGatewayContract
+{
     private string $baseUrl;
+
     private string $login;
+
     private string $transKey;
+
     private string $secretKey;
+
     private string $webhookSecret;
 
     public function __construct(
@@ -39,11 +45,13 @@ final class DlocalGateway implements PaymentGatewayContract {
             : 'https://sandbox.dlocal.com';
     }
 
-    public function identifier(): string {
+    public function identifier(): string
+    {
         return 'dlocal';
     }
 
-    public function listTransactions(string $apiKey, array $filters = []): array {
+    public function listTransactions(string $apiKey, array $filters = []): array
+    {
         $url = "{$this->baseUrl}/payments";
         $date = $this->getDlocalDate();
 
@@ -52,21 +60,24 @@ final class DlocalGateway implements PaymentGatewayContract {
             $response = Http::withHeaders($headers)->get($url, $filters);
 
             if ($response->failed()) {
-                Log::error("dLocal listTransactions failed", [
+                Log::error('dLocal listTransactions failed', [
                     'status' => $response->status(),
-                    'body' => $response->body()
+                    'body' => $response->body(),
                 ]);
+
                 return [];
             }
 
             return $response->json() ?? [];
         } catch (\Exception $e) {
-            Log::error("dLocal listTransactions failure: " . $e->getMessage());
+            Log::error('dLocal listTransactions failure: '.$e->getMessage());
+
             return [];
         }
     }
 
-    public function loadMerchant(string $apiKey): MerchantData {
+    public function loadMerchant(string $apiKey): MerchantData
+    {
         return new MerchantData(
             id: $this->login,
             slug: 'dlocal-merchant',
@@ -78,24 +89,61 @@ final class DlocalGateway implements PaymentGatewayContract {
         );
     }
 
-    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string {
+    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
+    {
         $url = "{$this->baseUrl}/payments";
         $date = $this->getDlocalDate();
-        $idempotencyKey = $payment->resolvedSlug() . '_' . time();
+        $idempotencyKey = $payment->resolvedSlug().'_'.time();
 
-        $domainResolver = app(\App\Modules\Shared\Contracts\TenantDomainResolverContract::class);
-        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId) 
-            ?? $payment->tenantId . '.' . config('tenancy.central_domain');
-            
+        $domainResolver = app(TenantDomainResolverContract::class);
+        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId)
+            ?? $payment->tenantId.'.'.config('tenancy.central_domain');
+
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
         $port = parse_url(config('app.url'), PHP_URL_PORT);
         $portSuffix = $port ? ":$port" : '';
         $baseUrl = "$scheme://$tenantDomain$portSuffix";
 
+        $country = strtoupper($payment->customFieldValues['country'] ?? 'UY');
+        $isSandbox = $this->baseUrl === 'https://sandbox.dlocal.com';
+
+        if ($isSandbox) {
+            $gatewayCountry = 'UY';
+            $gatewayCurrency = 'UYU';
+        } else {
+            $countryCurrencies = [
+                'UY' => 'UYU',
+                'AR' => 'ARS',
+                'BR' => 'BRL',
+                'MX' => 'MXN',
+                'CO' => 'COP',
+                'CL' => 'CLP',
+                'PE' => 'PEN',
+                'EC' => 'USD',
+                'PA' => 'USD',
+                'SV' => 'USD',
+            ];
+            $gatewayCountry = $country;
+            $gatewayCurrency = $countryCurrencies[$country] ?? 'USD';
+        }
+
+        $exchangeRates = [
+            'USD' => 1.0,
+            'UYU' => 40.0,
+            'ARS' => 900.0,
+            'BRL' => 5.4,
+            'MXN' => 18.0,
+            'COP' => 4000.0,
+            'CLP' => 930.0,
+            'PEN' => 3.8,
+        ];
+        $rate = $exchangeRates[$gatewayCurrency] ?? 1.0;
+        $amount = round((float) $payment->amount * $rate, 2);
+
         $payload = [
-            'amount' => (float) $payment->amount,
-            'currency' => 'USD',
-            'country' => $payment->customFieldValues['country'] ?? 'UY', // Default country if not provided
+            'amount' => $amount,
+            'currency' => $gatewayCurrency,
+            'country' => $gatewayCountry,
             'order_id' => $payment->resolvedSlug(),
             'success_url' => "$baseUrl/billing/success",
             'back_url' => "$baseUrl/billing/cancel",
@@ -112,36 +160,39 @@ final class DlocalGateway implements PaymentGatewayContract {
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $headers = $this->buildHeaders($date, $jsonPayload, $idempotencyKey);
 
-        Log::info("dLocal: Creating payment session V2.1", ['order_id' => $payment->resolvedSlug()]);
+        Log::info('dLocal: Creating payment session V2.1', ['order_id' => $payment->resolvedSlug()]);
 
         $response = Http::withHeaders($headers)
             ->withBody($jsonPayload, 'application/json')
             ->send('POST', $url);
 
         if ($response->failed()) {
-            Log::error("dLocal API Error V2.1", [
-                'status' => $response->status(), 
+            Log::error('dLocal API Error V2.1', [
+                'status' => $response->status(),
                 'body' => $response->body(),
-                'headers' => $headers
+                'headers' => $headers,
             ]);
-            throw new DlocalGatewayException("dLocal payment initiation failed: " . ($response->json()['message'] ?? 'Unknown error'));
+            throw new DlocalGatewayException('dLocal payment initiation failed: '.($response->json()['message'] ?? 'Unknown error'));
         }
 
         $data = $response->json();
 
-        return $data['redirect_url'] ?? throw new DlocalGatewayException("No redirect URL returned by dLocal");
+        return $data['redirect_url'] ?? throw new DlocalGatewayException('No redirect URL returned by dLocal');
     }
 
-    public function verifyWebhook(string $payload, string $signature, string $secret): bool {
+    public function verifyWebhook(string $payload, string $signature, string $secret): bool
+    {
         if (str_contains($signature, 'Signature: ')) {
             $signature = last(explode('Signature: ', $signature));
         }
 
         $expected = hash_hmac('sha256', $payload, $secret);
+
         return hash_equals($expected, $signature);
     }
 
-    public function parseWebhookPayload(array $payload): PaymentResultData {
+    public function parseWebhookPayload(array $payload): PaymentResultData
+    {
         $rawStatus = $payload['status'] ?? '';
         $statusCode = $payload['status_code'] ?? '';
 
@@ -156,7 +207,7 @@ final class DlocalGateway implements PaymentGatewayContract {
         };
 
         if ($status === null) {
-            $code = (int) (!empty($statusCode) ? $statusCode : $rawStatus);
+            $code = (int) (! empty($statusCode) ? $statusCode : $rawStatus);
             $status = match ($code) {
                 200 => PaymentStatus::Approved,
                 100 => PaymentStatus::Pending,
@@ -180,15 +231,52 @@ final class DlocalGateway implements PaymentGatewayContract {
         );
     }
 
-    public function processDirectPayment(PaymentData $payment, string $apiKey, ?string $token = null): PaymentResultData {
+    public function processDirectPayment(PaymentData $payment, string $apiKey, ?string $token = null): PaymentResultData
+    {
         $url = "{$this->baseUrl}/payments";
         $date = $this->getDlocalDate();
-        $idempotencyKey = $payment->resolvedSlug() . '_' . time();
+        $idempotencyKey = $payment->resolvedSlug().'_'.time();
+
+        $country = strtoupper($payment->customFieldValues['country'] ?? 'UY');
+        $isSandbox = $this->baseUrl === 'https://sandbox.dlocal.com';
+
+        if ($isSandbox) {
+            $gatewayCountry = 'UY';
+            $gatewayCurrency = 'UYU';
+        } else {
+            $countryCurrencies = [
+                'UY' => 'UYU',
+                'AR' => 'ARS',
+                'BR' => 'BRL',
+                'MX' => 'MXN',
+                'CO' => 'COP',
+                'CL' => 'CLP',
+                'PE' => 'PEN',
+                'EC' => 'USD',
+                'PA' => 'USD',
+                'SV' => 'USD',
+            ];
+            $gatewayCountry = $country;
+            $gatewayCurrency = $countryCurrencies[$country] ?? 'USD';
+        }
+
+        $exchangeRates = [
+            'USD' => 1.0,
+            'UYU' => 40.0,
+            'ARS' => 900.0,
+            'BRL' => 5.4,
+            'MXN' => 18.0,
+            'COP' => 4000.0,
+            'CLP' => 930.0,
+            'PEN' => 3.8,
+        ];
+        $rate = $exchangeRates[$gatewayCurrency] ?? 1.0;
+        $amount = round((float) $payment->amount * $rate, 2);
 
         $payload = [
-            'amount' => (float) $payment->amount,
-            'currency' => 'USD',
-            'country' => $payment->customFieldValues['country'] ?? 'UY',
+            'amount' => $amount,
+            'currency' => $gatewayCurrency,
+            'country' => $gatewayCountry,
             'order_id' => $payment->resolvedSlug(),
             'payment_method_id' => 'CARD',
             'payment_method_flow' => 'DIRECT',
@@ -206,7 +294,7 @@ final class DlocalGateway implements PaymentGatewayContract {
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $headers = $this->buildHeaders($date, $jsonPayload, $idempotencyKey);
 
-        Log::info("dLocal: Processing direct payment", ['order_id' => $payment->resolvedSlug()]);
+        Log::info('dLocal: Processing direct payment', ['order_id' => $payment->resolvedSlug()]);
 
         $response = Http::withHeaders($headers)
             ->withBody($jsonPayload, 'application/json')
@@ -215,7 +303,8 @@ final class DlocalGateway implements PaymentGatewayContract {
         $data = $response->json();
 
         if ($response->failed()) {
-            Log::error("dLocal Direct Payment Failed", ['status' => $response->status(), 'body' => $data]);
+            Log::error('dLocal Direct Payment Failed', ['status' => $response->status(), 'body' => $data]);
+
             return new PaymentResultData(
                 gatewayReference: (string) ($data['id'] ?? ''),
                 displayId: $payment->displayId,
@@ -231,10 +320,11 @@ final class DlocalGateway implements PaymentGatewayContract {
         return $this->parseWebhookPayload($data);
     }
 
-    public function submitPayout(PayoutData $payout): PayoutResultData {
+    public function submitPayout(PayoutData $payout): PayoutResultData
+    {
         $url = "{$this->baseUrl}/v3/payouts";
         $date = $this->getDlocalDate();
-        
+
         $payload = [
             'amount' => (float) $payout->amount,
             'currency' => $payout->currency,
@@ -252,7 +342,7 @@ final class DlocalGateway implements PaymentGatewayContract {
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $headers = $this->buildHeaders($date, $jsonPayload);
 
-        Log::info("dLocal: Submitting Payout V3", ['external_id' => $payout->externalId]);
+        Log::info('dLocal: Submitting Payout V3', ['external_id' => $payout->externalId]);
 
         $response = Http::withHeaders($headers)
             ->withBody($jsonPayload, 'application/json')
@@ -261,7 +351,8 @@ final class DlocalGateway implements PaymentGatewayContract {
         $data = $response->json();
 
         if ($response->failed()) {
-            Log::error("dLocal Payout Submission Failed", ['status' => $response->status(), 'body' => $data]);
+            Log::error('dLocal Payout Submission Failed', ['status' => $response->status(), 'body' => $data]);
+
             return new PayoutResultData(
                 id: (string) ($data['id'] ?? ''),
                 status: 'REJECTED',
@@ -283,17 +374,18 @@ final class DlocalGateway implements PaymentGatewayContract {
         );
     }
 
-    public function getPayoutStatus(string $payoutId): PayoutResultData {
+    public function getPayoutStatus(string $payoutId): PayoutResultData
+    {
         $url = "{$this->baseUrl}/v3/payouts/{$payoutId}";
         $date = $this->getDlocalDate();
-        
+
         $headers = $this->buildHeaders($date);
 
         $response = Http::withHeaders($headers)->get($url);
         $data = $response->json();
 
         if ($response->failed()) {
-            Log::error("dLocal Payout Status Check Failed", ['status' => $response->status(), 'id' => $payoutId]);
+            Log::error('dLocal Payout Status Check Failed', ['status' => $response->status(), 'id' => $payoutId]);
             throw new DlocalGatewayException("Failed to retrieve payout status for ID: {$payoutId}");
         }
 
@@ -307,81 +399,86 @@ final class DlocalGateway implements PaymentGatewayContract {
         );
     }
 
-    public function createEnrollment(array $payload): array {
+    public function createEnrollment(array $payload): array
+    {
         $url = "{$this->baseUrl}/enrollments";
         $date = $this->getDlocalDate();
-        $idempotencyKey = ($payload['external_id'] ?? 'enroll_') . '_' . time();
+        $idempotencyKey = ($payload['external_id'] ?? 'enroll_').'_'.time();
 
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $headers = $this->buildHeaders($date, $jsonPayload, $idempotencyKey);
 
-        Log::info("dLocal: Creating enrollment", ['external_id' => $payload['external_id'] ?? '']);
+        Log::info('dLocal: Creating enrollment', ['external_id' => $payload['external_id'] ?? '']);
 
         $response = Http::withHeaders($headers)
             ->withBody($jsonPayload, 'application/json')
             ->send('POST', $url);
 
         if ($response->failed()) {
-            Log::error("dLocal Create Enrollment Failed", [
+            Log::error('dLocal Create Enrollment Failed', [
                 'status' => $response->status(),
                 'body' => $response->json(),
-                'payload' => $payload
+                'payload' => $payload,
             ]);
-            throw new DlocalGatewayException("dLocal enrollment creation failed: " . ($response->json()['message'] ?? 'Unknown error'));
+            throw new DlocalGatewayException('dLocal enrollment creation failed: '.($response->json()['message'] ?? 'Unknown error'));
         }
 
         return $response->json() ?? [];
     }
 
-    public function cancelEnrollment(string $enrollmentId): array {
+    public function cancelEnrollment(string $enrollmentId): array
+    {
         $url = "{$this->baseUrl}/enrollments/{$enrollmentId}/cancel";
         $date = $this->getDlocalDate();
 
         $headers = $this->buildHeaders($date);
 
-        Log::info("dLocal: Cancelling enrollment", ['enrollment_id' => $enrollmentId]);
+        Log::info('dLocal: Cancelling enrollment', ['enrollment_id' => $enrollmentId]);
 
         $response = Http::withHeaders($headers)->send('POST', $url);
 
         if ($response->failed()) {
-            Log::error("dLocal Cancel Enrollment Failed", [
+            Log::error('dLocal Cancel Enrollment Failed', [
                 'status' => $response->status(),
                 'body' => $response->json(),
-                'enrollment_id' => $enrollmentId
+                'enrollment_id' => $enrollmentId,
             ]);
-            throw new DlocalGatewayException("dLocal enrollment cancellation failed: " . ($response->json()['message'] ?? 'Unknown error'));
+            throw new DlocalGatewayException('dLocal enrollment cancellation failed: '.($response->json()['message'] ?? 'Unknown error'));
         }
 
         return $response->json() ?? [];
     }
 
-    public function getEnrollment(string $enrollmentId): array {
+    public function getEnrollment(string $enrollmentId): array
+    {
         $url = "{$this->baseUrl}/enrollments/{$enrollmentId}";
         $date = $this->getDlocalDate();
 
         $headers = $this->buildHeaders($date);
 
-        Log::info("dLocal: Retrieving enrollment", ['enrollment_id' => $enrollmentId]);
+        Log::info('dLocal: Retrieving enrollment', ['enrollment_id' => $enrollmentId]);
 
         $response = Http::withHeaders($headers)->get($url);
 
         if ($response->failed()) {
-            Log::error("dLocal Get Enrollment Failed", [
+            Log::error('dLocal Get Enrollment Failed', [
                 'status' => $response->status(),
                 'body' => $response->json(),
-                'enrollment_id' => $enrollmentId
+                'enrollment_id' => $enrollmentId,
             ]);
-            throw new DlocalGatewayException("Failed to retrieve enrollment: " . ($response->json()['message'] ?? 'Unknown error'));
+            throw new DlocalGatewayException('Failed to retrieve enrollment: '.($response->json()['message'] ?? 'Unknown error'));
         }
 
         return $response->json() ?? [];
     }
 
-    private function getDlocalDate(): string {
+    private function getDlocalDate(): string
+    {
         return now()->format('Y-m-d\TH:i:s.v\Z');
     }
 
-    private function buildHeaders(string $date, ?string $body = null, ?string $idempotencyKey = null): array {
+    private function buildHeaders(string $date, ?string $body = null, ?string $idempotencyKey = null): array
+    {
         $signature = $this->generateSignature->execute(
             $this->login,
             $date,

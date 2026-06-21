@@ -30,11 +30,45 @@ class DlocalBillingProvider implements BillingProvider
         $baseUrl = "$scheme://$tenantDomain$portSuffix";
 
         $country = strtoupper($tenant->country ?? 'UY');
-        $gatewayCountry = in_array($country, ['EC', 'PA', 'SV', 'US']) ? $country : 'EC';
+        $isSandbox = config('payments.dlocal.environment') === 'sandbox';
+
+        if ($isSandbox) {
+            $gatewayCountry = 'UY';
+            $gatewayCurrency = 'UYU';
+        } else {
+            $countryCurrencies = [
+                'UY' => 'UYU',
+                'AR' => 'ARS',
+                'BR' => 'BRL',
+                'MX' => 'MXN',
+                'CO' => 'COP',
+                'CL' => 'CLP',
+                'PE' => 'PEN',
+                'EC' => 'USD',
+                'PA' => 'USD',
+                'SV' => 'USD',
+            ];
+            $gatewayCountry = $country;
+            $gatewayCurrency = $countryCurrencies[$country] ?? 'USD';
+        }
+
+        $exchangeRates = [
+            'USD' => 1.0,
+            'UYU' => 40.0,
+            'ARS' => 900.0,
+            'BRL' => 5.4,
+            'MXN' => 18.0,
+            'COP' => 4000.0,
+            'CLP' => 930.0,
+            'PEN' => 3.8,
+        ];
+        $rate = $exchangeRates[$gatewayCurrency] ?? 1.0;
+        $usdAmount = (float) $plan->price_monthly->getAmount() / 100;
+        $localAmount = round($usdAmount * $rate, 2);
 
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
-            'currency' => 'USD',
+            'currency' => $gatewayCurrency,
             'country' => $gatewayCountry,
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name}",
@@ -50,7 +84,7 @@ class DlocalBillingProvider implements BillingProvider
                 'frequency' => 'MONTHLY',
                 'amount' => [
                     'type' => 'FIXED',
-                    'value' => (float) $plan->price_monthly->getAmount() / 100,
+                    'value' => $localAmount,
                 ],
             ],
             'notification_url' => route('payments.webhooks.dlocal', ['tenant' => $tenant->id]),
@@ -162,11 +196,45 @@ class DlocalBillingProvider implements BillingProvider
         $baseUrl = "$scheme://$tenantDomain$portSuffix";
 
         $country = strtoupper($tenant->country ?? 'UY');
-        $gatewayCountry = in_array($country, ['EC', 'PA', 'SV', 'US']) ? $country : 'EC';
+        $isSandbox = config('payments.dlocal.environment') === 'sandbox';
+
+        if ($isSandbox) {
+            $gatewayCountry = 'UY';
+            $gatewayCurrency = 'UYU';
+        } else {
+            $countryCurrencies = [
+                'UY' => 'UYU',
+                'AR' => 'ARS',
+                'BR' => 'BRL',
+                'MX' => 'MXN',
+                'CO' => 'COP',
+                'CL' => 'CLP',
+                'PE' => 'PEN',
+                'EC' => 'USD',
+                'PA' => 'USD',
+                'SV' => 'USD',
+            ];
+            $gatewayCountry = $country;
+            $gatewayCurrency = $countryCurrencies[$country] ?? 'USD';
+        }
+
+        $exchangeRates = [
+            'USD' => 1.0,
+            'UYU' => 40.0,
+            'ARS' => 900.0,
+            'BRL' => 5.4,
+            'MXN' => 18.0,
+            'COP' => 4000.0,
+            'CLP' => 930.0,
+            'PEN' => 3.8,
+        ];
+        $rate = $exchangeRates[$gatewayCurrency] ?? 1.0;
+        $usdAmount = (float) $plan->price_monthly->getAmount() / 100;
+        $localAmount = round($usdAmount * $rate, 2);
 
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
-            'currency' => 'USD',
+            'currency' => $gatewayCurrency,
             'country' => $gatewayCountry,
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name} (Trial)",
@@ -185,7 +253,7 @@ class DlocalBillingProvider implements BillingProvider
                 'frequency' => 'MONTHLY',
                 'amount' => [
                     'type' => 'FIXED',
-                    'value' => (float) $plan->price_monthly->getAmount() / 100,
+                    'value' => $localAmount,
                 ],
             ],
             'notification_url' => route('payments.webhooks.dlocal', ['tenant' => $tenant->id]),
