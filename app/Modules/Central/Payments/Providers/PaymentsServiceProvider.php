@@ -27,6 +27,8 @@ final class PaymentsServiceProvider extends ServiceProvider {
             };
         });
 
+        $this->app->alias(PaymentGatewayContract::class, \App\Modules\Central\Payments\Contracts\PaymentGateway::class);
+
         // ── Payment Handler Bindings (Strategy Pattern) ──────────────────────
         // Tagged bindings para handlers post-pago por contexto.
         // Cada handler implementa PaymentHandlerContract y se registra aquí.

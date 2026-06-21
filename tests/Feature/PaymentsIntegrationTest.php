@@ -66,6 +66,7 @@ it('generates a PagueloFacil hosted checkout URL', function () {
 
     $gateway = new ClaveGateway(App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment::Sandbox);
     $url = $gateway->buildCheckoutUrl(new PaymentData(
+        context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
         amount: 29.99,
         description: 'Test',
         displayId: '123',
@@ -142,19 +143,20 @@ it('fulfills a subscription when payment is approved', function () {
         ]
     ]);
 
-    $result = new \App\Modules\Central\Payments\DTOs\PaymentResultData(
-        gatewayReference: 'TX_SUCCESS',
+    $dispatcher = app(\App\Modules\Central\Payments\Services\PaymentHandlerDispatcher::class);
+    $dispatcher->dispatch(
+        context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
+        tenantId: $this->tenant->id,
         displayId: 'sub_' . $this->tenant->id,
-        status: PaymentStatus::Approved,
         amount: 29.99,
-        gatewayCode: 'CLAVE',
-        authorizationCode: '123456',
-        errorCode: null,
-        errorMessage: null
+        success: true,
+        metadata: [
+            'plan_id' => $plan->id,
+            'gateway_reference' => 'TX_SUCCESS',
+            'gateway' => 'paguelofacil',
+            'currency' => 'USD',
+        ]
     );
-
-    // Fire the event (Listeners are NOT faked)
-    event(new PaymentApproved($payment, $result));
 
     // The listener should have executed
     $this->tenant->refresh();

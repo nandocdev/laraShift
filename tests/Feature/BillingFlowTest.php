@@ -67,6 +67,7 @@ class BillingFlowTest extends TestCase
         $gateway = app(\App\Modules\Central\Payments\Contracts\PaymentGateway::class);
         
         $paymentData = new PaymentData(
+            context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
             amount: 29.99,
             description: 'Subscription to Pro',
             displayId: 'sub_' . $this->tenant->id,

@@ -50,6 +50,9 @@ class DlocalBillingProviderTest extends TestCase
 
     public function test_create_checkout_session_sends_correct_payload_and_returns_url()
     {
+        config(['payments.dlocal.environment' => 'production']);
+        $this->tenant->update(['country' => 'EC']);
+
         Http::fake([
             '*/enrollments' => Http::response([
                 'id' => 'E-12345',
@@ -91,7 +94,7 @@ class DlocalBillingProviderTest extends TestCase
             'gateway' => 'dlocal',
         ]);
 
-        $this->provider->cancelSubscription($this->tenant, 'E-12345');
+        $this->provider->cancelSubscription($this->tenant, 'E-12345', true);
 
         $subscription->refresh();
         $this->assertSame('cancelled', $subscription->status);
