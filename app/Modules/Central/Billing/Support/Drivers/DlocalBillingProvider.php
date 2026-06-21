@@ -32,7 +32,7 @@ class DlocalBillingProvider implements BillingProvider
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
             'currency' => 'USD',
-            'country' => 'UY', // Default country for dLocal
+            'country' => 'EC', // Default country for dLocal (Ecuador natively uses USD)
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name}",
             'payment_method_id' => 'CARD', // We can use credit card as default
@@ -161,7 +161,7 @@ class DlocalBillingProvider implements BillingProvider
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
             'currency' => 'USD',
-            'country' => 'UY',
+            'country' => 'EC', // Ecuador natively uses USD to avoid currency mismatch in enrollments
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name} (Trial)",
             'payment_method_id' => 'CARD',

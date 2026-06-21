@@ -179,7 +179,7 @@
                     x-data="registrationCheckout({
                         apiKey: '{{ config('payments.dlocal.smart_fields') }}',
                         locale: '{{ app()->getLocale() }}',
-                        country: 'UY',
+                        country: 'EC',
                         isPlanFree: {{ $this->isPlanFree() ? 'true' : 'false' }},
                         cardholderName: '{{ $name }}'
                     })"
