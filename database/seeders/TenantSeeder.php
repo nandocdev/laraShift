@@ -42,7 +42,8 @@ class TenantSeeder extends Seeder {
                 name: $data['name'],
                 slug: $data['slug'],
                 email: $data['email'],
-                plan_id: $data['plan_id']
+                plan_id: $data['plan_id'],
+                billing_option: 'trial_no_card'
             ));
 
             $this->command->info("Tenant provisionado: {$data['name']} ({$data['slug']})");

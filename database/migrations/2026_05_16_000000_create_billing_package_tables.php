@@ -44,6 +44,16 @@ return new class extends Migration
             $table->string('gateway')->default('stripe');
             $table->string('external_id')->nullable();
             $table->timestamp('current_period_end')->nullable();
+            
+            // Cashier Compatibility Columns
+            $table->string('type')->default('default');
+            $table->string('stripe_id')->nullable();
+            $table->string('stripe_status')->nullable();
+            $table->string('stripe_price')->nullable();
+            $table->integer('quantity')->nullable();
+            $table->timestamp('trial_ends_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
+
             $table->timestamps();
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
@@ -58,6 +68,11 @@ return new class extends Migration
             $table->integer('amount')->default(0);
             $table->integer('quantity')->default(1);
             
+            // Cashier Compatibility Columns
+            $table->string('stripe_id')->nullable();
+            $table->string('stripe_product')->nullable();
+            $table->string('stripe_price')->nullable();
+
             // Metered billing support
             $table->string('meter_id')->nullable();
             $table->string('meter_event_name')->nullable();

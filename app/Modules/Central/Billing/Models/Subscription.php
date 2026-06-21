@@ -18,6 +18,8 @@ class Subscription extends CashierSubscription
         'gateway',
         'current_period_end',
         'tenant_id',
+        'trial_ends_at',
+        'ends_at',
     ];
 
     /**
