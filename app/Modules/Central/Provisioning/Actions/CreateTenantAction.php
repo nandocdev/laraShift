@@ -68,18 +68,6 @@ final readonly class CreateTenantAction
                 $existingPayment = Payment::where('slug', $checkoutSlug)->where('status', 'approved')->first();
 
                 if (! $existingPayment) {
-                    // To prevent race conditions and satisfy SubscriptionPaymentHandler's search for the Tenant model
-                    // on DB::afterCommit, we create the Tenant record with 'pending_payment' status beforehand.
-                    $tenant = Tenant::create([
-                        'id' => $tenantId,
-                        'slug' => $data->slug,
-                        'name' => $data->name,
-                        'email' => $data->email,
-                        'plan_id' => $data->plan_id,
-                        'status' => 'pending_payment',
-                        'country' => $data->country,
-                    ]);
-
                     try {
                         $paymentData = new PaymentData(
                             context: PaymentContext::Subscription,
@@ -90,6 +78,7 @@ final readonly class CreateTenantAction
                             tenantId: $tenantId, // Generated ID
                             customFieldValues: [
                                 'plan_id' => $plan->id,
+                                'country' => $data->country,
                             ],
                             slug: $checkoutSlug
                         );
@@ -100,8 +89,6 @@ final readonly class CreateTenantAction
                             throw new \Exception('Payment failed: '.($result['message'] ?? 'Unknown error'));
                         }
                     } catch (\Exception $e) {
-                        // Rollback: delete the provisionally created tenant if payment failed
-                        $tenant->delete();
                         throw $e;
                     }
                 } else {
@@ -194,6 +181,30 @@ final readonly class CreateTenantAction
                         'country' => $data->country,
                     ]);
                 });
+
+                if ($data->billing_option === 'pay_now') {
+                    $checkoutSlug = 'checkout_'.md5($data->slug.$data->email);
+                    $approvedPayment = Payment::where('slug', $checkoutSlug)->where('status', 'approved')->first();
+                    if ($approvedPayment) {
+                        $subscription = $tenant->subscriptions()->create([
+                            'plan_id' => $plan->id,
+                            'provider_subscription_id' => $approvedPayment->gateway_reference ?? $checkoutSlug,
+                            'status' => 'active',
+                            'gateway' => $approvedPayment->gateway ?? 'dlocal',
+                            'current_period_end' => now()->addDays((int) ($plan->billing_cycle_days ?? 30)),
+                        ]);
+
+                        \App\Modules\Central\Billing\Models\Invoice::create([
+                            'tenant_id' => $tenant->id,
+                            'subscription_id' => $subscription->id,
+                            'amount' => (int) ($approvedPayment->amount * 100),
+                            'currency' => $approvedPayment->currency ?? 'USD',
+                            'status' => 'paid',
+                            'issued_at' => now(),
+                            'provider_invoice_id' => $approvedPayment->gateway_reference ?? $checkoutSlug,
+                        ]);
+                    }
+                }
             } else {
                 $tenant->update(['status' => 'provisioning']);
             }

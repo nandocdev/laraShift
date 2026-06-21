@@ -45,7 +45,17 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
             return;
         }
 
-        $tenant = Tenant::findOrFail($tenantId);
+        $tenant = Tenant::find($tenantId);
+
+        if (! $tenant) {
+            Log::info('SubscriptionPaymentHandler: Tenant not found, skipping immediate fulfillment (will be handled by tenant creator)', [
+                'tenant_id' => $tenantId,
+                'display_id' => $displayId,
+            ]);
+
+            return;
+        }
+
         $plan = Plan::findOrFail($planId);
 
         $subscription = Subscription::updateOrCreate(
