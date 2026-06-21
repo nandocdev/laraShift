@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Actions\SyncInvoicesAction;
 use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
+use Illuminate\Support\Str;
 
 class StripeBillingProvider implements BillingProvider
 {
@@ -19,7 +20,7 @@ class StripeBillingProvider implements BillingProvider
             throw new \InvalidArgumentException("Plan [{$planId}] has no Stripe ID configured.");
         }
 
-        $tenantDomain = $tenant->domains()->first()?->domain ?? $tenant->slug . '.' . config('tenancy.central_domain');
+        $tenantDomain = $tenant->domains()->first()?->domain ?? $tenant->slug.'.'.config('tenancy.central_domain');
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
         $port = parse_url(config('app.url'), PHP_URL_PORT);
         $portSuffix = $port ? ":$port" : '';
@@ -50,7 +51,7 @@ class StripeBillingProvider implements BillingProvider
     public function syncSubscription(Tenant $tenant): void
     {
         $tenant->updateStripeCustomer();
-        
+
         $subscription = $tenant->subscription('default');
         if ($subscription) {
             $subscription->syncStripeStatus();
@@ -80,5 +81,10 @@ class StripeBillingProvider implements BillingProvider
     public function getInvoices(Tenant $tenant): array
     {
         return $tenant->invoices()->toArray();
+    }
+
+    public function createTrialSubscription(Tenant $tenant, string $planId, ?string $paymentToken, bool $withCard): string
+    {
+        return 'trial_stripe_'.Str::random(12);
     }
 }

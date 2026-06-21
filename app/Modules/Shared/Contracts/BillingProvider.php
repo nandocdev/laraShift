@@ -9,12 +9,14 @@ use App\Modules\Central\Provisioning\Models\Tenant;
 interface BillingProvider
 {
     public function createCheckoutSession(Tenant $tenant, string $planId): string;
-    
+
     public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void;
-    
+
     public function syncSubscription(Tenant $tenant): void;
 
     public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array;
-    
+
     public function getInvoices(Tenant $tenant): array;
+
+    public function createTrialSubscription(Tenant $tenant, string $planId, ?string $paymentToken, bool $withCard): string;
 }

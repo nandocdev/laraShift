@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Support;
 
+use App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\InternalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
@@ -27,16 +28,15 @@ class BillingManager extends Manager implements BillingProvider
         return $this->container->make(StripeBillingProvider::class);
     }
 
-    public function createDlocalDriver(): \App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider
+    public function createDlocalDriver(): DlocalBillingProvider
     {
-        return $this->container->make(\App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider::class);
+        return $this->container->make(DlocalBillingProvider::class);
     }
 
     public function createClaveDriver(): InternalBillingProvider
     {
         return $this->createPaguelofacilDriver();
     }
-
 
     public function forTenant(Tenant $tenant): BillingProvider
     {
@@ -66,5 +66,10 @@ class BillingManager extends Manager implements BillingProvider
     public function getInvoices(Tenant $tenant): array
     {
         return $this->forTenant($tenant)->getInvoices($tenant);
+    }
+
+    public function createTrialSubscription(Tenant $tenant, string $planId, ?string $paymentToken, bool $withCard): string
+    {
+        return $this->forTenant($tenant)->createTrialSubscription($tenant, $planId, $paymentToken, $withCard);
     }
 }
