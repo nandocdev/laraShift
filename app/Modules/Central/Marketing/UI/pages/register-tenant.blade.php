@@ -51,7 +51,7 @@
     </div>
 
     {{-- Wizard Content --}}
-    <div class="sm:mx-auto sm:w-full {{ $step === 2 ? 'sm:max-w-5xl' : 'sm:max-w-xl' }} transition-all duration-300">
+    <div class="sm:mx-auto sm:w-full {{ $step === 1 ? 'sm:max-w-xl' : 'sm:max-w-5xl' }} transition-all duration-300">
         <flux:card class="py-8 px-4 shadow-xl sm:rounded-xl sm:px-10 border border-zinc-200/50 dark:border-zinc-800/50">
 
             {{-- ═══════════════════════════════════════════════════════ --}}
@@ -175,7 +175,7 @@
             {{-- STEP 3: Payment & Confirmation                         --}}
             {{-- ═══════════════════════════════════════════════════════ --}}
             @if($step === 3)
-                <div class="space-y-6" wire:key="step-3"
+                <div class="space-y-8" wire:key="step-3"
                     x-data="registrationCheckout({
                         apiKey: '{{ config('payments.dlocal.smart_fields') }}',
                         locale: '{{ app()->getLocale() }}',
@@ -184,199 +184,266 @@
                         cardholderName: '{{ $name }}'
                     })"
                 >
+                    {{-- Section Header --}}
                     <div>
                         <flux:heading size="lg" class="mb-1">{{ __('Confirm & Launch') }}</flux:heading>
-                        <flux:subheading class="text-zinc-500">{{ __('Review your details and finalize registration') }}</flux:subheading>
+                        <flux:subheading class="text-zinc-500">{{ __('Choose your billing method, review your details, and initialize your workspace') }}</flux:subheading>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {{-- Left: Order Summary --}}
-                        <div class="space-y-6">
-                            <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-4">
-                                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ __('Registration Summary') }}</h4>
-                                
-                                <div class="space-y-3">
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-zinc-500">{{ __('Organization') }}</span>
-                                        <span class="font-semibold text-zinc-900 dark:text-white">{{ $company }}</span>
+                    {{-- 1. Full-Width Billing Option Selector --}}
+                    @if(!$this->isPlanFree())
+                        <div class="space-y-3">
+                            <flux:label class="text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">{{ __('Select Billing Method') }}</flux:label>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Option A: Trial No Card -->
+                                <label @class([
+                                    'relative flex flex-col justify-between cursor-pointer rounded-xl border p-5 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700',
+                                    'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/10' => $billing_option === 'trial_no_card',
+                                    'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900' => $billing_option !== 'trial_no_card',
+                                ])>
+                                    <input type="radio" wire:model.live="billing_option" value="trial_no_card" class="sr-only">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex flex-col text-left">
+                                            <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('Start 14-day Free Trial') }}</span>
+                                            <span class="mt-2 block text-xs text-zinc-500 leading-normal">{{ __('No credit card required. Explore features instantly.') }}</span>
+                                        </div>
+                                        @if($billing_option === 'trial_no_card')
+                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 dark:text-indigo-400 w-5 h-5 shrink-0" />
+                                        @endif
                                     </div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-zinc-500">{{ __('Workspace URL') }}</span>
-                                        <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ $slug }}.{{ config('tenancy.central_domain') }}</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-zinc-500">{{ __('Email') }}</span>
-                                        <span class="font-medium text-zinc-900 dark:text-white">{{ $email }}</span>
-                                    </div>
-                                </div>
+                                    <span class="mt-4 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-md self-start uppercase tracking-wider">{{ __('Recommended') }}</span>
+                                </label>
 
-                                <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                                    <div class="flex justify-between items-center">
-                                        <div>
-                                            <span class="text-xs font-bold uppercase text-zinc-400 tracking-wider">{{ __('Selected Plan') }}</span>
-                                            <div class="text-lg font-bold text-zinc-900 dark:text-white">{{ $selectedPlan?->name ?? 'Free' }}</div>
+                                <!-- Option B: Trial With Card -->
+                                <label @class([
+                                    'relative flex flex-col justify-between cursor-pointer rounded-xl border p-5 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700',
+                                    'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/10' => $billing_option === 'trial_with_card',
+                                    'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900' => $billing_option !== 'trial_with_card',
+                                ])>
+                                    <input type="radio" wire:model.live="billing_option" value="trial_with_card" class="sr-only">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex flex-col text-left">
+                                            <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('14-Day Trial (With Card)') }}</span>
+                                            <span class="mt-2 block text-xs text-zinc-500 leading-normal">{{ __('Validate your card today. Pay nothing until your trial ends.') }}</span>
                                         </div>
-                        <div class="text-right">
-                                            @if($selectedPlan && $selectedPlan->price_monthly->isPositive())
-                                                <div class="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                                                    {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($selectedPlan->price_monthly) }}
-                                                </div>
-                                                <div class="text-[10px] uppercase text-zinc-500 font-bold">{{ __('per month') }}</div>
-                                            @else
-                                                <div class="text-2xl font-black text-emerald-500">{{ __('Free') }}</div>
-                                            @endif
-                                        </div>
+                                        @if($billing_option === 'trial_with_card')
+                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 dark:text-indigo-400 w-5 h-5 shrink-0" />
+                                        @endif
                                     </div>
+                                    <span class="mt-4 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2.5 py-1 rounded-md self-start uppercase tracking-wider">{{ __('Card Verification') }}</span>
+                                </label>
+
+                                <!-- Option C: Pay Now -->
+                                <label @class([
+                                    'relative flex flex-col justify-between cursor-pointer rounded-xl border p-5 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700',
+                                    'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/10' => $billing_option === 'pay_now',
+                                    'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900' => $billing_option !== 'pay_now',
+                                ])>
+                                    <input type="radio" wire:model.live="billing_option" value="pay_now" class="sr-only">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex flex-col text-left">
+                                            <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('Pay & Activate Instantly') }}</span>
+                                            <span class="mt-2 block text-xs text-zinc-500 leading-normal">{{ __('Pay immediately. Skip the trial period and start building now.') }}</span>
+                                        </div>
+                                        @if($billing_option === 'pay_now')
+                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 dark:text-indigo-400 w-5 h-5 shrink-0" />
+                                        @endif
+                                    </div>
+                                    <span class="mt-4 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-md self-start uppercase tracking-wider">{{ __('Immediate') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- 2. Two-Column Grid: Left (Payment Form / Trial Info) & Right (Order Summary & CTA) --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                        {{-- Left Column: 3/5 width --}}
+                        <div class="lg:col-span-3 space-y-6">
+                            
+                            {{-- Error Display --}}
+                            <div x-show="error || $wire.error" style="display: none;" class="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900 shadow-sm">
+                                <div class="flex gap-2">
+                                    <flux:icon icon="exclamation-triangle" class="w-5 h-5 shrink-0 text-red-500" />
+                                    <span x-text="error || $wire.error"></span>
                                 </div>
                             </div>
 
-                        {{-- Right: Payment Details (if applicable) --}}
-                        <div class="space-y-4">
-                            @if(!$this->isPlanFree())
-                                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ __('Billing Option') }}</h4>
-                                
-                                <div class="grid grid-cols-1 gap-3 my-3">
-                                    <label @class([
-                                        'relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all duration-200',
-                                        'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' => $billing_option === 'trial_no_card',
-                                        'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300' => $billing_option !== 'trial_no_card',
-                                    ])>
-                                        <input type="radio" wire:model.live="billing_option" value="trial_no_card" class="sr-only">
-                                        <div class="flex flex-1">
-                                            <div class="flex flex-col text-left">
-                                                <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('Start 14-day Free Trial (No Card)') }}</span>
-                                                <span class="mt-1 flex items-center text-xs text-zinc-500">{{ __('No credit card required. Fast access.') }}</span>
-                                            </div>
-                                        </div>
-                                        @if($billing_option === 'trial_no_card')
-                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 w-5 h-5" />
-                                        @endif
-                                    </label>
-
-                                    <label @class([
-                                        'relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all duration-200',
-                                        'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' => $billing_option === 'trial_with_card',
-                                        'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300' => $billing_option !== 'trial_with_card',
-                                    ])>
-                                        <input type="radio" wire:model.live="billing_option" value="trial_with_card" class="sr-only">
-                                        <div class="flex flex-1">
-                                            <div class="flex flex-col text-left">
-                                                <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('Start 14-day Trial (Verify Card)') }}</span>
-                                                <span class="mt-1 flex items-center text-xs text-zinc-500">{{ __('Enter card details now. Pay only if you stay.') }}</span>
-                                            </div>
-                                        </div>
-                                        @if($billing_option === 'trial_with_card')
-                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 w-5 h-5" />
-                                        @endif
-                                    </label>
-
-                                    <label @class([
-                                        'relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all duration-200',
-                                        'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/10' => $billing_option === 'pay_now',
-                                        'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300' => $billing_option !== 'pay_now',
-                                    ])>
-                                        <input type="radio" wire:model.live="billing_option" value="pay_now" class="sr-only">
-                                        <div class="flex flex-1">
-                                            <div class="flex flex-col text-left">
-                                                <span class="block text-sm font-bold text-zinc-900 dark:text-white">{{ __('Pay Now & Start') }}</span>
-                                                <span class="mt-1 flex items-center text-xs text-zinc-500">{{ __('Charge immediately. No trial.') }}</span>
-                                            </div>
-                                        </div>
-                                        @if($billing_option === 'pay_now')
-                                            <flux:icon icon="check-circle" variant="solid" class="text-indigo-600 w-5 h-5" />
-                                        @endif
-                                    </label>
-                                </div>
-
-                                <div x-show="error || $wire.error" style="display: none;" class="p-3 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900">
-                                    <span x-text="error || $wire.error"></span>
-                                </div>
-
-                                @if ($paymentAlreadyApproved)
-                                    <div class="flex flex-col items-center justify-center p-6 text-center bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 rounded-xl space-y-3 min-h-[200px]">
-                                        <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                            <flux:icon icon="check" variant="mini" class="w-6 h-6" />
-                                        </div>
-                                        <flux:heading size="sm" class="text-emerald-700 dark:text-emerald-400">{{ __('Payment Completed') }}</flux:heading>
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                                            {{ __('Your payment has been successfully processed. You can safely retry provisioning your workspace without being charged again.') }}
-                                        </p>
+                            @if($this->isPlanFree())
+                                {{-- Free Plan Presentation --}}
+                                <div class="flex flex-col items-center justify-center p-8 text-center bg-emerald-50/20 dark:bg-emerald-950/10 border border-dashed border-emerald-200 dark:border-emerald-900 rounded-2xl shadow-sm space-y-4">
+                                    <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                        <flux:icon icon="check-circle" class="w-10 h-10" />
                                     </div>
-                                @else
-                                    <div x-show="$wire.billing_option !== 'trial_no_card'" class="relative space-y-4 bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm min-h-[200px]">
-                                        {{-- Loading Overlay with Structured Skeletons --}}
-                                        <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white dark:bg-zinc-900 rounded-xl p-5 space-y-4 select-none pointer-events-none">
-                                            {{-- Card Input Skeleton --}}
-                                            <div class="space-y-2">
-                                                <div class="h-3 w-24 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
-                                                <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
-                                            </div>
-
-                                            {{-- Cardholder Name Skeleton --}}
-                                            <div class="space-y-2">
-                                                <div class="h-3 w-28 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
-                                                <div class="h-10 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg animate-pulse"></div>
-                                            </div>
-
-                                            <div class="flex items-center justify-between pt-1">
-                                                <div class="h-2 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
-                                                <div class="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
-                                                    <div class="w-3 h-3 border-2 border-zinc-300 dark:border-zinc-700 border-t-zinc-600 rounded-full animate-spin"></div>
-                                                    <span class="text-[9px] font-bold uppercase tracking-wider animate-pulse">{{ __('Loading secure inputs...') }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-1">
-                                            <flux:label size="sm">{{ __('Card Information') }}</flux:label>
-                                            <div wire:ignore id="reg-card-field" class="h-10 px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg"></div>
-                                            <p x-show="fieldError" x-text="fieldError" class="text-[10px] text-red-500 mt-1"></p>
-                                        </div>
-
-                                        <div class="space-y-1">
-                                            <flux:label size="sm">{{ __('Cardholder Name') }}</flux:label>
-                                            <flux:input x-model="cardholderName" size="sm" placeholder="As shown on card" />
-                                        </div>
+                                    <div class="space-y-1">
+                                        <flux:heading size="md" class="text-emerald-800 dark:text-emerald-400 font-extrabold">{{ __('Ready to Launch!') }}</flux:heading>
+                                        <flux:text class="max-w-sm text-zinc-500">{{ __('Your permanent free workspace is ready. Click the launch button on the right to start.') }}</flux:text>
                                     </div>
-                                @endif
-                                
-                                <div x-show="$wire.billing_option !== 'trial_no_card'" class="space-y-4">
-                                    <div class="flex items-center justify-center gap-2 text-[10px] text-zinc-400 uppercase font-bold tracking-widest mt-4">
-                                        <flux:icon icon="lock-closed" variant="mini" class="w-3 h-3" />
-                                        {{ __('Securely processed by dLocal') }}
-                                    </div>
-                                    <p class="text-[10px] text-zinc-500 leading-tight">
-                                        {{ config('app.name', 'LaraShift') }} is powered by dLocal, which has been appointed by {{ config('app.name', 'LaraShift') }} to provide payment services on its behalf, including the collection of the data necessary to facilitate and remit your payments. As such, you are now providing your personal data to dLocal. For more information, please visit dLocal’s <a href="https://www.dlocal.com/legal/privacy-hub/" target="_blank" class="text-indigo-500 hover:underline">Privacy Hub</a>.
-                                    </p>
                                 </div>
                             @else
-                                <div class="flex flex-col items-center justify-center h-full p-8 text-center bg-emerald-50/30 dark:bg-emerald-950/10 border border-dashed border-emerald-200 dark:border-emerald-900 rounded-xl">
-                                    <flux:icon icon="check-circle" class="w-12 h-12 text-emerald-500 mb-3" />
-                                    <flux:heading size="sm">{{ __('Ready to launch') }}</flux:heading>
-                                    <flux:text size="sm" class="mt-1">{{ __('Your free organization is one click away.') }}</flux:text>
-                                </div>
+                                {{-- If payment is already approved (e.g. page refreshed after success) --}}
+                                @if ($paymentAlreadyApproved)
+                                    <div class="flex flex-col items-center justify-center p-8 text-center bg-emerald-50/30 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl shadow-sm space-y-4">
+                                        <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                            <flux:icon icon="check" variant="mini" class="w-7 h-7" />
+                                        </div>
+                                        <div class="space-y-1">
+                                            <flux:heading size="md" class="text-emerald-800 dark:text-emerald-400 font-extrabold">{{ __('Payment Already Confirmed') }}</flux:heading>
+                                            <p class="text-sm text-zinc-500 max-w-sm">
+                                                {{ __('Your credit card authorization succeeded. Feel free to launch and provision your workspace.') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @else
+                                    {{-- Case A: Trial No Card --}}
+                                    <div x-show="$wire.billing_option === 'trial_no_card'" class="rounded-2xl border border-dashed border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/20 dark:bg-indigo-950/10 p-8 text-center space-y-4">
+                                        <div class="mx-auto w-14 h-14 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-md">
+                                            <flux:icon icon="sparkles" class="w-7 h-7" />
+                                        </div>
+                                        <div class="max-w-md mx-auto space-y-2">
+                                            <h3 class="text-lg font-bold text-zinc-950 dark:text-white">{{ __('Start Your 14-Day Free Trial') }}</h3>
+                                            <p class="text-sm text-zinc-500 leading-relaxed">{{ __('Enjoy unrestricted access to all features of the Pro plan. No credit card is required to start. We will send you a reminder email before your trial expires.') }}</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Case B: Card Details Input (Trial with Card OR Pay Now) --}}
+                                    {{-- Crucial: the #reg-card-field div must always remain in the DOM, so instead of Blade @if, we can use Alpine's x-show --}}
+                                    <div x-show="$wire.billing_option !== 'trial_no_card'" class="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-6 shadow-sm">
+                                        <div>
+                                            <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                <flux:icon icon="credit-card" variant="mini" class="w-4 h-4 text-zinc-400" />
+                                                {{ __('Card Details') }}
+                                            </h4>
+                                            <p class="text-xs text-zinc-500 mt-1">{{ __('Enter your card credentials below. Secure fields will handle validation automatically.') }}</p>
+                                        </div>
+
+                                        <div class="space-y-5 relative">
+                                            {{-- Skeletons during iframe initialization --}}
+                                            <div x-show="!fieldsMounted" class="absolute inset-0 z-10 bg-white dark:bg-zinc-900 rounded-xl space-y-4 select-none pointer-events-none transition-opacity duration-300">
+                                                <div class="space-y-2">
+                                                    <div class="h-3 w-28 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                    <div class="h-12 bg-zinc-100 dark:bg-zinc-800/40 rounded-lg animate-pulse"></div>
+                                                </div>
+                                                <div class="space-y-2">
+                                                    <div class="h-3 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                                                    <div class="h-12 bg-zinc-100 dark:bg-zinc-800/40 rounded-lg animate-pulse"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <flux:label class="font-semibold">{{ __('Card Information') }}</flux:label>
+                                                <div wire:ignore id="reg-card-field" class="h-12 px-4 py-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all shadow-sm"></div>
+                                                <p x-show="fieldError" x-text="fieldError" class="text-xs text-red-500 mt-1" style="display: none;"></p>
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <flux:label class="font-semibold">{{ __('Cardholder Name') }}</flux:label>
+                                                <input type="text" x-model="cardholderName" placeholder="As shown on card" class="block w-full h-12 px-4 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-950 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm">
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 uppercase font-bold tracking-widest">
+                                            <div class="flex items-center gap-2">
+                                                <flux:icon icon="lock-closed" variant="mini" class="w-4 h-4 text-emerald-500" />
+                                                {{ __('Secure 256-bit SSL Connection') }}
+                                            </div>
+                                            <div>{{ __('Powered by dLocal') }}</div>
+                                        </div>
+
+                                        <p class="text-[10px] text-zinc-500 leading-relaxed pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                                            {{ config('app.name', 'LaraShift') }} uses dLocal to process payments securely. By providing your payment credentials, you authorize dLocal to validate and securely store your card token for transaction fulfillment. Learn more at dLocal's <a href="https://www.dlocal.com/legal/privacy-hub/" target="_blank" class="text-indigo-500 hover:underline">Privacy Hub</a>.
+                                        </p>
+                                    </div>
+                                @endif
                             @endif
+
+                            {{-- Secondary Back Button --}}
+                            <div class="flex justify-start pt-4">
+                                <flux:button wire:click="previousStep" variant="ghost" class="px-6 py-2.5">
+                                    <flux:icon icon="arrow-left" class="w-4 h-4 mr-2" />
+                                    {{ __('Back to Plans') }}
+                                </flux:button>
+                            </div>
+                        </div>
+
+                        {{-- Right Column: 2/5 width (Summary & CTA Card) --}}
+                        <div class="lg:col-span-2 space-y-6 lg:sticky lg:top-6">
+                            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-5 shadow-sm">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{{ __('Order Summary') }}</h4>
+
+                                <div class="space-y-4 pt-2">
+                                    <div class="flex justify-between items-start text-sm">
+                                        <span class="text-zinc-500">{{ __('Organization') }}</span>
+                                        <span class="font-bold text-zinc-900 dark:text-white text-right max-w-[180px] truncate">{{ $company }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-start text-sm">
+                                        <span class="text-zinc-500">{{ __('Workspace') }}</span>
+                                        <span class="font-semibold text-indigo-600 dark:text-indigo-400 text-right max-w-[180px] truncate">{{ $slug }}.{{ config('tenancy.central_domain') }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-start text-sm">
+                                        <span class="text-zinc-500">{{ __('Email') }}</span>
+                                        <span class="font-medium text-zinc-900 dark:text-white text-right max-w-[180px] truncate">{{ $email }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-start text-sm">
+                                        <span class="text-zinc-500">{{ __('Selected Plan') }}</span>
+                                        <span class="font-bold text-zinc-900 dark:text-white text-right">{{ $selectedPlan?->name ?? 'Free' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+                                    <div class="flex justify-between items-baseline">
+                                        <span class="text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">
+                                            @if($this->isPlanFree())
+                                                {{ __('Plan Price') }}
+                                            @elseif($billing_option === 'pay_now')
+                                                {{ __('Due Today') }}
+                                            @else
+                                                {{ __('Due After 14 Days') }}
+                                            @endif
+                                        </span>
+                                        
+                                        <div class="text-right">
+                                            @if($selectedPlan && $selectedPlan->price_monthly->isPositive())
+                                                <span class="text-3xl font-black text-zinc-950 dark:text-white">
+                                                    {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($selectedPlan->price_monthly) }}
+                                                </span>
+                                                <span class="text-xs text-zinc-500">/{{ __('mo') }}</span>
+                                            @else
+                                                <span class="text-2xl font-black text-emerald-500">{{ __('Free') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if(!$this->isPlanFree() && $billing_option !== 'pay_now')
+                                        <div class="flex justify-between text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/20 px-3 py-2 rounded-lg mt-2">
+                                            <span>{{ __('Trial Period') }}</span>
+                                            <span>{{ __('14 Days Free') }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Main Action Call to Action (CTA) Button --}}
+                                <div class="pt-4">
+                                    <flux:button x-on:click="handleSubmit" variant="primary" class="w-full py-4 text-base font-bold shadow-lg shadow-indigo-500/10 cursor-pointer h-12" x-bind:disabled="loading || (!isPlanFree && $wire.billing_option !== 'trial_no_card' && (!isFormValid || !fieldsMounted) && !$wire.paymentAlreadyApproved)" wire:loading.attr="disabled">
+                                        <span x-show="!loading" wire:loading.remove wire:target="register">
+                                            @if($isPlanFree || $billing_option === 'trial_no_card')
+                                                {{ __('Create Organization') }}
+                                            @elseif($billing_option === 'trial_with_card')
+                                                {{ __('Verify Card & Start Trial') }}
+                                            @else
+                                                {{ __('Pay & Activate') }}
+                                            @endif
+                                        </span>
+                                        <span x-show="loading || $wire.loading" class="flex items-center justify-center gap-2">
+                                            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            {{ __('Provisioning...') }}
+                                        </span>
+                                    </flux:button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800 flex justify-between">
-                        <flux:button wire:click="previousStep" variant="ghost">
-                            <flux:icon icon="arrow-left" class="w-4 h-4 mr-2" />
-                            {{ __('Back') }}
-                        </flux:button>
-
-                        <flux:button x-on:click="handleSubmit" variant="primary" class="px-12 py-3" x-bind:disabled="loading || (!isPlanFree && $wire.billing_option !== 'trial_no_card' && (!isFormValid || !fieldsMounted) && !$wire.paymentAlreadyApproved)" wire:loading.attr="disabled">
-                            <span x-show="!loading" wire:loading.remove wire:target="register">
-                                {{ $isPlanFree || $billing_option === 'trial_no_card' ? __('Create Organization') : ($paymentAlreadyApproved ? __('Retry Provisioning') : __('Create Organization & Pay')) }}
-                            </span>
-                            <span x-show="loading || $wire.loading" class="flex items-center gap-2">
-                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                {{ __('Processing...') }}
-                            </span>
-                        </flux:button>
-                    </div>
                 </div>
-
             @endif
 
             <script>
