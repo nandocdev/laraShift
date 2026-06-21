@@ -76,9 +76,11 @@ class RegisterTenant extends Component
                 'company' => 'required|string|max:255',
                 'country' => 'required|string|size:2|in:UY,EC,AR,BR,CL,CO,MX,PE,PA',
                 'slug' => [
-                    'required', 'string', 'max:63',
+                    'required',
+                    'string',
+                    'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:'.implode(',', ReservedSlugs::$list),
+                    'not_in:' . implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
                 'password' => [
@@ -133,12 +135,12 @@ class RegisterTenant extends Component
     {
         $rules = $this->rulesForStep($this->step);
 
-        if (! empty($rules)) {
+        if (!empty($rules)) {
             $this->validate($rules);
         }
 
         if ($this->step === 1) {
-            $lockKey = 'reserved_slug_'.$this->slug;
+            $lockKey = 'reserved_slug_' . $this->slug;
             $currentLock = Cache::get($lockKey);
 
             if ($currentLock && $currentLock !== $this->email) {
@@ -193,7 +195,7 @@ class RegisterTenant extends Component
             $this->validate($allRules);
 
             // Final lock check to prevent race conditions during checkout
-            $lockKey = 'reserved_slug_'.$this->slug;
+            $lockKey = 'reserved_slug_' . $this->slug;
             $currentLock = Cache::get($lockKey);
             if ($currentLock && $currentLock !== $this->email) {
                 throw new \Exception(__('This workspace URL is temporarily reserved by another user.'));
@@ -213,7 +215,7 @@ class RegisterTenant extends Component
             // Release lock on success
             Cache::forget($lockKey);
 
-            $domain = $this->slug.'.'.config('tenancy.central_domain');
+            $domain = $this->slug . '.' . config('tenancy.central_domain');
             $baseUrl = config('app.url');
             $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
             $port = parse_url($baseUrl, PHP_URL_PORT);
@@ -239,7 +241,7 @@ class RegisterTenant extends Component
     {
         $plan = Plan::where('slug', $this->plan_id)->first();
 
-        return ! $plan || ! $plan->price_monthly->isPositive();
+        return !$plan || !$plan->price_monthly->isPositive();
     }
 
     /**
@@ -260,7 +262,7 @@ class RegisterTenant extends Component
             return false;
         }
 
-        $checkoutSlug = 'checkout_'.md5($this->slug.$this->email);
+        $checkoutSlug = 'checkout_' . md5($this->slug . $this->email);
 
         return Payment::where('slug', $checkoutSlug)
             ->where('status', 'approved')
