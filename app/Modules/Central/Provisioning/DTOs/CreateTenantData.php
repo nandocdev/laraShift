@@ -16,5 +16,6 @@ final class CreateTenantData extends Data
         public ?string $password = null,
         public ?string $payment_token = null,
         public ?string $billing_option = 'pay_now',
+        public ?string $country = 'UY',
     ) {}
 }

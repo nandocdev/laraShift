@@ -51,6 +51,8 @@ class RegisterTenant extends Component
 
     public string $billing_option = 'trial_no_card';
 
+    public string $country = 'UY';
+
     // Wizard state
     public int $step = 1;
 
@@ -72,6 +74,7 @@ class RegisterTenant extends Component
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:central_users,email',
                 'company' => 'required|string|max:255',
+                'country' => 'required|string|size:2|in:UY,EC,AR,BR,CL,CO,MX,PE,PA',
                 'slug' => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
@@ -204,6 +207,7 @@ class RegisterTenant extends Component
                 password: $this->password,
                 payment_token: $this->payment_token,
                 billing_option: $this->billing_option,
+                country: $this->country,
             ));
 
             // Release lock on success

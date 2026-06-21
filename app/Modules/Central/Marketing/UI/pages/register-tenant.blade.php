@@ -69,7 +69,27 @@
                         <flux:input wire:model="email" type="email" :label="__('Work Email')" placeholder="jane@company.com" required />
                     </div>
 
-                    <flux:input wire:model.live.debounce.300ms="company" :label="__('Company Name')" placeholder="Acme Corp" required />
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <flux:input wire:model.live.debounce.300ms="company" :label="__('Company Name')" placeholder="Acme Corp" required />
+                        
+                        <div class="space-y-1.5">
+                            <flux:label class="font-semibold text-sm">{{ __('Country') }}</flux:label>
+                            <select wire:model="country" class="block w-full h-10 px-3 text-sm rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm">
+                                <option value="UY">{{ __('Uruguay') }}</option>
+                                <option value="EC">{{ __('Ecuador') }}</option>
+                                <option value="AR">{{ __('Argentina') }}</option>
+                                <option value="BR">{{ __('Brazil') }}</option>
+                                <option value="CL">{{ __('Chile') }}</option>
+                                <option value="CO">{{ __('Colombia') }}</option>
+                                <option value="MX">{{ __('Mexico') }}</option>
+                                <option value="PE">{{ __('Peru') }}</option>
+                                <option value="PA">{{ __('Panama') }}</option>
+                            </select>
+                            @error('country')
+                                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
 
                     <flux:input wire:model.live.debounce.300ms="slug" :label="__('Workspace URL')" required>
                         <x-slot name="append">

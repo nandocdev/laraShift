@@ -77,6 +77,7 @@ final readonly class CreateTenantAction
                         'email' => $data->email,
                         'plan_id' => $data->plan_id,
                         'status' => 'pending_payment',
+                        'country' => $data->country,
                     ]);
 
                     try {
@@ -119,6 +120,7 @@ final readonly class CreateTenantAction
                     'email' => $data->email,
                     'plan_id' => $data->plan_id,
                     'status' => 'pending_payment',
+                    'country' => $data->country,
                 ]);
 
                 try {
@@ -152,6 +154,7 @@ final readonly class CreateTenantAction
                     'email' => $data->email,
                     'plan_id' => $data->plan_id,
                     'status' => 'pending_payment',
+                    'country' => $data->country,
                 ]);
 
                 try {
@@ -188,6 +191,7 @@ final readonly class CreateTenantAction
                         'email' => $data->email,
                         'plan_id' => $data->plan_id,
                         'status' => 'provisioning',
+                        'country' => $data->country,
                     ]);
                 });
             } else {

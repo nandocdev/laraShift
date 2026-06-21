@@ -29,10 +29,13 @@ class DlocalBillingProvider implements BillingProvider
         $portSuffix = $port ? ":$port" : '';
         $baseUrl = "$scheme://$tenantDomain$portSuffix";
 
+        $country = strtoupper($tenant->country ?? 'UY');
+        $gatewayCountry = in_array($country, ['EC', 'PA', 'SV', 'US']) ? $country : 'EC';
+
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
             'currency' => 'USD',
-            'country' => 'EC', // Default country for dLocal (Ecuador natively uses USD)
+            'country' => $gatewayCountry,
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name}",
             'payment_method_id' => 'CARD', // We can use credit card as default
@@ -158,10 +161,13 @@ class DlocalBillingProvider implements BillingProvider
         $portSuffix = $port ? ":$port" : '';
         $baseUrl = "$scheme://$tenantDomain$portSuffix";
 
+        $country = strtoupper($tenant->country ?? 'UY');
+        $gatewayCountry = in_array($country, ['EC', 'PA', 'SV', 'US']) ? $country : 'EC';
+
         $payload = [
             'external_id' => 'sub_'.$tenant->id.'_'.time(),
             'currency' => 'USD',
-            'country' => 'EC', // Ecuador natively uses USD to avoid currency mismatch in enrollments
+            'country' => $gatewayCountry,
             'type' => 'MERCHANT_SUBSCRIPTION',
             'description' => "Subscription to {$plan->name} (Trial)",
             'payment_method_id' => 'CARD',
