@@ -6,12 +6,15 @@ namespace App\Modules\Central\Marketing\Livewire;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Support\PlanManager;
+use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -31,37 +34,48 @@ class RegisterTenant extends Component
 {
     // Step 1: Organization
     public string $name = '';
+
     public string $email = '';
+
     public string $company = '';
+
     public string $slug = '';
+
     public string $password = '';
-// Step 2: Plan
-public string $plan_id = 'free';
 
-// Step 3: Payment
-public ?string $payment_token = null;
+    // Step 2: Plan
+    public string $plan_id = 'free';
 
-// Wizard state
-public int $step = 1;
-public bool $autoGenerateSlug = true;
-public bool $loading = false;
-public ?string $error = null;
-public bool $paymentAlreadyApproved = false;
+    // Step 3: Payment
+    public ?string $payment_token = null;
 
-/**
- * @var array<string, array> Reglas de validación por step.
- */
+    public string $billing_option = 'trial_no_card';
+
+    // Wizard state
+    public int $step = 1;
+
+    public bool $autoGenerateSlug = true;
+
+    public bool $loading = false;
+
+    public ?string $error = null;
+
+    public bool $paymentAlreadyApproved = false;
+
+    /**
+     * @var array<string, array> Reglas de validación por step.
+     */
     private function rulesForStep(int $step): array
     {
         return match ($step) {
             1 => [
-                'name'     => 'required|string|max:255',
-                'email'    => 'required|email|max:255|unique:central_users,email',
-                'company'  => 'required|string|max:255',
-                'slug'     => [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:central_users,email',
+                'company' => 'required|string|max:255',
+                'slug' => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:' . implode(',', ReservedSlugs::$list),
+                    'not_in:'.implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
                 'password' => [
@@ -78,7 +92,8 @@ public bool $paymentAlreadyApproved = false;
                 'plan_id' => 'required|exists:plans,slug',
             ],
             3 => [
-                'payment_token' => ($this->isPlanFree() || $this->paymentAlreadyApproved) ? 'nullable|string' : 'required|string',
+                'billing_option' => 'required|in:trial_no_card,trial_with_card,pay_now',
+                'payment_token' => ($this->isPlanFree() || $this->billing_option === 'trial_no_card' || $this->paymentAlreadyApproved) ? 'nullable|string' : 'required|string',
             ],
             default => [],
         };
@@ -120,15 +135,16 @@ public bool $paymentAlreadyApproved = false;
         }
 
         if ($this->step === 1) {
-            $lockKey = 'reserved_slug_' . $this->slug;
-            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
-            
+            $lockKey = 'reserved_slug_'.$this->slug;
+            $currentLock = Cache::get($lockKey);
+
             if ($currentLock && $currentLock !== $this->email) {
                 $this->addError('slug', __('This workspace URL is temporarily reserved by another user.'));
+
                 return;
             }
-            
-            \Illuminate\Support\Facades\Cache::put($lockKey, $this->email, now()->addMinutes(15));
+
+            Cache::put($lockKey, $this->email, now()->addMinutes(15));
         }
 
         if ($this->step === 2) {
@@ -174,8 +190,8 @@ public bool $paymentAlreadyApproved = false;
             $this->validate($allRules);
 
             // Final lock check to prevent race conditions during checkout
-            $lockKey = 'reserved_slug_' . $this->slug;
-            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+            $lockKey = 'reserved_slug_'.$this->slug;
+            $currentLock = Cache::get($lockKey);
             if ($currentLock && $currentLock !== $this->email) {
                 throw new \Exception(__('This workspace URL is temporarily reserved by another user.'));
             }
@@ -187,12 +203,13 @@ public bool $paymentAlreadyApproved = false;
                 plan_id: $this->plan_id,
                 password: $this->password,
                 payment_token: $this->payment_token,
+                billing_option: $this->billing_option,
             ));
 
             // Release lock on success
-            \Illuminate\Support\Facades\Cache::forget($lockKey);
+            Cache::forget($lockKey);
 
-            $domain = $this->slug . '.' . config('tenancy.central_domain');
+            $domain = $this->slug.'.'.config('tenancy.central_domain');
             $baseUrl = config('app.url');
             $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
             $port = parse_url($baseUrl, PHP_URL_PORT);
@@ -200,7 +217,7 @@ public bool $paymentAlreadyApproved = false;
 
             // Immediate login redirection
             $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
@@ -239,9 +256,9 @@ public bool $paymentAlreadyApproved = false;
             return false;
         }
 
-        $checkoutSlug = 'checkout_' . md5($this->slug . $this->email);
+        $checkoutSlug = 'checkout_'.md5($this->slug.$this->email);
 
-        return \App\Modules\Central\Payments\Models\Payment::where('slug', $checkoutSlug)
+        return Payment::where('slug', $checkoutSlug)
             ->where('status', 'approved')
             ->exists();
     }
@@ -251,9 +268,9 @@ public bool $paymentAlreadyApproved = false;
         $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
 
         return view('marketing::pages.register-tenant', [
-            'plans'        => PlanManager::all(),
+            'plans' => PlanManager::all(),
             'selectedPlan' => $this->selectedPlan,
-            'isPlanFree'   => $this->isPlanFree(),
+            'isPlanFree' => $this->isPlanFree(),
         ]);
     }
 }

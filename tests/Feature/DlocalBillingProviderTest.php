@@ -18,7 +18,9 @@ class DlocalBillingProviderTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+
     private Plan $plan;
+
     private DlocalBillingProvider $provider;
 
     protected function setUp(): void
@@ -52,8 +54,8 @@ class DlocalBillingProviderTest extends TestCase
             '*/enrollments' => Http::response([
                 'id' => 'E-12345',
                 'status' => 'PENDING',
-                'redirect_url' => 'https://pay.dlocal.com/gmf-apm/payments-redirect/E-12345'
-            ], 200)
+                'redirect_url' => 'https://pay.dlocal.com/gmf-apm/payments-redirect/E-12345',
+            ], 200),
         ]);
 
         $redirectUrl = $this->provider->createCheckoutSession($this->tenant, 'pro');
@@ -62,6 +64,7 @@ class DlocalBillingProviderTest extends TestCase
 
         Http::assertSent(function ($request) {
             $data = json_decode($request->body(), true);
+
             return str_contains($request->url(), '/enrollments') &&
                    $request->method() === 'POST' &&
                    $data['type'] === 'MERCHANT_SUBSCRIPTION' &&
@@ -75,8 +78,8 @@ class DlocalBillingProviderTest extends TestCase
         Http::fake([
             '*/enrollments/E-12345/cancel' => Http::response([
                 'status' => 'CANCELLED',
-                'status_code' => '400'
-            ], 200)
+                'status_code' => '400',
+            ], 200),
         ]);
 
         // Create subscription in DB
@@ -106,9 +109,9 @@ class DlocalBillingProviderTest extends TestCase
                 'id' => 'E-12345',
                 'status' => 'ACTIVE',
                 'subscription' => [
-                    'end_date' => '2026-12-31'
-                ]
-            ], 200)
+                    'end_date' => '2026-12-31',
+                ],
+            ], 200),
         ]);
 
         $data = $this->provider->getSubscriptionData($this->tenant, 'E-12345');
@@ -125,9 +128,9 @@ class DlocalBillingProviderTest extends TestCase
                 'id' => 'E-12345',
                 'status' => 'ACTIVE',
                 'subscription' => [
-                    'end_date' => '2026-12-31'
-                ]
-            ], 200)
+                    'end_date' => '2026-12-31',
+                ],
+            ], 200),
         ]);
 
         $subscription = Subscription::create([
@@ -143,5 +146,63 @@ class DlocalBillingProviderTest extends TestCase
         $subscription->refresh();
         $this->assertSame('active', $subscription->status);
         $this->assertSame('2026-12-31 00:00:00', $subscription->current_period_end->toDateTimeString());
+    }
+
+    public function test_create_trial_subscription_sends_future_start_date()
+    {
+        Http::fake([
+            '*/enrollments' => Http::response([
+                'id' => 'E-54321',
+                'status' => 'PENDING',
+            ], 200),
+        ]);
+
+        $enrollmentId = $this->provider->createTrialSubscription($this->tenant, 'pro', 'card_token_123', true);
+
+        $this->assertSame('E-54321', $enrollmentId);
+
+        Http::assertSent(function ($request) {
+            $data = json_decode($request->body(), true);
+
+            return str_contains($request->url(), '/enrollments') &&
+                   $request->method() === 'POST' &&
+                   $data['type'] === 'MERCHANT_SUBSCRIPTION' &&
+                   $data['payer']['document'] === '12345678' &&
+                   $data['card']['token'] === 'card_token_123' &&
+                   $data['subscription']['start_date'] === now()->addDays(14)->format('Y-m-d');
+        });
+    }
+
+    public function test_create_trial_subscription_without_card_returns_local_id()
+    {
+        $trialId = $this->provider->createTrialSubscription($this->tenant, 'pro', null, false);
+
+        $this->assertTrue(str_starts_with($trialId, 'trial_'));
+    }
+
+    public function test_cancel_subscription_with_grace_period_retains_access_until_ends_at()
+    {
+        Http::fake([
+            '*/enrollments/E-12345/cancel' => Http::response([
+                'status' => 'CANCELLED',
+            ], 200),
+        ]);
+
+        $subscription = Subscription::create([
+            'tenant_id' => $this->tenant->id,
+            'plan_id' => $this->plan->id,
+            'provider_subscription_id' => 'E-12345',
+            'status' => 'active',
+            'gateway' => 'dlocal',
+            'current_period_end' => now()->addDays(15),
+        ]);
+
+        $this->provider->cancelSubscription($this->tenant, 'E-12345', false);
+
+        $subscription->refresh();
+        // Access remains active (status not updated to cancelled immediately, ends_at is set to current_period_end)
+        $this->assertSame('active', $subscription->status);
+        $this->assertNotNull($subscription->ends_at);
+        $this->assertSame($subscription->current_period_end->toDateTimeString(), $subscription->ends_at->toDateTimeString());
     }
 }
