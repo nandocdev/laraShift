@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Handlers;
 
+use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Models\Subscription;
-use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Payments\Enums\PaymentContext;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\PaymentHandlerContract;
@@ -36,11 +36,12 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
     {
         $planId = $metadata['plan_id'] ?? null;
 
-        if (!$planId) {
+        if (! $planId) {
             Log::error('SubscriptionPaymentHandler: plan_id missing in metadata', [
-                'tenant_id'  => $tenantId,
+                'tenant_id' => $tenantId,
                 'display_id' => $displayId,
             ]);
+
             return;
         }
 
@@ -49,18 +50,22 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
 
         $subscription = Subscription::updateOrCreate(
             [
-                'tenant_id'                => $tenant->id,
+                'tenant_id' => $tenant->id,
                 'provider_subscription_id' => $metadata['gateway_reference'] ?? $displayId,
             ],
             [
-                'plan_id'            => $plan->id,
-                'status'             => 'active',
-                'gateway'            => $metadata['gateway'] ?? 'clave',
+                'plan_id' => $plan->id,
+                'status' => 'active',
+                'gateway' => $metadata['gateway'] ?? 'clave',
                 'current_period_end' => now()->addDays((int) ($plan->billing_cycle_days ?? 30)),
             ]
         );
 
-        $tenant->update(['plan_id' => $plan->slug]);
+        $tenant->update([
+            'plan_id' => $plan->slug,
+            'status' => 'active',
+            'suspended_at' => null,
+        ]);
 
         // Generate Invoice for the tenant
         Invoice::updateOrCreate(
@@ -68,18 +73,18 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
                 'provider_invoice_id' => $metadata['gateway_reference'] ?? $displayId,
             ],
             [
-                'tenant_id'       => $tenant->id,
+                'tenant_id' => $tenant->id,
                 'subscription_id' => $subscription->id,
-                'amount'          => (int) ($amount * 100),
-                'currency'        => $metadata['currency'] ?? 'USD',
-                'status'          => 'paid',
-                'issued_at'       => now(),
+                'amount' => (int) ($amount * 100),
+                'currency' => $metadata['currency'] ?? 'USD',
+                'status' => 'paid',
+                'issued_at' => now(),
             ]
         );
 
         Log::info('SubscriptionPaymentHandler: subscription fulfilled', [
-            'tenant'     => $tenantId,
-            'plan'       => $plan->slug,
+            'tenant' => $tenantId,
+            'plan' => $plan->slug,
             'display_id' => $displayId,
         ]);
     }
@@ -93,7 +98,7 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
 
             if ($tenant) {
                 $tenant->update([
-                    'status'       => 'suspended',
+                    'status' => 'suspended',
                     'suspended_at' => now(),
                 ]);
 
@@ -103,21 +108,21 @@ final class SubscriptionPaymentHandler implements PaymentHandlerContract
                     ->performedOn($tenant)
                     ->withProperties([
                         'display_id' => $displayId,
-                        'attempts'   => $attemptCount,
-                        'reason'     => $reason,
+                        'attempts' => $attemptCount,
+                        'reason' => $reason,
                     ])
                     ->log('tenant_suspended_by_dunning');
             }
 
             Log::alert('SubscriptionPaymentHandler: max attempts reached, tenant suspended', [
-                'tenant'   => $tenantId,
+                'tenant' => $tenantId,
                 'attempts' => $attemptCount,
             ]);
         } else {
             Log::info('SubscriptionPaymentHandler: payment attempt failed', [
-                'tenant'   => $tenantId,
-                'attempt'  => $attemptCount,
-                'reason'   => $reason,
+                'tenant' => $tenantId,
+                'attempt' => $attemptCount,
+                'reason' => $reason,
             ]);
         }
     }
