@@ -35,14 +35,27 @@ class ManageFeature extends Component
         }
     }
 
+    public function updatedKey($value): void
+    {
+        $this->key = Str::lower(Str::slug($value, '.'));
+    }
+
     public function save(): void
     {
         $this->validate([
-            'key' => 'required|string|max:100|unique:features,key,' . ($this->feature->id ?? 'NULL') . ',id',
+            'key' => [
+                'required',
+                'string',
+                'max:100',
+                'regex:/^[a-z0-9]+\.[a-z0-9_]+$/',
+                'unique:features,key,' . ($this->feature->id ?? 'NULL') . ',id'
+            ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'module' => 'nullable|string|max:100',
             'is_active' => 'boolean',
+        ], [
+            'key.regex' => __('The key must follow the format module.action (e.g. auth.mfa_enforce)'),
         ]);
 
         $attributes = [
@@ -69,9 +82,10 @@ class ManageFeature extends Component
     {
         if (! $this->feature) return;
 
-        // Note: In production we should check if used in overrides/plans
+        // Perform soft delete
         $this->feature->delete();
-        session()->flash('status', __('Feature deleted.'));
+        
+        session()->flash('status', __('Feature retired. Historical data remains valid.'));
         $this->redirect(route('central.features.index'), navigate: true);
     }
 

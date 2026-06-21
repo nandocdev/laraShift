@@ -6,7 +6,7 @@ namespace App\Modules\Central\Payments\Tests;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Central\Payments\Events\PaymentApproved;
+use App\Modules\Shared\Events\PaymentCompleted;
 use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\Models\PaymentWebhook;
@@ -86,7 +86,7 @@ final class PaymentVerifierTest extends TenantTestCase {
     // ── Terminal status guard ─────────────────────────────────────────────────
 
     public function test_approved_payment_is_not_overwritten_by_declined_webhook(): void {
-        \Event::fake([PaymentApproved::class]);
+        \Event::fake([PaymentCompleted::class]);
 
         Payment::factory()->create([
             'tenant_id' => $this->tenantId,

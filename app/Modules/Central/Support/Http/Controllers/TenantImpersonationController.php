@@ -30,14 +30,18 @@ class TenantImpersonationController extends Controller
             ->whereNull('ended_at')
             ->firstOrFail();
 
-        // 1. Mark as used/active
+        // 1. Authenticate the operator in the tenant guard
+        // This ensures the operator has a real session on the tenant side.
+        auth()->loginUsingId($session->operator_id);
+
+        // 2. Mark session as used/active
         Session::put('impersonation_session_id', $session->id);
         Session::put('impersonated_by', $session->operator_id);
 
-        // 2. Clear token for security (one-time use for transition)
+        // 3. Clear token for security (one-time use for transition)
         $session->update(['token' => 'used_' . Str::random(10)]);
 
-        return redirect('/dashboard')->with('status', __('Impersonation active. Actions are audited.'));
+        return redirect()->intended('/dashboard')->with('status', __('Impersonation active. Actions are audited.'));
     }
 
     /**
@@ -60,6 +64,7 @@ class TenantImpersonationController extends Controller
             }
         }
 
+        auth()->logout();
         Session::forget(['impersonation_session_id', 'impersonated_by']);
 
         return redirect('/')->with('status', __('Impersonation session ended.'));

@@ -29,6 +29,7 @@ class AuditLog extends Model
 
     protected $casts = [
         'metadata' => 'array',
+        'action' => \App\Modules\Tenant\Audit\Enums\AuditAction::class,
     ];
 
     public function user(): BelongsTo

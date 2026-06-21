@@ -28,9 +28,9 @@ class CreateInitialAdminUser
                 'password' => Hash::make($password),
             ]);
 
-            // 3. Assign admin role
+            // 3. Assign owner role
             setPermissionsTeamId($event->tenant->id);
-            $user->assignRole('admin');
+            $user->assignRole('Owner');
 
             // 4. Notify user as per PRD US-101
             $user->notify(new \App\Modules\Central\Provisioning\Notifications\WelcomeTenantNotification(

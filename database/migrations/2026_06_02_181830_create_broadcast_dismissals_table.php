@@ -23,6 +23,13 @@ return new class extends Migration
 
             $table->unique(['broadcast_id', 'user_id']);
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE broadcast_dismissals ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE broadcast_dismissals FORCE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON broadcast_dismissals USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

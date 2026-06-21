@@ -28,7 +28,7 @@
                             {{ $invoice->period_start->format('Y-m-d') }} - {{ $invoice->period_end->format('Y-m-d') }}
                         </flux:table.cell>
                         <flux:table.cell>
-                            {{ number_format($invoice->amount_due / 100, 2) }} {{ strtoupper($invoice->currency) }}
+                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" :variant="$invoice->status === 'paid' ? 'success' : 'warning'">

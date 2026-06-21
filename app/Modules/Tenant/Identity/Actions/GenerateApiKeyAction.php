@@ -31,10 +31,20 @@ final readonly class GenerateApiKeyAction
             'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $name,
-            'key_hash' => hash('sha256', $plainKey),
+            'key_hash' => hash_hmac('sha256', $plainKey, config('app.key')),
             'scopes' => $scopes,
             'created_by' => $creator?->id,
         ]);
+
+        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_CREATED,
+                resource: 'api_key',
+                resourceId: $apiKey->id,
+                metadata: ['name' => $name, 'scopes' => $scopes],
+                userId: $creator?->id
+            )
+        );
 
         activity('identity')
             ->performedOn($apiKey)

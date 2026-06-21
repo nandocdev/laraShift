@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Actions;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Contracts\TenantContract;
 use App\Modules\Central\Support\Models\SupportNote;
 use Illuminate\Support\Str;
 
 final readonly class CreateSupportNoteAction
 {
-    public function execute(Tenant $tenant, string $content): SupportNote
+    public function execute(TenantContract $tenant, string $content): SupportNote
     {
         $note = SupportNote::create([
             'id' => Str::uuid()->toString(),
-            'tenant_id' => $tenant->id,
+            'tenant_id' => $tenant->getId(),
             'author_id' => auth('central')->id(),
             'content' => $content,
         ]);

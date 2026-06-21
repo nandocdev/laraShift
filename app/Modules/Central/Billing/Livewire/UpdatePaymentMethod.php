@@ -14,14 +14,25 @@ class UpdatePaymentMethod extends Component {
     public string $paymentMethod;
 
     #[On('paymentMethodUpdated')]
-    public function updatePaymentMethod(string $paymentMethod): void {
+    public function updatePaymentMethod(string $paymentMethod, ?string $lastFour = null, ?string $brand = null): void {
         try {
-            tenant()->updateDefaultPaymentMethod($paymentMethod);
+            $tenant = tenant();
+            $gateway = $tenant->billing_gateway ?? config('payments.default', 'dlocal');
 
-            tenant()->update([
-                'pm_type' => tenant()->card_brand,
-                'pm_last_four' => tenant()->card_last_four,
-            ]);
+            if ($gateway === 'dlocal') {
+                $tenant->update([
+                    'stripe_id' => $paymentMethod, // We use stripe_id column generically for the customer vault ID / token
+                    'pm_type' => $brand ?? 'card',
+                    'pm_last_four' => $lastFour ?? '****',
+                ]);
+            } else {
+                // Fallback to Cashier for Stripe
+                $tenant->updateDefaultPaymentMethod($paymentMethod);
+                $tenant->update([
+                    'pm_type' => $tenant->card_brand,
+                    'pm_last_four' => $tenant->card_last_four,
+                ]);
+            }
 
             session()->flash('status', __('Payment method updated successfully.'));
             $this->redirect(route('tenant.billing.manage'), navigate: true);

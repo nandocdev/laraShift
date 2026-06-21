@@ -27,29 +27,46 @@ final class PaymentResultData extends Data {
         #[Required, StringType]
         public readonly string $gatewayCode,
 
-        public readonly ?string $authorizationCode,
-        public readonly ?string $errorCode,
-        public readonly ?string $errorMessage,
+        public readonly ?string $authorizationCode = null,
+        public readonly ?string $errorCode = null,
+        public readonly ?string $errorMessage = null,
         public readonly array $raw = [],
     ) {
     }
 
     public static function fromClavePayload(array $payload): self {
+        // 1. Determine Status
+        // Webhook uses 'status' (1 approved, 0 declined)
+        // Redirect uses 'Estado' ('Aprobada', 'Denegada', 'Pendiente')
         $status = match (true) {
+            ($payload['status'] ?? null) === 1 => PaymentStatus::Approved,
+            ($payload['status'] ?? null) === 0 => PaymentStatus::Declined,
+            ($payload['Estado'] ?? '') === 'Aprobada' => PaymentStatus::Approved,
+            ($payload['Estado'] ?? '') === 'Denegada' => PaymentStatus::Declined,
             isset($payload['approved']) && $payload['approved'] => PaymentStatus::Approved,
             isset($payload['declined']) && $payload['declined'] => PaymentStatus::Declined,
             default => PaymentStatus::Pending,
         };
 
+        // 2. Resolve Gateway Reference (codOper / Oper / transactionId)
+        $reference = (string) ($payload['codOper'] ?? $payload['Oper'] ?? $payload['transactionId'] ?? $payload['txId'] ?? '');
+
+        // 3. Resolve Amount (totalPay / TotalPagado / amount)
+        $amount = (float) ($payload['totalPay'] ?? $payload['TotalPagado'] ?? $payload['amount'] ?? 0);
+
+        // 4. Resolve Display ID (order/invoice reference)
+        // We often send displayId in PARM_2 or PARM_1 depending on the flow
+        $displayId = (string) ($payload['PARM_2'] ?? $payload['PARM_1'] ?? $payload['displayId'] ?? $payload['orderId'] ?? '');
+
         return new self(
-            gatewayReference: $payload['transactionId'] ?? $payload['txId'] ?? '',
-            displayId: $payload['displayId'] ?? $payload['orderId'] ?? '',
+            gatewayReference: $reference,
+            displayId: $displayId,
             status: $status,
-            amount: (float) ($payload['amount'] ?? 0),
-            gatewayCode: $payload['gatewayCode'] ?? 'CLAVE',
-            authorizationCode: $payload['authCode'] ?? $payload['authorization'] ?? null,
-            errorCode: $payload['errorCode'] ?? null,
-            errorMessage: $payload['errorMessage'] ?? $payload['description'] ?? null,
+            amount: $amount,
+            gatewayCode: $payload['type'] ?? $payload['gatewayCode'] ?? 'CLAVE',
+            authorizationCode: $payload['authStatus'] ?? $payload['authCode'] ?? $payload['authorization'] ?? null,
+            errorCode: $payload['error_code'] ?? $payload['errorCode'] ?? null,
+            errorMessage: $payload['messageSys'] ?? $payload['errorMessage'] ?? $payload['Razon'] ?? $payload['description'] ?? null,
             raw: $payload,
         );
     }

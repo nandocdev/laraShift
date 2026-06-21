@@ -34,6 +34,7 @@ final readonly class ResolveTenantFeaturesAction
         return Cache::rememberForever($cacheKey, function () use ($tenant) {
             // 1. Get Plan Features
             $planFeatures = Feature::whereHas('plans', function ($query) use ($tenant) {
+                    $query->withTrashed(); // Support retired plans for existing tenants
                     $query->where('plans.slug', $tenant->plan_id);
                     
                     if (\Illuminate\Support\Str::isUuid($tenant->plan_id)) {

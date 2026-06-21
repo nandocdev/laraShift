@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Support\Drivers;
 
 use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Billing\Support\PagueloFacilClient;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Contracts\BillingProvider;
 
@@ -18,7 +18,9 @@ class InternalBillingProvider implements BillingProvider
 
     public function createCheckoutSession(Tenant $tenant, string $planId): string
     {
-        return route('tenant.billing.checkout.hosted', [
+        $domain = $tenant->domains->first()?->domain ?? $tenant->id . '.' . config('tenancy.central_domain');
+        
+        return tenant_route($domain, 'tenant.billing.checkout.hosted', [
             'tenant_uuid' => $tenant->id,
             'plan_uuid' => $planId,
         ]);
@@ -41,12 +43,43 @@ class InternalBillingProvider implements BillingProvider
 
     public function syncSubscription(Tenant $tenant): void
     {
-        // Implement status sync
+        $subscription = $tenant->subscriptions()->latest()->first();
+
+        if ($subscription && $subscription->provider_subscription_id) {
+            try {
+                $data = $this->getSubscriptionData($tenant, $subscription->provider_subscription_id);
+
+                if ($data) {
+                    $subscription->update([
+                        'status' => strtolower($data['status'] ?? $subscription->status),
+                        'current_period_end' => isset($data['nextPaymentDate']) ? \Illuminate\Support\Carbon::parse($data['nextPaymentDate']) : $subscription->current_period_end,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to sync PagueloFacil subscription for tenant {$tenant->id}: {$e->getMessage()}");
+            }
+        }
+    }
+
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    {
+        try {
+            $response = $this->client->getSubscription($subscriptionId);
+            
+            if ($response['success'] ?? false) {
+                return $response['data'];
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            \Log::error("PagueloFacil getSubscriptionData Error: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getInvoices(Tenant $tenant): array
     {
-        $gateway = app(PaymentGateway::class);
+        $gateway = app(PaymentGatewayContract::class);
         $apiKey = config("payments.{$gateway->identifier()}.api_key") 
                ?? config("payments.{$gateway->identifier()}.login");
 

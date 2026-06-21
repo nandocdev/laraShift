@@ -16,8 +16,14 @@ class HealthCheckController extends Controller
      * GET /central/health
      * Monitors system dependencies.
      */
-    public function __invoke(): JsonResponse
+    public function __invoke(\Illuminate\Http\Request $request): JsonResponse
     {
+        // IP Restriction if configured
+        $allowedIps = config('infrastructure.health.allowed_ips', []);
+        if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps, true)) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
         $status = 'healthy';
         $checks = [
             'database' => $this->checkDatabase(),
@@ -52,6 +58,15 @@ class HealthCheckController extends Controller
     protected function checkRedis(): array
     {
         try {
+            // Check if the Redis class or the phpredis extension is actually available
+            // to avoid fatal "Class Redis not found" errors
+            if (! class_exists('Redis') && config('database.redis.client') === 'phpredis') {
+                return [
+                    'status' => 'fail', 
+                    'message' => 'PHP Extension "phpredis" is missing. Install it or switch to "predis".'
+                ];
+            }
+
             Redis::connection()->ping();
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {

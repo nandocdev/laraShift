@@ -13,6 +13,8 @@ interface BillingProvider
     public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void;
     
     public function syncSubscription(Tenant $tenant): void;
+
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array;
     
     public function getInvoices(Tenant $tenant): array;
 }

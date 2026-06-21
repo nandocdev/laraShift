@@ -32,9 +32,13 @@ class PagueloFacilClient {
      */
     public function generatePaymentLink(array $data): string
     {
+        $amount = $data['amount'] instanceof \Money\Money 
+            ? (float) $data['amount']->getAmount() / 100 
+            : (float) $data['amount'];
+
         $payload = [
             'CCLW' => $this->cclw,
-            'CMTN' => number_format((float) $data['amount'], 2, '.', ''),
+            'CMTN' => number_format($amount, 2, '.', ''),
             'CDSC' => substr($data['description'], 0, 150),
             'RETURN_URL' => bin2hex($data['return_url']),
             'PARM_1' => $data['tenant_id'],
@@ -150,6 +154,16 @@ class PagueloFacilClient {
         if ($response->successful() && ($data['success'] ?? false) === false) {
             throw new \Exception($data['message'] ?? 'PagueloFacil API Error without message');
         }
+
+        return $response->throw()->json();
+    }
+
+    /**
+     * Get details of a subscription.
+     */
+    public function getSubscription(string $subscriptionId): array
+    {
+        $response = $this->client()->get("/subscriptions-api/v1/CustomerSubscriptions/{$subscriptionId}");
 
         return $response->throw()->json();
     }

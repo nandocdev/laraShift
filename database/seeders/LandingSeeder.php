@@ -42,8 +42,8 @@ class LandingSeeder extends Seeder
                         'variant' => 'split',
                         'order' => 0,
                         'config' => [
-                            'headline' => 'Automate your business with LaraShift',
-                            'subtitle' => 'The ultimate platform for multi-tenant SaaS applications in Laravel.',
+                            'headline' => 'Escala tu SaaS con Arquitectura Empresarial',
+                            'subtitle' => 'La plataforma B2B con Aislamiento de Grado Bancario, Motor de Quotas, API Keys Seguras y Facturación Dunning Unificada. Lista para Producción.',
                             'button_primary_text' => 'Get Started',
                             'button_primary_url' => '/register',
                             'image_url' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426&ixlib=rb-4.0.3',
@@ -56,9 +56,9 @@ class LandingSeeder extends Seeder
                         'variant' => 'centered',
                         'order' => 1,
                         'config' => [
-                            'headline' => 'Ready to grow your revenue?',
-                            'description' => 'Join 2,000+ businesses using our platform to scale their operations.',
-                            'button_primary_text' => 'Start Free Trial',
+                            'headline' => '¿Listo para lanzar tu producto al mercado?',
+                            'description' => 'Únete a las plataformas que confían en nuestra infraestructura monolítica resiliente y olvídate de la complejidad técnica.',
+                            'button_primary_text' => 'Comenzar Prueba Gratuita',
                             'button_primary_url' => '/trial',
                         ],
                         'styles' => ['background' => 'dark']

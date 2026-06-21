@@ -13,6 +13,11 @@ class Broadcast extends Model
 {
     use HasUuids;
 
+    public function getConnectionName()
+    {
+        return config('tenancy.database.central_connection', 'central');
+    }
+
     protected $fillable = [
         'id',
         'created_by',

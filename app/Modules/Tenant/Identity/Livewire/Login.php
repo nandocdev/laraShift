@@ -43,7 +43,7 @@ class Login extends Component
                 'login.remember' => $this->remember,
             ]);
 
-            $this->redirect(route('login.challenge'), navigate: true);
+            $this->redirect(route('two-factor.login'), navigate: true);
             return;
         }
         

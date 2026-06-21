@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use App\Modules\Central\Billing\Support\BillingManager;
 use App\Modules\Central\Billing\Support\Drivers\InternalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\StripeBillingProvider;
+use App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider;
 use Tests\TestCase;
 
 class BillingManagerTest extends TestCase
@@ -32,6 +33,6 @@ class BillingManagerTest extends TestCase
         $manager = app(BillingManager::class);
         $driver = $manager->driver('dlocal');
 
-        $this->assertInstanceOf(InternalBillingProvider::class, $driver);
+        $this->assertInstanceOf(DlocalBillingProvider::class, $driver);
     }
 }

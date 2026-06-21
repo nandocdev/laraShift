@@ -15,6 +15,15 @@ final readonly class RevokeApiKeyAction
     {
         $apiKey->update(['revoked_at' => now()]);
 
+        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_REVOKED,
+                resource: 'api_key',
+                resourceId: $apiKey->id,
+                metadata: ['name' => $apiKey->name]
+            )
+        );
+
         activity('identity')
             ->performedOn($apiKey)
             ->log('api_key_revoked');

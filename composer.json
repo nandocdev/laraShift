@@ -10,6 +10,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-bcmath": "*",
+        "ext-intl": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "laravel/cashier": "^16.5",
         "laravel/chisel": "^0.1.0",
@@ -19,7 +21,7 @@
         "laravel/tinker": "^3.0",
         "livewire/flux": "^2.13.1",
         "livewire/livewire": "^4.1",
-        "nandocdev/plinth-multitenant-billing": "dev-main",
+        "predis/predis": "^3.5",
         "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-data": "^4.23",
         "spatie/laravel-medialibrary": "^11.23",
@@ -111,17 +113,16 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.5.7",
+            "ext-bcmath": "1",
+            "ext-exif": "1",
+            "ext-gd": "1",
+            "ext-intl": "1",
+            "ext-pcntl": "1"
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../plinth-multitenant-billing",
-            "options": {
-                "symlink": true
-            }
-        }
-    ]
+    "prefer-stable": true
 }

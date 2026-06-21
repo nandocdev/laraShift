@@ -1,8 +1,119 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 42" {{ $attributes }}>
-    <path 
-        fill="currentColor" 
-        fill-rule="evenodd" 
-        clip-rule="evenodd"
-        d="M17.2 5.633 8.6.855 0 5.633v26.51l16.2 9 16.2-9v-8.442l7.6-4.223V9.856l-8.6-4.777-8.6 4.777V18.3l-5.6 3.111V5.633ZM38 18.301l-5.6 3.11v-6.157l5.6-3.11V18.3Zm-1.06-7.856-5.54 3.078-5.54-3.079 5.54-3.078 5.54 3.079ZM24.8 18.3v-6.157l5.6 3.111v6.158L24.8 18.3Zm-1 1.732 5.54 3.078-13.14 7.302-5.54-3.078 13.14-7.3v-.002Zm-16.2 7.89 7.6 4.222V38.3L2 30.966V7.92l5.6 3.111v16.892ZM8.6 9.3 3.06 6.222 8.6 3.143l5.54 3.08L8.6 9.3Zm21.8 15.51-13.2 7.334V38.3l13.2-7.334v-6.156ZM9.6 11.034l5.6-3.11v14.6l-5.6 3.11v-14.6Z"
-    />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 42">
+    <svg
+        viewBox="0 0 101.4585 120.66013"
+        {{ $attributes }}
+        version="1.1"
+        id="svg14"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:svg="http://www.w3.org/2000/svg">
+        <defs
+            id="defs2">
+            <linearGradient
+                id="rocketGrad"
+                x1="71.728371"
+                y1="27.89707"
+                x2="71.728371"
+                y2="92.348473"
+                gradientTransform="scale(0.96196329,1.0395407)"
+                gradientUnits="userSpaceOnUse">
+                <stop
+                    offset="0%"
+                    stop-color="#6366f1"
+                    id="stop1" />
+                <stop
+                    offset="100%"
+                    stop-color="#8b5cf6"
+                    id="stop2" />
+            </linearGradient>
+            <linearGradient
+                id="rocketGrad-3"
+                x1="71.728371"
+                y1="27.89707"
+                x2="71.728371"
+                y2="92.348473"
+                gradientTransform="scale(0.96196329,1.0395407)"
+                gradientUnits="userSpaceOnUse">
+                <stop
+                    offset="0%"
+                    stop-color="#6366f1"
+                    id="stop1-6" />
+                <stop
+                    offset="100%"
+                    stop-color="#8b5cf6"
+                    id="stop2-7" />
+            </linearGradient>
+        </defs>
+        <!-- Cuerpo de la nave (triángulo redondeado) -->
+        <polygon
+            points="100,30 70,95 130,95 "
+            fill="url(#rocketGrad)"
+            stroke="#4f46e5"
+            stroke-width="2"
+            stroke-linejoin="round"
+            id="polygon2"
+            style="fill:url(#rocketGrad)"
+            transform="translate(-49.250307,-19.339873)" />
+        <polygon
+            points="70,95 130,95 100,30 "
+            fill="url(#rocketGrad)"
+            stroke="#4f46e5"
+            stroke-width="2"
+            stroke-linejoin="round"
+            id="polygon2-3"
+            style="fill:url(#rocketGrad-3)"
+            transform="matrix(0.51554744,0,0,0.40286125,-0.80510799,-11.683032)" />
+        <!-- Punta de la nave (óvalo/elipse en la parte superior) -->
+        <ellipse
+            cx="50.263077"
+            cy="15.550637"
+            rx="17.54258"
+            ry="10.350365"
+            fill="#818cf8"
+            id="ellipse2"
+            style="display:none;stroke-width:1.13883" />
+        <!-- Ventana/cockpit -->
+        <circle
+            cx="50.749695"
+            cy="45.660126"
+            r="6"
+            fill="#ffffff"
+            opacity="0.9"
+            id="circle2" />
+        <!-- Aletas laterales -->
+        <polygon
+            points="70,95 50,115 80,100 "
+            fill="#8b5cf6"
+            stroke="#4f46e5"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+            id="polygon3"
+            transform="translate(-49.250307,-19.339873)" />
+        <polygon
+            points="150,115 120,100 130,95 "
+            fill="#8b5cf6"
+            stroke="#4f46e5"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+            id="polygon4"
+            transform="matrix(1.0051273,0,0,1.1171794,-50.064141,-30.427153)" />
+        <!-- Llamas de despegue -->
+        <polygon
+            points="90,98 100,140 110,98 "
+            fill="#f59e0b"
+            opacity="0.9"
+            id="polygon5"
+            transform="translate(-49.250307,-19.339873)" />
+        <polygon
+            points="93,100 100,125 107,100 "
+            fill="#fbbf24"
+            opacity="0.8"
+            id="polygon6"
+            transform="translate(-49.250307,-19.339873)" />
+        <polygon
+            points="96,102 100,115 104,102 "
+            fill="#fef3c7"
+            id="polygon7"
+            transform="translate(-49.250307,-19.339873)" />
+        <!-- Líneas de velocidad minimalistas (a los costados) -->
+        <!-- Estrellas decorativas -->
+    </svg>

@@ -8,23 +8,23 @@ use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
+use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
- * Wizard de registro multi-step con integración de pago vía Plinth.
+ * Wizard de registro multi-step con integración de pago.
  *
  * Step 1: Datos de organización (nombre, email, compañía, slug, password)
  * Step 2: Selección visual de plan (cards con features y precios)
- * Step 3: Método de pago (Stripe Elements si plan.price > 0, o resumen si free)
+ * Step 3: Resumen y Pago
  *
  * [RIESGOS]
  * - Race condition en slug: validación `unique:tenants,slug` puede fallar si dos
  *   usuarios registran el mismo slug simultáneamente. Mitigado: constraint DB unique.
- * - Token de Stripe expira (~5 min): si el usuario demora mucho en step 3,
- *   el submit fallará. Mitigado: el token se genera al momento del submit.
  */
 #[Layout('layouts.marketing')]
 class RegisterTenant extends Component
@@ -35,20 +35,22 @@ class RegisterTenant extends Component
     public string $company = '';
     public string $slug = '';
     public string $password = '';
+// Step 2: Plan
+public string $plan_id = 'free';
 
-    // Step 2: Plan
-    public string $plan_id = 'free';
+// Step 3: Payment
+public ?string $payment_token = null;
 
-    // Step 3: Payment
-    public string $payment_token = '';
+// Wizard state
+public int $step = 1;
+public bool $autoGenerateSlug = true;
+public bool $loading = false;
+public ?string $error = null;
+public bool $paymentAlreadyApproved = false;
 
-    // Wizard state
-    public int $step = 1;
-    protected bool $autoGenerateSlug = true;
-
-    /**
-     * @var array<string, array> Reglas de validación por step.
-     */
+/**
+ * @var array<string, array> Reglas de validación por step.
+ */
     private function rulesForStep(int $step): array
     {
         return match ($step) {
@@ -59,15 +61,25 @@ class RegisterTenant extends Component
                 'slug'     => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:www,api,admin,central,app',
+                    'not_in:' . implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
-                'password' => 'required|string|min:12',
+                'password' => [
+                    'required',
+                    'string',
+                    Password::min(8)
+                        ->letters()
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols(),
+                ],
             ],
             2 => [
                 'plan_id' => 'required|exists:plans,slug',
             ],
-            3 => [],
+            3 => [
+                'payment_token' => ($this->isPlanFree() || $this->paymentAlreadyApproved) ? 'nullable|string' : 'required|string',
+            ],
             default => [],
         };
     }
@@ -79,6 +91,8 @@ class RegisterTenant extends Component
         if ($planFromQuery && Plan::where('slug', $planFromQuery)->exists()) {
             $this->plan_id = $planFromQuery;
         }
+
+        $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
     }
 
     public function updatedCompany(): void
@@ -99,15 +113,30 @@ class RegisterTenant extends Component
      */
     public function nextStep(): void
     {
-        $this->validate($this->rulesForStep($this->step));
+        $rules = $this->rulesForStep($this->step);
+
+        if (! empty($rules)) {
+            $this->validate($rules);
+        }
+
+        if ($this->step === 1) {
+            $lockKey = 'reserved_slug_' . $this->slug;
+            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+            
+            if ($currentLock && $currentLock !== $this->email) {
+                $this->addError('slug', __('This workspace URL is temporarily reserved by another user.'));
+                return;
+            }
+            
+            \Illuminate\Support\Facades\Cache::put($lockKey, $this->email, now()->addMinutes(15));
+        }
+
+        if ($this->step === 2) {
+            $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
+        }
 
         if ($this->step < 3) {
             $this->step++;
-        }
-
-        // Si plan es free, saltar de step 2 directo a submit
-        if ($this->step === 3 && $this->isPlanFree()) {
-            // No saltamos, mostramos resumen sin card form
         }
     }
 
@@ -129,39 +158,57 @@ class RegisterTenant extends Component
         $this->plan_id = $slug;
     }
 
-    /**
-     * Ejecuta el registro completo: provisioning + billing (via redirect).
-     */
     public function register(CreateTenantAction $action): void
     {
-        $tenant = $action->execute(new CreateTenantData(
-            name: $this->company,
-            slug: $this->slug,
-            email: $this->email,
-            plan_id: $this->plan_id,
-            password: $this->password,
-            payment_token: null, // No longer using client-side tokens for Paguelofacil link flow
-        ));
+        $this->loading = true;
+        $this->error = null;
 
-        // If it's a paid plan, redirect to the hosted checkout page within the tenant context
-        if (! $this->isPlanFree()) {
+        // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
+        $allRules = array_merge(
+            $this->rulesForStep(1),
+            $this->rulesForStep(2),
+            $this->rulesForStep(3)
+        );
+
+        try {
+            $this->validate($allRules);
+
+            // Final lock check to prevent race conditions during checkout
+            $lockKey = 'reserved_slug_' . $this->slug;
+            $currentLock = \Illuminate\Support\Facades\Cache::get($lockKey);
+            if ($currentLock && $currentLock !== $this->email) {
+                throw new \Exception(__('This workspace URL is temporarily reserved by another user.'));
+            }
+
+            $tenant = $action->execute(new CreateTenantData(
+                name: $this->company,
+                slug: $this->slug,
+                email: $this->email,
+                plan_id: $this->plan_id,
+                password: $this->password,
+                payment_token: $this->payment_token,
+            ));
+
+            // Release lock on success
+            \Illuminate\Support\Facades\Cache::forget($lockKey);
+
             $domain = $this->slug . '.' . config('tenancy.central_domain');
-            $protocol = app()->environment('local') ? 'http' : 'https';
-            $port = parse_url(config('app.url'), PHP_URL_PORT);
+            $baseUrl = config('app.url');
+            $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
+            $port = parse_url($baseUrl, PHP_URL_PORT);
             $portSuffix = $port ? ":$port" : '';
 
-            $checkoutUrl = "$protocol://$domain$portSuffix/billing/checkout/hosted/{$tenant->id}/{$this->selectedPlan->id}";
-
-            $this->redirect($checkoutUrl, navigate: false);
-            return;
+            // Immediate login redirection
+            $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
+            $this->error = $e->getMessage();
+            $this->addError('payment_token', $e->getMessage());
+        } finally {
+            $this->loading = false;
         }
-
-        $domain   = $this->slug . '.' . config('tenancy.central_domain');
-        $protocol = app()->environment('local') ? 'http' : 'https';
-        $port = parse_url(config('app.url'), PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-
-        $this->redirect("$protocol://$domain$portSuffix/auth/login", navigate: false);
     }
 
     /**
@@ -171,7 +218,7 @@ class RegisterTenant extends Component
     {
         $plan = Plan::where('slug', $this->plan_id)->first();
 
-        return ! $plan || $plan->price_monthly <= 0;
+        return ! $plan || ! $plan->price_monthly->isPositive();
     }
 
     /**
@@ -182,8 +229,27 @@ class RegisterTenant extends Component
         return Plan::where('slug', $this->plan_id)->first();
     }
 
+    public function isPaymentAlreadyApproved(): bool
+    {
+        if ($this->isPlanFree()) {
+            return false;
+        }
+
+        if (empty($this->slug) || empty($this->email)) {
+            return false;
+        }
+
+        $checkoutSlug = 'checkout_' . md5($this->slug . $this->email);
+
+        return \App\Modules\Central\Payments\Models\Payment::where('slug', $checkoutSlug)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
     public function render(): View
     {
+        $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
+
         return view('marketing::pages.register-tenant', [
             'plans'        => PlanManager::all(),
             'selectedPlan' => $this->selectedPlan,

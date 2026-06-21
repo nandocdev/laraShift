@@ -11,10 +11,20 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Current Plan -->
         <flux:card>
+            @php
+                $isActive = $subscription && ($subscription->active() || $subscription->onGracePeriod());
+                $isPaidPlan = $tenant->plan_id !== 'free';
+                $needsPayment = $isPaidPlan && ! $isActive;
+            @endphp
+
             <div class="flex justify-between items-start mb-6">
                 <div>
                     <flux:heading size="lg">{{ __('Current Plan') }}</flux:heading>
-                    <flux:badge size="sm" variant="success" class="mt-1">{{ strtoupper($tenant->plan_id) }}
+                    <flux:badge size="sm" :variant="$needsPayment ? 'warning' : 'success'" class="mt-1">
+                        {{ strtoupper($tenant->plan_id) }}
+                        @if($needsPayment)
+                            — {{ __('PENDING PAYMENT') }}
+                        @endif
                     </flux:badge>
                 </div>
                 <flux:button :href="route('tenant.billing.plans')" variant="ghost" icon="arrow-path" wire:navigate>{{ __('Change Plan') }}</flux:button>
@@ -24,15 +34,38 @@
                 @if ($subscription)
                     <div class="flex justify-between text-sm">
                         <span class="text-zinc-500">{{ __('Status') }}</span>
-                        <span class="font-medium">{{ strtoupper($subscription->stripe_status) }}</span>
+                        <span class="font-medium {{ $needsPayment ? 'text-red-500' : '' }}">
+                            {{ strtoupper($subscription->stripe_status) }}
+                        </span>
                     </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-zinc-500">{{ __('Next billing date') }}</span>
-                        <span
-                            class="font-medium">{{ $subscription->nextPayment() ? $subscription->nextPayment()->date()->format('M j, Y') : 'N/A' }}</span>
-                    </div>
+                    
+                    @if($isActive)
+                        <div class="flex justify-between text-sm">
+                            <span class="text-zinc-500">{{ __('Next billing date') }}</span>
+                            <span
+                                class="font-medium">{{ $subscription->nextPayment() ? $subscription->nextPayment()->date()->format('M j, Y') : 'N/A' }}</span>
+                        </div>
+                    @endif
+
+                    @if($needsPayment)
+                        <div class="pt-4">
+                            <flux:button :href="route('tenant.billing.plans')" variant="primary" class="w-full">
+                                {{ __('Complete Payment') }}
+                            </flux:button>
+                        </div>
+                    @endif
                 @else
-                    <flux:text>{{ __('You are currently on the Free plan.') }}</flux:text>
+                    @if($isPaidPlan)
+                         <div class="flex justify-between text-sm mb-4">
+                            <span class="text-zinc-500">{{ __('Status') }}</span>
+                            <span class="font-medium text-red-500">{{ __('INACTIVE') }}</span>
+                        </div>
+                        <flux:button :href="route('tenant.billing.plans')" variant="primary" class="w-full">
+                            {{ __('Pay for Plan') }}
+                        </flux:button>
+                    @else
+                        <flux:text>{{ __('You are currently on the Free plan.') }}</flux:text>
+                    @endif
                 @endif
             </div>
         </flux:card>
@@ -80,8 +113,7 @@
                     @forelse($invoices as $invoice)
                         <flux:table.row :key="$invoice->id">
                             <flux:table.cell>{{ $invoice->created_at->format('M j, Y') }}</flux:table.cell>
-                            <flux:table.cell>{{ number_format($invoice->amount / 100, 2) }}
-                                {{ strtoupper($invoice->currency) }}</flux:table.cell>
+                            <flux:table.cell>{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm"
                                     :variant="$invoice->status === 'paid' ? 'success' : 'warning'">

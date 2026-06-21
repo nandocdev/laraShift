@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Models;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Infrastructure\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +27,7 @@ class Invoice extends Model
 
     protected $casts = [
         'issued_at' => 'datetime',
-        'amount' => 'integer',
+        'amount' => MoneyCast::class,
     ];
 
     public function tenant(): BelongsTo

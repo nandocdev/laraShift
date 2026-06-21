@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="rocketGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cuerpo de la nave (triángulo redondeado) -->
+  <polygon points="100,30 70,95 130,95" fill="url(#rocketGrad)" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Punta de la nave (óvalo/elipse en la parte superior) -->
+  <ellipse cx="100" cy="40" rx="10" ry="14" fill="#818cf8"/>
+
+  <!-- Ventana/cockpit -->
+  <circle cx="100" cy="65" r="6" fill="#fff" opacity="0.9"/>
+
+  <!-- Aletas laterales -->
+  <polygon points="70,95 50,115 80,100" fill="#8b5cf6" stroke="#4f46e5" stroke-width="1.5" stroke-linejoin="round"/>
+  <polygon points="130,95 150,115 120,100" fill="#8b5cf6" stroke="#4f46e5" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Llamas de despegue -->
+  <polygon points="90,98 100,140 110,98" fill="#f59e0b" opacity="0.9"/>
+  <polygon points="93,100 100,125 107,100" fill="#fbbf24" opacity="0.8"/>
+  <polygon points="96,102 100,115 104,102" fill="#fef3c7"/>
+
+  <!-- Líneas de velocidad minimalistas (a los costados) -->
+  <line x1="45" y1="70" x2="55" y2="70" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="40" y1="80" x2="58" y2="80" stroke="#c7d2fe" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="145" y1="70" x2="155" y2="70" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="142" y1="80" x2="160" y2="80" stroke="#c7d2fe" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Estrellas decorativas -->
+  <circle cx="165" cy="40" r="1.5" fill="#a5b4fc"/>
+  <circle cx="35" cy="50" r="1" fill="#a5b4fc"/>
+  <circle cx="50" cy="25" r="1.5" fill="#a5b4fc"/>
+  <circle cx="155" cy="25" r="1" fill="#a5b4fc"/>
+  <circle cx="170" cy="60" r="1" fill="#a5b4fc"/>
+</svg>

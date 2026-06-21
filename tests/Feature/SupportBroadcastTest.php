@@ -35,12 +35,12 @@ it('renders active banners for the target tenant', function () {
 
     // Create a broadcast with banner channel
     $action = app(SendBroadcastAction::class);
-    $action->execute(
+    $action->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
         title: 'Platform Maintenance',
         body: 'Scheduled for tonight.',
         filterType: 'all',
         channels: ['banner']
-    );
+    ));
 
     tenancy()->initialize($tenant);
 
@@ -67,12 +67,12 @@ it('hides dismissed banners', function () {
         'plan_id' => 'pro',
     ]);
 
-    $broadcast = app(SendBroadcastAction::class)->execute(
+    $broadcast = app(SendBroadcastAction::class)->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
         title: 'Discount!',
         body: 'Upgrade now.',
         filterType: 'all',
         channels: ['banner']
-    );
+    ));
 
     tenancy()->initialize($tenant);
 

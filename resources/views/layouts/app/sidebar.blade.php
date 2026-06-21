@@ -7,6 +7,7 @@
 
 <body class="min-h-screen bg-white dark:bg-zinc-800">
     @include('partials.impersonation-banner')
+    @include('partials.subscription-banner')
     <livewire:global-announcements />
     <flux:sidebar sticky collapsible="mobile"
         class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
@@ -68,6 +69,10 @@
                 <flux:sidebar.item icon="credit-card" :href="route('tenant.billing.manage')"
                     :current="request()->routeIs('tenant.billing.*')" wire:navigate>
                     {{ __('Billing') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="banknotes" :href="route('tenant.payouts.index')"
+                    :current="request()->routeIs('tenant.payouts.*')" wire:navigate>
+                    {{ __('Withdrawals') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>

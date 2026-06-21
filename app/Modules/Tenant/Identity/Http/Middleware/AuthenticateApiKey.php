@@ -24,7 +24,7 @@ class AuthenticateApiKey
             return response()->json(['message' => 'Unauthorized. Invalid API Key format.'], 401);
         }
 
-        $hash = hash('sha256', $token);
+        $hash = hash_hmac('sha256', $token, config('app.key'));
 
         $apiKey = ApiKey::where('key_hash', $hash)
             ->whereNull('revoked_at')
@@ -46,20 +46,18 @@ class AuthenticateApiKey
             }
         }
 
-        // Update last used timestamp (US-T104)
-        $apiKey->update(['last_used_at' => now()]);
+        // Update last used timestamp (US-T104) - Throttled to avoid DB churn (MEDIO 6)
+        if (!$apiKey->last_used_at || $apiKey->last_used_at->diffInMinutes(now()) >= 15) {
+            $apiKey->update(['last_used_at' => now()]);
+        }
 
-        // Attach the API Key model to the request for controller access
+        // Attach the API Key model and scopes to the request
         $request->attributes->set('api_key', $apiKey);
+        $request->attributes->set('api_scopes', $apiKey->scopes);
         
         // Authenticate the user if the key is linked to one
         if ($apiKey->creator) {
             auth()->login($apiKey->creator);
-            
-            // Map API Key scopes to temporary permissions in the Gate (Integration)
-            foreach ($apiKey->scopes as $scope) {
-                \Illuminate\Support\Facades\Gate::define($scope, fn () => true);
-            }
         }
 
         return $next($request);

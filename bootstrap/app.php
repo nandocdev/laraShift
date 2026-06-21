@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+        $middleware->redirectGuestsTo(fn (Request $request) => (function_exists('tenant') && tenant()) ? route('login') : route('central.login'));
         $middleware->appendToGroup('universal', []);
+
+        $middleware->alias([
+            'feature' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureHasFeature::class,
+            'quota' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureWithinQuota::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

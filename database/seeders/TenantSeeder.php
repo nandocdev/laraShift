@@ -6,13 +6,11 @@ use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use Illuminate\Database\Seeder;
 
-class TenantSeeder extends Seeder
-{
+class TenantSeeder extends Seeder {
     /**
      * Run the database seeds.
      */
-    public function run(CreateTenantAction $action): void
-    {
+    public function run(CreateTenantAction $action): void {
         $testTenants = [
             [
                 'name' => 'Acme Corporation',

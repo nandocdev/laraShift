@@ -4,7 +4,7 @@
 >
 > Multi-tenancy, Billing, Provisioning, Features, Quotas, Security and Tenant Operations — built from day one for production.
 
-[![Laravel](https://img.shields.io/badge/Laravel-13.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3+-777BB4?style=for-the-badge&logo=php)](https://www.php.net)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
@@ -21,13 +21,11 @@ Most Laravel SaaS starters stop at:
 
 Real SaaS platforms require much more:
 
-- Tenant provisioning
-- Subscription lifecycle management
-- Feature management
-- Usage quotas
-- Audit trails
-- API access
-- Tenant customization
+- **Idempotent Tenant Provisioning** (with rollback and retry)
+- **Subscription Lifecycle Management** (including unified Dunning)
+- **Feature & Quota Management Engine**
+- **Bank-Grade Isolation** (via PostgreSQL Row-Level Security)
+- Audit trails & Secure API Access (HMAC)
 - Operational tooling
 
 LaraShift provides those capabilities as a **Modular Monolith**, avoiding the complexity and operational cost of microservices while maintaining strong domain boundaries.
@@ -36,49 +34,40 @@ LaraShift provides those capabilities as a **Modular Monolith**, avoiding the co
 
 ## Core Principles
 
-### 1. Modular Monolith
+### 1. Modular Monolith (RUP Oriented)
 
-Business capabilities are isolated into bounded contexts.
+Business capabilities are isolated into bounded contexts, strictly enforcing architectural boundaries.
 
 ```text
 app/
 └── Modules/
-    ├── Central/
-    ├── Tenant/
-    └── Shared/
+    ├── Central/ (Platform)
+    ├── Tenant/ (Product)
+    └── Shared/ (Contracts & Events)
 ```
 
-No service spaghetti.
-
-No god folders.
-
-No microservices unless there is a proven need.
+No service spaghetti. No god folders. No microservices unless there is a proven need.
 
 ---
 
-### 2. PostgreSQL Row-Level Security (RLS)
+### 2. Bank-Grade PostgreSQL Row-Level Security (RLS)
 
-Tenant isolation is enforced at the database layer.
+Tenant isolation is enforced at the database layer, completely decoupling security from application-level ORM scopes.
 
 Benefits:
-
-- Defense in depth
-- Reduced risk of tenant data leakage
-- Centralized access control
-- Production-grade isolation
+- **Defense in depth:** Validated through `RLSIsolationTest`.
+- Reduced risk of tenant data leakage.
+- Centralized access control: `tenant_isolation` policy applied with `WITH CHECK`.
 
 ---
 
 ### 3. Production First
 
 Every module is designed around real SaaS operational requirements:
-
-- Billing failures
-- Subscription lifecycle
-- Tenant suspension
-- Auditability
-- Support operations
-- Security controls
+- Atomic, modular provisioning with `TenantDataSeeder` initialization.
+- Centralized Dunning workflows (suspension on failed payments).
+- HMAC-SHA256 hardened API Keys with throttled usage tracking.
+- Dynamic `Feature` and `Quota` middleware protection (`HTTP 403` / `HTTP 429`).
 
 ---
 
@@ -88,98 +77,28 @@ Every module is designed around real SaaS operational requirements:
 
 Platform-level operations.
 
-```text
-Central
-├── Provisioning
-├── Billing
-├── Features
-├── Quotas
-└── Platform Administration
-```
-
 ### Provisioning
-
-Responsible for tenant lifecycle.
-
-```text
-Create Tenant
-↓
-Assign Plan
-↓
-Configure Features
-↓
-Configure Quotas
-↓
-Activate
-```
-
+Responsible for the robust tenant lifecycle via a modular pipeline.
 Capabilities:
-
-- Tenant creation
-- Tenant suspension
-- Tenant activation
-- Domain management
-- Onboarding workflows
-
----
+- Domain Reservation (`ReserveTenantDomainAction`)
+- Database Core Data Seeding (`SetupTenantCoreDataAction`)
+- External Infrastructure Hook (`ProvisionInfrastructureAction` -> `RailwayService`)
+- Idempotent execution (retry without duplication)
 
 ### Billing
-
 Subscription and payment engine.
-
 Capabilities:
-
 - Subscription plans
-- Invoices
-- Payment processing
-- Dunning workflows
-- Multi-gateway support
+- Invoices & Dunning workflows
+- Unified Webhook handling
+- Supported gateways: Stripe, PagueloFacil, dLocal.
 
-Supported gateways:
-
-- Stripe
-- PagueloFacil
-- dLocal
-
----
-
-### Features
-
-Feature flag system for SaaS plans.
-
-Examples:
-
-```text
-API Access
-Custom Domains
-Webhooks
-SMTP
-Audit Export
-```
-
-Question answered by this module:
-
-> Can this tenant use this capability?
-
----
-
-### Quotas
-
-Usage limitation engine.
-
-Examples:
-
-```text
-Users
-API Requests
-Domains
-Webhooks
-Storage
-```
-
-Question answered by this module:
-
-> How much can this tenant consume?
+### Features & Quotas
+Usage limitation engine running at runtime.
+Capabilities:
+- Trait-based validation: `$tenant->hasFeature()`, `$tenant->withinQuota()`.
+- Middlewares: `feature`, `quota`.
+- Graceful exception handling: `QuotaExceededException`.
 
 ---
 
@@ -187,136 +106,41 @@ Question answered by this module:
 
 Customer-facing product capabilities.
 
-```text
-Tenant
-├── Identity
-├── Audit
-├── Settings
-├── API Keys
-└── Webhooks
-```
-
-### Identity
-
+### Identity & API Keys
 Authentication and authorization.
-
 Capabilities:
-
-- Users
-- Roles
-- Permissions
-- MFA
-- Passkeys
-- Session management
+- Users, Roles, Permissions (Spatie).
+- Secure API Keys (HMAC hashed, no dynamic `Gate::define` memory leaks).
+- Throttled metric updates to protect Database I/O.
 
 ---
 
-### Audit
+# Roadmap & Status
 
-Immutable audit logging.
+LaraShift has reached a high level of **SaaS Readiness**, completing its core architectural foundation.
 
-Tracks:
+## Phase 1 — SaaS Foundation [COMPLETED]
+- [x] Identity & Roles
+- [x] Idempotent Provisioning
+- [x] Billing & Dunning
+- [x] RLS Database Isolation
+- [x] Secure API Keys
 
-- User actions
-- Permission changes
-- Security events
-- Billing actions
-- Configuration updates
-
----
-
-### Settings
-
-Tenant customization.
-
-Capabilities:
-
-- Branding
-- Localization
-- Timezones
-- Currency
-- Preferences
-
----
-
-### API Keys
-
-Programmatic access management.
-
-Capabilities:
-
-- API key generation
-- Key rotation
-- Revocation
-- Scopes
-
-Example scopes:
-
-```text
-users.read
-users.write
-billing.read
-audit.read
-```
-
----
-
-### Webhooks
-
-Event-driven integrations.
-
-Capabilities:
-
-- Event subscriptions
-- Delivery tracking
-- Retry mechanisms
-- Signature validation
-
-Example events:
-
-```text
-user.created
-invoice.paid
-subscription.cancelled
-```
-
----
-
-# Roadmap
-
-## Phase 1 — SaaS Foundation
-
-- [ ] Identity
-- [ ] Provisioning
-- [ ] Billing
-- [ ] Features
-- [ ] Quotas
-
----
-
-## Phase 2 — Operations & Security
-
-- [ ] Audit
-- [ ] API Keys
-- [ ] Settings
-- [ ] Webhooks
-
----
+## Phase 2 — Product & Operations [IN PROGRESS]
+- [x] Feature & Quota Engine
+- [x] Infrastructure Hooks
+- [ ] Real Domain mutator implementation (Railway API)
+- [ ] Comprehensive Audit Logs
+- [ ] Webhook outbound delivery
 
 ## Phase 3 — Platform Extensions
-
-- [ ] Notifications
-- [ ] SMTP
-- [ ] Domains
+- [ ] Notifications Center
+- [ ] SMTP Configuration
 - [ ] Data Export
 
----
-
 ## Phase 4 — Growth Tools
-
 - [ ] Landing Builder
-- [ ] CMS
-- [ ] Marketing
+- [ ] Marketing & CMS
 
 ---
 
@@ -324,7 +148,7 @@ subscription.cancelled
 
 | Layer          | Technology        |
 | -------------- | ----------------- |
-| Backend        | Laravel 13        |
+| Backend        | Laravel 11        |
 | Language       | PHP 8.3+          |
 | Database       | PostgreSQL 16+    |
 | Multi-Tenancy  | stancl/tenancy    |
@@ -341,7 +165,6 @@ subscription.cancelled
 # Design Goals
 
 LaraShift is designed for teams building:
-
 - B2B SaaS products
 - Internal business platforms
 - White-label applications
@@ -349,23 +172,9 @@ LaraShift is designed for teams building:
 - Enterprise software
 
 Not intended for:
-
 - Consumer social networks
 - Real-time gaming platforms
 - Microservice-first architectures
-
----
-
-# Development Status
-
-LaraShift is currently under active development.
-
-The goal is to provide a production-ready SaaS foundation focused on:
-
-- Security
-- Maintainability
-- Operational simplicity
-- Long-term scalability
 
 ---
 
@@ -373,6 +182,4 @@ The goal is to provide a production-ready SaaS foundation focused on:
 
 MIT License.
 
-Use it.
-Fork it.
-Build something valuable.
+Use it. Fork it. Build something valuable.

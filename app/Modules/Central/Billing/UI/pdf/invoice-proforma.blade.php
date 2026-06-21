@@ -155,7 +155,7 @@
         <tbody>
             <tr>
                 <td>{{ __('Subscription to') }} {{ strtoupper($tenant->plan_id) }} {{ __('Plan') }}</td>
-                <td style="text-align: right;">{{ number_format($invoice->amount_due / 100, 2) }} {{ strtoupper($invoice->currency) }}</td>
+                <td style="text-align: right;">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</td>
             </tr>
         </tbody>
     </table>
@@ -164,16 +164,16 @@
         <table>
             <tr>
                 <td>{{ __('Subtotal') }}</td>
-                <td style="text-align: right;">{{ number_format($invoice->amount_due / 100, 2) }} {{ strtoupper($invoice->currency) }}</td>
+                <td style="text-align: right;">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</td>
             </tr>
             <tr class="total-row">
                 <td>{{ __('Total') }}</td>
-                <td style="text-align: right;">{{ number_format($invoice->amount_due / 100, 2) }} {{ strtoupper($invoice->currency) }}</td>
+                <td style="text-align: right;">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</td>
             </tr>
             @if($invoice->status === 'paid')
                 <tr>
                     <td>{{ __('Amount Paid') }}</td>
-                    <td style="text-align: right;">{{ number_format($invoice->amount_paid / 100, 2) }} {{ strtoupper($invoice->currency) }}</td>
+                    <td style="text-align: right;">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</td>
                 </tr>
             @endif
         </table>

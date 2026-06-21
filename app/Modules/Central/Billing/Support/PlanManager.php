@@ -11,7 +11,7 @@ class PlanManager
 {
     public static function all(): Collection
     {
-        return Plan::where('is_active', true)->get();
+        return Plan::where('is_active', true)->withoutTrashed()->get();
     }
 
     public static function find(string $id): ?Plan

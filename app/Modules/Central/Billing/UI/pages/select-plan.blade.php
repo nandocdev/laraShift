@@ -11,18 +11,31 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        @php
+            $currentPlanPrice = $plans->firstWhere('slug', $currentPlanId)?->price_monthly?->getAmount() ?? 0;
+        @endphp
         @foreach($plans as $plan)
-            <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $plan->slug === $currentPlanId ? 'ring-2 ring-primary border-primary' : '' }}">
-                @if($plan->slug === $currentPlanId)
+            @php
+                $isCurrent = $plan->slug === $currentPlanId;
+                $needsPayment = $isCurrent && ! $isCurrentPlanActive;
+                $planPrice = $plan->price_monthly?->getAmount() ?? 0;
+                
+                $buttonText = __('Select Plan');
+                if ($planPrice > 0) {
+                    $buttonText = $planPrice < $currentPlanPrice ? __('Downgrade') : __('Upgrade Now');
+                }
+            @endphp
+            <flux:card wire:key="plan-{{ $plan->id }}" class="relative flex flex-col p-8 {{ $isCurrent ? 'ring-2 ring-primary border-primary' : '' }}">
+                @if($isCurrent)
                     <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white bg-primary uppercase tracking-widest shadow-sm">
-                        {{ __('Current Plan') }}
+                        {{ $isCurrentPlanActive ? __('Current Plan') : __('Pending Payment') }}
                     </div>
                 @endif
 
                 <div class="mb-8">
                     <flux:heading size="lg" class="text-2xl mb-1">{{ $plan->name }}</flux:heading>
                     <div class="flex items-baseline gap-1 mt-4">
-                        <span class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">${{ number_format($plan->price_monthly / 100, 2) }}</span>
+                        <span class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_monthly) }}</span>
                         <span class="text-zinc-500 text-sm">/{{ __('month') }}</span>
                     </div>
                 </div>
@@ -39,19 +52,23 @@
                 <flux:button 
                     type="button"
                     wire:click="selectPlan('{{ $plan->id }}')"
-                    variant="{{ $plan->slug === $currentPlanId ? 'ghost' : 'primary' }}" 
+                    variant="{{ $isCurrent && ! $needsPayment ? 'ghost' : 'primary' }}" 
                     class="w-full py-3"
-                    :disabled="$plan->slug === $currentPlanId"
+                    :disabled="$isCurrent && ! $needsPayment"
                     wire:loading.attr="disabled"
                 >
-                    <span wire:loading.remove wire:target="selectPlan">
-                        @if($plan->slug === $currentPlanId)
-                            {{ __('Selected') }}
+                    <span wire:loading.remove wire:target="selectPlan('{{ $plan->id }}')">
+                        @if($isCurrent)
+                            @if($needsPayment)
+                                {{ __('Proceed to Payment') }}
+                            @else
+                                {{ __('Selected') }}
+                            @endif
                         @else
-                            {{ $plan->price_monthly > 0 ? __('Upgrade Now') : __('Select Plan') }}
+                            {{ $buttonText }}
                         @endif
                     </span>
-                    <span wire:loading wire:target="selectPlan">
+                    <span wire:loading wire:target="selectPlan('{{ $plan->id }}')">
                         {{ __('Redirecting...') }}
                     </span>
                 </flux:button>

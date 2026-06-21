@@ -11,6 +11,8 @@ foreach (config('tenancy.central_domains', []) as $domain) {
 
 // Catch-all home route for other central domains or fallbacks
 Route::get('/', \App\Modules\Central\Marketing\Livewire\LandingPage::class)->name('home');
-Route::get('/register', \App\Modules\Central\Marketing\Livewire\RegisterTenant::class)->name('register');
+Route::get('/register', \App\Modules\Central\Marketing\Livewire\RegisterTenant::class)
+    ->middleware(['throttle:5,1'])
+    ->name('central.register');
 
 require __DIR__.'/settings.php';

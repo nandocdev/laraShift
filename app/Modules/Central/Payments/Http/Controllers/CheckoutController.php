@@ -21,7 +21,6 @@ final class CheckoutController extends Controller {
      */
     public function initiate(Request $request): JsonResponse {
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
             'description' => ['required', 'string', 'max:150'],
             'display_id' => ['required', 'string'],
             'email' => ['required', 'email'],
@@ -31,9 +30,12 @@ final class CheckoutController extends Controller {
         ]);
 
         try {
+            $amountResolver = app(\App\Modules\Shared\Contracts\PaymentAmountResolverContract::class);
+            $amount = $amountResolver->resolveAmount($data['display_id']);
+
             $session = $this->initiateAction->execute(
                 data: new PaymentData(
-                    amount: (float) $data['amount'],
+                    amount: $amount,
                     description: $data['description'],
                     displayId: $data['display_id'],
                     email: $data['email'],

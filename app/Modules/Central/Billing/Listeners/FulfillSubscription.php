@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Models\Subscription;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Payments\Events\PaymentApproved;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FulfillSubscription {

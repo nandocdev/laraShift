@@ -2,7 +2,7 @@
     <div class="flex items-center gap-4">
         <flux:button icon="arrow-left" variant="ghost" :href="route('central.provisioning.index')" wire:navigate />
         <div>
-            <flux:heading size="xl">{{ __('Feature Overrides for') }} {{ $tenant->name }}</flux:heading>
+            <flux:heading size="xl">{{ __('Feature Overrides for') }} {{ $tenantData->name }}</flux:heading>
             <flux:subheading>{{ __('Manually grant or deny specific functionalities for this tenant.') }}
             </flux:subheading>
         </div>

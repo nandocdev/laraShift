@@ -26,6 +26,7 @@ final class ProcessPaymentWebhookJob implements ShouldQueue {
         public readonly string $signature,
         public readonly string $webhookSecret,
     ) {
+        $this->onQueue('webhooks-priority');
     }
 
     public function handle(): void {

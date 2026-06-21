@@ -81,9 +81,9 @@ return new class extends Migration
             DB::statement("ALTER TABLE payment_webhooks ENABLE ROW LEVEL SECURITY;");
 
             // Policies are applied per-connection in the tenancy middleware via SET app.tenant_id
-            DB::statement("CREATE POLICY tenant_isolation ON payments USING (tenant_id = current_setting('app.tenant_id')::uuid);");
-            DB::statement("CREATE POLICY tenant_isolation ON payment_attempts USING (tenant_id = current_setting('app.tenant_id')::uuid);");
-            DB::statement("CREATE POLICY tenant_isolation ON payment_webhooks USING (tenant_id = current_setting('app.tenant_id')::uuid);");
+            DB::statement("CREATE POLICY tenant_isolation ON payments USING (tenant_id::text = current_setting('app.tenant_id'));");
+            DB::statement("CREATE POLICY tenant_isolation ON payment_attempts USING (tenant_id::text = current_setting('app.tenant_id'));");
+            DB::statement("CREATE POLICY tenant_isolation ON payment_webhooks USING (tenant_id::text = current_setting('app.tenant_id'));");
         }
     }
 

@@ -20,7 +20,6 @@ use App\Modules\Central\Payments\Jobs\ProcessPaymentWebhookJob;
 final class WebhookController extends Controller {
     public function handle(Request $request): Response {
         $gateway = $this->resolveGateway($request);
-        $tenantId = $this->resolveTenantId($request);
         $rawPayload = $request->getContent();
 
         $signature = match ($gateway) {
@@ -30,6 +29,23 @@ final class WebhookController extends Controller {
         };
 
         $webhookSecret = config("payments.{$gateway}.webhook_secret");
+
+        // Verify signature synchronously to prevent DoS via queue exhaustion
+        $verifier = app(\App\Modules\Shared\Contracts\PaymentGatewayContract::class);
+        // We temporarily swap the implementation to the correct gateway for verification
+        $gatewayService = match ($gateway) {
+            'dlocal' => app(\App\Modules\Central\Payments\Services\Gateways\DlocalGateway::class),
+            default => app(\App\Modules\Central\Payments\Services\Gateways\ClaveGateway::class),
+        };
+
+        if (!$gatewayService->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
+            \Illuminate\Support\Facades\Log::warning("{$gateway} Webhook: signature mismatch. Rejecting.", [
+                'ip' => $request->ip()
+            ]);
+            abort(401, 'Invalid webhook signature');
+        }
+
+        $tenantId = $this->resolveTenantId($request);
 
         ProcessPaymentWebhookJob::dispatch(
             tenantId: $tenantId,
@@ -45,10 +61,12 @@ final class WebhookController extends Controller {
     private function resolveGateway(Request $request): string {
         if ($request->is('*/clave'))
             return 'clave';
+        if ($request->is('*/dlocal/payout'))
+            return 'dlocal'; // Payouts use same secret/verification
         if ($request->is('*/dlocal'))
             return 'dlocal';
 
-        return 'clave';
+        return 'dlocal';
     }
 
     /**
@@ -56,13 +74,18 @@ final class WebhookController extends Controller {
      * or derived from the payload. Adjust to match the gateway's behavior.
      */
     private function resolveTenantId(Request $request): string {
-        $payload = json_decode($request->getContent(), true);
+        $payload = json_decode($request->getContent(), true) ?? $request->all();
 
-        // Security: Prioritize payload data over untrusted query params
-        $tenantId = $payload['tenantId'] ?? $payload['merchantId'] ?? $request->query('tenant');
+        // Security: Prioritize payload data over untrusted query params.
+        // PagueloFacil often uses PARM_1 for tenant_id if configured in the redirect/webhook setup.
+        $tenantId = $payload['tenant_id'] 
+            ?? $payload['tenantId'] 
+            ?? $payload['merchantId'] 
+            ?? $payload['PARM_1'] 
+            ?? ($payload['metadata']['tenant_id'] ?? null);
 
         if (empty($tenantId)) {
-            Log::warning('Webhook received without tenant identifier');
+            \Illuminate\Support\Facades\Log::warning('Webhook received without tenant identifier');
             abort(400, 'Missing tenant identifier');
         }
 

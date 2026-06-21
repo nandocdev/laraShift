@@ -20,29 +20,20 @@ class HorizonQueueResolver
      */
     public static function resolve(): array
     {
-        $baseQueues = ['default', 'notifications', 'broadcasts'];
+        $queues = [
+            'default', 
+            'notifications', 
+            'broadcasts',
+            'webhooks-priority',
+        ];
 
-        try {
-            // Safety check for CLI/Migrations
-            if (! Schema::hasTable('tenants')) {
-                return $baseQueues;
+        // Add 5 buckets for each priority
+        foreach (range(1, 5) as $bucket) {
+            foreach (['high', 'default', 'low'] as $priority) {
+                $queues[] = "tenant.b{$bucket}.{$priority}";
             }
-
-            $tenantQueues = Cache::remember('horizon_tenant_queues', 60, function () {
-                return Tenant::whereIn('status', ['active', 'suspended', 'past_due'])
-                    ->pluck('slug')
-                    ->flatMap(function ($slug) {
-                        return [
-                            "tenant.{$slug}.default",
-                            "tenant.{$slug}.low",
-                        ];
-                    })
-                    ->toArray();
-            });
-
-            return array_merge($baseQueues, $tenantQueues);
-        } catch (\Exception $e) {
-            return $baseQueues;
         }
+
+        return $queues;
     }
 }

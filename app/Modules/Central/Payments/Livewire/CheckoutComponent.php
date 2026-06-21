@@ -6,6 +6,7 @@ namespace App\Modules\Central\Payments\Livewire;
 
 use Livewire\Component;
 use App\Modules\Central\Payments\Actions\InitiateCheckoutAction;
+use App\Modules\Central\Payments\Actions\ProcessDirectPaymentAction;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Payments\Services\CheckoutSession;
@@ -29,14 +30,24 @@ final class CheckoutComponent extends Component {
     // Props
     // -------------------------------------------------------------------------
 
+    #[\Livewire\Attributes\Locked]
     public float $amount = 0.0;
+
+    #[\Livewire\Attributes\Locked]
     public float $taxAmount = 0.0;
+
+    #[\Livewire\Attributes\Locked]
     public float $discount = 0.0;
-    public string $description = '';
+
+    #[\Livewire\Attributes\Locked]
     public string $displayId = '';
+
+    #[\Livewire\Attributes\Locked]
+    public array $customFieldValues = [];
+
+    public string $description = '';
     public string $email = '';
     public string $lang = 'es';
-    public array $customFieldValues = [];
 
     // -------------------------------------------------------------------------
     // State
@@ -67,7 +78,7 @@ final class CheckoutComponent extends Component {
         $this->error = null;
 
         try {
-            $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
+            $gateway = tenant('billing_gateway') ?? config('payments.default', 'dlocal');
             $apiKey = config("payments.{$gateway}.api_key") ?? config("payments.{$gateway}.login"); // dLocal uses login as ID
 
             $session = $action->execute(
@@ -103,6 +114,31 @@ final class CheckoutComponent extends Component {
         }
     }
 
+    public function processSmartFieldsPayment(string $token, bool $saveCard, ProcessDirectPaymentAction $action): array {
+        $this->loading = true;
+
+        try {
+            $data = new PaymentData(
+                amount: $this->amount,
+                description: $this->description,
+                displayId: $this->displayId,
+                email: $this->email,
+                tenantId: (string) tenancy()->tenant->id,
+                taxAmount: $this->taxAmount,
+                discount: $this->discount,
+                lang: $this->lang,
+                customFieldValues: $this->customFieldValues,
+            );
+
+            return $action->execute($data, $token, $saveCard);
+        } catch (\Exception $e) {
+            logger()->error('Smart Fields payment failed', ['error' => $e->getMessage()]);
+            return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $this->loading = false;
+        }
+    }
+
     /**
      * Called by the JS adapter via Livewire.dispatch when the iframe posts
      * a payment result back to the parent window.
@@ -118,6 +154,12 @@ final class CheckoutComponent extends Component {
     }
 
     public function render(): \Illuminate\View\View {
+        $gateway = tenant('billing_gateway') ?? config('payments.default', 'dlocal');
+
+        if ($gateway === 'dlocal' && !isset($this->customFieldValues['use_redirect'])) {
+            return view('payments::livewire.dlocal-smart-fields');
+        }
+
         return view('payments::livewire.checkout-component');
     }
 }

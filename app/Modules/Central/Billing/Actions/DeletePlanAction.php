@@ -10,24 +10,23 @@ use App\Modules\Central\Provisioning\Models\Tenant;
 final readonly class DeletePlanAction
 {
     /**
-     * Deletes a plan.
-     * Prevents deletion if the plan is currently assigned to any tenant.
+     * Retires a plan using SoftDeletes.
+     * 
+     * This allows existing tenants and historical invoices to maintain 
+     * their references, while preventing the plan from being selected 
+     * for new subscriptions.
      */
     public function execute(Plan $plan): void
     {
-        // Protect against deleting a plan in use by a tenant (checking slug, since tenants.plan_id is currently the slug)
-        // Or UUID, depending on normalization. The current schema defaults to 'free', so we check slug.
-        $inUse = Tenant::where('plan_id', $plan->slug)->orWhere('plan_id', $plan->id)->exists();
-
-        if ($inUse) {
-            throw new \Exception(__('Cannot delete a plan that is currently assigned to one or more tenants.'));
-        }
-        
         $planId = $plan->id;
+        $planSlug = $plan->slug;
+
+        // Perform soft delete
         $plan->delete();
 
         activity('billing')
-            ->withProperties(['id' => $planId])
-            ->log('plan_deleted');
+            ->performedOn($plan)
+            ->withProperties(['id' => $planId, 'slug' => $planSlug])
+            ->log('plan_retired');
     }
 }

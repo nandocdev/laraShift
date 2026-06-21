@@ -45,6 +45,13 @@ return new class extends Migration
 
             $table->unique(['tenant_id', 'feature_id']);
         });
+
+        // Enable RLS
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_feature_overrides ENABLE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_feature_overrides FORCE ROW LEVEL SECURITY;");
+            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON tenant_feature_overrides USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        }
     }
 
     /**

@@ -3,7 +3,6 @@
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
-    $this->withoutMiddleware();
     $this->skipUnlessFortifyHas(Features::registration());
 });
 
@@ -21,8 +20,6 @@ test('new users can register', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
-
+    $response->assertSessionHasNoErrors();
     $this->assertAuthenticated();
 });

@@ -29,7 +29,7 @@ return new class extends Migration
 
             // Billing
             $table->string('plan_id')->default('free');
-            $table->string('billing_gateway')->default('dlocal'); // default per plan-mode strategy
+            $table->string('billing_gateway')->default('dlocal'); // default per plan-mode strategy (dLocal)
             
             $table->timestamps();
             $table->softDeletes();

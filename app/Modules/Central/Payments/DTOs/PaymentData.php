@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\DTOs;
 
+use App\Modules\Central\Payments\Enums\PaymentContext;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Validation\Min;
 use Spatie\LaravelData\Attributes\Validation\Numeric;
 
 final class PaymentData extends Data {
     public function __construct(
+        /** Contexto del pago: subscription, service_order, invoice */
+        public readonly PaymentContext $context,
+
         #[Numeric, Min(0.01)]
         public readonly float $amount,
 

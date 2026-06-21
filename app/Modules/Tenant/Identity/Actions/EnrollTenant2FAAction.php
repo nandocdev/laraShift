@@ -55,7 +55,7 @@ final readonly class EnrollTenant2FAAction
             ]
         );
 
-        $user->update(['mfa_enrolled' => true]);
+        $user->update(['mfa_enabled' => true]);
 
         activity('identity')
             ->performedOn($user)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Models;
 
+use App\Modules\Shared\Contracts\CentralUserContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,7 +15,7 @@ use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'is_global_admin', 'locked_until'])]
 #[Hidden(['password', 'remember_token'])]
-class CentralUser extends Authenticatable {
+class CentralUser extends Authenticatable implements CentralUserContract {
     use HasFactory, HasUuids, Notifiable;
 
     /**
@@ -52,6 +53,21 @@ class CentralUser extends Authenticatable {
     public function hasTwoFactorEnabled(): bool
     {
         return $this->twoFactorAuth()->exists();
+    }
+
+    public function getId(): string|int
+    {
+        return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
     }
 
     /**

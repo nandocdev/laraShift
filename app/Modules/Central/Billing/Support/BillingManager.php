@@ -14,12 +14,22 @@ class BillingManager extends Manager implements BillingProvider
 {
     public function getDefaultDriver(): string
     {
-        return config('payments.default', 'paguelofacil');
+        return config('payments.default', 'dlocal');
     }
 
     public function createPaguelofacilDriver(): InternalBillingProvider
     {
         return $this->container->make(InternalBillingProvider::class);
+    }
+
+    public function createStripeDriver(): StripeBillingProvider
+    {
+        return $this->container->make(StripeBillingProvider::class);
+    }
+
+    public function createDlocalDriver(): \App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider
+    {
+        return $this->container->make(\App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider::class);
     }
 
     public function createClaveDriver(): InternalBillingProvider
@@ -41,6 +51,11 @@ class BillingManager extends Manager implements BillingProvider
     public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void
     {
         $this->forTenant($tenant)->cancelSubscription($tenant, $subscriptionId, $immediately);
+    }
+
+    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    {
+        return $this->forTenant($tenant)->getSubscriptionData($tenant, $subscriptionId);
     }
 
     public function syncSubscription(Tenant $tenant): void

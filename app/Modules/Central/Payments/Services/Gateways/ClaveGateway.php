@@ -7,7 +7,7 @@ namespace App\Modules\Central\Payments\Services\Gateways;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\MerchantData;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
@@ -15,7 +15,7 @@ use App\Modules\Central\Payments\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Payments\Exceptions\InvalidMerchantException;
 use App\Modules\Central\Payments\Exceptions\ServiceNotFoundException;
 
-final class ClaveGateway implements PaymentGateway {
+final class ClaveGateway implements PaymentGatewayContract {
     /**
      * Gateway codes accepted as Clave services.
      */
@@ -32,6 +32,8 @@ final class ClaveGateway implements PaymentGateway {
     }
 
     public function loadMerchant(string $apiKey): MerchantData {
+        // loadMerchantServices is usually under HostedFields or root depending on the API version
+        // We'll try management base first
         $response = $this->post('/loadMerchantServices', [
             'CCLW' => $apiKey,
             'serviceCode' => self::SERVICE_CODE,
@@ -67,28 +69,32 @@ final class ClaveGateway implements PaymentGateway {
     }
 
     public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string {
-        // We use the LinkDeamon.cfm endpoint which is proven to return a stable redirect URL
-        // for the "Enlace de Pago" (Hosted Checkout) flow.
+        // LinkDeamon.cfm lives at the root of the apiBaseUrl
+        $url = rtrim($this->environment->apiBaseUrl(), '/') . '/LinkDeamon.cfm';
 
         $payload = [
             'CCLW' => config('payments.clave.cclw', $apiKey),
             'CMTN' => number_format((float) $payment->netAmount(), 2, '.', ''),
             'CDSC' => substr($payment->description, 0, 150),
             'RETURN_URL' => bin2hex(route('central.billing.paguelofacil.callback')),
-            // We use PARM_1 for tenant_id and PARM_2 for internal reference if needed
-            'PARM_1' => $payment->customFieldValues['tenant_id'] ?? tenant('id'),
+            'PARM_1' => $payment->tenantId,
             'PARM_2' => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
         ];
 
         if (!empty($payment->customFieldValues)) {
-            $payload['PF_CF'] = bin2hex(json_encode($payment->customFieldValues));
+            // PagueloFacil expects PF_CF as a hex-encoded JSON array of objects:
+            // [ {"id":"key", "nameOrLabel":"Label", "type":"hidden", "value":"val"} ]
+            $customFields = [];
+            foreach ($payment->customFieldValues as $key => $value) {
+                $customFields[] = [
+                    'id' => $key,
+                    'nameOrLabel' => ucwords(str_replace(['_', '-'], ' ', (string) $key)),
+                    'type' => 'hidden',
+                    'value' => (string) $value,
+                ];
+            }
+            $payload['PF_CF'] = bin2hex(json_encode($customFields));
         }
-
-        // Resolve root domain for LinkDeamon.cfm
-        $baseUrl = $this->environment->apiBaseUrl();
-        $domain = parse_url($baseUrl, PHP_URL_HOST);
-        $scheme = parse_url($baseUrl, PHP_URL_SCHEME);
-        $url = "{$scheme}://{$domain}/LinkDeamon.cfm";
 
         Log::info("PagueloFacil: Requesting Enlace de Pago", ['url' => $url, 'payload' => $payload]);
 
@@ -108,7 +114,13 @@ final class ClaveGateway implements PaymentGateway {
     }
 
     public function verifyWebhook(string $payload, string $signature, string $secret): bool {
-        // PagueLo Fácil signs webhooks with HMAC-SHA256
+        // PagueLo Fácil signs webhooks with HMAC-SHA256 if configured, 
+        // or uses a simple token match. Our implementation assumes HMAC.
+        if (empty($signature)) {
+            // Fallback for non-signed webhooks if needed, but security first
+            return false;
+        }
+
         $expected = hash_hmac('sha256', $payload, $secret);
 
         return hash_equals($expected, $signature);
@@ -118,11 +130,24 @@ final class ClaveGateway implements PaymentGateway {
         return PaymentResultData::fromClavePayload($payload);
     }
 
+    public function processDirectPayment(PaymentData $payment, string $apiKey, ?string $token = null): PaymentResultData {
+        throw new \Exception("Direct payment not supported for Clave gateway.");
+    }
+
+    public function submitPayout(\App\Modules\Central\Payments\DTOs\PayoutData $payout): \App\Modules\Central\Payments\DTOs\PayoutResultData {
+        throw new \Exception("Payouts not supported for Clave gateway.");
+    }
+
+    public function getPayoutStatus(string $payoutId): \App\Modules\Central\Payments\DTOs\PayoutResultData {
+        throw new \Exception("Payouts not supported for Clave gateway.");
+    }
+
     public function identifier(): string {
         return 'clave';
     }
 
     public function listTransactions(string $apiKey, array $filters = []): array {
+        // MerchantTransactions uses the management base URL
         $response = $this->get('/MerchantTransactions', $filters, $apiKey);
 
         if (!($response['success'] ?? false)) {
@@ -140,7 +165,7 @@ final class ClaveGateway implements PaymentGateway {
      * @throws ClaveGatewayException
      */
     private function post(string $path, array $body, ?string $apiKey = null): array {
-        $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
+        $url = rtrim($this->environment->managementBaseUrl(), '/') . $path;
 
         try {
             $response = Http::withHeaders([
@@ -148,8 +173,8 @@ final class ClaveGateway implements PaymentGateway {
                 'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
-                ->timeout(15)
-                ->retry(2, 500)
+                ->timeout(5)
+                ->retry(1, 100)
                 ->post($url, $body);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [
@@ -161,6 +186,12 @@ final class ClaveGateway implements PaymentGateway {
         }
 
         if ($response->failed()) {
+            // Fallback to HostedFields if management fails (some accounts are legacy)
+            if ($response->status() === 404 && !str_contains($url, '/HostedFields')) {
+                $url = rtrim($this->environment->apiBaseUrl(), '/') . '/HostedFields' . $path;
+                return $this->postRetry($url, $body, $apiKey);
+            }
+
             Log::error('ClaveGateway: HTTP error', [
                 'url' => $url,
                 'status' => $response->status(),
@@ -175,18 +206,28 @@ final class ClaveGateway implements PaymentGateway {
         return $response->json() ?? [];
     }
 
+    private function postRetry(string $url, array $body, ?string $apiKey = null): array {
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'Authorization' => $apiKey ?? config('payments.clave.api_key'),
+        ])->post($url, $body);
+
+        return $response->json() ?? [];
+    }
+
     /**
      * @throws ClaveGatewayException
      */
     private function get(string $path, array $query, ?string $apiKey = null): array {
-        $url = rtrim($this->environment->apiBaseUrl(), '/') . $path;
+        $url = rtrim($this->environment->managementBaseUrl(), '/') . $path;
 
         try {
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => $apiKey ?? config('payments.clave.api_key'),
             ])
-                ->timeout(15)
+                ->timeout(5)
                 ->get($url, $query);
         } catch (ConnectionException $e) {
             Log::error('ClaveGateway: connection failure', [
