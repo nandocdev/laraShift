@@ -15,13 +15,12 @@ final readonly class MrrCalculator
      */
     public function calculateMrr(): float
     {
-        return (float) Tenant::where('status', 'active')
-            ->whereNotNull('plan_id')
-            ->where('plan_id', '!=', 'free')
-            ->get()
-            ->sum(function (Tenant $tenant) {
-                return $this->planMrr($tenant->plan);
-            });
+        return (float) Tenant::query()
+            ->where('tenants.status', 'active')
+            ->whereNotNull('tenants.plan_id')
+            ->where('tenants.plan_id', '!=', 'free')
+            ->leftJoin('plans', 'tenants.plan_id', '=', 'plans.slug')
+            ->sum(DB::raw('COALESCE(plans.price_monthly, 0) / 100.0'));
     }
 
     /**
@@ -31,21 +30,24 @@ final readonly class MrrCalculator
      */
     public function mrrByPlan(): array
     {
-        return Tenant::where('status', 'active')
-            ->whereNotNull('plan_id')
-            ->where('plan_id', '!=', 'free')
-            ->get()
-            ->groupBy('plan_id')
-            ->map(function ($tenants, $planId) {
-                $plan = Plan::find($planId);
-
-                return [
-                    'plan' => $plan?->name ?? $planId,
-                    'count' => $tenants->count(),
-                    'mrr' => $tenants->sum(fn ($t) => $this->planMrr($t->plan)),
-                ];
-            })
-            ->values()
+        return Tenant::query()
+            ->where('tenants.status', 'active')
+            ->whereNotNull('tenants.plan_id')
+            ->where('tenants.plan_id', '!=', 'free')
+            ->leftJoin('plans', 'tenants.plan_id', '=', 'plans.slug')
+            ->groupBy('tenants.plan_id', 'plans.name')
+            ->orderBy('plans.name')
+            ->get([
+                'tenants.plan_id',
+                DB::raw('COALESCE(plans.name, tenants.plan_id) as plan'),
+                DB::raw('COUNT(*) as count'),
+                DB::raw('COALESCE(SUM(plans.price_monthly), 0) / 100.0 as mrr'),
+            ])
+            ->map(fn ($row) => [
+                'plan' => $row->plan,
+                'count' => (int) $row->count,
+                'mrr' => (float) $row->mrr,
+            ])
             ->toArray();
     }
 
@@ -89,36 +91,45 @@ final readonly class MrrCalculator
      */
     public function monthlyBreakdown(int $months = 12): array
     {
+        $monthsAgo = now()->subMonths($months - 1)->startOfMonth();
+
+        $allActiveTenants = Tenant::where('status', 'active')
+            ->whereNotNull('plan_id')
+            ->where('plan_id', '!=', 'free')
+            ->with('plan')
+            ->get();
+
+        $newByMonth = Tenant::where('created_at', '>=', $monthsAgo)
+            ->get(['created_at'])
+            ->groupBy(fn (Tenant $t) => $t->created_at->format('Y-m'))
+            ->map(fn ($group) => $group->count());
+
+        $churnedByMonth = Tenant::where('status', 'archived')
+            ->where('archived_at', '>=', $monthsAgo)
+            ->get(['archived_at'])
+            ->groupBy(fn (Tenant $t) => $t->archived_at->format('Y-m'))
+            ->map(fn ($group) => $group->count());
+
         $data = [];
 
         for ($i = $months - 1; $i >= 0; $i--) {
             $month = now()->subMonths($i);
-            $monthStart = $month->copy()->startOfMonth();
+            $monthKey = $month->format('Y-m');
             $monthEnd = $month->copy()->endOfMonth();
 
+            $mrr = (float) $allActiveTenants
+                ->filter(fn (Tenant $t) => $t->created_at <= $monthEnd)
+                ->sum(fn (Tenant $t) => $this->planMrr($t->plan));
+
             $data[] = [
-                'month' => $month->format('Y-m'),
-                'mrr' => $this->mrrAtDate($monthEnd),
-                'new_tenants' => Tenant::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
-                'churned' => Tenant::where('status', 'archived')
-                    ->whereBetween('archived_at', [$monthStart, $monthEnd])
-                    ->count(),
+                'month' => $monthKey,
+                'mrr' => $mrr,
+                'new_tenants' => (int) ($newByMonth[$monthKey] ?? 0),
+                'churned' => (int) ($churnedByMonth[$monthKey] ?? 0),
             ];
         }
 
         return $data;
-    }
-
-    private function mrrAtDate(\DateTimeInterface $date): float
-    {
-        return (float) Tenant::where('created_at', '<=', $date)
-            ->where('status', 'active')
-            ->whereNotNull('plan_id')
-            ->where('plan_id', '!=', 'free')
-            ->get()
-            ->sum(function (Tenant $tenant) {
-                return $this->planMrr($tenant->plan);
-            });
     }
 
     private function planMrr(?Plan $plan): float
