@@ -6,6 +6,9 @@ use App\Modules\Shared\Tenancy\Services\CentralFallback;
 use Illuminate\Http\Request;
 
 beforeEach(function () {
+    config(['tenancy.central_domain' => 'larashift.test']);
+    config(['tenancy.central_domains' => ['127.0.0.1', 'localhost', 'larashift.test']]);
+
     $this->fallback = app(CentralFallback::class);
 });
 
