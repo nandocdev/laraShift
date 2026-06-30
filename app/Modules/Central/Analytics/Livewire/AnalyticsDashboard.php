@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Central\Analytics\Livewire;
 
 use App\Modules\Central\Analytics\Actions\ExportPlatformMetricsAction;
-use App\Modules\Central\Analytics\Models\PlatformMetric;
-use App\Modules\Central\Billing\Services\MrrCalculator;
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Analytics\Actions\FetchDashboardMetricsAction;
+use App\Modules\Central\Analytics\Exceptions\ExportFailedException;
+use App\Modules\Shared\Tenancy\Services\CentralFallback;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -21,8 +21,10 @@ class AnalyticsDashboard extends Component
 
     public bool $exporting = false;
 
-    public function mount(): void
+    public function mount(CentralFallback $centralFallback): void
     {
+        $centralFallback->ensureCentral();
+
         $this->dateFrom = now()->subDays(30)->format('Y-m-d');
         $this->dateTo = now()->format('Y-m-d');
     }
@@ -39,35 +41,27 @@ class AnalyticsDashboard extends Component
         try {
             $filePath = $action->execute($this->dateFrom, $this->dateTo);
             session()->flash('status', __('Export generated. File: :path', ['path' => $filePath]));
-        } catch (\Exception $e) {
+        } catch (ExportFailedException $e) {
             $this->addError('export', $e->getMessage());
         } finally {
             $this->exporting = false;
         }
     }
 
-    public function render(): View
+    public function render(FetchDashboardMetricsAction $action): View
     {
-        $calculator = app(MrrCalculator::class);
-
-        $latest = PlatformMetric::where('period', now()->format('Y-m-d'))
-            ->get()
-            ->keyBy(fn ($m) => $m->group ? "{$m->metric}.{$m->group}" : $m->metric);
-
-        $monthlyBreakdown = $calculator->monthlyBreakdown(12);
-
-        $mrrByPlan = $calculator->mrrByPlan();
+        $metrics = $action->execute();
 
         return view('analytics::pages.dashboard', [
-            'currentMrr' => $latest->get('mrr')?->value ?? $calculator->calculateMrr(),
-            'churn30d' => $latest->get('churn_rate_30d')?->value ?? $calculator->churnRate(now()->subDays(30)),
-            'totalTenants' => $latest->get('tenants.total')?->value ?? Tenant::count(),
-            'activeTenants' => $latest->get('tenants.active')?->value ?? 0,
-            'suspendedTenants' => $latest->get('tenants.suspended')?->value ?? 0,
-            'archivedTenants' => $latest->get('tenants.archived')?->value ?? 0,
-            'failedProvisioning' => $latest->get('provisioning.failed')?->value ?? 0,
-            'monthlyBreakdown' => $monthlyBreakdown,
-            'mrrByPlan' => $mrrByPlan,
+            'currentMrr' => $metrics->currentMrr,
+            'churn30d' => $metrics->churn30d,
+            'totalTenants' => $metrics->totalTenants,
+            'activeTenants' => $metrics->activeTenants,
+            'suspendedTenants' => $metrics->suspendedTenants,
+            'archivedTenants' => $metrics->archivedTenants,
+            'failedProvisioning' => $metrics->failedProvisioning,
+            'monthlyBreakdown' => $metrics->monthlyBreakdown,
+            'mrrByPlan' => $metrics->mrrByPlan,
         ]);
     }
 }
