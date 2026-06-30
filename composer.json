@@ -10,8 +10,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
-        "ext-bcmath": "*",
-        "ext-intl": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "laravel/cashier": "^16.5",
         "laravel/chisel": "^0.1.0",
