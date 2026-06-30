@@ -15,6 +15,40 @@ No modifiques lógica de negocio existente.
 
 ---
 
+## tarea
+
+Estás trabajando en el módulo `app/Modules/{{ BoundedContext }}/{{ DomainModule }}/` de un Monolito Modular Laravel (Blade + Livewire + FluxUI).
+
+Reglas de scope — no las rompas:
+- Solo puedes leer/escribir dentro de este módulo: Actions/, DTOs/, Events/, Http/, Livewire/, Models/, Resources/, Providers/, routes/.
+- No toques otros módulos ni Shared/ salvo que la tarea lo pida explícitamente.
+- No modifiques Actions/, Models/, DTOs/ ni Http/Controllers/ existentes si la tarea es de UI — solo consúmelos.
+- Los componentes Livewire solo orquestan estado de UI y llaman Actions ya existentes; nunca reimplementan lógica de negocio.
+- Usa exclusivamente los componentes globales del Design System (`<x-table>`, `<x-modal>`, `<x-badge>`, `<x-alert>`, `<x-empty-state>`, `<x-skeleton>`, `<x-layout.host|tenant|public>`). No crees alternativas propias.
+- Respeta el namespace de vistas del módulo y el layout correspondiente al scope (Central → host, Tenant → tenant).
+- Toda tabla o query tenant-scoped debe respetar el scope/aislamiento de tenant existente — no lo bypasees.
+- Si necesitas algo que no existe en este módulo (una Action, un componente global, una ruta), repórtalo y detente — no lo improvises ni lo construyas en otro módulo.
+
+## 💳 FASE UI-4 — Billing & Provisioning
+
+> **Objetivo:** El backoffice host tiene UI completa para gestionar planes, suscripciones, pagos y el ciclo de vida de provisioning de tenants.
+
+---
+
+### Sprint U04 — Billing — Planes, Suscripciones & Pagos
+**Módulos:** `Central/Billing` · `Central/Payments`
+
+**`Central/Payments`**
+
+- [ ] `Payments/Livewire/GatewaySettings.php` —  (configuración de pasarela)
+- [ ] `Payments/Livewire/WebhookLog.php` —  (log de webhooks entrantes)
+- [x] `Payments/Livewire/PayoutRequests.php` — Gestión de payouts
+- [x] `Payments/Livewire/PayoutSettings.php` — Configuración de payouts
+- [x] `Payments/Livewire/CheckoutComponent.php` — Checkout
+
+
+---
+
 ## Antes de programar
 
 Consulta:
@@ -54,16 +88,16 @@ Detente si:
 
 ## Stack UI Real
 
-| Aspecto | Convención |
-|---|---|
-| **Framework** | Livewire 4 |
-| **UI Kit** | Flux UI (`flux:button`, `flux:card`, `flux:modal`, `flux:badge`, `flux:table`, `flux:input`, `flux:select`, `flux:textarea`, `flux:checkbox`, `flux:heading`, `flux:separator`, `flux:dropdown`) |
-| **CSS** | Tailwind CSS 4 |
-| **Layouts** | `#[Layout('layouts.central')]` para Host, `#[Layout('layouts.app')]` para Tenant, `#[Layout('layouts.marketing')]` para público |
-| **Notificación UI** | `$this->dispatch('notify', message: __('...'))` |
-| **Feedback** | `session()->flash('status', __('...'))` |
+| Aspecto             | Convención                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Framework**       | Livewire 4                                                                                                                                                                                       |
+| **UI Kit**          | Flux UI (`flux:button`, `flux:card`, `flux:modal`, `flux:badge`, `flux:table`, `flux:input`, `flux:select`, `flux:textarea`, `flux:checkbox`, `flux:heading`, `flux:separator`, `flux:dropdown`) |
+| **CSS**             | Tailwind CSS 4                                                                                                                                                                                   |
+| **Layouts**         | `#[Layout('layouts.central')]` para Host, `#[Layout('layouts.app')]` para Tenant, `#[Layout('layouts.marketing')]` para público                                                                  |
+| **Notificación UI** | `$this->dispatch('notify', message: __('...'))`                                                                                                                                                  |
+| **Feedback**        | `session()->flash('status', __('...'))`                                                                                                                                                          |
 
-**NO crees componentes Blade globales** (`x-table`, `x-modal`, `x-alert`, `x-badge`, `x-skeleton`, `x-empty-state`, `x-layout.*`). El stack usa Flux UI para todo eso. Usa los componentes de Flux directamente.
+**NO crees componentes Blade globales si ya Flux los ofrece** (`x-table`, `x-modal`, `x-alert`, `x-badge`, `x-skeleton`, `x-empty-state`, `x-layout.*`). El stack usa Flux UI para todo eso. Usa los componentes de Flux directamente.
 
 ---
 
@@ -230,3 +264,54 @@ Bloqueos o deuda técnica detectada.
 - [ ] Tests pasando: `php artisan test`
 - [ ] Lint pasando: `composer lint:check`
 - [ ] Actualizar `docs/UI/ROADMAP_UI.md` con lo completado
+
+# COMMITS ATÓMICOS
+
+Cada tarea completada debe generar un commit independiente.
+
+Formato obligatorio:
+
+Conventional Commits en español.
+
+Formato:
+
+```
+tipo(scope): descripción
+```
+
+Tipos permitidos:
+
+```
+feat
+fix
+refactor
+test
+docs
+chore
+perf
+security
+```
+
+Ejemplos:
+
+```
+feat(billing): agregar gestión de planes desde panel central
+
+feat(tenant): implementar aislamiento de suscripciones
+
+test(billing): agregar pruebas de autorización de reportes
+
+fix(auth): corregir validación de permisos administrativos
+```
+
+Reglas:
+
+Un commit = una intención.
+
+No mezclar:
+
+* features
+* refactors
+* fixes no relacionados
+
+---
