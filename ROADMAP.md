@@ -73,7 +73,7 @@ app/Modules
 | 🏗️ Fase 1 — Fundaciones            | S01–S04 | 38     | 38          | 100% |
 | 🔐 Fase 2 — Auth & Tenancy         | S05–S07 | 30     | 30          | 100% |
 | 💳 Fase 3 — Billing & Provisioning | S08–S11 | 38     | 38          | 100% |
-| 🏢 Fase 4 — Tenant Core            | S12–S15 | 25     | 21          | 84%  |
+| 🏢 Fase 4 — Tenant Core            | S12–S15 | 25     | 25          | 100% |
 | 🚀 Fase 5 — Features Avanzados     | S16–S20 | 20     | 19          | 95%  |
 | 🔒 Fase 6 — Hardening & Compliance | S21–S24 | 11     | 9           | 82%  |
 
@@ -95,7 +95,7 @@ app/Modules
 | S12    | Tenant Settings y White-label              | 6      | 6   | 100% | ✅ Completado  |
 | S13    | Tenant Audit                               | 6      | 6   | 100% | ✅ Completado  |
 | S14    | Tenant Notifications                       | 7      | 7   | 100% | ✅ Completado  |
-| S15    | Tenant Usage & Quotas                      | 6      | 2   | 33%  | ▰ En progreso |
+| S15    | Tenant Usage & Quotas                      | 6      | 6   | 100% | ✅ Completado  |
 | S16    | Host Features Flags                        | 5      | 5   | 100% | ✅ Completado  |
 | S17    | Tenant Integrations — Webhooks y API Keys  | 5      | 5   | 100% | ✅ Completado  |
 | S18    | Tenant Data Management                     | 4      | 4   | 100% | ✅ Completado  |
@@ -412,12 +412,31 @@ app/Modules
 **Módulo:** `Tenant/Usage`
 **Entregable:** El sistema trackea consumo en tiempo real, enforce límites y alerta cuando se aproximan.
 
-- [ ] Implementar contadores distribuidos en Redis para enforcement en tiempo real (API calls, usuarios activos)
-- [ ] Implementar tracking de métricas de consumo para reporting en DB (eventual, agregado)
-- [ ] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan (lee definición de límites desde `Central/Features`, no la duplica)
-- [ ] Implementar alertas de proximidad a límites (configurable: 80%, 90%, 100%)
-- [ ] Implementar dashboard de uso visible para el admin del tenant
-- [ ] Implementar sincronización periódica de contadores Redis → DB para persistencia y reporting
+- [x] Implementar contadores distribuidos en Redis para enforcement en tiempo real (API calls, usuarios activos)
+  - `QuotaManager` con Cache (Redis), clave `quota:{tenant}:{metric}:{period}`, TTL 32 días
+  - Commits (previos): `feat(quota): implement QuotaManager with Redis counters`
+- [x] Implementar tracking de métricas de consumo para reporting en DB (eventual, agregado)
+  - Tabla `quota_snapshots` con `usage`, `limit`, `metric`, `period`
+  - `SnapshotQuotasJob` snapshotea staff/bookings/invitations/api_keys diariamente
+  - Commit: `fix(usage): corregir columnas en SnapshotQuotasJob`
+- [x] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan (lee definición de límites desde `Central/Features`, no la duplica)
+  - `QuotaManager::increment()` retorna false si excede límite (hard block)
+  - `EnsureWithinQuota` middleware para rutas sensibles
+  - `HasQuotas` trait con `withinQuota()` que lee de `Plan.features.quotas`
+  - Commits (previos): `feat(quota): add quota middleware and tenant trait`
+- [x] Implementar alertas de proximidad a límites (configurable: 80%, 90%, 100%)
+  - `QuotaManager::checkThresholds()` al 80% y 100% con lock de 30 días por periodo
+  - `QuotaThresholdReachedNotification` para notificar al tenant
+  - Commit (previo): `feat(quota): add quota threshold alerts`
+- [x] Implementar dashboard de uso visible para el admin del tenant
+  - `UsageOverview` Livewire con métricas staff/bookings/invitations/api_keys
+  - Badges: UNLIMITED, NEAR LIMIT (≥80%), FULL (100%) con barras de progreso
+  - Ruta `GET /usage` → `tenant.usage.index`
+  - Commit: `feat(usage): registrar ruta del dashboard UsageOverview`
+- [x] Implementar sincronización periódica de contadores Redis → DB para persistencia y reporting
+  - `SnapshotQuotasJob` programado diariamente en `routes/console.php`
+  - Persiste en `quota_snapshots` con `usage`, `limit`, `period`, `tenant_id`
+  - Commit (previo): `feat(quota): add SnapshotQuotasJob for Redis to DB sync`
 
 ---
 
