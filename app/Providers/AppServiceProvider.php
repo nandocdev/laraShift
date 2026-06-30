@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Modules\Shared\Events\Catalog\DomainEventCatalog;
+use App\Modules\Shared\Events\Contracts\EventPublisher;
+use App\Modules\Shared\Events\Outbox\OutboxEventPublisher;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(EventPublisher::class, OutboxEventPublisher::class);
+
+        $this->mergeConfigFrom(__DIR__ . '/../../config/events.php', 'events');
     }
 
     /**
@@ -23,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        config([
+            'events.map' => array_merge(
+                config('events.map', []),
+                DomainEventCatalog::toConfigMap(),
+            ),
+        ]);
+
         if (app()->isProduction()) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }

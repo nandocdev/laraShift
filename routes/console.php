@@ -14,3 +14,11 @@ Schedule::job(new SnapshotQuotasJob)->daily();
 Schedule::job(new ReconcileResourcesJob)->daily();
 
 Schedule::command('billing:reconcile')->dailyAt('03:00');
+
+Schedule::job(new \App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob)
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::job(new \App\Modules\Shared\Events\Dlq\RetryDeadLetterJob)
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
