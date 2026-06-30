@@ -4,6 +4,7 @@ use App\Modules\Shared\Exceptions\HttpExceptionMap;
 use App\Modules\Shared\Http\Middleware\CorrelationId;
 use App\Modules\Shared\Http\Middleware\GlobalRateLimiter;
 use App\Modules\Shared\Http\Middleware\ResolveTenant;
+use App\Modules\Shared\Http\Middleware\SecurityHeaders;
 use App\Modules\Shared\Http\Middleware\TraceContext;
 use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
 use App\Modules\Shared\Tenancy\Http\Middleware\EnsureHasFeature;
@@ -27,6 +28,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('universal', [
             CorrelationId::class,
             TraceContext::class,
+        ]);
+
+        $middleware->appendToGroup('web', [
+            SecurityHeaders::class,
         ]);
 
         $middleware->alias([
