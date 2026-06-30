@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 final readonly class DunningEngine
 {
-    private const array DUNNING_SCHEDULE = [
+    private const DUNNING_SCHEDULE = [
         ['day' => 0, 'action' => 'notify'],
         ['day' => 3, 'action' => 'notify'],
         ['day' => 7, 'action' => 'notify'],
@@ -20,7 +20,7 @@ final readonly class DunningEngine
         ['day' => 14, 'action' => 'suspend'],
     ];
 
-    private const int GRACE_PERIOD_DAYS = 3;
+    private const GRACE_PERIOD_DAYS = 3;
 
     /**
      * Process the dunning cycle for a tenant.
