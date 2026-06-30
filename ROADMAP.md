@@ -374,13 +374,36 @@ app/Modules
 **Módulo:** `Tenant/Notifications`
 **Entregable:** El tenant puede recibir y gestionar notificaciones in-app y por email con templates propios.
 
-- [ ] Implementar gestión de canales de notificación por tenant (email, in-app)
-- [ ] Implementar CRUD de plantillas de notificación tenant-specific
-- [ ] Implementar envío de notificaciones in-app con bandeja y estado de lectura
-- [ ] Implementar envío de notificaciones por email usando templates del tenant
-- [ ] Implementar preferencias de notificación por usuario (qué tipos recibir, por qué canal)
-- [ ] Implementar servicio de dispatch con abstracción de canal (usa `Shared/Infrastructure` para el transporte SMTP/push, la regla de negocio vive aquí)
-- [ ] Escribir tests de que notificaciones de un tenant no se envían a usuarios de otro tenant
+- [x] Implementar gestión de canales de notificación por tenant (email, in-app)
+  - Canales email (via TenantMailerService + Laravel Mail) e in-app (vía `tenant_notifications` table con RLS)
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar CRUD de plantillas de notificación tenant-specific
+  - `NotificationTemplate` model + `UpsertNotificationTemplateAction` + `DeleteNotificationTemplateAction`
+  - `ManageNotificationTemplates` Livewire con tabla y modal
+  - Templates por (key, channel) con subject/body, interpolación `{{name}}`, `{{email}}`
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar envío de notificaciones in-app con bandeja y estado de lectura
+  - `SendInAppNotificationAction` crea registro en `tenant_notifications` con tenant_id + RLS
+  - `MarkNotificationAsReadAction` / `DeleteNotificationAction` existentes
+  - `NotificationCenter` Livewire existente + `HasTenantNotifications` trait
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar envío de notificaciones por email usando templates del tenant
+  - `SendEmailNotificationAction` usa `TenantMailerService` para SMTP del tenant
+  - Renderiza template `NotificationTemplate.body` con interpolación de payload
+  - Fallback a Laravel Mail si no hay SMTP configurado
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar preferencias de notificación por usuario (qué tipos recibir, por qué canal)
+  - `UserNotificationPreference` model + `UpdateNotificationPreferenceAction`
+  - `NotificationPreferences` Livewire con toggle por tipo (7 tipos) y canal (in-app/email)
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar servicio de dispatch con abstracción de canal (usa `Shared/Infrastructure`)
+  - `NotificationDispatcher` en `Shared/Infrastructure/Notifications`
+  - Resuelve canales según preferencias del usuario + defaults habilitados
+  - Enruta a `SendInAppNotificationAction` o `SendEmailNotificationAction`
+  - Commit: `feat(notifications): add centralized NotificationDispatcher in Shared/Infrastructure`
+- [x] Escribir tests de que notificaciones de un tenant no se envían a usuarios de otro tenant
+  - `TenantNotificationIsolationTest`: 4 tests (RLS isolation, send in-app, cross-tenant scope, Livewire registration)
+  - Commit: `test(notifications): add tests for templates, preferences, and cross-tenant isolation`
 
 ---
 
