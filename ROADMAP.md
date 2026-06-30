@@ -601,9 +601,22 @@ app/Modules
 **Módulo:** `Central/Security`
 **Entregable:** Auditoría de seguridad completada, políticas de data retention activas y secrets bajo rotación.
 
-- [ ] Implementar auditoría global de accesos y cambios sensibles en el host
-- [ ] Implementar gestión de políticas de data retention y encryption keys por tenant tier
-- [ ] Implementar rotación automática de secrets y API keys con notificación
+- [x] Implementar auditoría global de accesos y cambios sensibles en el host
+  - `spatie/laravel-activitylog` con tabla `activity_log` registra todo cambio: provisioning, billing, support, security, features
+  - `Central/Security` dashboard muestra eventos recientes de security log
+  - Commits (previos): infraestructura inicial de activity log + SecurityS políticas
+- [x] Implementar gestión de políticas de data retention y encryption keys por tenant tier
+  - `ResolveTenantEncryptionPolicyAction` lee políticas desde `Plan.features.encryption`
+  - `TenantEncryptionKey` model por tenant con propósito (at_rest), key_identifier, encrypted_key
+  - Políticas incluyen: `key_rotation_days`, `encrypt_at_rest`, `encrypt_in_transit`
+  - Retention visible por plan tier en `SecurityPolicies` dashboard
+  - Commit: `feat(security): add encryption key rotation, policy resolution, and API key auto-rotation`
+- [x] Implementar rotación automática de secrets y API keys con notificación
+  - `RotateEncryptionKeyAction` genera nueva key de 256-bit, desactiva anterior, logea evento
+  - `RotateTenantApiKeysAction` auto-revoca keys >90 días sin uso
+  - `RotateTenantSecretsJob` diario a las 03:00 itera todos los tenants
+  - `KeyRotatedNotification` email para cada rotación de key
+  - Commit: `feat(security): add RotateTenantSecretsJob for daily automated secret rotation`
 
 ---
 
