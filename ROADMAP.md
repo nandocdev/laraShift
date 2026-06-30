@@ -331,12 +331,12 @@ app/Modules
 **Módulo:** `Tenant/Settings`
 **Entregable:** Cada tenant puede personalizar su instancia con su identidad visual y configuraciones locales.
 
-- [ ] Implementar CRUD de configuraciones locales del tenant (timezone, moneda, formatos de fecha)
-- [ ] Implementar white-label: carga de logo, selección de colores primarios/secundarios
-- [ ] Implementar configuración de custom domain con verificación (integrado con Provisioning)
+- [x] Implementar CRUD de configuraciones locales del tenant (timezone, moneda, formatos de fecha)
+- [x] Implementar white-label: carga de logo, selección de colores primarios/secundarios
+- [x] Implementar configuración de custom domain con verificación (integrado con Provisioning)
 - [ ] Implementar personalización de email templates del tenant
-- [ ] Implementar resolución jerárquica de configuración: Platform default → Plan default → Tenant override, en servicio único
-- [ ] Implementar CRUD de metadata dinámico y reglas de negocio específicas del tenant
+- [x] Implementar resolución jerárquica de configuración: Platform default → Plan default → Tenant override, en servicio único
+- [x] Implementar CRUD de metadata dinámico y reglas de negocio específicas del tenant
 
 ---
 
