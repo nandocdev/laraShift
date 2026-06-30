@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Modules\Shared\Events\Catalog\DomainEventCatalog;
 use App\Modules\Shared\Events\Contracts\EventPublisher;
 use App\Modules\Shared\Events\Outbox\OutboxEventPublisher;
+use App\Modules\Shared\Http\ViewComposers\BrandingComposer;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use App\Modules\Tenant\Settings\Policies\TenantSettingPolicy;
 use Carbon\CarbonImmutable;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
@@ -54,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
             TenantSetting::class,
             TenantSettingPolicy::class
         );
+
+        View::composer('layouts.app', BrandingComposer::class);
 
         $this->configureDefaults();
 

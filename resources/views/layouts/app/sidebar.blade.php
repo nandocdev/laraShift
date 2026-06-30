@@ -18,62 +18,32 @@
 
         <flux:sidebar.nav>
             <flux:sidebar.group :heading="__('Platform')" class="grid">
-                <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
-                    wire:navigate>
-                    {{ __('Dashboard') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="users" :href="route('tenant.team.index')"
-                    :current="request()->routeIs('tenant.team.*')" wire:navigate>
-                    {{ __('Members') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="shield-check" :href="route('tenant.roles.index')"
-                    :current="request()->routeIs('tenant.roles.*')" wire:navigate>
-                    {{ __('Roles & Permissions') }}
-                </flux:sidebar.item>
-                
+                <x-tenant-nav-item route="dashboard" icon="home" :label="__('Dashboard')" />
+                <x-tenant-nav-item route="tenant.team.*" icon="users" :label="__('Members')" />
+                <x-tenant-nav-item route="tenant.roles.*" icon="shield-check" :label="__('Roles & Permissions')" />
+
                 @php
                     $rootLanding = \App\Modules\Central\Landings\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
                 @endphp
                 @if($rootLanding)
-                    <flux:sidebar.item icon="megaphone" :href="route('tenant.landings.builder', $rootLanding)" target="_blank">
-                        {{ __('Landing Page') }}
-                    </flux:sidebar.item>
+                    <x-tenant-nav-item route="tenant.landings.builder" icon="megaphone" :label="__('Landing Page')"
+                        :href="route('tenant.landings.builder', $rootLanding)" target="_blank" />
                 @endif
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Settings')" class="grid">
-                <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')"
-                    :current="request()->routeIs('tenant.settings.branding')" wire:navigate>
-                    {{ __('Branding') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="globe-americas" :href="route('tenant.settings.localization')"
-                    :current="request()->routeIs('tenant.settings.localization')" wire:navigate>
-                    {{ __('Localization') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="envelope" :href="route('tenant.settings.smtp')"
-                    :current="request()->routeIs('tenant.settings.smtp')" wire:navigate>
-                    {{ __('SMTP Settings') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="key" :href="route('tenant.api-keys.index')"
-                    :current="request()->routeIs('tenant.api-keys.*')" wire:navigate>
-                    {{ __('API Keys') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="shield-check" :href="route('tenant.settings.security.2fa')"
-                    :current="request()->routeIs('tenant.settings.security.*')" wire:navigate>
-                    {{ __('Security & 2FA') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="clipboard-document-list" :href="route('tenant.audit.index')"
-                    :current="request()->routeIs('tenant.audit.*')" wire:navigate>
-                    {{ __('Audit Log') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="credit-card" :href="route('tenant.billing.manage')"
-                    :current="request()->routeIs('tenant.billing.*')" wire:navigate>
-                    {{ __('Billing') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="banknotes" :href="route('tenant.payouts.index')"
-                    :current="request()->routeIs('tenant.payouts.*')" wire:navigate>
-                    {{ __('Withdrawals') }}
-                </flux:sidebar.item>
+                <x-tenant-nav-item route="tenant.settings.branding" icon="paint-brush" :label="__('Branding')"
+                    permission="manage-settings" />
+                <x-tenant-nav-item route="tenant.settings.localization" icon="globe-americas" :label="__('Localization')"
+                    permission="manage-settings" />
+                <x-tenant-nav-item route="tenant.settings.smtp" icon="envelope" :label="__('SMTP Settings')"
+                    permission="manage-settings" />
+                <x-tenant-nav-item route="tenant.api-keys.*" icon="key" :label="__('API Keys')" />
+                <x-tenant-nav-item route="tenant.settings.security.*" icon="shield-check" :label="__('Security & 2FA')" />
+                <x-tenant-nav-item route="tenant.audit.*" icon="clipboard-document-list" :label="__('Audit Log')"
+                    permission="view-audit" />
+                <x-tenant-nav-item route="tenant.billing.*" icon="credit-card" :label="__('Billing')" />
+                <x-tenant-nav-item route="tenant.payouts.*" icon="banknotes" :label="__('Withdrawals')" />
             </flux:sidebar.group>
         </flux:sidebar.nav>
 
