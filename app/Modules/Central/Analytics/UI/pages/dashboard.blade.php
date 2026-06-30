@@ -57,9 +57,9 @@
                 <flux:table.rows>
                     @forelse($mrrByPlan as $plan)
                         <flux:table.row>
-                            <flux:table.cell class="font-medium">{{ $plan['plan'] }}</flux:table.cell>
-                            <flux:table.cell>{{ $plan['count'] }}</flux:table.cell>
-                            <flux:table.cell class="font-mono">${{ number_format($plan['mrr'], 2) }}</flux:table.cell>
+                            <flux:table.cell class="font-medium">{{ $plan->plan }}</flux:table.cell>
+                            <flux:table.cell>{{ $plan->count }}</flux:table.cell>
+                            <flux:table.cell class="font-mono">${{ number_format($plan->mrr, 2) }}</flux:table.cell>
                         </flux:table.row>
                     @empty
                         <flux:table.row>
@@ -75,10 +75,10 @@
             <div class="space-y-3 max-h-[400px] overflow-y-auto">
                 @foreach($monthlyBreakdown as $month)
                     <div class="flex items-center justify-between text-sm">
-                        <span class="font-mono text-xs text-zinc-500 w-16">{{ $month['month'] }}</span>
-                        <span class="text-emerald-600 font-medium w-24 text-right">${{ number_format($month['mrr'], 0) }}</span>
-                        <span class="text-blue-500 text-xs w-16 text-right">+{{ $month['new_tenants'] }}</span>
-                        <span class="text-red-400 text-xs w-16 text-right">{{ $month['churned'] > 0 ? '-'.$month['churned'] : '0' }}</span>
+                        <span class="font-mono text-xs text-zinc-500 w-16">{{ $month->month }}</span>
+                        <span class="text-emerald-600 font-medium w-24 text-right">${{ number_format($month->mrr, 0) }}</span>
+                        <span class="text-blue-500 text-xs w-16 text-right">+{{ $month->newTenants }}</span>
+                        <span class="text-red-400 text-xs w-16 text-right">{{ $month->churned > 0 ? '-'.$month->churned : '0' }}</span>
                     </div>
                 @endforeach
             </div>
