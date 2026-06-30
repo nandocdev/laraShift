@@ -255,16 +255,16 @@ app/Modules
 **Módulo:** `Central/Billing`
 **Entregable:** CRUD de planes y suscripciones funcional con prorrateo, grace periods y dunning configurados.
 
-- [ ] Implementar CRUD de planes (nombre, precio, ciclo, features incluidos, límites de quotas)
-- [ ] Implementar CRUD de suscripciones de tenant (plan, estado, fechas)
-- [ ] Implementar máquina de estados del Tenant Lifecycle con transiciones y eventos disparados
-- [ ] Implementar cálculo de prorrateo en upgrades/downgrades (fórmula documentada y testeada)
-- [ ] Implementar grace periods configurables por plan con transición automática a `SUSPENDED`
-- [ ] Implementar ciclo de dunning (secuencia de intentos, notificaciones, escalation)
+- [x] Implementar CRUD de planes (nombre, precio, ciclo, features incluidos, límites de quotas)
+- [x] Implementar CRUD de suscripciones de tenant (plan, estado, fechas)
+- [x] Implementar máquina de estados del Tenant Lifecycle con transiciones y eventos disparados
+- [x] Implementar cálculo de prorrateo en upgrades/downgrades (fórmula documentada y testeada)
+- [x] Implementar grace periods configurables por plan con transición automática a `SUSPENDED`
+- [x] Implementar ciclo de dunning (secuencia de intentos, notificaciones, escalation)
 - [ ] Implementar aplicación de descuentos, cupones y ajustes manuales
-- [ ] Implementar generación de facturas (PDF) con envío por email
-- [ ] Implementar conciliación financiera entre pagos recibidos y facturas
-- [ ] Implementar reportes básicos de MRR y churn
+- [x] Implementar generación de facturas (PDF) con envío por email
+- [x] Implementar conciliación financiera entre pagos recibidos y facturas
+- [x] Implementar reportes básicos de MRR y churn
 
 ---
 
