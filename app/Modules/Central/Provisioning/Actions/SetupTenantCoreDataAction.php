@@ -22,7 +22,7 @@ final readonly class SetupTenantCoreDataAction
         }
 
         // 2. Run the data seeder for the tenant
-        $seeder = new TenantDataSeeder();
+        $seeder = new TenantDataSeeder;
         $seeder->run((string) $tenant->id);
 
         activity('provisioning')

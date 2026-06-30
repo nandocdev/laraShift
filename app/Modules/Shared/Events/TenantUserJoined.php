@@ -13,6 +13,7 @@ class TenantUserJoined
     use Dispatchable, SerializesModels;
 
     public string $tenantId;
+
     public string $userId;
 
     public function __construct(

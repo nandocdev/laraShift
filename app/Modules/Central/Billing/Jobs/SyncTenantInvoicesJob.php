@@ -33,15 +33,16 @@ class SyncTenantInvoicesJob implements ShouldQueue
 
         if (Cache::has($cacheKey)) {
             Log::debug("SyncTenantInvoicesJob throttled for tenant {$this->tenant->id}. Skipping.");
+
             return;
         }
 
         try {
             $action->execute($this->tenant);
-            
+
             Cache::put($cacheKey, true, now()->addMinutes(self::THROTTLE_MINUTES));
         } catch (\Exception $e) {
-            Log::error("Failed to sync invoices for tenant {$this->tenant->id}: " . $e->getMessage());
+            Log::error("Failed to sync invoices for tenant {$this->tenant->id}: ".$e->getMessage());
             throw $e;
         }
     }

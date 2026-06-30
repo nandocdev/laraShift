@@ -12,6 +12,7 @@ use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
 
@@ -28,7 +29,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'session-test-' . Str::random(4),
+        'slug' => 'session-test-'.Str::random(4),
         'name' => 'Session Test',
         'email' => 'session@test.com',
         'plan_id' => 'free',
@@ -136,7 +137,7 @@ test('session revocation logs activity', function () {
     $action = app(InvalidateUserSessionsAction::class);
     $action->execute($this->user, $admin);
 
-    $logs = \Spatie\Activitylog\Models\Activity::where('description', 'tenant_user_sessions_revoked')->get();
+    $logs = Activity::where('description', 'tenant_user_sessions_revoked')->get();
 
     expect($logs)->not->toBeEmpty();
 });

@@ -3,11 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Billing\Services\ProrationCalculator;
 use App\Modules\Central\Provisioning\Actions\ArchiveWithRetentionAction;
 use App\Modules\Central\Provisioning\Actions\ChangeTenantPlanAction;
 use App\Modules\Central\Provisioning\Actions\VerifyCustomDomainAction;
-use App\Modules\Central\Provisioning\Models\Domain;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -38,7 +36,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'offboarding-test-' . Str::random(4),
+        'slug' => 'offboarding-test-'.Str::random(4),
         'name' => 'Offboarding Test',
         'email' => 'off@test.com',
         'plan_id' => 'free',
@@ -114,7 +112,7 @@ test('change plan rejects inactive plan', function () {
     $action = app(ChangeTenantPlanAction::class);
 
     expect(fn () => $action->execute($this->tenant, 'inactive-plan'))
-        ->toThrow(\InvalidArgumentException::class, 'not active');
+        ->toThrow(InvalidArgumentException::class, 'not active');
 });
 
 test('change plan includes proration info', function () {
@@ -144,7 +142,7 @@ test('custom domain verification handles dns errors gracefully', function () {
 test('enterprise retention is 365 days', function () {
     $enterpriseTenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'ent-off-' . Str::random(4),
+        'slug' => 'ent-off-'.Str::random(4),
         'name' => 'Enterprise',
         'email' => 'ent@test.com',
         'plan_id' => 'enterprise',

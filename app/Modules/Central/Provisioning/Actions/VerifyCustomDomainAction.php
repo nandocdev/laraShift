@@ -6,12 +6,12 @@ namespace App\Modules\Central\Provisioning\Actions;
 
 use App\Modules\Central\Provisioning\Models\Domain;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 final readonly class VerifyCustomDomainAction
 {
     private const string DNS_TEMPLATE = '_larashift.%s';
+
     private const string EXPECTED_VALUE = 'verified.larashift.app';
 
     /**

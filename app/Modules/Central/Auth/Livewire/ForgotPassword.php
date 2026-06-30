@@ -29,6 +29,7 @@ class ForgotPassword extends Component
         if ($status === Password::RESET_LINK_SENT) {
             session()->flash('status', __($status));
             $this->reset('email');
+
             return;
         }
 

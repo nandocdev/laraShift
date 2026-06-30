@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Modules\Central\Landings\Actions\PublishLandingAction;
 use App\Modules\Central\Landings\Models\Landing;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\Seeder;
@@ -15,8 +16,9 @@ class LandingSeeder extends Seeder
     {
         $tenant = Tenant::first();
 
-        if (!$tenant) {
+        if (! $tenant) {
             $this->command->error('No tenant found. Run TenantSeeder first.');
+
             return;
         }
 
@@ -33,7 +35,7 @@ class LandingSeeder extends Seeder
                     'typography' => [
                         'font_heading' => 'Inter',
                         'font_body' => 'Inter',
-                    ]
+                    ],
                 ],
                 'blocks' => [
                     [
@@ -48,7 +50,7 @@ class LandingSeeder extends Seeder
                             'button_primary_url' => '/register',
                             'image_url' => 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2426&ixlib=rb-4.0.3',
                         ],
-                        'styles' => ['padding' => 'xl']
+                        'styles' => ['padding' => 'xl'],
                     ],
                     [
                         'id' => 'cta-1',
@@ -61,7 +63,7 @@ class LandingSeeder extends Seeder
                             'button_primary_text' => 'Comenzar Prueba Gratuita',
                             'button_primary_url' => '/trial',
                         ],
-                        'styles' => ['background' => 'dark']
+                        'styles' => ['background' => 'dark'],
                     ],
                     [
                         'id' => 'footer-1',
@@ -73,15 +75,15 @@ class LandingSeeder extends Seeder
                             'legal_links' => [
                                 ['label' => 'Privacy', 'url' => '/privacy'],
                                 ['label' => 'Terms', 'url' => '/terms'],
-                            ]
-                        ]
-                    ]
-                ]
+                            ],
+                        ],
+                    ],
+                ],
             ]
         );
 
         $landing = Landing::where('slug', 'saas-landing')->first();
-        app(\App\Modules\Central\Landings\Actions\PublishLandingAction::class)->execute($landing);
+        app(PublishLandingAction::class)->execute($landing);
 
         $this->command->info('Landing seeder finished and published.');
     }

@@ -13,7 +13,7 @@ class AuthenticateApiKey
 {
     /**
      * Handle an incoming request.
-     * 
+     *
      * Authenticates the request using the provided API Key.
      */
     public function handle(Request $request, Closure $next, string ...$scopes): Response
@@ -47,14 +47,14 @@ class AuthenticateApiKey
         }
 
         // Update last used timestamp (US-T104) - Throttled to avoid DB churn (MEDIO 6)
-        if (!$apiKey->last_used_at || $apiKey->last_used_at->diffInMinutes(now()) >= 15) {
+        if (! $apiKey->last_used_at || $apiKey->last_used_at->diffInMinutes(now()) >= 15) {
             $apiKey->update(['last_used_at' => now()]);
         }
 
         // Attach the API Key model and scopes to the request
         $request->attributes->set('api_key', $apiKey);
         $request->attributes->set('api_scopes', $apiKey->scopes);
-        
+
         // Authenticate the user if the key is linked to one
         if ($apiKey->creator) {
             auth()->login($apiKey->creator);

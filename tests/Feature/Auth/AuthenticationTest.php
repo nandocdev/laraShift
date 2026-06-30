@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
+use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Tenant\Identity\Models\User;
+use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
@@ -11,9 +14,9 @@ use Laravel\Fortify\Features;
 uses(RefreshDatabase::class);
 
 test('login screen can be rendered', function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
-    $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
-    $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
+    $this->seed(PlanSeeder::class);
+    $create = app(CreateTenantAction::class);
+    $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-test',
         email: 'admin@acme.test',
@@ -24,7 +27,7 @@ test('login screen can be rendered', function () {
     $this->assertNotNull($tenant);
 
     $domain = $tenant->domains()->first()->domain;
-    URL::forceRootUrl('http://' . $domain);
+    URL::forceRootUrl('http://'.$domain);
 
     $response = $this->get(route('login'));
 
@@ -32,9 +35,9 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
-    $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
-    $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
+    $this->seed(PlanSeeder::class);
+    $create = app(CreateTenantAction::class);
+    $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-auth',
         email: 'admin@acme.test',
@@ -43,7 +46,7 @@ test('users can authenticate using the login screen', function () {
 
     $tenant = $create->execute($data);
     $domain = $tenant->domains()->first()->domain;
-    URL::forceRootUrl('http://' . $domain);
+    URL::forceRootUrl('http://'.$domain);
 
     $user = User::create([
         'tenant_id' => $tenant->id,
@@ -65,9 +68,9 @@ test('users can authenticate using the login screen', function () {
 });
 
 test('users can not authenticate with invalid password', function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
-    $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
-    $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
+    $this->seed(PlanSeeder::class);
+    $create = app(CreateTenantAction::class);
+    $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-auth-fail',
         email: 'admin@acme.test',
@@ -76,7 +79,7 @@ test('users can not authenticate with invalid password', function () {
 
     $tenant = $create->execute($data);
     $domain = $tenant->domains()->first()->domain;
-    URL::forceRootUrl('http://' . $domain);
+    URL::forceRootUrl('http://'.$domain);
 
     $user = User::create([
         'tenant_id' => $tenant->id,
@@ -96,7 +99,7 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
+    $this->seed(PlanSeeder::class);
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 
     Features::twoFactorAuthentication([
@@ -104,8 +107,8 @@ test('users with two factor enabled are redirected to two factor challenge', fun
         'confirmPassword' => true,
     ]);
 
-    $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
-    $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
+    $create = app(CreateTenantAction::class);
+    $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-2fa',
         email: 'admin@acme.test',
@@ -114,7 +117,7 @@ test('users with two factor enabled are redirected to two factor challenge', fun
 
     $tenant = $create->execute($data);
     $domain = $tenant->domains()->first()->domain;
-    URL::forceRootUrl('http://' . $domain);
+    URL::forceRootUrl('http://'.$domain);
 
     $user = User::forceCreate([
         'tenant_id' => $tenant->id,
@@ -136,9 +139,9 @@ test('users with two factor enabled are redirected to two factor challenge', fun
 });
 
 test('users can logout', function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
-    $create = app(\App\Modules\Central\Provisioning\Actions\CreateTenantAction::class);
-    $data = new \App\Modules\Central\Provisioning\DTOs\CreateTenantData(
+    $this->seed(PlanSeeder::class);
+    $create = app(CreateTenantAction::class);
+    $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-logout',
         email: 'admin@acme.test',
@@ -147,7 +150,7 @@ test('users can logout', function () {
 
     $tenant = $create->execute($data);
     $domain = $tenant->domains()->first()->domain;
-    URL::forceRootUrl('http://' . $domain);
+    URL::forceRootUrl('http://'.$domain);
 
     $user = User::create([
         'tenant_id' => $tenant->id,

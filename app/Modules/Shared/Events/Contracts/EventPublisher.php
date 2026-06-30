@@ -20,7 +20,7 @@ interface EventPublisher
     /**
      * Publish multiple domain events in a batch.
      *
-     * @param DomainEvent[] $events
+     * @param  DomainEvent[]  $events
      * @return string[] Event IDs
      */
     public function publishBatch(array $events): array;

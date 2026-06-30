@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Identity\Livewire;
 
 use App\Modules\Tenant\Identity\Actions\AcceptInvitationAction;
+use App\Modules\Tenant\Identity\DTOs\UserAcceptanceData;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -15,6 +16,7 @@ use Livewire\Component;
 class AcceptInvitation extends Component
 {
     public string $token = '';
+
     public Invitation $invitation;
 
     #[Validate('required|string|min:2|max:255')]
@@ -50,7 +52,7 @@ class AcceptInvitation extends Component
     {
         $this->validate();
 
-        $user = $action->execute(new \App\Modules\Tenant\Identity\DTOs\UserAcceptanceData(
+        $user = $action->execute(new UserAcceptanceData(
             token: $this->token,
             name: $this->name,
             password: $this->password

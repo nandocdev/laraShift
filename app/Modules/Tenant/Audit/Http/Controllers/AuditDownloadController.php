@@ -24,7 +24,7 @@ final class AuditDownloadController extends Controller
 
         $path = $request->query('path');
         $tenantId = tenant('id');
-        
+
         // Security Strategy: Explicitly allow only specific prefixes per tenant.
         $allowedPrefixes = [
             "exports/audit/audit_log_{$tenantId}",

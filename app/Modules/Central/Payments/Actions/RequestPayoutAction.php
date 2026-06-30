@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Actions;
 
-use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PayoutData;
 use App\Modules\Central\Payments\DTOs\PayoutResultData;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -21,24 +21,24 @@ final readonly class RequestPayoutAction
 
     public function execute(PayoutData $data): PayoutResultData
     {
-        Log::info("Processing payout request for tenant", [
+        Log::info('Processing payout request for tenant', [
             'tenant_id' => $data->tenantId,
             'amount' => $data->amount,
-            'currency' => $data->currency
+            'currency' => $data->currency,
         ]);
 
         // In a real scenario, we would check tenant balance here first
-        
+
         $result = $this->gateway->submitPayout($data);
 
         if ($result->isSuccessful()) {
-            Log::info("Payout processed successfully", ['id' => $result->id]);
+            Log::info('Payout processed successfully', ['id' => $result->id]);
         } elseif ($result->isPending()) {
-            Log::info("Payout pending approval", ['id' => $result->id]);
+            Log::info('Payout pending approval', ['id' => $result->id]);
         } else {
-            Log::error("Payout failed", [
+            Log::error('Payout failed', [
                 'id' => $result->id,
-                'detail' => $result->statusDetail
+                'detail' => $result->statusDetail,
             ]);
         }
 

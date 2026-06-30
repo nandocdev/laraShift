@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Support\Http\Controllers;
 
 use App\Modules\Central\Support\Models\SupportSession;
+use App\Modules\Central\Support\Notifications\ImpersonationEndedNotification;
 use App\Modules\Shared\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -39,7 +40,7 @@ class TenantImpersonationController extends Controller
         Session::put('impersonated_by', $session->operator_id);
 
         // 3. Clear token for security (one-time use for transition)
-        $session->update(['token' => 'used_' . Str::random(10)]);
+        $session->update(['token' => 'used_'.Str::random(10)]);
 
         return redirect()->intended('/dashboard')->with('status', __('Impersonation active. Actions are audited.'));
     }
@@ -55,9 +56,9 @@ class TenantImpersonationController extends Controller
             $session = SupportSession::with('tenant')->find($sessionId);
             if ($session) {
                 $session->update(['ended_at' => now()]);
-                
+
                 // Notify tenant as per PRD security requirement
-                $session->tenant->notify(new \App\Modules\Central\Support\Notifications\ImpersonationEndedNotification(
+                $session->tenant->notify(new ImpersonationEndedNotification(
                     $session->reason,
                     $session->started_at->format('Y-m-d H:i')
                 ));

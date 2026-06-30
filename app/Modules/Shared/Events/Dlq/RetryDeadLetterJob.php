@@ -28,7 +28,8 @@ final class RetryDeadLetterJob implements ShouldQueue
                         $eventClass = $this->resolveEventClass($dlq->event_type);
 
                         if ($eventClass === null) {
-                            $dlq->markFailed('No handler registered for event type: ' . $dlq->event_type);
+                            $dlq->markFailed('No handler registered for event type: '.$dlq->event_type);
+
                             continue;
                         }
 

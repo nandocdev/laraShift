@@ -10,8 +10,8 @@ use Illuminate\Http\Response;
 final readonly class ApiResponse
 {
     /**
-     * @param array<string, mixed>|null $data
-     * @param array<string, mixed> $meta
+     * @param  array<string, mixed>|null  $data
+     * @param  array<string, mixed>  $meta
      */
     public static function success(
         ?array $data = null,
@@ -23,8 +23,8 @@ final readonly class ApiResponse
     }
 
     /**
-     * @param array<string, mixed>|null $data
-     * @param array<string, mixed> $meta
+     * @param  array<string, mixed>|null  $data
+     * @param  array<string, mixed>  $meta
      */
     public static function created(
         ?array $data = null,
@@ -35,8 +35,8 @@ final readonly class ApiResponse
     }
 
     /**
-     * @param array<string, mixed>|null $data
-     * @param array<string, mixed> $meta
+     * @param  array<string, mixed>|null  $data
+     * @param  array<string, mixed>  $meta
      */
     public static function noContent(
         ?array $data = null,
@@ -47,8 +47,8 @@ final readonly class ApiResponse
     }
 
     /**
-     * @param array<int, array{message: string, code?: string, field?: string}> $errors
-     * @param array<string, mixed> $meta
+     * @param  array<int, array{message: string, code?: string, field?: string}>  $errors
+     * @param  array<string, mixed>  $meta
      */
     public static function error(
         array $errors,
@@ -60,9 +60,9 @@ final readonly class ApiResponse
     }
 
     /**
-     * @param array<string, mixed>|null $data
-     * @param array<int, array{message: string, code?: string, field?: string}>|null $errors
-     * @param array<string, mixed> $meta
+     * @param  array<string, mixed>|null  $data
+     * @param  array<int, array{message: string, code?: string, field?: string}>|null  $errors
+     * @param  array<string, mixed>  $meta
      */
     private static function envelope(
         ?array $data = null,

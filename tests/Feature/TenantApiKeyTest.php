@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Identity\Actions\GenerateApiKeyAction;
-use App\Modules\Tenant\Identity\Models\ApiKey;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -28,7 +27,7 @@ it('generates a secure api key with specific scopes', function () {
 
     expect($result['key'])->toStartWith('tnt_');
     expect(strlen($result['key']))->toBe(68); // tnt_ + 64 hex chars
-    
+
     $model = $result['model'];
     expect($model->name)->toBe('Test Key');
     expect($model->scopes)->toBe(['orders:read', 'orders:write']);
@@ -52,6 +51,6 @@ it('revokes an api key immediately', function () {
     expect($apiKey->isActive())->toBeTrue();
 
     $apiKey->update(['revoked_at' => now()]);
-    
+
     expect($apiKey->isActive())->toBeFalse();
 });

@@ -18,11 +18,12 @@ use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
-class Tenant extends BaseTenant implements TenantWithDatabase, TenantContract
+class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
 {
     use Billable, HasDatabase, HasDomains, HasFeatures, HasQuotas, HasUuids, Notifiable, SoftDeletes;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $casts = [
@@ -32,23 +33,28 @@ class Tenant extends BaseTenant implements TenantWithDatabase, TenantContract
         'suspended_at' => 'datetime',
     ];
 
-    public function plan(): BelongsTo {
+    public function plan(): BelongsTo
+    {
         return $this->belongsTo(Plan::class, 'plan_id', 'slug');
     }
 
-    public function getId(): string|int {
+    public function getId(): string|int
+    {
         return $this->id;
     }
 
-    public function getName(): string {
+    public function getName(): string
+    {
         return $this->name ?? 'Unknown';
     }
 
-    public function getDomain(): string {
+    public function getDomain(): string
+    {
         return $this->domains->first()?->domain ?? '';
     }
 
-    public static function getCustomColumns(): array {
+    public static function getCustomColumns(): array
+    {
         return [
             'id',
             'slug',

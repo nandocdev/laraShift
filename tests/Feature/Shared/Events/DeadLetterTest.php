@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Shared\Events\Dlq\DeadLetterEvent;
 use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
-use App\Modules\Shared\Events\Outbox\OutboxEvent;
-use App\Modules\Shared\Events\Outbox\OutboxEventPublisher;
+use App\Modules\Shared\Events\DomainEvent;
 
 test('dlq stores failed event metadata', function () {
     $dlq = DeadLetterEvent::create([
@@ -77,9 +76,12 @@ test('dlq retryable scope returns only eligible events', function () {
     expect($retryable->first()->event_type)->toBe('retryable_event');
 });
 
-class DlqTestEvent extends \App\Modules\Shared\Events\DomainEvent
+class DlqTestEvent extends DomainEvent
 {
-    public function __construct() { parent::__construct(1); }
+    public function __construct()
+    {
+        parent::__construct(1);
+    }
 }
 
 test('dlq retry job processes retryable events', function () {

@@ -4,20 +4,22 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Jobs;
 
+use App\Modules\Central\Payments\Actions\HandleWebhookAction;
+use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Modules\Central\Payments\Actions\HandleWebhookAction;
-use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use Throwable;
 
-final class ProcessPaymentWebhookJob implements ShouldQueue {
+final class ProcessPaymentWebhookJob implements ShouldQueue
+{
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 5;
+
     public int $timeout = 60;
 
     public int $backoffSeconds = 30;
@@ -33,6 +35,7 @@ final class ProcessPaymentWebhookJob implements ShouldQueue {
 
     /**
      * Exponential backoff: 30s, 2min, 8min, 32min, 2h
+     *
      * @return int[]
      */
     public function backoff(): array
@@ -45,7 +48,8 @@ final class ProcessPaymentWebhookJob implements ShouldQueue {
         return now()->addHours(12);
     }
 
-    public function handle(): void {
+    public function handle(): void
+    {
         // Tenant context must be initialized before business logic.
         // This follows the mandatory queue isolation pattern in Architecture.md.
         tenancy()->initialize($this->tenantId);
@@ -64,7 +68,8 @@ final class ProcessPaymentWebhookJob implements ShouldQueue {
         }
     }
 
-    public function failed(Throwable $e): void {
+    public function failed(Throwable $e): void
+    {
         // Signature failures are not retryable. Exhaust immediately.
         if ($e instanceof WebhookVerificationException) {
             Log::critical('ClaveGateway: webhook signature failure — not retrying', [

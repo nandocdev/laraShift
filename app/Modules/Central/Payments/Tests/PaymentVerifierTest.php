@@ -4,28 +4,30 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Tests;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Shared\Events\PaymentCompleted;
 use App\Modules\Central\Payments\Exceptions\WebhookVerificationException;
 use App\Modules\Central\Payments\Models\Payment;
-use App\Modules\Central\Payments\Models\PaymentWebhook;
 use App\Modules\Central\Payments\Services\PaymentVerifier;
+use App\Modules\Shared\Events\PaymentCompleted;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TenantTestCase;
 
-final class PaymentVerifierTest extends TenantTestCase {
+final class PaymentVerifierTest extends TenantTestCase
+{
     use RefreshDatabase;
 
     private PaymentVerifier $verifier;
 
-    protected function setUp(): void {
+    protected function setUp(): void
+    {
         parent::setUp();
         $this->verifier = app(PaymentVerifier::class);
     }
 
     // ── Webhook verification ──────────────────────────────────────────────────
 
-    public function test_throws_on_invalid_signature(): void {
+    public function test_throws_on_invalid_signature(): void
+    {
         $this->expectException(WebhookVerificationException::class);
 
         $this->verifier->handleWebhook(
@@ -38,7 +40,8 @@ final class PaymentVerifierTest extends TenantTestCase {
 
     // ── Idempotency ───────────────────────────────────────────────────────────
 
-    public function test_duplicate_webhook_does_not_create_second_record(): void {
+    public function test_duplicate_webhook_does_not_create_second_record(): void
+    {
         \Event::fake();
 
         $payload = $this->approvedPayload('INV-001', 'TX-001');
@@ -61,7 +64,8 @@ final class PaymentVerifierTest extends TenantTestCase {
 
     // ── Cross-tenant isolation ────────────────────────────────────────────────
 
-    public function test_webhook_does_not_reconcile_payment_from_another_tenant(): void {
+    public function test_webhook_does_not_reconcile_payment_from_another_tenant(): void
+    {
         $payload = $this->approvedPayload('INV-001', 'TX-001');
         $rawPayload = json_encode($payload);
         $secret = 'test-secret';
@@ -85,7 +89,8 @@ final class PaymentVerifierTest extends TenantTestCase {
 
     // ── Terminal status guard ─────────────────────────────────────────────────
 
-    public function test_approved_payment_is_not_overwritten_by_declined_webhook(): void {
+    public function test_approved_payment_is_not_overwritten_by_declined_webhook(): void
+    {
         \Event::fake([PaymentCompleted::class]);
 
         Payment::factory()->create([
@@ -109,7 +114,8 @@ final class PaymentVerifierTest extends TenantTestCase {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function approvedPayload(string $displayId, string $txId): array {
+    private function approvedPayload(string $displayId, string $txId): array
+    {
         return [
             'displayId' => $displayId,
             'txId' => $txId,
@@ -119,7 +125,8 @@ final class PaymentVerifierTest extends TenantTestCase {
         ];
     }
 
-    private function declinedPayload(string $displayId, string $txId): array {
+    private function declinedPayload(string $displayId, string $txId): array
+    {
         return [
             'displayId' => $displayId,
             'txId' => $txId,

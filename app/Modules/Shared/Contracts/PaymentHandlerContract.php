@@ -22,20 +22,20 @@ interface PaymentHandlerContract
     /**
      * Ejecutado cuando el pago es aprobado exitosamente.
      *
-     * @param string $tenantId    Tenant propietario del pago
-     * @param string $displayId   Referencia interna (invoice_id, order_id, etc.)
-     * @param float  $amount      Monto aprobado por la pasarela
-     * @param array  $metadata    Datos adicionales del contexto original
+     * @param  string  $tenantId  Tenant propietario del pago
+     * @param  string  $displayId  Referencia interna (invoice_id, order_id, etc.)
+     * @param  float  $amount  Monto aprobado por la pasarela
+     * @param  array  $metadata  Datos adicionales del contexto original
      */
     public function onApproved(string $tenantId, string $displayId, float $amount, array $metadata): void;
 
     /**
      * Ejecutado cuando el pago falla o es rechazado.
      *
-     * @param string $tenantId    Tenant propietario del pago
-     * @param string $displayId   Referencia interna
-     * @param string $reason      Motivo del fallo
-     * @param array  $metadata    Datos adicionales del contexto original
+     * @param  string  $tenantId  Tenant propietario del pago
+     * @param  string  $displayId  Referencia interna
+     * @param  string  $reason  Motivo del fallo
+     * @param  array  $metadata  Datos adicionales del contexto original
      */
     public function onFailed(string $tenantId, string $displayId, string $reason, array $metadata): void;
 }

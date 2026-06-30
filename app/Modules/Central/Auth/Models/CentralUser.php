@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Models;
 
+use App\Modules\Central\Auth\Database\Factories\CentralUserFactory;
+use App\Modules\Central\Auth\Notifications\CentralResetPasswordNotification;
 use App\Modules\Shared\Contracts\CentralUserContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'is_global_admin', 'locked_until'])]
 #[Hidden(['password', 'remember_token'])]
-class CentralUser extends Authenticatable implements CentralUserContract {
+class CentralUser extends Authenticatable implements CentralUserContract
+{
     use HasFactory, HasUuids, Notifiable;
 
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \App\Modules\Central\Auth\Database\Factories\CentralUserFactory
+    protected static function newFactory(): CentralUserFactory
     {
-        return \App\Modules\Central\Auth\Database\Factories\CentralUserFactory::new();
+        return CentralUserFactory::new();
     }
 
     /**
@@ -31,7 +36,8 @@ class CentralUser extends Authenticatable implements CentralUserContract {
      *
      * @return array<string, string>
      */
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
@@ -45,7 +51,7 @@ class CentralUser extends Authenticatable implements CentralUserContract {
         return $this->hasOne(Central2FA::class, 'user_id');
     }
 
-    public function centralSessions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function centralSessions(): HasMany
     {
         return $this->hasMany(CentralSession::class, 'user_id');
     }
@@ -73,11 +79,11 @@ class CentralUser extends Authenticatable implements CentralUserContract {
     /**
      * Envía la notificación de restablecimiento de contraseña.
      *
-     * @param string $token
+     * @param  string  $token
      */
     public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new \App\Modules\Central\Auth\Notifications\CentralResetPasswordNotification($token));
+        $this->notify(new CentralResetPasswordNotification($token));
     }
 
     /**
@@ -85,10 +91,10 @@ class CentralUser extends Authenticatable implements CentralUserContract {
      */
     public function initials(): string
     {
-        return \Illuminate\Support\Str::of($this->name)
+        return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn ($word) => \Illuminate\Support\Str::substr($word, 0, 1))
+            ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
 }

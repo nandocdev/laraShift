@@ -3,17 +3,17 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Billing\Actions\SyncInvoicesAction;
-use App\Modules\Central\Billing\Models\Invoice;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Payments\DTOs\PaymentData;
-use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Central\Payments\Events\PaymentApproved;
+use App\Modules\Central\Payments\Enums\PaymentContext;
+use App\Modules\Central\Payments\Models\Payment;
+use App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment;
 use App\Modules\Central\Payments\Services\Gateways\ClaveGateway;
 use App\Modules\Central\Payments\Services\Gateways\DlocalGateway;
+use App\Modules\Central\Payments\Services\PaymentHandlerDispatcher;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -34,7 +34,7 @@ it('resolves the correct gateway based on tenant settings', function () {
     // 1. Default (from config)
     $defaultGateway = config('payments.default', 'clave');
     $gateway = app(PaymentGateway::class);
-    
+
     if ($defaultGateway === 'dlocal') {
         expect($gateway)->toBeInstanceOf(DlocalGateway::class);
     } else {
@@ -44,7 +44,7 @@ it('resolves the correct gateway based on tenant settings', function () {
     // 2. Force switch
     $this->tenant->update(['billing_gateway' => 'clave']);
     tenancy()->initialize($this->tenant);
-    
+
     $gateway = app(PaymentGateway::class);
     expect($gateway)->toBeInstanceOf(ClaveGateway::class);
 });
@@ -60,13 +60,13 @@ it('generates a PagueloFacil hosted checkout URL', function () {
     Http::fake([
         '*/LinkDeamon.cfm' => Http::response([
             'success' => true,
-            'data' => ['url' => 'https://checkout.paguelofacil.com/test']
-        ], 200)
+            'data' => ['url' => 'https://checkout.paguelofacil.com/test'],
+        ], 200),
     ]);
 
-    $gateway = new ClaveGateway(App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment::Sandbox);
+    $gateway = new ClaveGateway(ClaveEnvironment::Sandbox);
     $url = $gateway->buildCheckoutUrl(new PaymentData(
-        context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
+        context: PaymentContext::Subscription,
         amount: 29.99,
         description: 'Test',
         displayId: '123',
@@ -84,7 +84,7 @@ it('syncs invoices from multiple gateways', function () {
         'codOper' => 'TX123',
         'totalPay' => '29.99',
         'date' => now()->toDateTimeString(),
-        'status' => 1
+        'status' => 1,
     ];
 
     // Mock dLocal transactions
@@ -96,12 +96,12 @@ it('syncs invoices from multiple gateways', function () {
     ];
 
     $action = app(SyncInvoicesAction::class);
-    
+
     // Test mapping for PF
     $reflection = new ReflectionClass($action);
     $method = $reflection->getMethod('mapAndStore');
     $method->setAccessible(true);
-    
+
     $method->invoke($action, $this->tenant, $pfData);
     $this->assertDatabaseHas('invoices', ['provider_invoice_id' => 'TX123', 'amount' => 2999]);
 
@@ -118,9 +118,9 @@ it('fulfills a subscription when payment is approved', function () {
         'amount' => 29.99,
     ]);
 
-    $payment = \App\Modules\Central\Payments\Models\Payment::create([
+    $payment = Payment::create([
         'tenant_id' => $this->tenant->id,
-        'display_id' => 'sub_' . $this->tenant->id,
+        'display_id' => 'sub_'.$this->tenant->id,
         'slug' => 'test-slug',
         'amount' => 29.99,
         'description' => 'Test',
@@ -138,16 +138,16 @@ it('fulfills a subscription when payment is approved', function () {
             'customFieldValues' => [
                 'type' => 'subscription',
                 'plan_id' => $plan->id,
-                'tenant_id' => $this->tenant->id
-            ]
-        ]
+                'tenant_id' => $this->tenant->id,
+            ],
+        ],
     ]);
 
-    $dispatcher = app(\App\Modules\Central\Payments\Services\PaymentHandlerDispatcher::class);
+    $dispatcher = app(PaymentHandlerDispatcher::class);
     $dispatcher->dispatch(
-        context: \App\Modules\Central\Payments\Enums\PaymentContext::Subscription,
+        context: PaymentContext::Subscription,
         tenantId: $this->tenant->id,
-        displayId: 'sub_' . $this->tenant->id,
+        displayId: 'sub_'.$this->tenant->id,
         amount: 29.99,
         success: true,
         metadata: [
@@ -164,6 +164,6 @@ it('fulfills a subscription when payment is approved', function () {
     $this->assertDatabaseHas('subscriptions', [
         'tenant_id' => $this->tenant->id,
         'plan_id' => $plan->id,
-        'status' => 'active'
+        'status' => 'active',
     ]);
 });

@@ -42,12 +42,12 @@ test('money rejects different currency arithmetic', function () {
     $usd = Money::fromDecimal(10, 'USD');
     $eur = Money::fromDecimal(10, 'EUR');
 
-    expect(fn () => $usd->add($eur))->toThrow(\InvalidArgumentException::class);
-    expect(fn () => $usd->subtract($eur))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => $usd->add($eur))->toThrow(InvalidArgumentException::class);
+    expect(fn () => $usd->subtract($eur))->toThrow(InvalidArgumentException::class);
 });
 
 test('money rejects unsupported currencies', function () {
-    expect(fn () => new Money(100, 'XYZ'))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => new Money(100, 'XYZ'))->toThrow(InvalidArgumentException::class);
 });
 
 test('money is zero', function () {

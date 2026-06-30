@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Actions;
 
-use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentData;
-use App\Modules\Central\Payments\DTOs\PaymentResultData;
-use App\Modules\Central\Payments\Enums\PaymentStatus;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Payments\Models\PaymentAttempt;
 use App\Modules\Central\Payments\Services\PaymentHandlerDispatcher;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Shared\Events\PaymentCompleted;
 use Illuminate\Support\Facades\DB;
 
@@ -56,7 +54,7 @@ final readonly class ProcessDirectPaymentAction
             ]);
 
             $apiKey = config("payments.{$this->gateway->identifier()}.login");
-            
+
             // Process via Gateway
             $result = $this->gateway->processDirectPayment($data, (string) $apiKey, $token);
 
@@ -71,8 +69,8 @@ final readonly class ProcessDirectPaymentAction
             // Dispatch to context-aware handler
             $metadata = array_merge($data->customFieldValues, [
                 'gateway_reference' => $result->gatewayReference,
-                'gateway'           => $this->gateway->identifier(),
-                'error_message'     => $result->errorMessage,
+                'gateway' => $this->gateway->identifier(),
+                'error_message' => $result->errorMessage,
             ]);
 
             DB::afterCommit(function () use ($data, $result, $metadata) {

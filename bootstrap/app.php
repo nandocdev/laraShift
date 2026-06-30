@@ -5,8 +5,10 @@ use App\Modules\Shared\Http\Middleware\CorrelationId;
 use App\Modules\Shared\Http\Middleware\GlobalRateLimiter;
 use App\Modules\Shared\Http\Middleware\ResolveTenant;
 use App\Modules\Shared\Http\Middleware\TraceContext;
-use App\Modules\Shared\Tenancy\Http\Middleware\EnsureUserQuota;
 use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
+use App\Modules\Shared\Tenancy\Http\Middleware\EnsureHasFeature;
+use App\Modules\Shared\Tenancy\Http\Middleware\EnsureUserQuota;
+use App\Modules\Shared\Tenancy\Http\Middleware\EnsureWithinQuota;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,8 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'feature' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureHasFeature::class,
-            'quota' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureWithinQuota::class,
+            'feature' => EnsureHasFeature::class,
+            'quota' => EnsureWithinQuota::class,
             'resolve-tenant' => ResolveTenant::class,
             'throttle.global' => GlobalRateLimiter::class,
             'user-quota' => EnsureUserQuota::class,
@@ -64,7 +66,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->report(function (QuotaExceededException $e) {
-            \Log::warning('Quota exceeded', [
+            Log::warning('Quota exceeded', [
                 'metric' => $e->metric,
                 'tenant_id' => function_exists('tenant') ? tenant('id') : null,
             ]);

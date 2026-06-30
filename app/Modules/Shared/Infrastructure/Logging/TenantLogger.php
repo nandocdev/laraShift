@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 final readonly class TenantLogger
 {
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function emergency(string $message, array $extra = []): void
     {
@@ -19,7 +19,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function alert(string $message, array $extra = []): void
     {
@@ -27,7 +27,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function critical(string $message, array $extra = []): void
     {
@@ -35,7 +35,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function error(string $message, array $extra = []): void
     {
@@ -43,7 +43,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function warning(string $message, array $extra = []): void
     {
@@ -51,7 +51,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function notice(string $message, array $extra = []): void
     {
@@ -59,7 +59,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function info(string $message, array $extra = []): void
     {
@@ -67,7 +67,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      */
     public function debug(string $message, array $extra = []): void
     {
@@ -75,7 +75,7 @@ final readonly class TenantLogger
     }
 
     /**
-     * @param array<string, mixed> $extra
+     * @param  array<string, mixed>  $extra
      * @return array<string, mixed>
      */
     private function enrich(array $extra): array

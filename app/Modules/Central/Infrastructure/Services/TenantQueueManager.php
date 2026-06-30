@@ -33,7 +33,7 @@ class TenantQueueManager
     public static function dispatch(Tenant $tenant, $job, string $priority = 'default'): void
     {
         $queue = self::resolve($tenant, $priority);
-        
+
         dispatch($job)->onQueue($queue);
     }
 }

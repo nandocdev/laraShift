@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Services\MrrCalculator;
-use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 

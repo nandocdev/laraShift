@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Auth\Models\CentralUser;
-use App\Modules\Central\Auth\Models\Central2FA;
 use App\Modules\Central\Auth\Actions\LoginCentralUserAction;
 use App\Modules\Central\Auth\DTOs\LoginData;
+use App\Modules\Central\Auth\Models\Central2FA;
+use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
@@ -23,7 +23,7 @@ it('requires 2fa if enabled', function () {
         'password' => Hash::make($password),
     ]);
 
-    $google2fa = new Google2FA();
+    $google2fa = new Google2FA;
     $secret = $google2fa->generateSecretKey();
 
     Central2FA::create([

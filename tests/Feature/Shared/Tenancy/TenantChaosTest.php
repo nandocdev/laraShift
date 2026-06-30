@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Tenancy\Services\TenantConfigCache;
+use App\Modules\Shared\Tenancy\Services\TenantResolver;
 use App\Modules\Shared\Tenancy\ValueObjects\TenantContext;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
@@ -66,9 +67,9 @@ test('fake db connection failure does not crash context creation', function () {
 test('multiple sequential tenant initializations clean up state', function () {
     $tenantB = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'chaos-b-' . Str::random(5),
+        'slug' => 'chaos-b-'.Str::random(5),
         'name' => 'Chaos B',
-        'email' => Str::random(10) . '@b.com',
+        'email' => Str::random(10).'@b.com',
         'plan_id' => 'free',
     ]);
 
@@ -84,7 +85,7 @@ test('multiple sequential tenant initializations clean up state', function () {
 });
 
 test('tenant resolver returns null for non-existent id', function () {
-    $resolver = app(\App\Modules\Shared\Tenancy\Services\TenantResolver::class);
+    $resolver = app(TenantResolver::class);
 
     $tenant = $resolver->findById('00000000-0000-0000-0000-000000099999');
 
@@ -94,13 +95,13 @@ test('tenant resolver returns null for non-existent id', function () {
 test('tenant config cache handles missing plan gracefully', function () {
     $tenantWithoutPlan = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'no-plan-' . Str::random(5),
+        'slug' => 'no-plan-'.Str::random(5),
         'name' => 'No Plan',
-        'email' => Str::random(10) . '@noplan.com',
+        'email' => Str::random(10).'@noplan.com',
         'plan_id' => 'nonexistent-plan',
     ]);
 
-    $configCache = app(\App\Modules\Shared\Tenancy\Services\TenantConfigCache::class);
+    $configCache = app(TenantConfigCache::class);
 
     $config = $configCache->getAll($tenantWithoutPlan);
 

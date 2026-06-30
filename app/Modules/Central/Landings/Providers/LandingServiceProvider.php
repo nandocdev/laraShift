@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Landings\Providers;
 
+use App\Modules\Central\Landings\Livewire\LandingBuilder;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class LandingServiceProvider extends ServiceProvider
 {
@@ -21,10 +24,10 @@ class LandingServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'landings');
-        
-        \Illuminate\Support\Facades\Blade::component('landings::layouts.landing', 'landing-layout');
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'landings');
 
-        \Livewire\Livewire::component('landing-builder', \App\Modules\Central\Landings\Livewire\LandingBuilder::class);
+        Blade::component('landings::layouts.landing', 'landing-layout');
+
+        Livewire::component('landing-builder', LandingBuilder::class);
     }
 }

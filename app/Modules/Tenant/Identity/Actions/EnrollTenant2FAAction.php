@@ -24,7 +24,7 @@ final readonly class EnrollTenant2FAAction
         $secret = $this->google2fa->generateSecretKey();
 
         $qrCodeUrl = $this->google2fa->getQRCodeUrl(
-            config('app.name') . ' (Tenant)',
+            config('app.name').' (Tenant)',
             $user->email,
             $secret
         );
@@ -67,7 +67,7 @@ final readonly class EnrollTenant2FAAction
     private function generateRecoveryCodes(): array
     {
         return Collection::times(8, function () {
-            return Str::random(10) . '-' . Str::random(10);
+            return Str::random(10).'-'.Str::random(10);
         })->toArray();
     }
 }

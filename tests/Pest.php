@@ -2,7 +2,9 @@
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 /*
@@ -18,8 +20,8 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)
     ->beforeEach(function () {
-        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
-        
+        $this->withoutMiddleware(PreventRequestForgery::class);
+
         $class = get_class($this);
         if ((str_contains($class, 'Feature\\Auth') || str_contains($class, 'Feature\\Settings')) && ! str_contains($class, 'AuthenticationTest')) {
             $plan = Plan::firstOrCreate(['slug' => 'free'], [
@@ -42,12 +44,12 @@ uses(TestCase::class, RefreshDatabase::class)
             ]);
 
             $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
-            $domain = 'test-tenant.' . $centralDomain;
-            
+            $domain = 'test-tenant.'.$centralDomain;
+
             $tenant->domains()->firstOrCreate(['domain' => $domain]);
 
             tenancy()->initialize($tenant);
-            Illuminate\Support\Facades\URL::forceRootUrl('http://' . $domain);
+            URL::forceRootUrl('http://'.$domain);
         }
     })
     ->in('Feature');

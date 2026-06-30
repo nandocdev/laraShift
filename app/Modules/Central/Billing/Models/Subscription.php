@@ -56,11 +56,12 @@ class Subscription extends CashierSubscription
      */
     public function nextPayment(): ?object
     {
-        if (!$this->current_period_end) {
+        if (! $this->current_period_end) {
             return null;
         }
 
-        return new class($this->current_period_end) {
+        return new class($this->current_period_end)
+        {
             public function __construct(private $date) {}
 
             public function date()

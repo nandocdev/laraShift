@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Livewire;
 
+use App\Modules\Shared\Infrastructure\Services\QuotaManager;
 use App\Modules\Tenant\Identity\Actions\GenerateApiKeyAction;
 use App\Modules\Tenant\Identity\Actions\RevokeApiKeyAction;
 use App\Modules\Tenant\Identity\Models\ApiKey;
@@ -16,10 +17,12 @@ class ManageApiKeys extends Component
 {
     // Form state
     public string $name = '';
+
     public array $selectedScopes = [];
-    
+
     // Result state
     public string $plainKey = '';
+
     public bool $showingKey = false;
 
     public array $availableScopes = [
@@ -38,9 +41,10 @@ class ManageApiKeys extends Component
         ]);
 
         // Check Limit (US-T104, US-T401)
-        $quota = app(\App\Modules\Shared\Infrastructure\Services\QuotaManager::class);
+        $quota = app(QuotaManager::class);
         if (! $quota->increment(tenant(), 'api_keys')) {
             $this->addError('name', __('Maximum limit of API keys reached for your plan.'));
+
             return;
         }
 
@@ -48,7 +52,7 @@ class ManageApiKeys extends Component
 
         $this->plainKey = $result['key'];
         $this->showingKey = true;
-        
+
         $this->reset(['name', 'selectedScopes']);
         session()->flash('status', __('API Key generated successfully. Save it now!'));
     }

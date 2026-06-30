@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Shared\Tenancy\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 final readonly class CentralFallback
 {

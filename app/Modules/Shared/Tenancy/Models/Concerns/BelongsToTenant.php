@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Tenancy\Models\Concerns;
 
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\Eloquent\Model;
 
 trait BelongsToTenant
 {
     public static function bootBelongsToTenant(): void
     {
-        static::addGlobalScope(new TenantScope());
+        static::addGlobalScope(new TenantScope);
 
         static::creating(function (Model $model) {
             if (! $model->tenant_id && function_exists('tenancy') && tenancy()->initialized) {
@@ -24,6 +25,6 @@ trait BelongsToTenant
      */
     public function tenant()
     {
-        return $this->belongsTo(\App\Modules\Central\Provisioning\Models\Tenant::class, 'tenant_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 }

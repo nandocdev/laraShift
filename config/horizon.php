@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Central\Infrastructure\Services\HorizonQueueResolver;
 use Illuminate\Support\Str;
 
 return [
@@ -199,7 +200,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => \App\Modules\Central\Infrastructure\Services\HorizonQueueResolver::resolve(),
+            'queue' => HorizonQueueResolver::resolve(),
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,

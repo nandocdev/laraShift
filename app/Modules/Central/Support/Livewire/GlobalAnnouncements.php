@@ -7,8 +7,8 @@ namespace App\Modules\Central\Support\Livewire;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class GlobalAnnouncements extends Component
 {
@@ -17,7 +17,9 @@ class GlobalAnnouncements extends Component
      */
     public function dismiss(string $broadcastId): void
     {
-        if (! auth()->check()) return;
+        if (! auth()->check()) {
+            return;
+        }
 
         $connection = config('tenancy.database.central_connection', 'central');
 
@@ -38,7 +40,7 @@ class GlobalAnnouncements extends Component
     public function render(): View
     {
         $tenant = tenant();
-        
+
         if (! $tenant) {
             return view('support::livewire.global-announcements', ['activeBroadcasts' => collect()]);
         }
@@ -50,7 +52,7 @@ class GlobalAnnouncements extends Component
         // 2. Are sent (sent_at is not null)
         // 3. Match tenant filters (all, same plan, or same status)
         // 4. Have NOT been dismissed by this user
-        
+
         $dismissedIds = DB::connection($connection)->table('broadcast_dismissals')
             ->where('user_id', auth()->id())
             ->pluck('broadcast_id');

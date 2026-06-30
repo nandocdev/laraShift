@@ -6,9 +6,11 @@ use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Features\Models\Feature;
 use App\Modules\Central\Features\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Infrastructure\Services\QuotaManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 uses(RefreshDatabase::class);
 
@@ -22,8 +24,8 @@ beforeEach(function () {
         'features' => [
             'quotas' => [
                 'users' => 5,
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $this->feature = Feature::create([
@@ -50,10 +52,10 @@ afterEach(function () {
 });
 
 it('allows access if tenant has feature', function () {
-    Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'feature:api-access'])
-        ->get('/feature-test', fn() => 'Allowed');
+    Route::middleware(['web', InitializeTenancyByDomain::class, 'feature:api-access'])
+        ->get('/feature-test', fn () => 'Allowed');
 
-    $domain = 'test-tenant.' . config('tenancy.central_domain');
+    $domain = 'test-tenant.'.config('tenancy.central_domain');
     $this->tenant->domains()->create(['domain' => $domain]);
 
     $this->get("http://{$domain}/feature-test")
@@ -62,10 +64,10 @@ it('allows access if tenant has feature', function () {
 });
 
 it('denies access if tenant lacks feature', function () {
-    Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'feature:non-existent-feature'])
-        ->get('/feature-test-missing', fn() => 'Allowed');
+    Route::middleware(['web', InitializeTenancyByDomain::class, 'feature:non-existent-feature'])
+        ->get('/feature-test-missing', fn () => 'Allowed');
 
-    $domain = 'test-tenant.' . config('tenancy.central_domain');
+    $domain = 'test-tenant.'.config('tenancy.central_domain');
     $this->tenant->domains()->create(['domain' => $domain]);
 
     $this->get("http://{$domain}/feature-test-missing")
@@ -86,10 +88,10 @@ it('allows access if feature is granted via override', function () {
         'type' => 'allow',
     ]);
 
-    Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'feature:custom-feature'])
-        ->get('/feature-test-override', fn() => 'Allowed');
+    Route::middleware(['web', InitializeTenancyByDomain::class, 'feature:custom-feature'])
+        ->get('/feature-test-override', fn () => 'Allowed');
 
-    $domain = 'test-tenant.' . config('tenancy.central_domain');
+    $domain = 'test-tenant.'.config('tenancy.central_domain');
     $this->tenant->domains()->create(['domain' => $domain]);
 
     $this->get("http://{$domain}/feature-test-override")
@@ -98,10 +100,10 @@ it('allows access if feature is granted via override', function () {
 });
 
 it('allows access if tenant is within quota', function () {
-    Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'quota:users'])
-        ->get('/quota-test', fn() => 'Allowed');
+    Route::middleware(['web', InitializeTenancyByDomain::class, 'quota:users'])
+        ->get('/quota-test', fn () => 'Allowed');
 
-    $domain = 'test-tenant.' . config('tenancy.central_domain');
+    $domain = 'test-tenant.'.config('tenancy.central_domain');
     $this->tenant->domains()->create(['domain' => $domain]);
 
     $this->get("http://{$domain}/quota-test")
@@ -110,13 +112,13 @@ it('allows access if tenant is within quota', function () {
 });
 
 it('denies access if tenant exceeds quota', function () {
-    $quotaManager = app(\App\Modules\Shared\Infrastructure\Services\QuotaManager::class);
+    $quotaManager = app(QuotaManager::class);
     $quotaManager->forceIncrement($this->tenant, 'users', 6);
 
-    Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'quota:users'])
-        ->get('/quota-test-exceeded', fn() => 'Allowed');
+    Route::middleware(['web', InitializeTenancyByDomain::class, 'quota:users'])
+        ->get('/quota-test-exceeded', fn () => 'Allowed');
 
-    $domain = 'test-tenant.' . config('tenancy.central_domain');
+    $domain = 'test-tenant.'.config('tenancy.central_domain');
     $this->tenant->domains()->create(['domain' => $domain]);
 
     $this->get("http://{$domain}/quota-test-exceeded")

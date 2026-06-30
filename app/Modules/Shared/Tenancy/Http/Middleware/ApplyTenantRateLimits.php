@@ -6,7 +6,6 @@ namespace App\Modules\Shared\Tenancy\Http\Middleware;
 
 use App\Modules\Central\Billing\Models\Plan;
 use Closure;
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,7 +15,7 @@ class ApplyTenantRateLimits
 {
     /**
      * Handle an incoming request.
-     * 
+     *
      * [RIESGOS]
      * - If Redis is unavailable, the system fails open to prevent complete outage.
      */
@@ -28,12 +27,12 @@ class ApplyTenantRateLimits
 
         $tenant = tenant();
         $limitRpm = $this->resolveLimit($tenant);
-        $key = 'tenant_rate_limit:' . $tenant->id;
+        $key = 'tenant_rate_limit:'.$tenant->id;
 
         try {
             if (RateLimiter::tooManyAttempts($key, $limitRpm)) {
                 $seconds = RateLimiter::availableIn($key);
-                
+
                 return response()->json([
                     'error' => 'Too Many Requests',
                     'message' => __('Rate limit exceeded for your plan. Please try again in :seconds seconds.', ['seconds' => $seconds]),
@@ -47,7 +46,7 @@ class ApplyTenantRateLimits
             RateLimiter::hit($key, 60); // 1 minute window
         } catch (\Exception $e) {
             // Fail open: log warning but allow request if Redis is down
-            Log::warning('Rate limiter failed for tenant ' . $tenant->id . ': ' . $e->getMessage());
+            Log::warning('Rate limiter failed for tenant '.$tenant->id.': '.$e->getMessage());
         }
 
         $response = $next($request);
@@ -68,10 +67,10 @@ class ApplyTenantRateLimits
 
         try {
             $plan = $tenant->plan; // Assuming relation exists or plan_id is used to find
-            
+
             if (! $plan) {
                 // Find by ID or Slug if relation not loaded
-                $plan = \App\Modules\Central\Billing\Models\Plan::where('id', $tenant->plan_id)
+                $plan = Plan::where('id', $tenant->plan_id)
                     ->orWhere('slug', $tenant->plan_id)
                     ->first();
             }

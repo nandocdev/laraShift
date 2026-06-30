@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Support\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Laravel\Cashier\Billable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Database\Seeders\PlanSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Cashier\Billable;
 
 uses(RefreshDatabase::class);
 
@@ -23,8 +22,8 @@ it('has a plan matrix in database', function () {
 });
 
 it('tenant model uses billable trait', function () {
-    $tenant = new Tenant();
-    
+    $tenant = new Tenant;
+
     expect(class_uses_recursive($tenant))->toContain(Billable::class);
 });
 

@@ -30,6 +30,7 @@ class PurgeTenantJob implements ShouldQueue
 
         if (! $tenant) {
             Log::warning("Tenant not found for purging: {$this->tenantId}");
+
             return;
         }
 
@@ -37,7 +38,7 @@ class PurgeTenantJob implements ShouldQueue
         $tenant->forceDelete();
 
         // 3. Additional cleanup if needed (DNS, Third-party APIs)
-        
+
         Log::info("Purge completed for tenant: {$this->tenantSlug}");
 
         activity('provisioning')

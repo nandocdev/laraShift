@@ -31,7 +31,7 @@ class LoginChallenge extends Component
         ]);
 
         $userId = Session::get('login.id');
-        
+
         // Use model with tenant scope
         $user = User::findOrFail($userId);
 
@@ -39,7 +39,7 @@ class LoginChallenge extends Component
 
         if ($google2fa->verifyKey($secret, $this->code)) {
             Auth::guard('web')->login($user, Session::get('login.remember', false));
-            
+
             Session::forget(['login.id', 'login.remember']);
             session()->regenerate();
 

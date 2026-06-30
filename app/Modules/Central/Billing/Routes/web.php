@@ -2,20 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Billing\Actions\GenerateInvoicePdfAction;
 use App\Modules\Central\Billing\Http\Controllers\BillingApiController;
-use App\Modules\Central\Billing\Http\Controllers\DlocalWebhookController;
+use App\Modules\Central\Billing\Http\Controllers\PaguelofacilCallbackController;
 use App\Modules\Central\Billing\Http\Controllers\StripeWebhookController;
+use App\Modules\Central\Billing\Livewire\GlobalInvoiceList;
+use App\Modules\Central\Billing\Livewire\ManagePlan;
+use App\Modules\Central\Billing\Livewire\PlanList;
 use App\Modules\Central\Billing\Livewire\SubscriptionList;
 use App\Modules\Central\Billing\Livewire\TenantInvoiceList;
 use App\Modules\Central\Billing\Models\Invoice;
-use App\Modules\Central\Billing\Actions\GenerateInvoicePdfAction;
 use Illuminate\Support\Facades\Route;
 
 // Webhooks (Public with internal validation)
 Route::post('/central/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.stripe');
 
 // PagueloFacil Public Callback (Browser Redirect)
-Route::get('/central/billing/paguelofacil/callback', [\App\Modules\Central\Billing\Http\Controllers\PaguelofacilCallbackController::class, 'handleReturn'])->name('central.billing.paguelofacil.callback');
+Route::get('/central/billing/paguelofacil/callback', [PaguelofacilCallbackController::class, 'handleReturn'])->name('central.billing.paguelofacil.callback');
 
 Route::middleware(['web', 'auth:central'])->group(function () {
     // API Endpoints
@@ -27,10 +30,10 @@ Route::middleware(['web', 'auth:central'])->group(function () {
 
     // UI & Documents
     Route::get('/central/billing/subscriptions', SubscriptionList::class)->name('central.billing.subscriptions');
-    Route::get('/central/billing/plans', \App\Modules\Central\Billing\Livewire\PlanList::class)->name('central.billing.plans');
-    Route::get('/central/billing/plans/create', \App\Modules\Central\Billing\Livewire\ManagePlan::class)->name('central.billing.plans.create');
-    Route::get('/central/billing/plans/{plan}/edit', \App\Modules\Central\Billing\Livewire\ManagePlan::class)->name('central.billing.plans.edit');
-    Route::get('/central/billing/invoices/global', \App\Modules\Central\Billing\Livewire\GlobalInvoiceList::class)->name('central.billing.invoices.global');
+    Route::get('/central/billing/plans', PlanList::class)->name('central.billing.plans');
+    Route::get('/central/billing/plans/create', ManagePlan::class)->name('central.billing.plans.create');
+    Route::get('/central/billing/plans/{plan}/edit', ManagePlan::class)->name('central.billing.plans.edit');
+    Route::get('/central/billing/invoices/global', GlobalInvoiceList::class)->name('central.billing.invoices.global');
     Route::get('/central/billing/tenants/{tenant}/invoices', TenantInvoiceList::class)->name('central.billing.tenant.invoices');
 
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {

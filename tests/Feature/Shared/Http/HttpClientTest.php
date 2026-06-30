@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Modules\Shared\Infrastructure\Http\HttpClient;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 test('client makes get request', function () {

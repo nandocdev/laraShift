@@ -12,5 +12,6 @@ class Permission extends SpatiePermission
     use HasUuids;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Livewire;
 
+use App\Modules\Central\Auth\Actions\LoginCentralUserAction;
 use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -36,8 +37,8 @@ class LoginChallenge extends Component
         $secret = $user->twoFactorAuth->secret;
 
         if ($google2fa->verifyKey($secret, $this->code)) {
-            $action = app(\App\Modules\Central\Auth\Actions\LoginCentralUserAction::class);
-            
+            $action = app(LoginCentralUserAction::class);
+
             DB::transaction(function () use ($user, $action) {
                 Auth::guard('central')->login($user, Session::get('login.remember', false));
                 Session::forget(['login.id', 'login.remember']);

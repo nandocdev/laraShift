@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 final readonly class TenantConfigCache
 {
     private const CACHE_PREFIX = 'tenant_config';
+
     private const DEFAULT_TTL = 300;
 
     private int $ttl;
@@ -70,6 +71,6 @@ final readonly class TenantConfigCache
 
     private function cacheKey(Tenant $tenant): string
     {
-        return self::CACHE_PREFIX . ":{$tenant->id}";
+        return self::CACHE_PREFIX.":{$tenant->id}";
     }
 }

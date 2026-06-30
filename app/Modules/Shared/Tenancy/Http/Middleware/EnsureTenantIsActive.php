@@ -23,20 +23,20 @@ class EnsureTenantIsActive
         // 1. Whitelist critical routes
         if ($request->routeIs([
             'tenant.home',
-            'login', 
-            'login.store', 
+            'login',
+            'login.store',
             'logout',
-            'two-factor.login', 
+            'two-factor.login',
             'two-factor.login.store',
-            'tenant.invitations.accept', 
-            'tenant.support.auth', 
+            'tenant.invitations.accept',
+            'tenant.support.auth',
             'payments.checkout.initiate',
             'tenant.billing.plans',
             'tenant.billing.manage',
             'tenant.billing.checkout.hosted',
             'tenant.billing.success',
             'tenant.billing.cancel',
-            'tenant.billing.update-payment'
+            'tenant.billing.update-payment',
         ]) || $request->is('livewire/*', 'dashboard', 'auth/*', 'billing/*')) {
             return $next($request);
         }
@@ -46,7 +46,7 @@ class EnsureTenantIsActive
             app(ResolveTenantFeaturesAction::class)->execute(tenant());
         } catch (\Exception $e) {
             // Log and continue if features can't be resolved
-            \Log::warning("Could not resolve features for tenant: " . tenant('id'));
+            \Log::warning('Could not resolve features for tenant: '.tenant('id'));
         }
 
         // 2. Hard block for archived tenants

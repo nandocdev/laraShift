@@ -4,24 +4,28 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Tests;
 
-use Illuminate\Support\Facades\Http;
+use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Exceptions\InvalidMerchantException;
 use App\Modules\Central\Payments\Exceptions\ServiceNotFoundException;
 use App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment;
 use App\Modules\Central\Payments\Services\Gateways\ClaveGateway;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
-final class ClaveGatewayTest extends TestCase {
+final class ClaveGatewayTest extends TestCase
+{
     private ClaveGateway $gateway;
 
-    protected function setUp(): void {
+    protected function setUp(): void
+    {
         parent::setUp();
         $this->gateway = new ClaveGateway(ClaveEnvironment::Sandbox);
     }
 
     // ── loadMerchant ─────────────────────────────────────────────────────────
 
-    public function test_load_merchant_returns_merchant_data_on_success(): void {
+    public function test_load_merchant_returns_merchant_data_on_success(): void
+    {
         Http::fake([
             '*/loadMerchantServices' => Http::response($this->validMerchantResponse(), 200),
         ]);
@@ -34,7 +38,8 @@ final class ClaveGatewayTest extends TestCase {
         $this->assertSame('CLAVE', $merchant->services[0]->gatewayCode);
     }
 
-    public function test_load_merchant_throws_when_success_is_false(): void {
+    public function test_load_merchant_throws_when_success_is_false(): void
+    {
         Http::fake([
             '*/loadMerchantServices' => Http::response(['success' => false, 'description' => 'Bad key'], 200),
         ]);
@@ -43,7 +48,8 @@ final class ClaveGatewayTest extends TestCase {
         $this->gateway->loadMerchant('bad-key');
     }
 
-    public function test_load_merchant_throws_when_no_clave_service(): void {
+    public function test_load_merchant_throws_when_no_clave_service(): void
+    {
         $response = $this->validMerchantResponse();
         $response['services'] = [
             array_merge($response['services'][0], ['gatewayCode' => 'OTHER_GATEWAY']),
@@ -57,7 +63,8 @@ final class ClaveGatewayTest extends TestCase {
 
     // ── verifyWebhook ─────────────────────────────────────────────────────────
 
-    public function test_webhook_verification_passes_with_valid_signature(): void {
+    public function test_webhook_verification_passes_with_valid_signature(): void
+    {
         $payload = '{"txId":"123","status":"approved"}';
         $secret = 'my-webhook-secret';
         $signature = hash_hmac('sha256', $payload, $secret);
@@ -65,7 +72,8 @@ final class ClaveGatewayTest extends TestCase {
         $this->assertTrue($this->gateway->verifyWebhook($payload, $signature, $secret));
     }
 
-    public function test_webhook_verification_fails_with_tampered_payload(): void {
+    public function test_webhook_verification_fails_with_tampered_payload(): void
+    {
         $payload = '{"txId":"123","status":"approved"}';
         $tamperedPayload = '{"txId":"123","status":"declined"}';
         $secret = 'my-webhook-secret';
@@ -76,15 +84,16 @@ final class ClaveGatewayTest extends TestCase {
 
     // ── buildCheckoutUrl ──────────────────────────────────────────────────────
 
-    public function test_checkout_url_contains_expected_params(): void {
+    public function test_checkout_url_contains_expected_params(): void
+    {
         Http::fake([
             '*/LinkDeamon.cfm' => Http::response([
                 'success' => true,
-                'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout?id=123']
-            ], 200)
+                'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout?id=123'],
+            ], 200),
         ]);
 
-        $payment = new \App\Modules\Central\Payments\DTOs\PaymentData(
+        $payment = new PaymentData(
             amount: 99.99,
             description: 'Test order',
             displayId: 'INV-001',
@@ -99,7 +108,8 @@ final class ClaveGatewayTest extends TestCase {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function validMerchantResponse(): array {
+    private function validMerchantResponse(): array
+    {
         return [
             'success' => true,
             'services' => [

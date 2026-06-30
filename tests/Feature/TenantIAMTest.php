@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -67,8 +67,8 @@ it('prevents cross-tenant authentication', function () {
 
     // Try to login into Tenant B with User A
     tenancy()->initialize($tenantB);
-    
+
     $foundUser = User::where('email', 'user@test.com')->first();
-    
+
     expect($foundUser)->toBeNull();
 });

@@ -19,7 +19,10 @@ class DomainEventTestSample extends DomainEvent
 
 class DomainEventTestV2 extends DomainEvent
 {
-    public function __construct() { parent::__construct(version: 2); }
+    public function __construct()
+    {
+        parent::__construct(version: 2);
+    }
 }
 
 beforeEach(function () {

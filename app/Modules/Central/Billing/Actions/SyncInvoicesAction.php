@@ -42,6 +42,7 @@ final readonly class SyncInvoicesAction
                         'issued_at' => Carbon::createFromTimestamp($data->created),
                     ]
                 );
+
                 return $invoice->wasRecentlyCreated || $invoice->wasChanged();
             }
 
@@ -52,19 +53,20 @@ final readonly class SyncInvoicesAction
                     ['provider_invoice_id' => $data['codOper']],
                     [
                         'tenant_id' => $tenant->id,
-                        'amount' => (int) ((float)$data['totalPay'] * 100),
+                        'amount' => (int) ((float) $data['totalPay'] * 100),
                         'currency' => 'USD',
                         'status' => (isset($data['status']) && $data['status'] == 1) ? 'paid' : 'pending',
                         'issued_at' => Carbon::parse($data['date']),
                     ]
                 );
+
                 return $invoice->wasRecentlyCreated || $invoice->wasChanged();
             }
 
             // 3. dLocal format
             if (isset($data['payment_id'])) {
                 $invoice = Invoice::updateOrCreate(
-                    ['provider_invoice_id' => (string)$data['payment_id']],
+                    ['provider_invoice_id' => (string) $data['payment_id']],
                     [
                         'tenant_id' => $tenant->id,
                         'amount' => (int) ($data['amount'] * 100),
@@ -73,6 +75,7 @@ final readonly class SyncInvoicesAction
                         'issued_at' => Carbon::parse($data['created_date'] ?? now()),
                     ]
                 );
+
                 return $invoice->wasRecentlyCreated || $invoice->wasChanged();
             }
 

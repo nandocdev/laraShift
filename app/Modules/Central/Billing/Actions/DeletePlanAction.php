@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Actions;
 
 use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Provisioning\Models\Tenant;
 
 final readonly class DeletePlanAction
 {
     /**
      * Retires a plan using SoftDeletes.
-     * 
-     * This allows existing tenants and historical invoices to maintain 
-     * their references, while preventing the plan from being selected 
+     *
+     * This allows existing tenants and historical invoices to maintain
+     * their references, while preventing the plan from being selected
      * for new subscriptions.
      */
     public function execute(Plan $plan): void

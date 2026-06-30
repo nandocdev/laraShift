@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
 use App\Modules\Central\Payments\Http\Controllers\CheckoutController;
 use App\Modules\Central\Payments\Http\Controllers\WebhookController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

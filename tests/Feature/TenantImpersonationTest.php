@@ -10,6 +10,7 @@ use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 uses(RefreshDatabase::class);
 
@@ -73,14 +74,14 @@ test('non-admin cannot impersonate', function () {
     $action = app(ImpersonateTenantUserAction::class);
 
     expect(fn () => $action->execute($this->target, $member, 'Not allowed'))
-        ->toThrow(\RuntimeException::class);
+        ->toThrow(RuntimeException::class);
 });
 
 test('cannot impersonate yourself', function () {
     $action = app(ImpersonateTenantUserAction::class);
 
     expect(fn () => $action->execute($this->admin, $this->admin, 'Self'))
-        ->toThrow(\RuntimeException::class);
+        ->toThrow(RuntimeException::class);
 });
 
 test('revert impersonation returns to original user', function () {
@@ -105,7 +106,7 @@ test('impersonation logs to activity', function () {
     $action = app(ImpersonateTenantUserAction::class);
     $action->execute($this->target, $this->admin, 'Audit test');
 
-    $logs = \Spatie\Activitylog\Models\Activity::where('description', 'tenant_impersonation_started')->get();
+    $logs = Activity::where('description', 'tenant_impersonation_started')->get();
 
     expect($logs)->not->toBeEmpty();
 });

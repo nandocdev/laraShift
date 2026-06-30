@@ -9,7 +9,6 @@ use App\Modules\Central\Billing\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Models\Activity;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -20,14 +19,14 @@ class Dashboard extends Component
     {
         $tenantCount = Tenant::count();
         $activeSubscriptionsCount = Subscription::where('status', 'active')->count();
-        
+
         // Revenue in last 30 days
         $totalRevenue = Invoice::where('status', 'paid')
             ->where('issued_at', '>=', now()->subDays(30))
             ->sum('amount');
 
         $recentTenants = Tenant::latest()->take(5)->get();
-        
+
         $recentActivities = Activity::latest()->take(10)->get();
 
         return view('central-auth::pages.dashboard', [

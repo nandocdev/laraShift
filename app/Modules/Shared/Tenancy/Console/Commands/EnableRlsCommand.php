@@ -6,7 +6,6 @@ namespace App\Modules\Shared\Tenancy\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class EnableRlsCommand extends Command
 {
@@ -33,6 +32,7 @@ class EnableRlsCommand extends Command
 
         if (! config('database.default') === 'pgsql') {
             $this->error('Row Level Security is only supported on PostgreSQL.');
+
             return self::FAILURE;
         }
 
@@ -43,7 +43,7 @@ class EnableRlsCommand extends Command
             DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY");
 
             $policyName = "tenant_isolation_{$table}";
-            
+
             // Drop policy if exists to avoid errors on re-run
             DB::statement("DROP POLICY IF EXISTS {$policyName} ON {$table}");
 
@@ -58,6 +58,7 @@ class EnableRlsCommand extends Command
 
         } catch (\Exception $e) {
             $this->error("Failed to enable RLS: {$e->getMessage()}");
+
             return self::FAILURE;
         }
 

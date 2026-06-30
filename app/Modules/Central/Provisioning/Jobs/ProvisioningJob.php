@@ -17,6 +17,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 final class ProvisioningJob implements ShouldQueue
@@ -24,7 +25,9 @@ final class ProvisioningJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
+
     public int $timeout = 600;
+
     public int $backoff = 60;
 
     public function __construct(
@@ -57,12 +60,12 @@ final class ProvisioningJob implements ShouldQueue
                 $errors = $validate->execute($tenant);
 
                 if (! empty($errors)) {
-                    throw new \RuntimeException('Validation failed: ' . implode('; ', $errors));
+                    throw new \RuntimeException('Validation failed: '.implode('; ', $errors));
                 }
             });
 
             $this->executeStep($tenant, 'db_created', $stateMachine, function () {
-                if (! \Illuminate\Support\Facades\Schema::hasTable('tenants')) {
+                if (! Schema::hasTable('tenants')) {
                     throw new \RuntimeException('Tenants table not found.');
                 }
             });
@@ -97,7 +100,7 @@ final class ProvisioningJob implements ShouldQueue
 
             Log::info("ProvisioningJob completado para tenant: {$tenant->id}");
         } catch (\Throwable $e) {
-            Log::error("ProvisioningJob falló para tenant {$this->slug}: " . $e->getMessage(), [
+            Log::error("ProvisioningJob falló para tenant {$this->slug}: ".$e->getMessage(), [
                 'tenant_id' => $tenant->id,
                 'step' => $stateMachine->resumeFrom($tenant),
             ]);

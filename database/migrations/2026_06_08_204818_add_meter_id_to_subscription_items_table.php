@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (Schema::hasTable('subscription_items') && !Schema::hasColumn('subscription_items', 'meter_id')) {
+        if (Schema::hasTable('subscription_items') && ! Schema::hasColumn('subscription_items', 'meter_id')) {
             Schema::table('subscription_items', function (Blueprint $table) {
                 $table->string('meter_id')->nullable();
             });

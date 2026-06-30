@@ -17,25 +17,29 @@ use Livewire\Component;
 class TwoFactorEnrollment extends Component
 {
     public bool $showingQrCode = false;
+
     public string $secret = '';
+
     public string $qrCodeUrl = '';
+
     public string $code = '';
+
     public array $recoveryCodes = [];
 
     public function initiate(EnrollCentral2FAAction $action): void
     {
         $data = $action->initiate(auth('central')->user());
-        
+
         $this->secret = $data['secret'];
-        
+
         $renderer = new ImageRenderer(
             new RendererStyle(200),
-            new SvgImageBackEnd()
+            new SvgImageBackEnd
         );
 
         $writer = new Writer($renderer);
         $this->qrCodeUrl = $writer->writeString($data['qr_code_url']);
-        
+
         $this->showingQrCode = true;
     }
 

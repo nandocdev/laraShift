@@ -13,9 +13,9 @@ class PriceFormatter
 {
     public static function format(Money $money, string $locale = 'en'): string
     {
-        $currencies = new ISOCurrencies();
-        
-        if (!extension_loaded('intl')) {
+        $currencies = new ISOCurrencies;
+
+        if (! extension_loaded('intl')) {
             $locale = 'en';
         }
 

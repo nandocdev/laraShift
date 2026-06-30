@@ -17,11 +17,12 @@ final readonly class RegisterPaymentMethodAction
     /**
      * Ejecuta el registro de método de pago y suscripción.
      *
-     * @param Tenant $tenant          Tenant recién creado (ya persistido en DB)
-     * @param string $paymentToken    Token/PaymentMethod ID generado por Stripe.js en el frontend
-     * @param string $planSlug        Slug del plan seleccionado (ej: 'pro', 'enterprise')
-     * @return Subscription           La suscripción creada
-     * @throws \Exception             Si el gateway falla
+     * @param  Tenant  $tenant  Tenant recién creado (ya persistido en DB)
+     * @param  string  $paymentToken  Token/PaymentMethod ID generado por Stripe.js en el frontend
+     * @param  string  $planSlug  Slug del plan seleccionado (ej: 'pro', 'enterprise')
+     * @return Subscription La suscripción creada
+     *
+     * @throws \Exception Si el gateway falla
      */
     public function execute(Tenant $tenant, string $paymentToken, string $planSlug): Subscription
     {
@@ -46,13 +47,13 @@ final readonly class RegisterPaymentMethodAction
 
             Log::info("Subscription created via Cashier for tenant: {$tenant->id}", [
                 'plan' => $planSlug,
-                'subscription_id' => $subscription->id
+                'subscription_id' => $subscription->id,
             ]);
 
             return $subscription;
 
         } catch (\Exception $e) {
-            Log::error("Failed to register payment method or create subscription: " . $e->getMessage());
+            Log::error('Failed to register payment method or create subscription: '.$e->getMessage());
             throw $e;
         }
     }

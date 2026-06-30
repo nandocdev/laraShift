@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
+use App\Modules\Tenant\Identity\DTOs\InvitationData;
 use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant;
+use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive;
 use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
@@ -46,7 +49,7 @@ it('kicks out an inactive user immediately via middleware', function () {
 
     // 3. Next request (kicked out)
     $response = $this->get('/test-active');
-    
+
     $response->assertRedirect(route('login'));
     $this->assertGuest();
 });
@@ -74,14 +77,14 @@ it('allows inviting an email that belongs to another tenant', function () {
     ]);
 
     tenancy()->initialize($tenantB);
-    
-    // We need roles to exist for the invitation to work
-    app(\App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction::class)->execute($tenantB);
 
-    $action = app(\App\Modules\Tenant\Identity\Actions\SendInvitationAction::class);
+    // We need roles to exist for the invitation to work
+    app(EnsureTenantRolesExistAction::class)->execute($tenantB);
+
+    $action = app(SendInvitationAction::class);
 
     // This should NOT throw an exception anymore
-    $invitation = $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+    $invitation = $action->execute(new InvitationData(
         email: 'shared@test.com',
         roleName: 'member'
     ), $userA);
@@ -97,7 +100,7 @@ it('returns 404 for cross-tenant access attempts', function () {
         'name' => 'Tenant A',
         'email' => 'a@test.com',
     ]);
-    $domainA = 'a.' . config('tenancy.central_domain');
+    $domainA = 'a.'.config('tenancy.central_domain');
     $tenantA->domains()->create(['domain' => $domainA]);
 
     $userA = User::create([
@@ -113,14 +116,16 @@ it('returns 404 for cross-tenant access attempts', function () {
         'name' => 'Tenant B',
         'email' => 'b@test.com',
     ]);
-    $domainB = 'b.' . config('tenancy.central_domain');
+    $domainB = 'b.'.config('tenancy.central_domain');
     $tenantB->domains()->create(['domain' => $domainB]);
 
     // Act as User A but try to access Tenant B domain
     $this->actingAs($userA);
 
     // Mock a route in the tenant group
-    Route::get('/api/resource', function () { return 'ok'; })
+    Route::get('/api/resource', function () {
+        return 'ok';
+    })
         ->middleware(['web', EnsureUserBelongsToTenant::class]);
 
     $this->get("http://{$domainB}/api/resource")

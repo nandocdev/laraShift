@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Modules\Shared\Http\Middleware\ResolveTenant;
-use App\Modules\Shared\Tenancy\Services\TenantResolver;
 use Illuminate\Http\Request;
 
 test('middleware does not re-initialize if tenancy already active', function () {

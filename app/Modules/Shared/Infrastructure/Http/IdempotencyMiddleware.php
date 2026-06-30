@@ -7,7 +7,6 @@ namespace App\Modules\Shared\Infrastructure\Http;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 final class IdempotencyMiddleware
@@ -34,7 +33,7 @@ final class IdempotencyMiddleware
             ], 400);
         }
 
-        $cacheKey = 'idempotency:' . $key;
+        $cacheKey = 'idempotency:'.$key;
 
         $cached = Cache::get($cacheKey);
 

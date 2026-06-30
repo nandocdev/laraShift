@@ -6,6 +6,7 @@ namespace App\Modules\Central\Support\Livewire;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Support\Actions\SendBroadcastAction;
+use App\Modules\Central\Support\DTOs\BroadcastData;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -19,9 +20,13 @@ class BroadcastCenter extends Component
 
     // Form state
     public string $title = '';
+
     public string $body = '';
+
     public string $filterType = 'all';
+
     public string $filterValue = '';
+
     public array $channels = ['email'];
 
     public function send(SendBroadcastAction $action): void
@@ -34,7 +39,7 @@ class BroadcastCenter extends Component
         ]);
 
         try {
-            $action->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
+            $action->execute(new BroadcastData(
                 title: $this->title,
                 body: $this->body,
                 filterType: $this->filterType,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Identity\Actions;
 
 use App\Modules\Tenant\Identity\Models\TenantSession;
+use Illuminate\Support\Facades\DB;
 
 final readonly class EnsureTenantSessionLimitAction
 {
@@ -26,7 +27,7 @@ final readonly class EnsureTenantSessionLimitAction
                 $session->revoke(null, 'Concurrent session limit exceeded');
 
                 if (config('session.driver') === 'database') {
-                    \Illuminate\Support\Facades\DB::table('sessions')
+                    DB::table('sessions')
                         ->where('id', $session->session_id)
                         ->delete();
                 }

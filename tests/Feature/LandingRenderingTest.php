@@ -4,11 +4,12 @@ use App\Modules\Central\Landings\Actions\RenderLandingAction;
 use App\Modules\Central\Landings\Models\Landing;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
 it('renders a landing page with blocks', function () {
-    $tenantId = (string) \Illuminate\Support\Str::uuid();
+    $tenantId = (string) Str::uuid();
     // 1. Create a tenant
     $tenant = Tenant::create([
         'id' => $tenantId,
@@ -24,7 +25,7 @@ it('renders a landing page with blocks', function () {
         'slug' => 'test-landing',
         'title' => 'Test Landing',
         'theme' => [
-            'colors' => ['primary' => '#000000']
+            'colors' => ['primary' => '#000000'],
         ],
         'blocks' => [
             [
@@ -34,9 +35,9 @@ it('renders a landing page with blocks', function () {
                 'order' => 0,
                 'config' => [
                     'headline' => 'Welcome to Test',
-                ]
-            ]
-        ]
+                ],
+            ],
+        ],
     ]);
 
     // 3. Render

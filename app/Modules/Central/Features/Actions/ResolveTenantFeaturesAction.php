@@ -8,6 +8,7 @@ use App\Modules\Central\Features\Models\Feature;
 use App\Modules\Central\Features\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 final readonly class ResolveTenantFeaturesAction
 {
@@ -15,10 +16,10 @@ final readonly class ResolveTenantFeaturesAction
      * Resolves and caches the effective feature set for a tenant.
      * Hierarchy: Override (Deny > Allow) -> Plan Base.
      *
-     * @param Tenant $tenant The tenant instance.
-     * @param bool $forceRefresh Whether to force cache rebuild.
+     * @param  Tenant  $tenant  The tenant instance.
+     * @param  bool  $forceRefresh  Whether to force cache rebuild.
      * @return array<string> List of active feature keys.
-     * 
+     *
      * [RIESGOS]
      * - Cache pollution in testing environment -> Mitigated by forcing Cache::forget when running unit tests.
      * - High query volume if cache fails -> Solved by caching indefinitely (rememberForever) in production.
@@ -34,13 +35,13 @@ final readonly class ResolveTenantFeaturesAction
         return Cache::rememberForever($cacheKey, function () use ($tenant) {
             // 1. Get Plan Features
             $planFeatures = Feature::whereHas('plans', function ($query) use ($tenant) {
-                    $query->withTrashed(); // Support retired plans for existing tenants
-                    $query->where('plans.slug', $tenant->plan_id);
-                    
-                    if (\Illuminate\Support\Str::isUuid($tenant->plan_id)) {
-                        $query->orWhere('plans.id', $tenant->plan_id);
-                    }
-                })
+                $query->withTrashed(); // Support retired plans for existing tenants
+                $query->where('plans.slug', $tenant->plan_id);
+
+                if (Str::isUuid($tenant->plan_id)) {
+                    $query->orWhere('plans.id', $tenant->plan_id);
+                }
+            })
                 ->where('is_active', true)
                 ->pluck('key')
                 ->toArray();
@@ -49,7 +50,7 @@ final readonly class ResolveTenantFeaturesAction
             $overrides = TenantFeatureOverride::where('tenant_id', $tenant->id)
                 ->where(function ($query) {
                     $query->whereNull('expires_at')
-                          ->orWhere('expires_at', '>', now());
+                        ->orWhere('expires_at', '>', now());
                 })
                 ->with('feature')
                 ->get();
@@ -59,7 +60,7 @@ final readonly class ResolveTenantFeaturesAction
 
             // 3. Merge: (Plan + Allowed Overrides) - Denied Overrides
             $effectiveFeatures = array_unique(array_merge($planFeatures, $allowedByOverride));
-            
+
             return array_values(array_diff($effectiveFeatures, $deniedByOverride));
         });
     }

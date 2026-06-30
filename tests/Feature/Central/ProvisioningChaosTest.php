@@ -28,7 +28,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'chaos-test-' . Str::random(4),
+        'slug' => 'chaos-test-'.Str::random(4),
         'name' => 'Chaos Test',
         'email' => 'chaos@test.com',
         'plan_id' => 'free',
@@ -58,7 +58,7 @@ test('pre-provisioning validation passes for valid tenant', function () {
 test('pre-provisioning validation fails for tenant with empty name', function () {
     $tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'no-name-' . Str::random(4),
+        'slug' => 'no-name-'.Str::random(4),
         'name' => '',
         'email' => 'noname@test.com',
         'plan_id' => 'free',

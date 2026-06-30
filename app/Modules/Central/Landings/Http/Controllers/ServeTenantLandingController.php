@@ -32,7 +32,7 @@ final class ServeTenantLandingController extends Controller
 
         // Fallback: Show a default landing/welcome if nothing is published
         return view('welcome', [
-            'tenant' => tenant()
+            'tenant' => tenant(),
         ]);
     }
 }

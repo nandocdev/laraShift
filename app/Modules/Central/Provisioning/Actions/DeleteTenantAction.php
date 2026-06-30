@@ -11,8 +11,8 @@ final readonly class DeleteTenantAction
 {
     /**
      * Deletes a tenant.
-     * 
-     * @param bool $hardDelete If true, dispatches a background purge job.
+     *
+     * @param  bool  $hardDelete  If true, dispatches a background purge job.
      */
     public function execute(Tenant $tenant, bool $hardDelete = false): void
     {
@@ -22,7 +22,7 @@ final readonly class DeleteTenantAction
         if ($hardDelete) {
             // US-103: Purge is completed in a background job
             PurgeTenantJob::dispatch($id, $slug);
-            
+
             activity('provisioning')
                 ->performedOn($tenant)
                 ->withProperties(['slug' => $slug, 'hard_delete' => true])

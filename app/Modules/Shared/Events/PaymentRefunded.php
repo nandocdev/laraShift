@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Events;
 
-use App\Modules\Shared\Events\DomainEvent;
-
 class PaymentRefunded extends DomainEvent
 {
     public function __construct(

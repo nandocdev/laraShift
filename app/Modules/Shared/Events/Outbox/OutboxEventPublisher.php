@@ -6,7 +6,6 @@ namespace App\Modules\Shared\Events\Outbox;
 
 use App\Modules\Shared\Events\Contracts\EventPublisher;
 use App\Modules\Shared\Events\DomainEvent;
-use App\Modules\Shared\ValueObjects\Uuid;
 use Illuminate\Support\Facades\DB;
 
 final readonly class OutboxEventPublisher implements EventPublisher

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\DTOs;
 
-use Spatie\LaravelData\Data;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
+use Spatie\LaravelData\Attributes\Validation\Numeric;
 use Spatie\LaravelData\Attributes\Validation\Required;
 use Spatie\LaravelData\Attributes\Validation\StringType;
-use Spatie\LaravelData\Attributes\Validation\Numeric;
+use Spatie\LaravelData\Data;
 
-final class PaymentResultData extends Data {
+final class PaymentResultData extends Data
+{
     public function __construct(
         #[Required, StringType]
         public readonly string $gatewayReference,
@@ -31,10 +32,10 @@ final class PaymentResultData extends Data {
         public readonly ?string $errorCode = null,
         public readonly ?string $errorMessage = null,
         public readonly array $raw = [],
-    ) {
-    }
+    ) {}
 
-    public static function fromClavePayload(array $payload): self {
+    public static function fromClavePayload(array $payload): self
+    {
         // 1. Determine Status
         // Webhook uses 'status' (1 approved, 0 declined)
         // Redirect uses 'Estado' ('Aprobada', 'Denegada', 'Pendiente')

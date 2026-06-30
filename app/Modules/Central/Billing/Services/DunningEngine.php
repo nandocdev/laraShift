@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Services;
 
 use App\Modules\Central\Billing\Notifications\PaymentFailedNotification;
+use App\Modules\Central\Billing\Notifications\TenantSuspendedNotification;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Shared\Events\TenantSuspendedByDunning;
 use Illuminate\Support\Facades\Log;
 
 final readonly class DunningEngine
@@ -123,7 +125,7 @@ final readonly class DunningEngine
         ]);
 
         try {
-            $tenant->notify(new \App\Modules\Central\Billing\Notifications\TenantSuspendedNotification($tenant));
+            $tenant->notify(new TenantSuspendedNotification($tenant));
         } catch (\Throwable $e) {
             Log::error('Suspension notification failed', [
                 'tenant' => $tenant->id,
@@ -139,7 +141,7 @@ final readonly class DunningEngine
             'suspended_at' => now(),
         ]);
 
-        event(new \App\Modules\Shared\Events\TenantSuspendedByDunning(
+        event(new TenantSuspendedByDunning(
             tenantId: $tenant->id,
             invoiceId: '',
         ));

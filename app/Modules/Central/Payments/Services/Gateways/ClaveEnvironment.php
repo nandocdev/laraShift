@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Payments\Services\Gateways;
 
-enum ClaveEnvironment: string {
+enum ClaveEnvironment: string
+{
     case Production = 'production';
     case Sandbox = 'sandbox';
     case Dev = 'dev';
@@ -12,7 +13,8 @@ enum ClaveEnvironment: string {
     /**
      * Hosted Fields / LinkDeamon base URL.
      */
-    public function apiBaseUrl(): string {
+    public function apiBaseUrl(): string
+    {
         return match ($this) {
             self::Production => 'https://secure.paguelofacil.com',
             self::Sandbox => 'https://sandbox.paguelofacil.com',
@@ -23,7 +25,8 @@ enum ClaveEnvironment: string {
     /**
      * Management API base URL (Transactions, Customers, etc.)
      */
-    public function managementBaseUrl(): string {
+    public function managementBaseUrl(): string
+    {
         return match ($this) {
             self::Production => 'https://admin.paguelofacil.com/PFManagementServices/api/v1',
             self::Sandbox => 'https://sandbox.paguelofacil.com/PFManagementServices/api/v1',
@@ -34,7 +37,8 @@ enum ClaveEnvironment: string {
     /**
      * Checkout frontend base URL.
      */
-    public function checkoutBaseUrl(): string {
+    public function checkoutBaseUrl(): string
+    {
         return match ($this) {
             self::Production => 'https://checkout.paguelofacil.com',
             self::Sandbox => 'https://sandbox.paguelofacil.com',
@@ -42,7 +46,8 @@ enum ClaveEnvironment: string {
         };
     }
 
-    public static function fromConfig(): self {
+    public static function fromConfig(): self
+    {
         return match (config('payments.clave.environment', 'sandbox')) {
             'production' => self::Production,
             'dev' => self::Dev,

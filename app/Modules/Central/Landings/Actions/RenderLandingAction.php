@@ -15,12 +15,12 @@ final class RenderLandingAction
     public function execute(Landing $landing): string
     {
         $theme = $landing->theme;
-        
+
         // Filter out blocks with invalid types to prevent LFI / View Injection
         $blocks = collect($landing->blocks)
             ->filter(fn ($block) => preg_match('/^[a-zA-Z0-9\-]+$/', $block['type'] ?? ''))
             ->sortBy('order');
-        
+
         $html = Blade::render(
             '<x-landing-layout :theme="$theme" :title="$title">
                 @foreach($blocks as $block)

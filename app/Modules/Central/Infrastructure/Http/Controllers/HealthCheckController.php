@@ -6,9 +6,10 @@ namespace App\Modules\Central\Infrastructure\Http\Controllers;
 
 use App\Modules\Shared\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Redis;
 
 class HealthCheckController extends Controller
 {
@@ -16,11 +17,11 @@ class HealthCheckController extends Controller
      * GET /central/health
      * Monitors system dependencies.
      */
-    public function __invoke(\Illuminate\Http\Request $request): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         // IP Restriction if configured
         $allowedIps = config('infrastructure.health.allowed_ips', []);
-        if (!empty($allowedIps) && !in_array($request->ip(), $allowedIps, true)) {
+        if (! empty($allowedIps) && ! in_array($request->ip(), $allowedIps, true)) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
@@ -49,6 +50,7 @@ class HealthCheckController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {
             return ['status' => 'fail', 'message' => $e->getMessage()];
@@ -62,12 +64,13 @@ class HealthCheckController extends Controller
             // to avoid fatal "Class Redis not found" errors
             if (! class_exists('Redis') && config('database.redis.client') === 'phpredis') {
                 return [
-                    'status' => 'fail', 
-                    'message' => 'PHP Extension "phpredis" is missing. Install it or switch to "predis".'
+                    'status' => 'fail',
+                    'message' => 'PHP Extension "phpredis" is missing. Install it or switch to "predis".',
                 ];
             }
 
             Redis::connection()->ping();
+
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {
             return ['status' => 'fail', 'message' => $e->getMessage()];
@@ -79,10 +82,11 @@ class HealthCheckController extends Controller
         try {
             // Check default queue size as a health indicator
             $size = Queue::size();
+
             return [
-                'status' => $size > 1000 ? 'warn' : 'pass', 
+                'status' => $size > 1000 ? 'warn' : 'pass',
                 'size' => $size,
-                'message' => $size > 1000 ? 'Queue deep' : 'Healthy'
+                'message' => $size > 1000 ? 'Queue deep' : 'Healthy',
             ];
         } catch (\Exception $e) {
             return ['status' => 'fail', 'message' => $e->getMessage()];

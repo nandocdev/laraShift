@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Actions;
 
+use App\Modules\Shared\Events\TenantUserJoined;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use App\Modules\Tenant\Identity\DTOs\UserAcceptanceData;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\User;
@@ -19,7 +23,7 @@ final readonly class AcceptInvitationAction
     public function execute(UserAcceptanceData $data): User
     {
         $tokenHash = hash('sha256', $data->token);
-        
+
         $invitation = Invitation::where('token_hash', $tokenHash)
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
@@ -59,9 +63,9 @@ final readonly class AcceptInvitationAction
             // 3. Mark invitation as accepted
             $invitation->update(['accepted_at' => now()]);
 
-            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::USER_JOINED,
+            app(RecordAuditLogAction::class)->execute(
+                new AuditLogData(
+                    action: AuditAction::USER_JOINED,
                     resource: 'user',
                     resourceId: $user->id,
                     metadata: ['email' => $user->email, 'role' => $invitation->role->name],
@@ -73,7 +77,7 @@ final readonly class AcceptInvitationAction
                 ->performedOn($user)
                 ->log('user_joined_via_invite');
 
-            event(new \App\Modules\Shared\Events\TenantUserJoined($user, $invitation->id));
+            event(new TenantUserJoined($user, $invitation->id));
 
             return $user;
         });

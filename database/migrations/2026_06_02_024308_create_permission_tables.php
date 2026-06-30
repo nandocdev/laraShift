@@ -113,7 +113,7 @@ return new class extends Migration
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
             ->forget(config('permission.cache.key'));
 
-        $connection = \Illuminate\Support\Facades\Schema::getConnection();
+        $connection = Schema::getConnection();
         if ($teams && $connection->getDriverName() === 'pgsql') {
             $teamKey = $columnNames['team_foreign_key'];
             foreach ([$tableNames['roles'], $tableNames['model_has_permissions'], $tableNames['model_has_roles']] as $table) {

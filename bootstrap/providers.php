@@ -1,21 +1,39 @@
 <?php
 
+use App\Modules\Central\Auth\Providers\CentralAuthServiceProvider;
+use App\Modules\Central\Billing\Providers\BillingServiceProvider;
+use App\Modules\Central\Features\Providers\FeaturesServiceProvider;
+use App\Modules\Central\Infrastructure\Providers\InfrastructureServiceProvider;
+use App\Modules\Central\Landings\Providers\LandingServiceProvider;
+use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
+use App\Modules\Central\Payments\Providers\PaymentsServiceProvider;
+use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
+use App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider;
+use App\Modules\Central\Support\Providers\SupportServiceProvider;
+use App\Modules\Tenant\Audit\Providers\AuditServiceProvider;
+use App\Modules\Tenant\Identity\Providers\IdentityServiceProvider;
+use App\Modules\Tenant\Settings\Providers\SettingsServiceProvider;
+use App\Providers\AppServiceProvider;
+use App\Providers\FortifyServiceProvider;
+use App\Providers\HorizonServiceProvider;
+use App\Providers\TenancyServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    App\Providers\HorizonServiceProvider::class,
-    App\Providers\TenancyServiceProvider::class,
-    App\Modules\Central\Auth\Providers\CentralAuthServiceProvider::class,
-    App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider::class,
-    App\Modules\Central\Billing\Providers\BillingServiceProvider::class,
-    App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider::class,
-    App\Modules\Central\Features\Providers\FeaturesServiceProvider::class,
-    App\Modules\Central\Landings\Providers\LandingServiceProvider::class,
-    App\Modules\Central\Support\Providers\SupportServiceProvider::class,
-    App\Modules\Central\Payments\Providers\PaymentsServiceProvider::class,
-    App\Modules\Central\Infrastructure\Providers\InfrastructureServiceProvider::class,
-    App\Modules\Central\Marketing\Providers\MarketingServiceProvider::class,
-    App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
-    App\Modules\Tenant\Settings\Providers\SettingsServiceProvider::class,
-    App\Modules\Tenant\Audit\Providers\AuditServiceProvider::class,
+    AppServiceProvider::class,
+    FortifyServiceProvider::class,
+    HorizonServiceProvider::class,
+    TenancyServiceProvider::class,
+    CentralAuthServiceProvider::class,
+    ProvisioningServiceProvider::class,
+    BillingServiceProvider::class,
+    CentralSettingsServiceProvider::class,
+    FeaturesServiceProvider::class,
+    LandingServiceProvider::class,
+    SupportServiceProvider::class,
+    PaymentsServiceProvider::class,
+    InfrastructureServiceProvider::class,
+    MarketingServiceProvider::class,
+    IdentityServiceProvider::class,
+    SettingsServiceProvider::class,
+    AuditServiceProvider::class,
 ];

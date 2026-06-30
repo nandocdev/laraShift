@@ -6,6 +6,7 @@ use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Tenancy\Services\TenantResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
     config(['tenancy.central_domain' => 'larashift.test']);
@@ -126,5 +127,5 @@ test('forgetCache clears resolver cache', function () {
 
     $this->resolver->forgetCache($this->tenant);
 
-    expect(\Illuminate\Support\Facades\Cache::get("tenant:id:{$this->tenant->id}"))->toBeNull();
+    expect(Cache::get("tenant:id:{$this->tenant->id}"))->toBeNull();
 });

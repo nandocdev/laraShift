@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Payments\Actions\RefundPaymentAction;
-use App\Modules\Central\Payments\Events\PaymentRefunded;
+use App\Modules\Central\Payments\Jobs\ProcessPaymentWebhookJob;
 use App\Modules\Central\Payments\Models\Payment;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Infrastructure\Http\IdempotencyMiddleware;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
@@ -31,7 +30,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'idempotency-test-' . Str::random(4),
+        'slug' => 'idempotency-test-'.Str::random(4),
         'name' => 'Idempotency Test',
         'email' => 'idempotency@test.com',
         'plan_id' => 'free',
@@ -49,7 +48,7 @@ test('idempotency middleware caches response for post requests', function () {
 });
 
 test('idempotency middleware returns cached response on duplicate key', function () {
-    $key = 'dup-key-' . Str::random(8);
+    $key = 'dup-key-'.Str::random(8);
 
     $request = Request::create('http://example.com/api/test', 'POST', [], [], [], [
         'HTTP_Idempotency-Key' => $key,
@@ -78,7 +77,7 @@ test('idempotency middleware rejects invalid key format', function () {
 });
 
 test('idempotency middleware does not cache 5xx responses', function () {
-    $key = 'error-key-' . Str::random(8);
+    $key = 'error-key-'.Str::random(8);
 
     $request = Request::create('http://example.com/api/test', 'POST', [], [], [], [
         'HTTP_Idempotency-Key' => $key,
@@ -109,7 +108,7 @@ test('idempotency middleware is skipped for get requests', function () {
 test('refund action marks payment as refunded', function () {
     $payment = Payment::create([
         'tenant_id' => $this->tenant->id,
-        'display_id' => 'refund-test-' . Str::random(6),
+        'display_id' => 'refund-test-'.Str::random(6),
         'slug' => 'refund-test',
         'amount' => 29.99,
         'description' => 'Refund Test',
@@ -133,7 +132,7 @@ test('refund action marks payment as refunded', function () {
 test('refund action rejects already refunded payment', function () {
     $payment = Payment::create([
         'tenant_id' => $this->tenant->id,
-        'display_id' => 'double-refund-' . Str::random(6),
+        'display_id' => 'double-refund-'.Str::random(6),
         'slug' => 'double-refund',
         'amount' => 10.00,
         'description' => 'Double Refund',
@@ -146,13 +145,13 @@ test('refund action rejects already refunded payment', function () {
     $action = app(RefundPaymentAction::class);
 
     expect(fn () => $action->execute($payment, $this->tenant, 'Double', 'admin'))
-        ->toThrow(\RuntimeException::class, 'already been refunded');
+        ->toThrow(RuntimeException::class, 'already been refunded');
 });
 
 test('refund action rejects non-approved payment', function () {
     $payment = Payment::create([
         'tenant_id' => $this->tenant->id,
-        'display_id' => 'pending-refund-' . Str::random(6),
+        'display_id' => 'pending-refund-'.Str::random(6),
         'slug' => 'pending-refund',
         'amount' => 10.00,
         'description' => 'Pending Refund',
@@ -164,7 +163,7 @@ test('refund action rejects non-approved payment', function () {
     $action = app(RefundPaymentAction::class);
 
     expect(fn () => $action->execute($payment, $this->tenant, 'Not approved', 'admin'))
-        ->toThrow(\RuntimeException::class, 'approved payments');
+        ->toThrow(RuntimeException::class, 'approved payments');
 });
 
 test('refund dispatches PaymentRefunded event', function () {
@@ -172,7 +171,7 @@ test('refund dispatches PaymentRefunded event', function () {
 
     $payment = Payment::create([
         'tenant_id' => $this->tenant->id,
-        'display_id' => 'event-refund-' . Str::random(6),
+        'display_id' => 'event-refund-'.Str::random(6),
         'slug' => 'event-refund',
         'amount' => 15.00,
         'description' => 'Event Refund',
@@ -184,11 +183,11 @@ test('refund dispatches PaymentRefunded event', function () {
     $action = app(RefundPaymentAction::class);
     $action->execute($payment, $this->tenant, 'Audit test', 'admin');
 
-    Event::assertDispatched(\App\Modules\Shared\Events\PaymentRefunded::class);
+    Event::assertDispatched(App\Modules\Shared\Events\PaymentRefunded::class);
 });
 
 test('process payment webhook job uses exponential backoff', function () {
-    $job = new \App\Modules\Central\Payments\Jobs\ProcessPaymentWebhookJob(
+    $job = new ProcessPaymentWebhookJob(
         tenantId: $this->tenant->id,
         rawPayload: '{}',
         signature: 'sig',

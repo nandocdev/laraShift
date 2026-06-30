@@ -31,7 +31,7 @@ final readonly class PasswordPolicy
     public function rules(): array
     {
         $config = $this->loadConfig();
-        $rules = ['min:' . ($config['min_length'] ?? 8)];
+        $rules = ['min:'.($config['min_length'] ?? 8)];
 
         if ($config['require_mixed_case'] ?? true) {
             $rules[] = 'regex:/[a-z]/';

@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace Tests\Feature\Central;
 
 use App\Modules\Central\Marketing\Livewire\RegisterTenant;
+use App\Modules\Central\Payments\Models\Payment;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->seed(PlanSeeder::class);
-    \Illuminate\Support\Facades\Cache::flush();
+    Cache::flush();
 });
 
 it('can advance through the wizard steps', function () {
@@ -27,7 +30,7 @@ it('can advance through the wizard steps', function () {
         ->call('nextStep')
         ->assertHasNoErrors()
         ->assertSet('step', 2)
-        
+
         // Step 2
         ->set('plan_id', 'pro')
         ->call('nextStep')
@@ -114,7 +117,7 @@ it('releases the slug lock upon successful registration', function () {
 
     // The lock is deleted
     $lockKey = 'reserved_slug_acme-corp';
-    expect(\Illuminate\Support\Facades\Cache::has($lockKey))->toBeFalse();
+    expect(Cache::has($lockKey))->toBeFalse();
 });
 
 it('allows the same user to navigate the wizard without auto-blocking', function () {
@@ -159,10 +162,10 @@ it('detects an already approved payment and allows retry without payment token',
     // 1. Manually seed an approved payment for the given slug & email combination
     $slug = 'acme-corp';
     $email = 'admin@acme.com';
-    $checkoutSlug = 'checkout_' . md5($slug . $email);
-    
-    \App\Modules\Central\Payments\Models\Payment::create([
-        'tenant_id' => \Illuminate\Support\Str::uuid()->toString(),
+    $checkoutSlug = 'checkout_'.md5($slug.$email);
+
+    Payment::create([
+        'tenant_id' => Str::uuid()->toString(),
         'display_id' => 'SUB-123456',
         'slug' => $checkoutSlug,
         'amount' => 29.0, // e.g. pro plan price
@@ -189,6 +192,3 @@ it('detects an already approved payment and allows retry without payment token',
     $component->call('register')
         ->assertHasNoErrors();
 });
-
-
-

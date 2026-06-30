@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Livewire;
 
-use App\Modules\Central\Billing\Actions\UpsertPlanAction;
 use App\Modules\Central\Billing\Actions\DeletePlanAction;
+use App\Modules\Central\Billing\Actions\UpsertPlanAction;
 use App\Modules\Central\Billing\DTOs\PlanData;
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Features\Models\Feature;
@@ -15,15 +15,22 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.central')]
-class ManagePlan extends Component {
+class ManagePlan extends Component
+{
     public ?Plan $plan = null;
+
     public bool $isEditing = false;
 
     public string $name = '';
+
     public string $slug = '';
+
     public float $price_monthly = 0.0;
+
     public float $price_yearly = 0.0;
+
     public bool $is_active = true;
+
     public string $stripe_id = '';
 
     // Feature Catalog Integration
@@ -31,11 +38,15 @@ class ManagePlan extends Component {
 
     // Legacy Features structure (for quotas)
     public int $quota_branches = 1;
+
     public int $quota_staff = 3;
+
     public int $quota_bookings = 100;
+
     public string $display_features = ''; // Comma separated
 
-    public function mount(?Plan $plan = null): void {
+    public function mount(?Plan $plan = null): void
+    {
         if ($plan && $plan->exists) {
             $this->plan = $plan;
             $this->isEditing = true;
@@ -56,7 +67,8 @@ class ManagePlan extends Component {
         }
     }
 
-    public function save(UpsertPlanAction $action): void {
+    public function save(UpsertPlanAction $action): void
+    {
         $this->validate([
             'name' => 'required|string|max:100',
             'slug' => ['required', 'alpha_dash', 'max:100', Rule::unique('plans', 'slug')->ignore($this->plan?->id)],
@@ -98,8 +110,11 @@ class ManagePlan extends Component {
         }
     }
 
-    public function delete(DeletePlanAction $action): void {
-        if (! $this->plan) return;
+    public function delete(DeletePlanAction $action): void
+    {
+        if (! $this->plan) {
+            return;
+        }
 
         try {
             $action->execute($this->plan);
@@ -110,7 +125,8 @@ class ManagePlan extends Component {
         }
     }
 
-    public function render(): View {
+    public function render(): View
+    {
         return view('billing::pages.manage-plan', [
             'availableFeatures' => Feature::where('is_active', true)->orderBy('module')->get(),
         ]);

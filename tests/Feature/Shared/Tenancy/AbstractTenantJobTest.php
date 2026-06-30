@@ -30,7 +30,7 @@ beforeEach(function () {
 test('abstract tenant job stores tenant context', function () {
     $context = new TenantContext($this->tenant->id, 'test-tenant');
 
-    $job = new class ($context) extends AbstractTenantJob
+    $job = new class($context) extends AbstractTenantJob
     {
         public function handle(): void {}
     };
@@ -44,7 +44,7 @@ test('abstract tenant job stores tenant context', function () {
 test('abstract tenant job generates queue name', function () {
     $context = new TenantContext($this->tenant->id, 'test-tenant');
 
-    $job = new class ($context) extends AbstractTenantJob
+    $job = new class($context) extends AbstractTenantJob
     {
         public function handle(): void {}
     };
@@ -57,9 +57,10 @@ test('abstract tenant job generates queue name', function () {
 test('abstract tenant job with high priority uses high queue', function () {
     $context = new TenantContext($this->tenant->id);
 
-    $job = new class ($context) extends AbstractTenantJob
+    $job = new class($context) extends AbstractTenantJob
     {
         public int $priority = 7;
+
         public function handle(): void {}
     };
 
@@ -69,9 +70,10 @@ test('abstract tenant job with high priority uses high queue', function () {
 test('abstract tenant job with low priority uses low queue', function () {
     $context = new TenantContext($this->tenant->id);
 
-    $job = new class ($context) extends AbstractTenantJob
+    $job = new class($context) extends AbstractTenantJob
     {
         public int $priority = 1;
+
         public function handle(): void {}
     };
 

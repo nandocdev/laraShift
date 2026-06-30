@@ -12,6 +12,7 @@ use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 class IdentityApiController extends Controller
 {
@@ -129,7 +130,7 @@ class IdentityApiController extends Controller
         ]);
 
         $user = User::findOrFail($id);
-        
+
         if ($user->id === auth()->id()) {
             return response()->json(['message' => 'You cannot change your own role via API.'], 400);
         }
@@ -153,7 +154,7 @@ class IdentityApiController extends Controller
         ]);
 
         $role = Role::create([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $validated['name'],
             'guard_name' => 'web',

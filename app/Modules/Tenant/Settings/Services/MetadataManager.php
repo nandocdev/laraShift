@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Settings\Services;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\TenantSettingsUpdated;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -40,7 +39,7 @@ final readonly class MetadataManager
     /**
      * Set multiple metadata values at once.
      *
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     public function setMultiple(Tenant $tenant, array $values): void
     {

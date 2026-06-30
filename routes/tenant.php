@@ -2,11 +2,46 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Billing\Livewire\HostedCheckout;
 use App\Modules\Central\Billing\Livewire\ManageBilling;
+use App\Modules\Central\Billing\Livewire\SelectPlan;
 use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
+use App\Modules\Central\Landings\Http\Controllers\ServeTenantLandingController;
+use App\Modules\Central\Landings\Livewire\LandingBuilder;
+use App\Modules\Central\Payments\Livewire\PayoutRequests;
+use App\Modules\Central\Payments\Livewire\PayoutSettings;
+use App\Modules\Central\Support\Http\Controllers\TenantImpersonationController;
+use App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions;
 use App\Modules\Shared\Tenancy\Http\Middleware\ApplyTenantRateLimits;
 use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
+use App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController;
+use App\Modules\Tenant\Audit\Livewire\AuditLogViewer;
+use App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa;
+use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant;
+use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Identity\Livewire\AcceptInvitation;
+use App\Modules\Tenant\Identity\Livewire\DataExport;
+use App\Modules\Tenant\Identity\Livewire\Login;
+use App\Modules\Tenant\Identity\Livewire\LoginChallenge;
+use App\Modules\Tenant\Identity\Livewire\ManageApiKeys;
+use App\Modules\Tenant\Identity\Livewire\RoleManagement;
+use App\Modules\Tenant\Identity\Livewire\TeamManagement;
+use App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment;
+use App\Modules\Tenant\Settings\Livewire\BrandingSettings;
+use App\Modules\Tenant\Settings\Livewire\LocalizationSettings;
+use App\Modules\Tenant\Settings\Livewire\SmtpSettings;
 use Illuminate\Support\Facades\Route;
+use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
+use Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController;
+use Laravel\Fortify\Http\Controllers\NewPasswordController;
+use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
+use Laravel\Fortify\Http\Controllers\RegisteredUserController;
+use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use Laravel\Fortify\Http\Controllers\VerifyEmailController;
+use Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController;
+use Laravel\Passkeys\Http\Controllers\PasskeyLoginController;
+use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -27,72 +62,72 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
     ApplyTenantRateLimits::class,
-    \App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions::class,
+    AuditImpersonationActions::class,
 ])->group(function () {
-    Route::get('/', \App\Modules\Central\Landings\Http\Controllers\ServeTenantLandingController::class)->name('tenant.home');
+    Route::get('/', ServeTenantLandingController::class)->name('tenant.home');
 
-    Route::get('/auth/login', \App\Modules\Tenant\Identity\Livewire\Login::class)->name('login');
-    Route::post('/auth/login', [\Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'store'])->name('login.store');
-    Route::post('/auth/logout', [\Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    Route::get('/auth/login', Login::class)->name('login');
+    Route::post('/auth/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+    Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::get('/auth/2fa/verify', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class)->name('two-factor.login');
-    Route::post('/auth/2fa/verify', [\Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController::class, 'store'])->name('two-factor.login.store');
+    Route::get('/auth/2fa/verify', LoginChallenge::class)->name('two-factor.login');
+    Route::post('/auth/2fa/verify', [TwoFactorAuthenticatedSessionController::class, 'store'])->name('two-factor.login.store');
 
-    Route::post('/auth/forgot-password', [\Laravel\Fortify\Http\Controllers\PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/auth/forgot-password', fn () => view('pages::auth.forgot-password'))->name('password.request');
-    Route::post('/auth/reset-password', [\Laravel\Fortify\Http\Controllers\NewPasswordController::class, 'store'])->name('password.update');
+    Route::post('/auth/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
     Route::get('/auth/reset-password/{token}', fn ($token) => view('pages::auth.reset-password', ['token' => $token]))->name('password.reset');
 
     Route::get('/auth/register', fn () => view('pages::auth.register'))->name('register');
-    Route::post('/auth/register', [\Laravel\Fortify\Http\Controllers\RegisteredUserController::class, 'store'])->name('register.store');
+    Route::post('/auth/register', [RegisteredUserController::class, 'store'])->name('register.store');
 
     Route::get('/auth/verify-email', fn () => view('pages::auth.verify-email'))->name('verification.notice');
-    Route::get('/auth/verify-email/{id}/{hash}', [\Laravel\Fortify\Http\Controllers\VerifyEmailController::class, '__invoke'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
-    Route::post('/auth/email/verification-notification', [\Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController::class, 'store'])->middleware(['throttle:6,1'])->name('verification.send');
+    Route::get('/auth/verify-email/{id}/{hash}', [VerifyEmailController::class, '__invoke'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/auth/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])->middleware(['throttle:6,1'])->name('verification.send');
 
     Route::get('/auth/confirm-password', fn () => view('pages::auth.confirm-password'))->name('password.confirm');
-    Route::post('/auth/confirm-password', [\Laravel\Fortify\Http\Controllers\ConfirmablePasswordController::class, 'store'])->name('password.confirm.store');
+    Route::post('/auth/confirm-password', [ConfirmablePasswordController::class, 'store'])->name('password.confirm.store');
 
-    Route::post('/auth/passkeys/login', [\Laravel\Passkeys\Http\Controllers\PasskeyLoginController::class, 'store'])->name('passkey.login');
-    Route::get('/auth/passkeys/login/options', [\Laravel\Passkeys\Http\Controllers\PasskeyLoginController::class, 'index'])->name('passkey.login-options');
-    Route::post('/auth/passkeys/register', [\Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController::class, 'store'])->name('passkey.register');
-    Route::get('/auth/passkeys/register/options', [\Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController::class, 'index'])->name('passkey.register-options');
-    Route::post('/auth/passkeys/confirm', [\Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController::class, 'store'])->name('passkey.confirm');
-    Route::get('/auth/passkeys/confirm/options', [\Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController::class, 'index'])->name('passkey.confirm-options');
+    Route::post('/auth/passkeys/login', [PasskeyLoginController::class, 'store'])->name('passkey.login');
+    Route::get('/auth/passkeys/login/options', [PasskeyLoginController::class, 'index'])->name('passkey.login-options');
+    Route::post('/auth/passkeys/register', [PasskeyRegistrationController::class, 'store'])->name('passkey.register');
+    Route::get('/auth/passkeys/register/options', [PasskeyRegistrationController::class, 'index'])->name('passkey.register-options');
+    Route::post('/auth/passkeys/confirm', [PasskeyConfirmationController::class, 'store'])->name('passkey.confirm');
+    Route::get('/auth/passkeys/confirm/options', [PasskeyConfirmationController::class, 'index'])->name('passkey.confirm-options');
 
-    Route::get('/auth/invitations/{token}/accept', \App\Modules\Tenant\Identity\Livewire\AcceptInvitation::class)->name('tenant.invitations.accept');
+    Route::get('/auth/invitations/{token}/accept', AcceptInvitation::class)->name('tenant.invitations.accept');
 
     // Support & Impersonation
-    Route::get('/support/auth', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
-    Route::post('/support/logout', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'logout'])->name('tenant.support.logout');
+    Route::get('/support/auth', [TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
+    Route::post('/support/logout', [TenantImpersonationController::class, 'logout'])->name('tenant.support.logout');
 
     Route::middleware([
-        'auth', 
-        \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant::class
+        'auth',
+        EnforceTenantMfa::class,
+        EnsureUserIsActive::class,
+        EnsureUserBelongsToTenant::class,
     ])->group(function () {
         Route::view('dashboard', 'dashboard')->name('dashboard');
-        
-        Route::get('/team/members', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
-        Route::get('/settings/roles', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class)->name('tenant.roles.index');
-        Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
-        Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
-        Route::get('/settings/localization', \App\Modules\Tenant\Settings\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
-        Route::get('/settings/smtp', \App\Modules\Tenant\Settings\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
-        Route::get('/settings/export', \App\Modules\Tenant\Identity\Livewire\DataExport::class)->name('tenant.settings.export');
-        Route::get('/settings/security/2fa', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
-        Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
-        Route::get('/audit/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.audit.download');
 
-        Route::get('/payouts', \App\Modules\Central\Payments\Livewire\PayoutRequests::class)->name('tenant.payouts.index');
-        Route::get('/settings/payouts', \App\Modules\Central\Payments\Livewire\PayoutSettings::class)->name('tenant.settings.payouts');
+        Route::get('/team/members', TeamManagement::class)->name('tenant.team.index');
+        Route::get('/settings/roles', RoleManagement::class)->name('tenant.roles.index');
+        Route::get('/settings/api-keys', ManageApiKeys::class)->name('tenant.api-keys.index');
+        Route::get('/settings/branding', BrandingSettings::class)->name('tenant.settings.branding');
+        Route::get('/settings/localization', LocalizationSettings::class)->name('tenant.settings.localization');
+        Route::get('/settings/smtp', SmtpSettings::class)->name('tenant.settings.smtp');
+        Route::get('/settings/export', DataExport::class)->name('tenant.settings.export');
+        Route::get('/settings/security/2fa', TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
+        Route::get('/audit', AuditLogViewer::class)->name('tenant.audit.index');
+        Route::get('/audit/download', AuditDownloadController::class)->name('tenant.audit.download');
 
-        Route::get('/data/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.data.download');
-        
+        Route::get('/payouts', PayoutRequests::class)->name('tenant.payouts.index');
+        Route::get('/settings/payouts', PayoutSettings::class)->name('tenant.settings.payouts');
+
+        Route::get('/data/download', AuditDownloadController::class)->name('tenant.data.download');
+
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
-        Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
-        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
+        Route::get('/billing/plans', SelectPlan::class)->name('tenant.billing.plans');
+        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', HostedCheckout::class)->name('tenant.billing.checkout.hosted');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
         Route::get('/billing/success', function () {
@@ -104,6 +139,6 @@ Route::middleware([
         })->name('tenant.billing.cancel');
 
         // Landing Builder
-        Route::get('/landings/{landing}/builder', \App\Modules\Central\Landings\Livewire\LandingBuilder::class)->name('tenant.landings.builder');
+        Route::get('/landings/{landing}/builder', LandingBuilder::class)->name('tenant.landings.builder');
     });
 });

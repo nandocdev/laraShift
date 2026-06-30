@@ -11,6 +11,7 @@ use App\Modules\Tenant\Settings\Models\TenantSetting;
 use App\Modules\Tenant\Settings\Support\BrandingPresets;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -21,10 +22,15 @@ class BrandingSettings extends Component
     use WithFileUploads;
 
     public string $name = '';
+
     public $logo;
+
     public string $logo_path = '';
+
     public string $primary_color = '#4f46e5';
+
     public string $theme_preset = 'saas';
+
     public bool $mfa_required = false;
 
     public function updatedThemePreset($value): void
@@ -52,7 +58,7 @@ class BrandingSettings extends Component
             $this->validate([
                 'logo' => 'image|max:2048',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             $this->reset('logo');
@@ -108,11 +114,12 @@ class BrandingSettings extends Component
                 'theme_preset' => 'required|string',
                 'mfa_required' => 'boolean',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
             $this->reset('logo');
             $this->addError('logo', __('The uploaded file could not be processed. Please try again.'));
+
             return;
         }
 
@@ -135,7 +142,7 @@ class BrandingSettings extends Component
     public function render(): View
     {
         return view('settings-tenant::livewire.branding-settings', [
-            'presets' => BrandingPresets::all()
+            'presets' => BrandingPresets::all(),
         ]);
     }
 }

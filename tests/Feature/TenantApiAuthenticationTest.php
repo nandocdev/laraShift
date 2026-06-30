@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Identity\Actions\GenerateApiKeyAction;
+use App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 uses(RefreshDatabase::class);
 
@@ -20,7 +23,7 @@ it('authenticates a request via bearer token and api key', function () {
     $tenant->domains()->create(['domain' => 'api-auth.larashift.test']);
 
     $action = app(GenerateApiKeyAction::class);
-    
+
     // We must initialize tenancy to generate the key in the right context
     tenancy()->initialize($tenant);
     $result = $action->execute('Integration Key', ['identity:read']);
@@ -39,7 +42,7 @@ it('authenticates a request via bearer token and api key', function () {
             'tenant' => 'API Auth Test',
             'api_key' => 'Integration Key',
         ]);
-        
+
     // 3. Verify last_used_at update
     tenancy()->initialize($tenant);
     expect($result['model']->fresh()->last_used_at)->not->toBeNull();
@@ -60,8 +63,10 @@ it('denies access if scope is missing', function () {
     tenancy()->end();
 
     // Mock a route requiring a specific scope
-    Route::middleware([\App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey::class . ':orders:write'])
-        ->get('/api/protected', function () { return 'ok'; });
+    Route::middleware([AuthenticateApiKey::class.':orders:write'])
+        ->get('/api/protected', function () {
+            return 'ok';
+        });
 
     $this->withToken($plainKey)
         ->getJson('http://scope.larashift.test/api/protected')
@@ -75,24 +80,24 @@ it('maps api key scopes to laravel gates', function () {
         'name' => 'Gate Test',
         'email' => 'gate@test.com',
     ]);
-    $domain = 'gate.' . config('tenancy.central_domain');
+    $domain = 'gate.'.config('tenancy.central_domain');
     $tenant->domains()->create(['domain' => $domain]);
 
     tenancy()->initialize($tenant);
-    $user = \App\Modules\Tenant\Identity\Models\User::create([
+    $user = User::create([
         'name' => 'Creator',
         'email' => 'creator@test.com',
         'password' => 'password',
     ]);
-    
+
     $result = app(GenerateApiKeyAction::class)->execute('Gate Key', ['orders:read'], $user);
     $plainKey = $result['key'];
     tenancy()->end();
 
     // Mock a route that uses standard Gate check
     Route::middleware([
-        \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey::class
+        InitializeTenancyByDomain::class,
+        AuthenticateApiKey::class,
     ])->get('/api/orders', function () {
         return auth()->user()->can('orders:read') ? 'allowed' : 'denied';
     });

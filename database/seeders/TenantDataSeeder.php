@@ -12,7 +12,7 @@ class TenantDataSeeder extends Seeder
     /**
      * Run the database seeds for a single tenant.
      */
-    public function run(string $tenantId = null): void
+    public function run(?string $tenantId = null): void
     {
         // If no tenantId provided, we assume we are running in a context where it's already set
         // but for provisioning, we explicitly pass it.
@@ -45,9 +45,9 @@ class TenantDataSeeder extends Seeder
         foreach ($roles as $roleData) {
             Role::firstOrCreate(
                 [
-                    'name' => $roleData['name'], 
+                    'name' => $roleData['name'],
                     'guard_name' => $roleData['guard_name'],
-                    'tenant_id' => $tenantId
+                    'tenant_id' => $tenantId,
                 ],
                 $roleData
             );

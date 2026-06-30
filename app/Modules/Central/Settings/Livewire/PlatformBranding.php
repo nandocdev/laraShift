@@ -13,7 +13,9 @@ use Livewire\Component;
 class PlatformBranding extends Component
 {
     public string $platformName;
+
     public string $primaryColor;
+
     public string $logoUrl;
 
     public function mount(): void

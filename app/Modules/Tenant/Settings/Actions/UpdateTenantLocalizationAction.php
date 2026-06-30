@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Settings\Actions;
 
 use App\Modules\Shared\Events\TenantSettingsUpdated;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use App\Modules\Tenant\Settings\DTOs\LocalizationData;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +35,9 @@ final readonly class UpdateTenantLocalizationAction
                 ]
             );
 
-            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::SETTINGS_UPDATED,
+            app(RecordAuditLogAction::class)->execute(
+                new AuditLogData(
+                    action: AuditAction::SETTINGS_UPDATED,
                     resource: 'settings',
                     resourceId: $settings->id,
                     metadata: ['updated' => ['timezone' => $data->timezone, 'locale' => $data->locale, 'currency' => $data->currency]]

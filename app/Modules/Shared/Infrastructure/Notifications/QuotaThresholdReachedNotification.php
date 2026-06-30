@@ -28,7 +28,7 @@ class QuotaThresholdReachedNotification extends Notification implements ShouldQu
     public function toMail(object $notifiable): MailMessage
     {
         $metricName = ucfirst(str_replace('_', ' ', $this->metric));
-        
+
         $message = (new MailMessage)
             ->subject(__(':metric Quota Warning (:threshold%)', ['metric' => $metricName, 'threshold' => $this->threshold]))
             ->greeting(__('Hello!'));

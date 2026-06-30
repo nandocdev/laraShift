@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Livewire;
 
-use App\Modules\Tenant\Identity\Actions\MarkNotificationAsReadAction;
 use App\Modules\Tenant\Identity\Actions\DeleteNotificationAction;
+use App\Modules\Tenant\Identity\Actions\MarkNotificationAsReadAction;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 

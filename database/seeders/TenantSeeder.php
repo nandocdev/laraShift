@@ -4,13 +4,16 @@ namespace Database\Seeders;
 
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\Seeder;
 
-class TenantSeeder extends Seeder {
+class TenantSeeder extends Seeder
+{
     /**
      * Run the database seeds.
      */
-    public function run(CreateTenantAction $action): void {
+    public function run(CreateTenantAction $action): void
+    {
         $testTenants = [
             [
                 'name' => 'Acme Corporation',
@@ -34,7 +37,7 @@ class TenantSeeder extends Seeder {
 
         foreach ($testTenants as $data) {
             // Skip if already exists to avoid unique constraint errors
-            if (\App\Modules\Central\Provisioning\Models\Tenant::where('email', $data['email'])->exists()) {
+            if (Tenant::where('email', $data['email'])->exists()) {
                 continue;
             }
 

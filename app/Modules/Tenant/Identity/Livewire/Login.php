@@ -33,6 +33,7 @@ class Login extends Component
 
         if (! $user || ! Hash::check($this->password, $user->password) || ! $user->is_active) {
             $this->addError('email', __('auth.failed'));
+
             return;
         }
 
@@ -44,9 +45,10 @@ class Login extends Component
             ]);
 
             $this->redirect(route('two-factor.login'), navigate: true);
+
             return;
         }
-        
+
         Auth::guard('web')->login($user, $this->remember);
 
         Session::regenerate();

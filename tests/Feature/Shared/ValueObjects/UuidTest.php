@@ -18,8 +18,8 @@ test('uuid accepts valid uuid strings', function () {
 });
 
 test('uuid rejects invalid strings', function () {
-    expect(fn () => new Uuid('not-a-uuid'))->toThrow(\InvalidArgumentException::class);
-    expect(fn () => new Uuid(''))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => new Uuid('not-a-uuid'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => new Uuid(''))->toThrow(InvalidArgumentException::class);
 });
 
 test('uuid equality', function () {

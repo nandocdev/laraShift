@@ -21,7 +21,7 @@ class BillingApiController extends Controller
     public function listPlans(): JsonResponse
     {
         return response()->json([
-            'data' => PlanManager::all()
+            'data' => PlanManager::all(),
         ]);
     }
 
@@ -36,12 +36,12 @@ class BillingApiController extends Controller
         ]);
 
         $tenant = Tenant::findOrFail($request->tenant_id);
-        
+
         try {
             $checkoutUrl = $action->execute($tenant, $request->plan_id);
-            
+
             return response()->json([
-                'checkout_url' => $checkoutUrl
+                'checkout_url' => $checkoutUrl,
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -66,7 +66,7 @@ class BillingApiController extends Controller
                 'ends_at' => $subscription->ends_at,
                 'on_grace_period' => $subscription->onGracePeriod(),
                 'active' => $subscription->active(),
-            ] : null
+            ] : null,
         ]);
     }
 
@@ -75,10 +75,10 @@ class BillingApiController extends Controller
      */
     public function cancelSubscription(Request $request, string $id, CancelSubscriptionAction $action): JsonResponse
     {
-        // $id is the external_id/stripe_id here or local ID? 
+        // $id is the external_id/stripe_id here or local ID?
         // PRD says {id}, let's assume local ID but resolve to tenant
-        $tenant = Tenant::whereHas('subscriptions', fn($q) => $q->where('id', $id)->orWhere('stripe_id', $id))->firstOrFail();
-        
+        $tenant = Tenant::whereHas('subscriptions', fn ($q) => $q->where('id', $id)->orWhere('stripe_id', $id))->firstOrFail();
+
         $action->execute($tenant, $id, $request->boolean('immediately', false));
 
         return response()->json(['message' => 'Subscription cancellation processed.']);

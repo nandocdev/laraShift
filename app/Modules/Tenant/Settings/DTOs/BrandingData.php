@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Settings\DTOs;
 
-use Spatie\LaravelData\Data;
 use Illuminate\Http\UploadedFile;
+use Spatie\LaravelData\Data;
 
 final class BrandingData extends Data
 {

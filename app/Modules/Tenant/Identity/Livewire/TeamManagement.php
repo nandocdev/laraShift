@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Livewire;
 
+use App\Modules\Shared\Events\TenantUserRevoked;
 use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
+use App\Modules\Tenant\Identity\DTOs\InvitationData;
 use App\Modules\Tenant\Identity\Models\Invitation;
 use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Models\User;
@@ -20,6 +22,7 @@ class TeamManagement extends Component
 
     // Invitation form state
     public string $inviteEmail = '';
+
     public string $inviteRole = 'member';
 
     public function invite(SendInvitationAction $action): void
@@ -30,11 +33,11 @@ class TeamManagement extends Component
         ]);
 
         try {
-            $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+            $action->execute(new InvitationData(
                 email: $this->inviteEmail,
                 roleName: $this->inviteRole
             ), auth()->user());
-            
+
             $this->reset(['inviteEmail', 'inviteRole']);
             session()->flash('status', __('Invitation sent.'));
         } catch (\Exception $e) {
@@ -45,10 +48,10 @@ class TeamManagement extends Component
     public function resendInvitation(string $id, SendInvitationAction $action): void
     {
         $oldInvite = Invitation::findOrFail($id);
-        
+
         try {
             // Re-execute sending using same email and role
-            $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+            $action->execute(new InvitationData(
                 email: $oldInvite->email,
                 roleName: $oldInvite->role->name
             ), auth()->user());
@@ -76,6 +79,7 @@ class TeamManagement extends Component
 
     // Change Role state
     public ?User $selectedMember = null;
+
     public string $newRole = '';
 
     public function selectMember(string $userId): void
@@ -92,6 +96,7 @@ class TeamManagement extends Component
 
         if ($this->selectedMember->id === auth()->id()) {
             $this->addError('newRole', __('You cannot change your own role.'));
+
             return;
         }
 
@@ -110,7 +115,7 @@ class TeamManagement extends Component
     public function revokeAccess(string $userId): void
     {
         $user = User::findOrFail($userId);
-        
+
         // Don't allow revoking self
         if ($user->id === auth()->id()) {
             return;
@@ -123,7 +128,7 @@ class TeamManagement extends Component
             ->performedOn($user)
             ->log('user_access_revoked');
 
-        event(new \App\Modules\Shared\Events\TenantUserRevoked($user, auth()->id()));
+        event(new TenantUserRevoked($user, auth()->id()));
 
         session()->flash('status', __('User access revoked.'));
     }

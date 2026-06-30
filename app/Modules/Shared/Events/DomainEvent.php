@@ -6,7 +6,6 @@ namespace App\Modules\Shared\Events;
 
 use App\Modules\Shared\ValueObjects\Timestamped;
 use App\Modules\Shared\ValueObjects\Uuid;
-use DateTimeImmutable;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
@@ -32,7 +31,7 @@ abstract class DomainEvent
     public ?string $causerType = null;
 
     /**
-     * @param int $version Event schema version (semantic: v1, v2, etc.)
+     * @param  int  $version  Event schema version (semantic: v1, v2, etc.)
      */
     public function __construct(
         int $version = 1,

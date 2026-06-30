@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Cache;
 final readonly class LockoutCentralUserAction
 {
     private const string CACHE_PREFIX = 'central_login_attempts:';
+
     private const int MAX_ATTEMPTS = 5;
+
     private const int LOCKOUT_MINUTES = 15;
 
     public function recordAttempt(string $email): int
@@ -84,6 +86,6 @@ final readonly class LockoutCentralUserAction
 
     private function cacheKey(string $email): string
     {
-        return self::CACHE_PREFIX . strtolower(trim($email));
+        return self::CACHE_PREFIX.strtolower(trim($email));
     }
 }

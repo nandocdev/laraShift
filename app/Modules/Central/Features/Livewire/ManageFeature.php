@@ -6,20 +6,25 @@ namespace App\Modules\Central\Features\Livewire;
 
 use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Support\Str;
 
 #[Layout('layouts.central')]
 class ManageFeature extends Component
 {
     public ?Feature $feature = null;
+
     public bool $isEditing = false;
 
     public string $key = '';
+
     public string $name = '';
+
     public string $description = '';
+
     public string $module = '';
+
     public bool $is_active = true;
 
     public function mount(?Feature $feature = null): void
@@ -48,7 +53,7 @@ class ManageFeature extends Component
                 'string',
                 'max:100',
                 'regex:/^[a-z0-9]+\.[a-z0-9_]+$/',
-                'unique:features,key,' . ($this->feature->id ?? 'NULL') . ',id'
+                'unique:features,key,'.($this->feature->id ?? 'NULL').',id',
             ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -80,11 +85,13 @@ class ManageFeature extends Component
 
     public function delete(): void
     {
-        if (! $this->feature) return;
+        if (! $this->feature) {
+            return;
+        }
 
         // Perform soft delete
         $this->feature->delete();
-        
+
         session()->flash('status', __('Feature retired. Historical data remains valid.'));
         $this->redirect(route('central.features.index'), navigate: true);
     }

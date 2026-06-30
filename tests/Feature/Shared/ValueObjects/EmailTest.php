@@ -20,10 +20,10 @@ test('email trims whitespace', function () {
 });
 
 test('email rejects invalid addresses', function () {
-    expect(fn () => new Email('not-an-email'))->toThrow(\InvalidArgumentException::class);
-    expect(fn () => new Email('user@'))->toThrow(\InvalidArgumentException::class);
-    expect(fn () => new Email('@domain.com'))->toThrow(\InvalidArgumentException::class);
-    expect(fn () => new Email(''))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => new Email('not-an-email'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => new Email('user@'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => new Email('@domain.com'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => new Email(''))->toThrow(InvalidArgumentException::class);
 });
 
 test('email extracts domain and local part', function () {

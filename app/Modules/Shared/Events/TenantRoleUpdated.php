@@ -13,6 +13,7 @@ class TenantRoleUpdated
     use Dispatchable, SerializesModels;
 
     public string $tenantId;
+
     public string $roleId;
 
     public function __construct(
