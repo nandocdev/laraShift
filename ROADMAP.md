@@ -100,7 +100,7 @@ app/Modules
 | S17    | Tenant Integrations — Webhooks y API Keys  | 5      | 5   | 100% | ✅ Completado  |
 | S18    | Tenant Data Management                     | 4      | 4   | 100% | ✅ Completado  |
 | S19    | Host Analytics & Reporting                 | 3      | 3   | 100% | ✅ Completado  |
-| S20    | Host Support                               | 3      | 0   | 0%   | ⬜ No iniciado |
+| S20    | Host Support                               | 3      | 3   | 100% | ✅ Completado  |
 | S21    | Host Security & Compliance                 | 3      | 3   | 100% | ✅ Completado  |
 | S22    | Host Monitoring & Alerting                 | 3      | 3   | 100% | ✅ Completado  |
 | S23    | Host Landings y Marketing                  | 3      | 3   | 100% | ✅ Completado  |
@@ -569,9 +569,24 @@ app/Modules
 **Módulo:** `Central/Support`
 **Entregable:** El equipo de soporte puede gestionar tickets con SLA y acceder a contexto de audit del tenant.
 
-- [ ] Implementar CRUD y ciclo de vida de tickets (abierto, en progreso, escalado, resuelto, cerrado)
-- [ ] Implementar asignación de tickets, SLA tracking y escalations automáticas
-- [ ] Implementar integración de tickets con audit logs de tenant bajo el modelo de visibilidad definido en S13
+- [x] Implementar CRUD y ciclo de vida de tickets (abierto, en progreso, escalado, resuelto, cerrado)
+  - `SupportTicket` + `SupportTicketMessage` models
+  - `CreateTicketAction` + `UpdateTicketStatusAction` + `AssignTicketAction` + `AddTicketMessageAction`
+  - `TicketList` Livewire con filtros por status, prioridad, búsqueda
+  - `ManageTicket` Livewire con detalle, mensajes, transiciones de estado
+  - `CreateTicket` Livewire con selector de tenant, prioridad, SLA automático
+  - Commit: `feat(support): add TicketList, ManageTicket, CreateTicket Livewire`
+- [x] Implementar asignación de tickets, SLA tracking y escalations automáticas
+  - SLA por prioridad: critical 4h, high 8h, medium 24h, low 48h
+  - SLA breach time calculado automáticamente en `CreateTicketAction`
+  - `AssignTicketAction` asigna y cambia status a in_progress automáticamente
+  - `EscalateOverdueTicketsJob` cada 30 min: escalado automático de tickets vencidos
+  - Columna `sla_breach_at` + badge visual en listado con diffForHumans
+  - Commits: `feat(support): implement ticket actions`, `feat(support): add EscalateOverdueTicketsJob`
+- [x] Implementar integración de tickets con audit logs de tenant bajo el modelo de visibilidad definido en S13
+  - `ManageTicket` reusa `QueryTenantAuditLogsAction` (contrato `SupportAuditVisibility`)
+  - Muestra eventos CRITICAL/HIGH del tenant directamente en la vista del ticket
+  - Commit: `feat(support): add TicketList, ManageTicket, CreateTicket Livewire with views`
 
 ---
 
