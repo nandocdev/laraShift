@@ -17,8 +17,10 @@ use Throwable;
 final class ProcessPaymentWebhookJob implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 5;
     public int $timeout = 60;
+
+    public int $backoffSeconds = 30;
 
     public function __construct(
         public readonly string $tenantId,
@@ -27,6 +29,20 @@ final class ProcessPaymentWebhookJob implements ShouldQueue {
         public readonly string $webhookSecret,
     ) {
         $this->onQueue('webhooks-priority');
+    }
+
+    /**
+     * Exponential backoff: 30s, 2min, 8min, 32min, 2h
+     * @return int[]
+     */
+    public function backoff(): array
+    {
+        return [30, 120, 480, 1920, 7200];
+    }
+
+    public function retryUntil(): \DateTime
+    {
+        return now()->addHours(12);
     }
 
     public function handle(): void {

@@ -47,6 +47,9 @@ class Payment extends Model {
         'gateway_reference',
         'authorization_code',
         'error_code',
+        'refunded_at',
+        'refund_reason',
+        'refunded_by',
     ];
 
     protected $casts = [
@@ -54,6 +57,7 @@ class Payment extends Model {
         'tax_amount' => 'float',
         'discount' => 'float',
         'context' => PaymentContext::class,
+        'refunded_at' => 'datetime',
     ];
 
     // -------------------------------------------------------------------------
