@@ -7,14 +7,16 @@ namespace App\Modules\Central\Auth\Actions;
 use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Support\Facades\Cache;
 
-final readonly class LockoutCentralUserAction {
+final readonly class LockoutCentralUserAction
+{
     private const CACHE_PREFIX = 'central_login_attempts:';
 
     private const MAX_ATTEMPTS = 5;
 
     private const LOCKOUT_MINUTES = 15;
 
-    public function recordAttempt(string $email): int {
+    public function recordAttempt(string $email): int
+    {
         $key = $this->cacheKey($email);
         $attempts = (int) Cache::get($key, 0) + 1;
 
@@ -36,7 +38,8 @@ final readonly class LockoutCentralUserAction {
         return $attempts;
     }
 
-    public function isLocked(string $email): bool {
+    public function isLocked(string $email): bool
+    {
         $key = $this->cacheKey($email);
         $attempts = (int) Cache::get($key, 0);
 
@@ -53,18 +56,21 @@ final readonly class LockoutCentralUserAction {
         return false;
     }
 
-    public function remainingAttempts(string $email): int {
+    public function remainingAttempts(string $email): int
+    {
         $key = $this->cacheKey($email);
         $attempts = (int) Cache::get($key, 0);
 
         return max(0, self::MAX_ATTEMPTS - $attempts);
     }
 
-    public function clearAttempts(string $email): void {
+    public function clearAttempts(string $email): void
+    {
         Cache::forget($this->cacheKey($email));
     }
 
-    public function clearLockout(string $email): void {
+    public function clearLockout(string $email): void
+    {
         $this->clearAttempts($email);
 
         $user = CentralUser::where('email', $email)->first();
@@ -78,7 +84,8 @@ final readonly class LockoutCentralUserAction {
         }
     }
 
-    private function cacheKey(string $email): string {
-        return self::CACHE_PREFIX . strtolower(trim($email));
+    private function cacheKey(string $email): string
+    {
+        return self::CACHE_PREFIX.strtolower(trim($email));
     }
 }
