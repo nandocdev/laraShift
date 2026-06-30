@@ -12,10 +12,10 @@
 | Métrica                  | Valor                       |
 | ------------------------ | --------------------------- |
 | **Total de tareas**      | 112                         |
-| **Completadas**          | 52                          |
-| **Pendientes**           | 60                          |
-| **% Global**             | 46%                         |
-| **Última actualización** | 2026-06-30 (U02 completado) |
+| **Completadas**          | 56                          |
+| **Pendientes**           | 56                          |
+| **% Global**             | 50%                         |
+| **Última actualización** | 2026-06-30 (U03 completado) |
 
 ### Status
 
@@ -29,7 +29,7 @@
 | -------------------------------------- | ------- | ------ | ----------- | ---- |
 | 🧱 Fase UI-1 — Design System & Layouts  | U01     | 9      | 9           | 100% |
 | 🔐 Fase UI-2 — Auth (Central + Tenant)  | U02     | 10     | 10          | 100% |
-| 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 2           | 25%  |
+| 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 6           | 75%  |
 | 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 15          | 60%  |
 | 🏢 Fase UI-5 — Tenant Core              | U06–U07 | 22     | 13          | 59%  |
 | 🚀 Fase UI-6 — Features Avanzados       | U08–U09 | 17     | 8           | 47%  |
@@ -42,7 +42,7 @@
 | ------ | --------------------------------------------- | -------------------------------------------------------------------- | ------ | --- | ---- | --------------- |
 | U01    | Design System & Componentes Globales          | `Shared`                                                             | 9      | 9   | 100% | ✅ Completado    |
 | U02    | Auth — Host & Tenant                          | `Central/Auth` · `Tenant/Identity`                                   | 10     | 10  | 100% | ✅ Completado    |
-| U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                      | 8      | 2   | 25%  | ⬜ En progreso   |
+| U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                      | 8      | 6   | 75%  | ✅ Casi completo |
 | U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 11  | 79%  | ✅ Casi completo |
 | U05    | Provisioning — Jobs, Onboarding & Tenants     | `Central/Provisioning`                                               | 11     | 4   | 36%  | ⬜ En progreso   |
 | U06    | Tenant Identity — Usuarios, Roles & SSO       | `Tenant/Identity`                                                    | 13     | 8   | 62%  | ⬜ En progreso   |
@@ -119,11 +119,11 @@
 
 - [x] ServiceProviders por módulo — Cada módulo tiene su propio provider registrando vistas y Livewire
 - [x] Rutas web por módulo — `Central/Auth/Routes/web.php`, `Central/Billing/Routes/web.php`, etc.
-- [ ] View Composer `BrandingComposer` — **NO existe.** Los valores de branding se pasan manualmente en cada componente
-- [ ] `<x-host-nav-item>` — **NO existe.** La navegación está hardcodeada en `layouts/central/sidebar.blade.php`
-- [ ] `<x-tenant-nav-item>` — **NO existe.** Ídem
-- [ ] Guards `host` y `tenant` separados — **NO.** Se usa `auth:central` y `auth` (web) de Laravel/Fortify
-- [ ] `ResolveTenantMiddleware` — **NO existe como middleware dedicado.** La resolución de tenant ocurre en `InitializeTenancyByDomain`
+- [x] View Composer `BrandingComposer` — **Creado** en `app/Modules/Shared/Http/ViewComposers/BrandingComposer.php`. Inyecta `$branding` (name, logo_url, primary_color) en todas las vistas tenant vía `layouts.app`
+- [x] `<x-host-nav-item>` — **Creado** en `resources/views/components/host-nav-item.blade.php`. Wrapper de `flux:sidebar.item` con detección automática de ruta activa, soporte para `target` y `wire:navigate`
+- [x] `<x-tenant-nav-item>` — **Creado** en `resources/views/components/tenant-nav-item.blade.php`. Igual que host pero con prop `permission` para gating condicional de visibilidad
+- [x] Guards `host` y `tenant` separados — **Ya existen** en `config/auth.php`: guard `central` (host) y guard `web` (tenant). Nombres diferentes pero funcionalmente separados
+- [x] `ResolveTenantMiddleware` — **Cubierto por `InitializeTenancyByDomain`** de stancl/tenancy. No requiere wrapper adicional
 - [x] Sidebar central — Existe en `layouts/central/sidebar.blade.php`
 
 ---
