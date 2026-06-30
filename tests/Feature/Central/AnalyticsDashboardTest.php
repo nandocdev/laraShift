@@ -160,3 +160,48 @@ it('produces correct monthly breakdown from MrrCalculator', function () {
     $breakdown = $calculator->monthlyBreakdown(3);
     expect($breakdown)->toHaveCount(3);
 });
+
+it('is idempotent — running the job twice produces the same records', function () {
+    Plan::create([
+        'id' => Str::uuid()->toString(),
+        'name' => 'Pro',
+        'slug' => 'pro',
+        'price_monthly' => 1000,
+        'price_yearly' => 10000,
+        'is_active' => true,
+        'features' => [],
+    ]);
+
+    Tenant::create([
+        'id' => Str::uuid()->toString(),
+        'slug' => 'idempotent-tenant',
+        'name' => 'Idempotent Tenant',
+        'email' => 'idem@test.com',
+        'plan_id' => 'pro',
+        'status' => 'active',
+    ]);
+
+    (new RefreshPlatformMetricsJob)->handle();
+    $countAfterFirst = PlatformMetric::count();
+
+    (new RefreshPlatformMetricsJob)->handle();
+    $countAfterSecond = PlatformMetric::count();
+
+    expect($countAfterSecond)->toBe($countAfterFirst);
+});
+
+it('exports valid CSV with headers only when range is empty', function () {
+    Storage::fake('local');
+
+    $action = app(ExportPlatformMetricsAction::class);
+    $filePath = $action->execute(
+        dateFrom: '2020-01-01',
+        dateTo: '2020-01-02',
+        disk: 'local',
+    );
+
+    $content = Storage::disk('local')->get($filePath);
+    expect($content)->toContain('Metric');
+    expect($content)->toContain('Captured At');
+    expect(trim($content))->toStartWith('Metric,Group,Period,Value');
+});
