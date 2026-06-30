@@ -345,12 +345,27 @@ app/Modules
 **Módulo:** `Tenant/Audit`
 **Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
 
-- [ ] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
-- [ ] Definir catálogo de eventos auditables con nivel de criticidad
-- [ ] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
-- [ ] Implementar export de audit trail (CSV / PDF)
-- [ ] Implementar retención configurable por plan y purge automático al expirar
-- [ ] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
+- [x] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
+  - `RecordAuditLogAction` + `TenantAuthAuditSubscriber` + `TenantIdentityEventSubscriber`
+  - Commit (previo): `feat(audit): add record audit log action`
+- [x] Definir catálogo de eventos auditables con nivel de criticidad
+  - `AuditAction` enum con 14 casos, cada uno con `severity()` (CRITICAL, HIGH, MEDIUM, LOW)
+  - Commit: `feat(audit): add severity levels to audit action enum`
+- [x] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
+  - `AuditLogViewer` Livewire con filtros por usuario, acción, rango de fechas + paginación
+  - Commit (previo): `feat(audit): add audit log viewer`
+- [x] Implementar export de audit trail (CSV / PDF)
+  - `ExportAuditLogsJob` + `AuditDownloadController` + `AuditLogExportNotification`
+  - Commit (previo): `feat(audit): add audit export`
+- [x] Implementar retención configurable por plan y purge automático al expirar
+  - `PurgeExpiredAuditLogsAction` resuelve días desde `Plan.features.audit_retention_days` (default 365, mínimo 30)
+  - `PurgeExpiredAuditLogsJob` itera tenants activos diariamente a las 02:00
+  - Commit: `feat(audit): implement configurable retention and auto-purge`
+- [x] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
+  - `SupportAuditVisibility` contract en `Shared/Contracts`
+  - `QueryTenantAuditLogsAction` implementa el contrato: inicializa tenancy, filtra por severidad CRITICAL/HIGH, no expone IP ni metadata
+  - `SupportAuditEntryData` DTO con campos explícitos visibles
+  - Commit: `feat(audit): add support visibility model for tenant audit logs`
 
 ---
 
