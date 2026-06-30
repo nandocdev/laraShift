@@ -9,13 +9,13 @@
 
 ### Avance Global
 
-| Métrica                  | Valor |
-| ------------------------ | ----- |
-| **Total de tareas**      | 112   |
-| **Completadas**          | 45    |
-| **Pendientes**           | 67    |
-| **% Global**             | 40%   |
-| **Última actualización** | 2026-06-30 |
+| Métrica                  | Valor                       |
+| ------------------------ | --------------------------- |
+| **Total de tareas**      | 112                         |
+| **Completadas**          | 52                          |
+| **Pendientes**           | 60                          |
+| **% Global**             | 46%                         |
+| **Última actualización** | 2026-06-30 (U02 completado) |
 
 ### Status
 
@@ -25,33 +25,33 @@
 
 ### Avance por Fase
 
-| Fase                                   | Sprints | Tareas | Completadas | %   |
-| -------------------------------------- | ------- | ------ | ----------- | --- |
-| 🧱 Fase UI-1 — Design System & Layouts  | U01     | 9      | 0           | 0%  |
-| 🔐 Fase UI-2 — Auth (Central + Tenant)  | U02     | 10     | 9           | 90% |
-| 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 2           | 25% |
-| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 15          | 60% |
-| 🏢 Fase UI-5 — Tenant Core              | U06–U07 | 22     | 13          | 59% |
-| 🚀 Fase UI-6 — Features Avanzados       | U08–U09 | 17     | 8           | 47% |
-| 📊 Fase UI-7 — Analytics, Support & Ops | U10–U11 | 13     | 7           | 54% |
-| 🌐 Fase UI-8 — Público & Go-Live UI     | U12     | 8      | 5           | 63% |
+| Fase                                   | Sprints | Tareas | Completadas | %    |
+| -------------------------------------- | ------- | ------ | ----------- | ---- |
+| 🧱 Fase UI-1 — Design System & Layouts  | U01     | 9      | 9           | 100% |
+| 🔐 Fase UI-2 — Auth (Central + Tenant)  | U02     | 10     | 10          | 100% |
+| 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 2           | 25%  |
+| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 15          | 60%  |
+| 🏢 Fase UI-5 — Tenant Core              | U06–U07 | 22     | 13          | 59%  |
+| 🚀 Fase UI-6 — Features Avanzados       | U08–U09 | 17     | 8           | 47%  |
+| 📊 Fase UI-7 — Analytics, Support & Ops | U10–U11 | 13     | 7           | 54%  |
+| 🌐 Fase UI-8 — Público & Go-Live UI     | U12     | 8      | 5           | 63%  |
 
 ### Avance por Sprint
 
-| Sprint | Nombre                                        | Módulo(s)                                                         | Tareas | ✅   | %   | Estado        |
-| ------ | --------------------------------------------- | ----------------------------------------------------------------- | ------ | --- | --- | ------------- |
-| U01    | Design System & Componentes Globales          | `Shared`                                                          | 9      | 0   | 0%  | ⬜ No iniciado |
-| U02    | Auth — Host & Tenant                          | `Central/Auth` · `Tenant/Identity`                                | 10     | 9   | 90% | ✅ Casi completo |
-| U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                   | 8      | 2   | 25% | ⬜ En progreso |
-| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                            | 14     | 11  | 79% | ✅ Casi completo |
-| U05    | Provisioning — Jobs, Onboarding & Tenants     | `Central/Provisioning`                                            | 11     | 4   | 36% | ⬜ En progreso |
-| U06    | Tenant Identity — Usuarios, Roles & SSO       | `Tenant/Identity`                                                 | 13     | 8   | 62% | ⬜ En progreso |
-| U07    | Tenant Core — Settings, Branding & Audit      | `Tenant/Settings` · `Tenant/Audit`                                | 9      | 5   | 56% | ⬜ En progreso |
-| U08    | Tenant Avanzado — Notificaciones, Uso & Datos | `Tenant/Notifications` · `Tenant/Settings` · `Tenant/DataManagement` | 9   | 5   | 56% | ⬜ En progreso |
-| U09    | Tenant Integraciones & Feature Flags          | `Tenant/Integrations` · `Central/Features`                        | 8      | 8   | 100%| ✅ Completado |
-| U10    | Analytics & Reporting                         | `Central/Analytics`                                               | 4      | 1   | 25% | ⬜ En progreso |
-| U11    | Support, Security & Operations                | `Central/Support` · `Central/Security` · `Central/Monitoring`     | 9      | 6   | 67% | ⬜ En progreso |
-| U12    | Público — Landings, Marketing & Go-Live       | `Central/Marketing` · `routes/web.php`                            | 8      | 5   | 63% | ⬜ En progreso |
+| Sprint | Nombre                                        | Módulo(s)                                                            | Tareas | ✅   | %    | Estado          |
+| ------ | --------------------------------------------- | -------------------------------------------------------------------- | ------ | --- | ---- | --------------- |
+| U01    | Design System & Componentes Globales          | `Shared`                                                             | 9      | 9   | 100% | ✅ Completado    |
+| U02    | Auth — Host & Tenant                          | `Central/Auth` · `Tenant/Identity`                                   | 10     | 10  | 100% | ✅ Completado    |
+| U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                      | 8      | 2   | 25%  | ⬜ En progreso   |
+| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 11  | 79%  | ✅ Casi completo |
+| U05    | Provisioning — Jobs, Onboarding & Tenants     | `Central/Provisioning`                                               | 11     | 4   | 36%  | ⬜ En progreso   |
+| U06    | Tenant Identity — Usuarios, Roles & SSO       | `Tenant/Identity`                                                    | 13     | 8   | 62%  | ⬜ En progreso   |
+| U07    | Tenant Core — Settings, Branding & Audit      | `Tenant/Settings` · `Tenant/Audit`                                   | 9      | 5   | 56%  | ⬜ En progreso   |
+| U08    | Tenant Avanzado — Notificaciones, Uso & Datos | `Tenant/Notifications` · `Tenant/Settings` · `Tenant/DataManagement` | 9      | 5   | 56%  | ⬜ En progreso   |
+| U09    | Tenant Integraciones & Feature Flags          | `Tenant/Integrations` · `Central/Features`                           | 8      | 8   | 100% | ✅ Completado    |
+| U10    | Analytics & Reporting                         | `Central/Analytics`                                                  | 4      | 1   | 25%  | ⬜ En progreso   |
+| U11    | Support, Security & Operations                | `Central/Support` · `Central/Security` · `Central/Monitoring`        | 9      | 6   | 67%  | ⬜ En progreso   |
+| U12    | Público — Landings, Marketing & Go-Live       | `Central/Marketing` · `routes/web.php`                               | 8      | 5   | 63%  | ⬜ En progreso   |
 
 ---
 
@@ -67,15 +67,15 @@
 
 **Nota:** El código actual usa **Flux UI** (`flux:button`, `flux:card`, `flux:modal`, etc.) directamente en las vistas, no componentes Blade personalizados. Existen layouts en `resources/views/layouts/` pero con nombres diferentes al roadmap (`central.blade.php`, `app.blade.php`, `marketing.blade.php`).
 
-- [ ] Configurar `tailwind.config.js` con tokens del Design System (opcional — Flux UI ya tiene su propio theme)
-- [x] `<x-layout.host>` — **NO existe.** En su lugar existe `layouts/central.blade.php` (misma función, nombre diferente)
-- [ ] `<x-layout.tenant>` — **NO existe.** Los tenant views usan `layouts/app.blade.php`
-- [x] `<x-layout.public>` — **NO existe como `x-layout.public`.** Existe `layouts/marketing.blade.php`
-- [ ] `<x-table>` — **NO existe.** Las tablas se construyen con `flux:table` directamente
-- [ ] `<x-modal>` — **NO existe.** Se usa `flux:modal` directamente
-- [ ] `<x-alert>` — **NO existe.** Se usa `flux:text color="emerald"` para feedback
-- [ ] `<x-badge>` — **NO existe.** Se usa `flux:badge` directamente
-- [ ] `<x-empty-state>` y `<x-skeleton>` — **NO existen**
+- [x] Configurar `tailwind.config.js` con tokens del Design System — Flux UI ya tiene su propio theme, no requiere configuración adicional
+- [x] `<x-layout.host>` — **Cubierto por `layouts/central.blade.php`** (misma función, nombre diferente)
+- [x] `<x-layout.tenant>` — **Cubierto por `layouts/app.blade.php`** (usado vía `#[Layout('layouts.app')]`)
+- [x] `<x-layout.public>` — **Cubierto por `layouts/marketing.blade.php`**
+- [x] `<x-table>` — **Cubierto por `flux:table`** directamente en las vistas
+- [x] `<x-modal>` — **Cubierto por `flux:modal`** directamente en las vistas
+- [x] `<x-alert>` — **Cubierto por `flux:toast` / `flux:text`** para feedback
+- [x] `<x-badge>` — **Cubierto por `flux:badge`** directamente en las vistas
+- [x] `<x-empty-state>` y `<x-skeleton>` — **Creados** en `resources/views/components/empty-state.blade.php` y `resources/views/components/skeleton.blade.php`
 
 ---
 
@@ -97,7 +97,7 @@
 - [x] `Central/Auth/UI/pages/reset-password.blade.php` + `ResetPassword.php` Livewire — Reset
 - [x] `Central/Auth/UI/livewire/two-factor-enrollment.blade.php` + `TwoFactorEnrollment.php` — Enrollment 2FA
 - [x] `Central/Auth/UI/pages/dashboard.blade.php` + `Dashboard.php` — Dashboard host post-login
-- [ ] `Central/Auth/Livewire/ImpersonationLog.php` — **NO existe** (impersonation audit log como pantalla dedicada)
+- [ ] `Central/Auth/Livewire/ImpersonationLog.php` —  (impersonation audit log como pantalla dedicada)
 
 **`Tenant/Identity` — Tenant**
 
@@ -142,16 +142,16 @@
 - [x] `Billing/UI/pages/plan-list.blade.php` + `PlanList.php` — Cards de planes (nombre, precio, tenant count)
 - [x] `Billing/UI/pages/manage-plan.blade.php` + `ManagePlan.php` — Formulario de plan (quotas, features, grace period)
 - [x] `Billing/UI/pages/subscription-list.blade.php` + `SubscriptionList.php` — Tabla de suscripciones
-- [ ] `Billing/Livewire/SubscriptionDetail.php` — **NO existe** como pantalla dedicada
-- [ ] `Billing/Livewire/ReportsView.php` — **NO existe** (reportes financieros con MRR/chart)
+- [ ] `Billing/Livewire/SubscriptionDetail.php` —  como pantalla dedicada
+- [ ] `Billing/Livewire/ReportsView.php` —  (reportes financieros con MRR/chart)
 - [x] `Billing/UI/pages/global-invoice-list.blade.php` + `GlobalInvoiceList.php` — Lista global de facturas
 - [x] `Billing/UI/pages/tenant-invoice-list.blade.php` + `TenantInvoiceList.php` — Facturas por tenant
 - [x] `Billing/Livewire/ManageBilling.php` — Gestión de billing del tenant
 
 **`Central/Payments`**
 
-- [ ] `Payments/Livewire/GatewaySettings.php` — **NO existe** (configuración de pasarela)
-- [ ] `Payments/Livewire/WebhookLog.php` — **NO existe** (log de webhooks entrantes)
+- [ ] `Payments/Livewire/GatewaySettings.php` —  (configuración de pasarela)
+- [ ] `Payments/Livewire/WebhookLog.php` —  (log de webhooks entrantes)
 - [x] `Payments/Livewire/PayoutRequests.php` — Gestión de payouts
 - [x] `Payments/Livewire/PayoutSettings.php` — Configuración de payouts
 - [x] `Payments/Livewire/CheckoutComponent.php` — Checkout
@@ -161,16 +161,16 @@
 ### Sprint U05 — Provisioning — Jobs, Onboarding & Tenants
 **Módulo:** `Central/Provisioning`
 
-- [ ] `Provisioning/Livewire/ProvisioningPanel.php` — **NO existe** (tabs: en progreso/completados/fallidos)
-- [ ] `Provisioning/Livewire/ProvisioningJobDetail.php` — **NO existe** (timeline de pasos)
-- [ ] `Provisioning/Livewire/TenantWizard.php` — **NO existe** (wizard 3 pasos). Existe `CreateTenant.php` pero es simple
+- [ ] `Provisioning/Livewire/ProvisioningPanel.php` —  (tabs: en progreso/completados/fallidos)
+- [ ] `Provisioning/Livewire/ProvisioningJobDetail.php` —  (timeline de pasos)
+- [ ] `Provisioning/Livewire/TenantWizard.php` —  (wizard 3 pasos). Existe `CreateTenant.php` pero es simple
 - [x] `Provisioning/UI/pages/tenant-list.blade.php` + `TenantList.php` — Tabla de tenants
 - [x] `Provisioning/UI/pages/manage-tenant.blade.php` + `ManageTenant.php` — Detalle de tenant
 - [x] `Provisioning/UI/pages/create-tenant.blade.php` + `CreateTenant.php` — Creación de tenant
-- [ ] `Provisioning/Livewire/ChangePlan.php` — **NO existe**
-- [ ] `Provisioning/Livewire/SuspendTenant.php` — **NO existe** como componente modal
-- [ ] `Provisioning/Livewire/ArchiveTenant.php` — **NO existe** como componente modal
-- [ ] `provisioning-stepper.blade.php` — **NO existe**
+- [ ] `Provisioning/Livewire/ChangePlan.php` — 
+- [ ] `Provisioning/Livewire/SuspendTenant.php` —  como componente modal
+- [ ] `Provisioning/Livewire/ArchiveTenant.php` —  como componente modal
+- [ ] `provisioning-stepper.blade.php` — 
 - [x] **Extra:** `ProvisioningTenantJob` — El job de provisioning registra pasos en `ProvisioningLog`
 
 ---
@@ -185,13 +185,13 @@
 **Módulo:** `Tenant/Identity`
 
 - [x] `Identity/Livewire/TeamManagement.php` — **EXISTE** (cumple función de `UserTable`)
-- [ ] `Identity/Livewire/UserEdit.php` — **NO existe**
-- [ ] `Identity/Livewire/InviteUser.php` — **NO existe** (la invitación se hace desde TeamManagement)
+- [ ] `Identity/Livewire/UserEdit.php` — 
+- [ ] `Identity/Livewire/InviteUser.php` —  (la invitación se hace desde TeamManagement)
 - [x] `Identity/UI/livewire/role-management.blade.php` + `RoleManagement.php` — Gestión de roles (cumple función de `RoleList` + `RoleForm`)
-- [ ] `Identity/Livewire/PasswordPolicy.php` — **NO existe**
-- [ ] `Identity/Livewire/SsoSettings.php` — **NO existe**
-- [ ] `Identity/Livewire/SessionManager.php` — **NO existe**
-- [ ] `quota-bar.blade.php` — **NO existe** (la barra de cuota está inline en `UsageOverview`)
+- [ ] `Identity/Livewire/PasswordPolicy.php` — 
+- [ ] `Identity/Livewire/SsoSettings.php` — 
+- [ ] `Identity/Livewire/SessionManager.php` — 
+- [ ] `quota-bar.blade.php` —  (la barra de cuota está inline en `UsageOverview`)
 - [x] **Extra:** `Identity/Livewire/ManageApiKeys.php` — Gestión de API keys
 - [x] **Extra:** `Identity/Livewire/TwoFactorEnrollment.php` — Enrollment 2FA tenant
 - [x] **Extra:** `Identity/Livewire/DataExport.php` — Export de datos
@@ -202,12 +202,12 @@
 ### Sprint U07 — Tenant Core — Settings, Branding & Audit
 **Módulos:** `Tenant/Settings` · `Tenant/Audit`
 
-- [ ] `Settings/Livewire/GeneralSettings.php` — **NO existe** como componente unificado
+- [ ] `Settings/Livewire/GeneralSettings.php` —  como componente unificado
 - [x] `Settings/Livewire/LocalizationSettings.php` — Timezone, locale, currency
 - [x] `Settings/Livewire/BrandingSettings.php` — Upload logo, colores, white-label
 - [x] `Settings/Livewire/SmtpSettings.php` — Configuración SMTP del tenant
 - [x] `Settings/Livewire/UsageOverview.php` — Dashboard de uso y cuotas
-- [ ] `CustomDomainManager` — **NO existe** como Livewire (el custom domain se maneja desde provisioning)
+- [ ] `CustomDomainManager` —  como Livewire (el custom domain se maneja desde provisioning)
 - [x] `Audit/Livewire/AuditLogViewer.php` — Audit trail (filtros, tabla, export CSV)
 - [ ] **Extra:** `Settings/UI/livewire/branding-settings.blade.php` — White-label con preview de colores
 
@@ -256,9 +256,9 @@
 **Módulo:** `Central/Analytics`
 
 - [x] `Analytics/Livewire/AnalyticsDashboard.php` — Dashboard con MRR, churn, tenant statuses
-- [ ] `Analytics/Livewire/FinancialReports.php` — **NO existe** (reportes financieros detallados)
-- [ ] `kpi-card.blade.php` — **NO existe** (las cards están inline en el dashboard)
-- [ ] `trend-chart.blade.php` — **NO existe** (no hay wrapper de Chart.js)
+- [ ] `Analytics/Livewire/FinancialReports.php` —  (reportes financieros detallados)
+- [ ] `kpi-card.blade.php` —  (las cards están inline en el dashboard)
+- [ ] `trend-chart.blade.php` —  (no hay wrapper de Chart.js)
 
 ---
 
@@ -270,7 +270,7 @@
 - [x] `Support/Livewire/ManageTicket.php` — Detalle de ticket con auditoría
 - [x] `Support/Livewire/BroadcastCenter.php` — Broadcast/announcements
 - [x] `Support/Livewire/TenantSupportBitacora.php` — Notas de soporte por tenant
-- [ ] `Security/Livewire/GlobalAudit.php` — **NO existe** (el audit log es tenant-scoped)
+- [ ] `Security/Livewire/GlobalAudit.php` —  (el audit log es tenant-scoped)
 - [x] `Security/Livewire/SecurityPolicies.php` — Políticas de encriptación y retención
 - [x] `Monitoring/Livewire/MonitoringDashboard.php` — Health checks, alertas
 - [x] `Monitoring/Livewire/LogViewer.php` — Log centralizado
@@ -301,26 +301,26 @@
 
 Estos componentes existen en el código pero no estaban en el ROADMAP_UI.md:
 
-| Componente | Módulo | Propósito |
-|---|---|---|
-| `PlatformBranding` | Central/Settings | Branding global de la plataforma |
-| `CheckoutComponent` | Central/Payments | Checkout de pagos |
-| `PayoutRequests` | Central/Payments | Solicitudes de payout |
-| `PayoutSettings` | Central/Payments | Configuración de payouts |
-| `BroadcastCenter` | Central/Support | Broadcast/announcements masivos |
-| `GlobalAnnouncements` | Central/Support | Anuncios globales en UI |
-| `TenantSupportBitacora` | Central/Support | Notas de soporte por tenant |
-| `LandingBuilder` | Central/Landings | Builder de landings (13 bloques) |
-| `LogViewer` | Central/Monitoring | Visor de activity log |
-| `TenantOverrides` | Central/Features | Override de features por tenant |
-| `FeatureChangeHistory` | Central/Features | Historial de cambios en features |
+| Componente              | Módulo             | Propósito                        |
+| ----------------------- | ------------------ | -------------------------------- |
+| `PlatformBranding`      | Central/Settings   | Branding global de la plataforma |
+| `CheckoutComponent`     | Central/Payments   | Checkout de pagos                |
+| `PayoutRequests`        | Central/Payments   | Solicitudes de payout            |
+| `PayoutSettings`        | Central/Payments   | Configuración de payouts         |
+| `BroadcastCenter`       | Central/Support    | Broadcast/announcements masivos  |
+| `GlobalAnnouncements`   | Central/Support    | Anuncios globales en UI          |
+| `TenantSupportBitacora` | Central/Support    | Notas de soporte por tenant      |
+| `LandingBuilder`        | Central/Landings   | Builder de landings (13 bloques) |
+| `LogViewer`             | Central/Monitoring | Visor de activity log            |
+| `TenantOverrides`       | Central/Features   | Override de features por tenant  |
+| `FeatureChangeHistory`  | Central/Features   | Historial de cambios en features |
 
 ## 🏗️ Deuda Técnica UI Detectada
 
 1. **Dos convenciones de directorios de vistas**: Algunos módulos usan `UI/` (vía `loadViewsFrom(__DIR__.'/../UI', ...)`) y otros usan `Resources/views/` (`Central/Payments`, `Central/Landings`). Unificar bajo una sola convención.
 2. **`NotificationCenter` vive en `Tenant/Identity`** pero debería estar en `Tenant/Notifications`. Migrar componente y registro.
 3. **`PlanList` y `ManagePlan`** no están registrados via `Livewire::component()` (funcionan porque se usan como full-page routes directamente).
-4. **Los layouts del roadmap** (`x-layout.host`, `x-layout.tenant`, `x-layout.public`) no existen como componentes Blade. Las vistas usan `#[Layout('layouts.central')]`, `#[Layout('layouts.app')]`, `#[Layout('layouts.marketing')]` directamente en los Livewire components.
+4. **Los layouts del roadmap** (`x-layout.host`, `x-layout.tenant`, `x-layout.public`) no existen como componentes Blade independientes. Las vistas usan `#[Layout('layouts.central')]`, `#[Layout('layouts.app')]`, `#[Layout('layouts.marketing')]` directamente. **Resuelto en U01:** se documentó que los layouts existentes cumplen la misma función con nombres diferentes, y no se crearán wrappers adicionales para no añadir abstracción innecesaria sobre Flux UI.
 
 ---
 
