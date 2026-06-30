@@ -546,9 +546,21 @@ app/Modules
 **Módulo:** `Central/Analytics`
 **Entregable:** El equipo host tiene visibilidad agregada de salud de la plataforma sin tocar DB de tenants.
 
-- [ ] Implementar read model centralizado event-driven para métricas cross-tenant
-- [ ] Implementar dashboards de salud: MRR, churn, tenants activos/suspendidos, provisioning failures
-- [ ] Implementar export de métricas agregadas (CSV/PDF) para stakeholders
+- [x] Implementar read model centralizado event-driven para métricas cross-tenant
+  - `platform_metrics` tabla central con snapshots por (metric, period, group)
+  - `RefreshPlatformMetricsJob` snapshotea hourly: MRR, churn, statuses, provisioning, MRR by plan
+  - `PlatformMetric` model con upsert idempotente
+  - Commit: `feat(analytics): add RefreshPlatformMetricsJob for event-driven read model`
+- [x] Implementar dashboards de salud: MRR, churn, tenants activos/suspendidos, provisioning failures
+  - `AnalyticsDashboard` Livewire con tarjetas de: MRR, Churn 30d, Total/Active/Suspended/Archived tenants, Failed provisioning
+  - Tabla MRR by Plan (nombre, count, MRR)
+  - Monthly breakdown (12 meses) con new tenants y churned
+  - Commits: `feat(analytics): add AnalyticsDashboard Livewire and CSV export`
+- [x] Implementar export de métricas agregadas (CSV/PDF) para stakeholders
+  - `ExportPlatformMetricsAction` genera CSV desde snapshots por rango de fechas
+  - Almacena en `private` disk, descargable por ruta firmada
+  - Botón Export CSV en el dashboard
+  - Commit: `feat(analytics): add AnalyticsDashboard Livewire and CSV export`
 
 ---
 
