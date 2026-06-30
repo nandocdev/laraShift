@@ -701,17 +701,20 @@ Explicar:
 
 # SPRINT A EJECUTAR
 
-## Sprint 03 — Shared Layer — Tenancy Core
+## 🏢 FASE 4 — Tenant Core (S12–S15)
 
-**Entregable:** Resolución de tenant funcional, switching de conexiones DB operativo y tenant context propagándose correctamente en sync y async.
+> **Objetivo:** Los tenants tienen una aplicación funcional: configuración propia, audit trail, notificaciones y control de su consumo.
 
-- [ ] Implementar `TenantResolver`: resolución por dominio, subdominio, header y session
-- [ ] Implementar switching dinámico de conexiones DB según estrategia elegida (ADR-002)
-- [ ] Implementar scoped queries automáticas con `tenant_id` enforcement
-- [ ] Implementar cache de tenant configuration con TTL configurable
-- [ ] Implementar fallback a modo central cuando no hay tenant resuelto
-- [ ] Implementar propagación de tenant context en **async boundaries**: `tenant_id` embebido en el envelope del mensaje de cola, nunca inferido del worker
-- [ ] Implementar abstracción de Background Jobs con prioridad, retry y tenant context embebido
-- [ ] Escribir tests de aislamiento: verificar que queries de tenant A no filtran datos de tenant B
-- [ ] Escribir tests de chaos: simular conexión DB caída y verificar fallback
-- [ ] Documentar ADR-003: estrategia de tenant context propagation
+---
+
+### Sprint 12 — Tenant Settings y White-label
+
+**Módulo:** `Tenant/Settings`
+**Entregable:** Cada tenant puede personalizar su instancia con su identidad visual y configuraciones locales.
+
+- [ ] Implementar CRUD de configuraciones locales del tenant (timezone, moneda, formatos de fecha)
+- [ ] Implementar white-label: carga de logo, selección de colores primarios/secundarios
+- [ ] Implementar configuración de custom domain con verificación (integrado con Provisioning)
+- [ ] Implementar personalización de email templates del tenant
+- [ ] Implementar resolución jerárquica de configuración: Platform default → Plan default → Tenant override, en servicio único
+- [ ] Implementar CRUD de metadata dinámico y reglas de negocio específicas del tenant
