@@ -7,8 +7,10 @@ namespace App\Modules\Central\Payments\Providers;
 use App\Modules\Central\Billing\Handlers\SubscriptionPaymentHandler;
 use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Payments\Livewire\CheckoutComponent;
+use App\Modules\Central\Payments\Livewire\GatewaySettings;
 use App\Modules\Central\Payments\Livewire\PayoutRequests;
 use App\Modules\Central\Payments\Livewire\PayoutSettings;
+use App\Modules\Central\Payments\Livewire\WebhookLog;
 use App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment;
 use App\Modules\Central\Payments\Services\Gateways\ClaveGateway;
 use App\Modules\Central\Payments\Services\Gateways\DlocalGateway;
@@ -65,5 +67,7 @@ final class PaymentsServiceProvider extends ServiceProvider
         Livewire::component('payments.checkout', CheckoutComponent::class);
         Livewire::component('payments.payout-settings', PayoutSettings::class);
         Livewire::component('payments.payout-requests', PayoutRequests::class);
+        Livewire::component('payments.gateway-settings', GatewaySettings::class);
+        Livewire::component('payments.webhook-log', WebhookLog::class);
     }
 }
