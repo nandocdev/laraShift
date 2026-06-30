@@ -6,8 +6,9 @@ namespace App\Modules\Central\Billing\Http\Controllers;
 
 use App\Modules\Central\Billing\Actions\CancelSubscriptionAction;
 use App\Modules\Central\Billing\Actions\CreateCheckoutSessionAction;
-use App\Modules\Central\Billing\Models\Invoice;
-use App\Modules\Central\Billing\Support\PlanManager;
+use App\Modules\Central\Billing\Actions\FetchInvoicesAction;
+use App\Modules\Central\Billing\Actions\FetchPlansAction;
+use App\Modules\Central\Billing\Actions\FetchSubscriptionStatusAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -15,14 +16,16 @@ use Illuminate\Http\Request;
 
 class BillingApiController extends Controller
 {
+    public function __construct(
+        private FetchPlansAction $fetchPlans,
+    ) {}
+
     /**
      * GET /central/plans
      */
     public function listPlans(): JsonResponse
     {
-        return response()->json([
-            'data' => PlanManager::all(),
-        ]);
+        return response()->json($this->fetchPlans->execute());
     }
 
     /**
@@ -51,23 +54,9 @@ class BillingApiController extends Controller
     /**
      * GET /central/billing/subscriptions/{tenant_id}
      */
-    public function subscriptionStatus(string $tenantId): JsonResponse
+    public function subscriptionStatus(string $tenantId, FetchSubscriptionStatusAction $action): JsonResponse
     {
-        $tenant = Tenant::findOrFail($tenantId);
-        $subscription = $tenant->subscription('default');
-
-        return response()->json([
-            'tenant_id' => $tenant->id,
-            'plan_id' => $tenant->plan_id,
-            'status' => $tenant->status,
-            'subscription' => $subscription ? [
-                'stripe_id' => $subscription->stripe_id,
-                'stripe_status' => $subscription->stripe_status,
-                'ends_at' => $subscription->ends_at,
-                'on_grace_period' => $subscription->onGracePeriod(),
-                'active' => $subscription->active(),
-            ] : null,
-        ]);
+        return response()->json($action->execute($tenantId));
     }
 
     /**
@@ -75,8 +64,6 @@ class BillingApiController extends Controller
      */
     public function cancelSubscription(Request $request, string $id, CancelSubscriptionAction $action): JsonResponse
     {
-        // $id is the external_id/stripe_id here or local ID?
-        // PRD says {id}, let's assume local ID but resolve to tenant
         $tenant = Tenant::whereHas('subscriptions', fn ($q) => $q->where('id', $id)->orWhere('stripe_id', $id))->firstOrFail();
 
         $action->execute($tenant, $id, $request->boolean('immediately', false));
@@ -87,14 +74,10 @@ class BillingApiController extends Controller
     /**
      * GET /central/billing/invoices
      */
-    public function listInvoices(Request $request): JsonResponse
+    public function listInvoices(Request $request, FetchInvoicesAction $action): JsonResponse
     {
-        $query = Invoice::query();
-
-        if ($request->has('tenant_id')) {
-            $query->where('tenant_id', $request->tenant_id);
-        }
-
-        return response()->json($query->latest()->paginate(20));
+        return response()->json(
+            $action->execute($request->tenant_id)
+        );
     }
 }
