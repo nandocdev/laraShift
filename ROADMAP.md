@@ -195,16 +195,16 @@ app/Modules
 **Módulo:** `Central/Auth`
 **Entregable:** Super-admins pueden autenticarse con 2FA, impersonar tenants (auditado) y el sistema de sesiones está hardened.
 
-- [ ] Implementar autenticación de super-admins (email/password con hashing seguro)
-- [ ] Implementar 2FA (TOTP: Google Authenticator / Authy compatible)
+- [x] Implementar autenticación de super-admins (email/password con hashing seguro)
+- [x] Implementar 2FA (TOTP: Google Authenticator / Authy compatible)
 - [ ] Implementar SSO/OIDC para super-admins
-- [ ] Implementar token/session binding por tenant: re-validación obligatoria al cruzar boundary de tenant
-- [ ] Implementar resolución y redirección post-login según tenant (dominio/subdominio/header)
-- [ ] Implementar logout global con invalidación de sesiones en todos los tenants
-- [ ] Implementar impersonation de super-admin con audit obligatorio (actor, target, timestamp, IP)
-- [ ] Implementar rate limiting, brute-force protection y bloqueo por IP
-- [ ] Implementar recuperación de credenciales y verificación de email central
-- [ ] Escribir tests de seguridad: token reuse cross-tenant, session fixation, brute-force
+- [x] Implementar token/session binding por tenant: re-validación obligatoria al cruzar boundary de tenant
+- [x] Implementar resolución y redirección post-login según tenant (dominio/subdominio/header)
+- [x] Implementar logout global con invalidación de sesiones en todos los tenants
+- [x] Implementar impersonation de super-admin con audit obligatorio (actor, target, timestamp, IP)
+- [x] Implementar rate limiting, brute-force protection y bloqueo por IP
+- [x] Implementar recuperación de credenciales y verificación de email central
+- [x] Escribir tests de seguridad: token reuse cross-tenant, session fixation, brute-force
 
 ---
 
