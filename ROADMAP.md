@@ -625,9 +625,23 @@ app/Modules
 **Módulo:** `Central/Monitoring`
 **Entregable:** El equipo de operaciones tiene visibilidad completa de la plataforma y alertas críticas configuradas.
 
-- [ ] Implementar health checks centralizados de tenants y servicios críticos
-- [ ] Implementar alertas críticas: downtime, billing failures, resource exhaustion, provisioning failures
-- [ ] Implementar centralized logging aggregator con retención configurable y búsqueda
+- [x] Implementar health checks centralizados de tenants y servicios críticos
+  - `RunTenantHealthCheckAction` chequea: inicialización tenancy, query a DB del tenant
+  - `RunTenantHealthChecksJob` cada 5 minutos para todos los tenants activos
+  - `TenantHealthCheck` model con tipo, status, mensaje, detalles JSON
+  - Health endpoint existente (`GET /central/health`) chequea DB, Redis, Queue
+  - Commits: `feat(monitoring): add health check actions`, `feat(monitoring): add RunTenantHealthChecksJob`
+- [x] Implementar alertas críticas: downtime, billing failures, resource exhaustion, provisioning failures
+  - `CheckCriticalAlertsAction` detecta: health failures, provisioning failures, billing suspensions, resource exhaustion
+  - Alertas se muestran en `MonitoringDashboard` con tarjetas rojas/ámbar
+  - Logging a `activity_log` con severidad CRITICAL/warning
+  - Commit: `feat(monitoring): add health check actions and critical alerts detection`
+- [x] Implementar centralized logging aggregator con retención configurable y búsqueda
+  - `LogViewer` Livewire sobre `activity_log` existente (spatie/laravel-activitylog)
+  - Filtros por log_name, búsqueda por descripción
+  - Paginación de 50 registros, ordenado por fecha descendente
+  - Integrado en `MonitoringDashboard` con vista de actividad reciente
+  - Commit: `feat(monitoring): add MonitoringDashboard, LogViewer Livewire and routes`
 
 ---
 
