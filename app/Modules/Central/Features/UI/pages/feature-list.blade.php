@@ -4,9 +4,14 @@
             <flux:heading size="xl">{{ __('Global Feature Catalog') }}</flux:heading>
             <flux:subheading>{{ __('Define functionalities that can be assigned to plans or overridden per tenant.') }}</flux:subheading>
         </div>
-        <flux:button :href="route('central.features.create')" variant="primary" icon="plus" wire:navigate>
-            {{ __('New Feature') }}
-        </flux:button>
+        <div class="flex gap-2">
+            <flux:button :href="route('central.features.history')" variant="ghost" icon="clock" wire:navigate>
+                {{ __('History') }}
+            </flux:button>
+            <flux:button :href="route('central.features.create')" variant="primary" icon="plus" wire:navigate>
+                {{ __('New Feature') }}
+            </flux:button>
+        </div>
     </div>
 
     @if (session('status'))

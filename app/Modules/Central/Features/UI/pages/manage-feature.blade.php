@@ -41,6 +41,40 @@
                 :label="__('Feature is active and can be used by tenants')" 
             />
 
+            <flux:separator text="{{ __('Targeting Rules') }}" />
+
+            <flux:text class="text-sm text-zinc-500">{{ __('Optionally restrict this feature to specific tenant attributes. Leave empty to make it available to all tenants with this plan.') }}</flux:text>
+
+            <div class="space-y-4">
+                <flux:input
+                    wire:model="regionInput"
+                    :label="__('Regions')"
+                    placeholder="e.g. LATAM, US, EU"
+                    @keydown.enter.prevent="$wire.addRegion"
+                >
+                    <x-slot name="append">
+                        <flux:button variant="ghost" wire:click="addRegion">{{ __('Add') }}</flux:button>
+                    </x-slot>
+                </flux:input>
+
+                @if (! empty($targeting['regions']))
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ($targeting['regions'] as $region)
+                            <flux:badge size="sm" inset="left">
+                                {{ $region }}
+                                <button wire:click="removeRegion('{{ $region }}')" class="ml-1 hover:text-red-500">&times;</button>
+                            </flux:badge>
+                        @endforeach
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-3 gap-4">
+                    <flux:input wire:model="targeting.staff_min" type="number" min="0" :label="__('Min Staff')" placeholder="1" />
+                    <flux:input wire:model="targeting.staff_max" type="number" min="0" :label="__('Max Staff')" placeholder="50" />
+                    <flux:input wire:model="targeting.min_tenancy_days" type="number" min="0" :label="__('Min Tenancy (days)')" placeholder="30" />
+                </div>
+            </div>
+
             <div class="flex justify-between items-center mt-4">
                 @if($isEditing)
                     <flux:modal.trigger name="delete-feature">

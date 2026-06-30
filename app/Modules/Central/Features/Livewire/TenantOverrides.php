@@ -63,13 +63,23 @@ class TenantOverrides extends Component
         }
     }
 
-    public function removeOverride(string $id): void
+    public function removeOverride(string $id, ApplyTenantFeatureOverrideAction $action): void
     {
         $tenant = Tenant::findOrFail($this->tenantId);
         $override = TenantFeatureOverride::where('tenant_id', $this->tenantId)->findOrFail($id);
+
+        activity('features')
+            ->performedOn($tenant)
+            ->withProperties([
+                'feature_key' => $override->feature?->key,
+                'type' => $override->type,
+                'actor' => auth('central')->id(),
+                'removed_override_id' => $id,
+            ])
+            ->log('feature_override_removed');
+
         $override->delete();
 
-        // Refresh cache
         app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
 
         session()->flash('status', __('Override removed.'));
