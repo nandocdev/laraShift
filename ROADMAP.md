@@ -5,6 +5,47 @@
 
 ---
 
+## 🏛️ Árbol de Módulos — `app/Modules/{BoundedContext}/{DomainModule}/`
+
+Derivado del contenido real del roadmap, no de una lista cerrada impuesta de antemano. Cada Domain Module mapea 1:1 a un sprint o grupo de sprints que ya comparten lenguaje de dominio y entregable.
+
+```
+app/Modules
+├── Central
+│   ├── Analytics       (S19 — read models cross-tenant, reporting)
+│   ├── Auth            (S05 — super-admin auth, 2FA, SSO, impersonation)
+│   ├── Billing         (S08 — planes, suscripciones, dunning, facturación)
+│   ├── Features        (S16 — feature flags, targeting, rollouts)
+│   ├── Landings        (S23 — páginas públicas, pricing)
+│   ├── Marketing       (S23 — captura de leads, CRM, legales)
+│   ├── Monitoring       (S22 — health checks, alertas, log aggregation)
+│   ├── Payments        (S09 — pasarela, webhooks de pago, reconciliación)
+│   ├── Provisioning    (S10–S11 — ProvisioningJob, offboarding, custom domains)
+│   ├── Security        (S21 — auditoría global, retention, rotación de secrets)
+│   └── Support         (S20 — tickets, SLA, escalations)
+├── Shared
+│   ├── Contracts       (S02 — Ports/Interfaces cross-layer)
+│   ├── Events          (S02 — Outbox, DLQ, publisher/subscriber)
+│   ├── Http            (S04 — middleware, formateador, exception handler)
+│   ├── Infrastructure  (S01, S04 — bootstrap, queues, storage, tracing, rate limiting)
+│   ├── Models          (S02 — modelos base abstractos)
+│   ├── Repositories     (S02 — repositorios genéricos)
+│   ├── Tenancy         (S03 — TenantResolver, connection switching, context propagation)
+│   └── ValueObjects    (S02 — Money, Email, UUID, Timestamped)
+└── Tenant
+    ├── Audit           (S13 — audit trail, búsqueda, export, retención)
+    ├── DataManagement  (S18 — export/import, backups, retención GDPR)
+    ├── Identity        (S06–S07 — usuarios, RBAC, SSO tenant, sesiones)
+    ├── Integrations    (S17 — webhooks outbound, API keys)
+    ├── Notifications   (S14 — canales, plantillas, preferencias, dispatch)
+    ├── Settings        (S12 — white-label, custom domain, config jerárquica)
+    └── Usage           (S15 — contadores Redis, enforcement, dashboard de consumo)
+```
+
+**Criterio aplicado:** un Domain Module nuevo se crea cuando el sprint tiene su propio lenguaje de dominio, sus propias entidades y un entregable que no es simplemente "configuración" de otro módulo. `Notifications`, `Usage`, `Integrations` y `DataManagement` califican como módulos de `Tenant` porque encapsulan reglas de negocio propias (políticas de canal, enforcement de cuotas, contratos de delivery, retención GDPR) — no son solo infra reutilizable. `Analytics`, `Monitoring` y `Security` califican como módulos de `Central` por la misma razón a nivel de plataforma. `Shared/Infrastructure` queda reservado para lo genuinamente technology-agnostic (colas, storage, tracing, HTTP client) que no tiene reglas de negocio.
+
+---
+
 ## 📊 Panel de Avance del Proyecto
 
 > **Instrucciones:** Al cerrar cada sprint, contar los `[x]` completados en ese bloque y actualizar los totales aquí.
@@ -75,6 +116,7 @@
 
 ### Sprint 01 — Infraestructura Base
 
+**Módulo:** `Shared/Infrastructure`
 **Entregable:** Repositorio funcional con entornos configurados, CI/CD mínimo y DB de host corriendo.
 
 - [x] Inicializar repositorio con estructura de módulos (Shared/, Tenant/, Central/) — Completado
@@ -92,6 +134,7 @@
 
 ### Sprint 02 — Shared Layer — Contratos y Eventos
 
+**Módulo:** `Shared/Contracts` (Ports, VOs, modelos base) + `Shared/Events` (Outbox, DLQ, publisher/subscriber)
 **Entregable:** Contratos de interfaces definidos, sistema de eventos con Outbox operativo y eventos base publicándose.
 
 - [x] Definir y documentar todos los Ports/Interfaces cross-layer (`TenantService`, `BillingPort`, `NotificationPort`, `StoragePort`)
@@ -108,34 +151,36 @@
 
 ### Sprint 03 — Shared Layer — Tenancy Core
 
+**Módulo:** `Shared/Tenancy`
 **Entregable:** Resolución de tenant funcional, switching de conexiones DB operativo y tenant context propagándose correctamente en sync y async.
 
-- [x] Implementar `TenantResolver`: resolución por dominio, subdominio, header y session
-- [x] Implementar switching dinámico de conexiones DB según estrategia elegida (ADR-002)
-- [x] Implementar scoped queries automáticas con `tenant_id` enforcement
-- [x] Implementar cache de tenant configuration con TTL configurable
-- [x] Implementar fallback a modo central cuando no hay tenant resuelto
-- [x] Implementar propagación de tenant context en **async boundaries**: `tenant_id` embebido en el envelope del mensaje de cola, nunca inferido del worker
-- [x] Implementar abstracción de Background Jobs con prioridad, retry y tenant context embebido
-- [x] Escribir tests de aislamiento: verificar que queries de tenant A no filtran datos de tenant B
-- [x] Escribir tests de chaos: simular conexión DB caída y verificar fallback
-- [x] Documentar ADR-003: estrategia de tenant context propagation
+- [ ] Implementar `TenantResolver`: resolución por dominio, subdominio, header y session
+- [ ] Implementar switching dinámico de conexiones DB según estrategia elegida (ADR-002)
+- [ ] Implementar scoped queries automáticas con `tenant_id` enforcement
+- [ ] Implementar cache de tenant configuration con TTL configurable
+- [ ] Implementar fallback a modo central cuando no hay tenant resuelto
+- [ ] Implementar propagación de tenant context en **async boundaries**: `tenant_id` embebido en el envelope del mensaje de cola, nunca inferido del worker
+- [ ] Implementar abstracción de Background Jobs con prioridad, retry y tenant context embebido
+- [ ] Escribir tests de aislamiento: verificar que queries de tenant A no filtran datos de tenant B
+- [ ] Escribir tests de chaos: simular conexión DB caída y verificar fallback
+- [ ] Documentar ADR-003: estrategia de tenant context propagation
 
 ---
 
 ### Sprint 04 — Shared Layer — HTTP y Observabilidad
 
+**Módulo:** `Shared/Http` (middleware, formateador, exception handler) + `Shared/Infrastructure` (exportador de trazas, cliente HTTP con circuit breaker)
 **Entregable:** Middleware stack completo operativo, trazabilidad distribuida configurada y logs estructurados fluyendo.
 
-- [ ] Implementar middleware de tenant resolution (integrado con `TenantResolver`)
-- [ ] Implementar middleware de correlation ID (generación y propagación en headers)
-- [ ] Implementar propagación de W3C TraceContext / OpenTelemetry en el middleware stack
+- [x] Implementar middleware de tenant resolution (integrado con `TenantResolver`)
+- [x] Implementar middleware de correlation ID (generación y propagación en headers)
+- [x] Implementar propagación de W3C TraceContext / OpenTelemetry en el middleware stack
 - [ ] Configurar exportador de trazas (Jaeger / Tempo / Datadog según stack)
-- [ ] Implementar logger estructurado tenant-aware (campos fijos: `tenant_id`, `correlation_id`, `trace_id`)
-- [ ] Implementar formateador unificado de respuestas (envelope `data`, `meta`, `errors`)
-- [ ] Implementar exception handler centralizado con mapa de errores a HTTP status codes
-- [ ] Implementar cliente HTTP genérico con retry y circuit breaker para llamadas externas
-- [ ] Implementar middleware de rate limiting global (por IP y por tenant)
+- [x] Implementar logger estructurado tenant-aware (campos fijos: `tenant_id`, `correlation_id`, `trace_id`)
+- [x] Implementar formateador unificado de respuestas (envelope `data`, `meta`, `errors`)
+- [x] Implementar exception handler centralizado con mapa de errores a HTTP status codes
+- [x] Implementar cliente HTTP genérico con retry y circuit breaker para llamadas externas
+- [x] Implementar middleware de rate limiting global (por IP y por tenant)
 
 ---
 
@@ -147,6 +192,7 @@
 
 ### Sprint 05 — Host Auth — Super-admin
 
+**Módulo:** `Central/Auth`
 **Entregable:** Super-admins pueden autenticarse con 2FA, impersonar tenants (auditado) y el sistema de sesiones está hardened.
 
 - [ ] Implementar autenticación de super-admins (email/password con hashing seguro)
@@ -164,6 +210,7 @@
 
 ### Sprint 06 — Tenant Identity — Usuarios y Roles
 
+**Módulo:** `Tenant/Identity`
 **Entregable:** Dentro de un tenant, los usuarios pueden registrarse, loguearse y el admin puede gestionar roles y permisos con RBAC.
 
 - [ ] Implementar CRUD de usuarios dentro del contexto de tenant
@@ -181,6 +228,7 @@
 
 ### Sprint 07 — Tenant Identity — SSO y Sesiones
 
+**Módulo:** `Tenant/Identity`
 **Entregable:** Tenants enterprise pueden configurar SSO/SAML/OIDC. Gestión de sesiones concurrentes operativa.
 
 - [ ] Implementar SSO/SAML 2.0 configurable por tenant
@@ -204,6 +252,7 @@
 
 ### Sprint 08 — Host Billing — Suscripciones y Planes
 
+**Módulo:** `Central/Billing`
 **Entregable:** CRUD de planes y suscripciones funcional con prorrateo, grace periods y dunning configurados.
 
 - [ ] Implementar CRUD de planes (nombre, precio, ciclo, features incluidos, límites de quotas)
@@ -221,6 +270,7 @@
 
 ### Sprint 09 — Host Payments — Pasarela y Webhooks
 
+**Módulo:** `Central/Payments`
 **Entregable:** Pagos reales procesándose en ambiente de staging. Webhooks de la pasarela manejados de forma idempotente. Reintentos automáticos con exponential backoff y reconciliación de discrepancias con la pasarela.
 
 - [ ] Implementar integración con pasarela elegida (Stripe / PayPal / Culqi / dLocal según mercado), Prioridad: dLocal para LATAM
@@ -237,6 +287,7 @@
 
 ### Sprint 10 — Host Provisioning — ProvisioningJob
 
+**Módulo:** `Central/Provisioning`
 **Entregable:** El flujo completo de onboarding de un nuevo tenant funciona end-to-end, con `ProvisioningJob` rastreable y recuperable ante fallos.
 
 - [ ] Implementar entidad `ProvisioningJob` con máquina de estados explícita (`PENDING → VALIDATED → DB_CREATED → MIGRATED → DNS_CONFIGURED → SSL_ISSUED → READY`)
@@ -254,6 +305,7 @@
 
 ### Sprint 11 — Host Provisioning — Offboarding y Recovery
 
+**Módulo:** `Central/Provisioning`
 **Entregable:** Suspensión, archivado y eliminación de tenants funcionando con retención legal. Custom domains verificables.
 
 - [ ] Implementar flujo de suspensión de tenant (deshabilitar acceso, congelar datos, notificar)
@@ -276,6 +328,7 @@
 
 ### Sprint 12 — Tenant Settings y White-label
 
+**Módulo:** `Tenant/Settings`
 **Entregable:** Cada tenant puede personalizar su instancia con su identidad visual y configuraciones locales.
 
 - [ ] Implementar CRUD de configuraciones locales del tenant (timezone, moneda, formatos de fecha)
@@ -289,6 +342,7 @@
 
 ### Sprint 13 — Tenant Audit
 
+**Módulo:** `Tenant/Audit`
 **Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
 
 - [ ] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
@@ -302,6 +356,7 @@
 
 ### Sprint 14 — Tenant Notifications
 
+**Módulo:** `Tenant/Notifications`
 **Entregable:** El tenant puede recibir y gestionar notificaciones in-app y por email con templates propios.
 
 - [ ] Implementar gestión de canales de notificación por tenant (email, in-app)
@@ -309,19 +364,19 @@
 - [ ] Implementar envío de notificaciones in-app con bandeja y estado de lectura
 - [ ] Implementar envío de notificaciones por email usando templates del tenant
 - [ ] Implementar preferencias de notificación por usuario (qué tipos recibir, por qué canal)
-- [ ] Implementar servicio centralizado de Notifications en Shared Layer con abstracción de canal
+- [ ] Implementar servicio de dispatch con abstracción de canal (usa `Shared/Infrastructure` para el transporte SMTP/push, la regla de negocio vive aquí)
 - [ ] Escribir tests de que notificaciones de un tenant no se envían a usuarios de otro tenant
 
 ---
 
-### Sprint 15 — Tenant Usage & Quot
-as
+### Sprint 15 — Tenant Usage & Quotas
 
+**Módulo:** `Tenant/Usage`
 **Entregable:** El sistema trackea consumo en tiempo real, enforce límites y alerta cuando se aproximan.
 
 - [ ] Implementar contadores distribuidos en Redis para enforcement en tiempo real (API calls, usuarios activos)
 - [ ] Implementar tracking de métricas de consumo para reporting en DB (eventual, agregado)
-- [ ] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan
+- [ ] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan (lee definición de límites desde `Central/Features`, no la duplica)
 - [ ] Implementar alertas de proximidad a límites (configurable: 80%, 90%, 100%)
 - [ ] Implementar dashboard de uso visible para el admin del tenant
 - [ ] Implementar sincronización periódica de contadores Redis → DB para persistencia y reporting
@@ -336,6 +391,7 @@ as
 
 ### Sprint 16 — Host Feature Flags
 
+**Módulo:** `Central/Features`
 **Entregable:** Super-admins pueden controlar features por plan y hacer rollouts graduales por atributos de tenant.
 
 - [ ] Implementar CRUD de feature flags (nombre, tipo boolean/payload, estado por plan)
@@ -348,6 +404,7 @@ as
 
 ### Sprint 17 — Tenant Integrations — Webhooks y API Keys
 
+**Módulo:** `Tenant/Integrations`
 **Entregable:** Los tenants pueden conectar sistemas externos via webhooks y API keys con delivery garantizado.
 
 - [ ] Implementar configuración de webhooks outbound por tenant (URL, eventos suscritos, secret)
@@ -360,17 +417,19 @@ as
 
 ### Sprint 18 — Tenant Data Management
 
+**Módulo:** `Tenant/DataManagement`
 **Entregable:** Los tenants pueden exportar e importar sus datos y gestionar backups bajo cumplimiento GDPR.
 
 - [ ] Implementar export completo de datos del tenant (JSON/CSV, async con notificación al completar)
 - [ ] Implementar import de datos con validación y reporte de errores
-- [ ] Implementar backup on-demand con descarga segura por tiempo limitado
+- [ ] Implementar backup on-demand con descarga segura por tiempo limitado (usa `Shared/Infrastructure` para el storage, la política de negocio vive aquí)
 - [ ] Implementar aplicación de políticas de retención de datos configurables por tipo de dato
 
 ---
 
 ### Sprint 19 — Host Analytics & Reporting
 
+**Módulo:** `Central/Analytics`
 **Entregable:** El equipo host tiene visibilidad agregada de salud de la plataforma sin tocar DB de tenants.
 
 - [ ] Implementar read model centralizado event-driven para métricas cross-tenant
@@ -381,6 +440,7 @@ as
 
 ### Sprint 20 — Host Support
 
+**Módulo:** `Central/Support`
 **Entregable:** El equipo de soporte puede gestionar tickets con SLA y acceder a contexto de audit del tenant.
 
 - [ ] Implementar CRUD y ciclo de vida de tickets (abierto, en progreso, escalado, resuelto, cerrado)
@@ -397,6 +457,7 @@ as
 
 ### Sprint 21 — Host Security & Compliance
 
+**Módulo:** `Central/Security`
 **Entregable:** Auditoría de seguridad completada, políticas de data retention activas y secrets bajo rotación.
 
 - [ ] Implementar auditoría global de accesos y cambios sensibles en el host
@@ -407,6 +468,7 @@ as
 
 ### Sprint 22 — Host Monitoring & Alerting
 
+**Módulo:** `Central/Monitoring`
 **Entregable:** El equipo de operaciones tiene visibilidad completa de la plataforma y alertas críticas configuradas.
 
 - [ ] Implementar health checks centralizados de tenants y servicios críticos
@@ -417,16 +479,18 @@ as
 
 ### Sprint 23 — Host Landings y Marketing
 
+**Módulo:** `Central/Landings` (páginas públicas) + `Central/Marketing` (captura de leads, CRM, legales)
 **Entregable:** La superficie pública de adquisición está operativa y capturando leads.
 
-- [ ] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com)
-- [ ] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding
-- [ ] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico
+- [ ] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com) — `Central/Landings`
+- [ ] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding — `Central/Marketing`
+- [ ] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico — `Central/Marketing`
 
 ---
 
 ### Sprint 24 — Hardening Final y Go-Live
 
+**Módulo:** N/A — checklist operativo, no produce código bajo `app/Modules/`
 **Entregable:** La plataforma pasa checklist de go-live y está en producción.
 
 - [ ] Ejecutar checklist de seguridad pre-producción: pen test de tenant isolation, revisión de secrets, HTTPS everywhere, headers de seguridad
