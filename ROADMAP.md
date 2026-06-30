@@ -345,12 +345,12 @@ app/Modules
 **Módulo:** `Tenant/Audit`
 **Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
 
-- [ ] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
-- [ ] Definir catálogo de eventos auditables con nivel de criticidad
-- [ ] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
-- [ ] Implementar export de audit trail (CSV / PDF)
-- [ ] Implementar retención configurable por plan y purge automático al expirar
-- [ ] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
+- [x] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
+- [x] Definir catálogo de eventos auditables con nivel de criticidad
+- [x] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
+- [x] Implementar export de audit trail (CSV / PDF)
+- [x] Implementar retención configurable por plan y purge automático al expirar
+- [x] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
 
 ---
 
