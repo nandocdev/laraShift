@@ -516,10 +516,28 @@ app/Modules
 **Módulo:** `Tenant/DataManagement`
 **Entregable:** Los tenants pueden exportar e importar sus datos y gestionar backups bajo cumplimiento GDPR.
 
-- [ ] Implementar export completo de datos del tenant (JSON/CSV, async con notificación al completar)
-- [ ] Implementar import de datos con validación y reporte de errores
-- [ ] Implementar backup on-demand con descarga segura por tiempo limitado (usa `Shared/Infrastructure` para el storage, la política de negocio vive aquí)
-- [ ] Implementar aplicación de políticas de retención de datos configurables por tipo de dato
+- [x] Implementar export completo de datos del tenant (JSON/CSV, async con notificación al completar)
+  - `ExportTenantDataAction` + `ExportTenantDataJob` + `DataExport` Livewire
+  - `IdentityExportService`, `SettingsExportService`, `BillingExportService` implementan `Exportable`
+  - Commits (previos): `feat(identity): implement tenant data export`
+- [x] Implementar import de datos con validación y reporte de errores
+  - `ImportTenantDataAction` + `ProcessImportJob` con validación de JSON y max 1000 records
+  - Soporta import de usuarios (con overwrite opcional) y settings
+  - Reporte de errores por fila con summary (importados, omitidos, errores)
+  - `ManageDataImports` Livewire con tabla de historial
+  - Commit: `feat(data): add ProcessImportJob and CreateBackupJob`
+- [x] Implementar backup on-demand con descarga segura por tiempo limitado
+  - `CreateBackupAction` + `CreateBackupJob` que recolecta todos los exportables
+  - Almacenamiento en `private` disk, expira a los 7 días
+  - Descarga via `AuditDownloadController` con URL firmada de 24h
+  - `ManageBackups` Livewire con lista y botón de descarga
+  - Commit: `feat(data): add ProcessImportJob and CreateBackupJob`
+- [x] Implementar aplicación de políticas de retención de datos configurables por tipo de dato
+  - `RetentionPolicyData` DTO con días por tipo (audit_logs, notifications, activity_log, exports, backups)
+  - `UpdateRetentionPolicyAction` + `GetRetentionPolicyAction` (almacena en tenant.data JSON)
+  - `RetentionSettings` Livewire con formulario para cada tipo
+  - Valores por defecto: audit 365d, notifications 180d, activity 365d, exports 30d, backups 7d
+  - Commit: `feat(data): add Livewire components for import, backups, and retention settings`
 
 ---
 
