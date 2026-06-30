@@ -23,7 +23,7 @@ abstract class DomainEvent
 
     public readonly string $occurredAt;
 
-    public ?string $tenantId = null;
+    public string $tenantId = '';
 
     public ?string $correlationId = null;
 
