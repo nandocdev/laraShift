@@ -59,7 +59,7 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
             'id',
             'slug',
             'name',
-            'email', // Tenant owner email
+            'email',
             'plan_id',
             'status',
             'suspended_at',
@@ -67,6 +67,7 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
             'read_only',
             'provisioning_status',
             'archived_at',
+            'data',
         ];
     }
 }
