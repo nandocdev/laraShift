@@ -9,6 +9,7 @@ use App\Modules\Central\Landings\Providers\LandingServiceProvider;
 use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
 use App\Modules\Central\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
+use App\Modules\Central\Security\Providers\SecurityServiceProvider;
 use App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
 use App\Modules\Tenant\Audit\Providers\AuditServiceProvider;
@@ -28,6 +29,7 @@ return [
     HorizonServiceProvider::class,
     TenancyServiceProvider::class,
     CentralAuthServiceProvider::class,
+    SecurityServiceProvider::class,
     AnalyticsServiceProvider::class,
     ProvisioningServiceProvider::class,
     BillingServiceProvider::class,

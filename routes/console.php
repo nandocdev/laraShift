@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Central\Analytics\Jobs\RefreshPlatformMetricsJob;
+use App\Modules\Central\Security\Jobs\RotateTenantSecretsJob;
 use App\Modules\Central\Support\Jobs\EscalateOverdueTicketsJob;
 use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
 use App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob;
@@ -38,4 +39,8 @@ Schedule::job(new RefreshPlatformMetricsJob)
 
 Schedule::job(new EscalateOverdueTicketsJob)
     ->everyThirtyMinutes()
+    ->withoutOverlapping();
+
+Schedule::job(new RotateTenantSecretsJob)
+    ->dailyAt('03:00')
     ->withoutOverlapping();
