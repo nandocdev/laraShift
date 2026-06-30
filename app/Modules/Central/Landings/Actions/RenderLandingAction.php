@@ -7,7 +7,7 @@ namespace App\Modules\Central\Landings\Actions;
 use App\Modules\Central\Landings\Models\Landing;
 use Illuminate\Support\Facades\Blade;
 
-final class RenderLandingAction
+final readonly class RenderLandingAction
 {
     /**
      * Renders a landing page to a complete HTML string.
