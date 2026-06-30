@@ -58,7 +58,7 @@ app/Modules
 | **Completadas**          | 152        |
 | **Pendientes**           | 10         |
 | **% Global**             | 94%        |
-| **Última actualización** | 2026-06-28 |
+| **Última actualización** | 2026-06-29 |
 
 ### Status
 
