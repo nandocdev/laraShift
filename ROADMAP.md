@@ -650,9 +650,22 @@ app/Modules
 **Módulo:** `Central/Landings` (páginas públicas) + `Central/Marketing` (captura de leads, CRM, legales)
 **Entregable:** La superficie pública de adquisición está operativa y capturando leads.
 
-- [ ] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com) — `Central/Landings`
-- [ ] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding — `Central/Marketing`
-- [ ] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico — `Central/Marketing`
+- [x] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com)
+  - `LandingPage` Livewire con planes desde `PlanManager`, branding desde `CentralBranding`
+  - Rutas públicas `GET /`, `GET /register` tanto para central_domains como catch-all
+  - Commits (previos): `feat(marketing): implement landing page with dynamic pricing`
+- [x] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding
+  - `RegisterTenant` Livewire multi-step wizard: org info → plan → payment
+  - Validación: slug unique, country LATAM, lock de 15 min para URLs, plan y billing option
+  - Redirección post-creación al tenant domain: `{slug}.{central_domain}/auth/login`
+  - Commits (previos): `feat(marketing): implement tenant registration flow`
+- [x] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico
+  - `LegalDocument` + `LegalDocumentVersion` models con versionado automático
+  - `UpsertLegalDocumentAction` incrementa versión, preserva anterior en tabla de history
+  - `PublishLegalDocumentAction` despublica versión anterior del mismo tipo, publica nueva
+  - `ManageLegalDocuments` Livewire con tabla de versiones por tipo y modal editor HTML
+  - Rutas públicas `GET /terms`, `GET /privacy` renderizan versión publicada
+  - Commits: `feat(legal): add legal document models`, `feat(legal): add ManageLegalDocuments`
 
 ---
 
