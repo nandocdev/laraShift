@@ -32,6 +32,7 @@ use App\Modules\Tenant\Notifications\Livewire\NotificationPreferences;
 use App\Modules\Tenant\Settings\Livewire\BrandingSettings;
 use App\Modules\Tenant\Settings\Livewire\LocalizationSettings;
 use App\Modules\Tenant\Settings\Livewire\SmtpSettings;
+use App\Modules\Tenant\Settings\Livewire\UsageOverview;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
@@ -121,6 +122,7 @@ Route::middleware([
         Route::get('/settings/security/2fa', TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/settings/notifications/templates', ManageNotificationTemplates::class)->name('tenant.settings.notifications.templates');
         Route::get('/settings/notifications/preferences', NotificationPreferences::class)->name('tenant.settings.notifications.preferences');
+        Route::get('/usage', UsageOverview::class)->name('tenant.usage.index');
         Route::get('/audit', AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', AuditDownloadController::class)->name('tenant.audit.download');
 
