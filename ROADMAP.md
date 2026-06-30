@@ -77,16 +77,16 @@
 
 **Entregable:** Repositorio funcional con entornos configurados, CI/CD mínimo y DB de host corriendo.
 
-- [ ] Inicializar repositorio con estructura de módulos (host/, shared/, tenant/, infra/) — Completado
-- [ ] Configurar entornos: `.env` base, staging y production con secrets management — Completado
-- [ ] Levantar DB host (PostgreSQL) con migraciones iniciales vía herramienta de ORM elegida — Completado
-- [ ] Configurar contenedores (Docker Compose) para desarrollo local completo — Completado
-- [ ] Implementar pipeline CI mínimo (lint, tests unitarios, build)
-- [ ] Configurar gestor de colas (Redis / RabbitMQ / SQS según decisión de stack) — Completado
-- [ ] Configurar proveedor de storage (S3 o equivalente) con bucket de staging — Completado
-- [ ] Configurar proveedor de email transaccional (SES / Postmark / Resend) — Completado
-- [ ] Documentar ADR-001: decisiones de stack base (lenguaje, framework, DB engine) — Completado
-- [ ] Documentar ADR-002: estrategia de aislamiento de tenant (Single-DB con `tenant_id`) — Completado
+- [x] Inicializar repositorio con estructura de módulos (Shared/, Tenant/, Central/) — Completado
+- [x] Configurar entornos: `.env` base, staging y production con secrets management — Completado
+- [x] Levantar DB host (PostgreSQL) con migraciones iniciales vía herramienta de ORM elegida — Completado
+- [x] Configurar contenedores (Docker Compose) para desarrollo local completo — Completado
+- [x] Implementar pipeline CI mínimo (lint, tests unitarios, build)
+- [x] Configurar gestor de colas (Redis / RabbitMQ / SQS según decisión de stack) — Completado
+- [x] Configurar proveedor de storage (S3 o equivalente) con bucket de staging — Completado
+- [x] Configurar proveedor de email transaccional (SES / Postmark / Resend) — Completado
+- [x] Documentar ADR-001: decisiones de stack base (lenguaje, framework, DB engine) — Completado
+- [x] Documentar ADR-002: estrategia de aislamiento de tenant (Single-DB con `tenant_id`) — Completado
 
 ---
 
@@ -94,15 +94,15 @@
 
 **Entregable:** Contratos de interfaces definidos, sistema de eventos con Outbox operativo y eventos base publicándose.
 
-- [ ] Definir y documentar todos los Ports/Interfaces cross-layer (`TenantService`, `BillingPort`, `NotificationPort`, `StoragePort`)
-- [ ] Implementar Value Objects base (`Money`, `Email`, `UUID`, `Timestamped`)
-- [ ] Implementar modelos base abstractos y repositorios genéricos
-- [ ] Diseñar envelope de evento con versionado explícito (`event_type`, `version`, `tenant_id`, `correlation_id`, `occurred_at`)
-- [ ] Implementar Outbox pattern (tabla `outbox_events`, worker de publicación, at-least-once delivery)
-- [ ] Implementar Dead Letter Queue con reintentos configurables y backoff exponencial
-- [ ] Definir catálogo inicial de eventos de dominio (`TenantCreated/v1`, `SubscriptionChanged/v1`, `PaymentSucceeded/v1`, `TenantProvisioningFailed/v1`)
-- [ ] Implementar publisher y subscriber base con garantía at-least-once
-- [ ] Escribir tests de contrato para publisher/subscriber
+- [x] Definir y documentar todos los Ports/Interfaces cross-layer (`TenantService`, `BillingPort`, `NotificationPort`, `StoragePort`)
+- [x] Implementar Value Objects base (`Money`, `Email`, `UUID`, `Timestamped`)
+- [x] Implementar modelos base abstractos y repositorios genéricos
+- [x] Diseñar envelope de evento con versionado explícito (`event_type`, `version`, `tenant_id`, `correlation_id`, `occurred_at`)
+- [x] Implementar Outbox pattern (tabla `outbox_events`, worker de publicación, at-least-once delivery)
+- [x] Implementar Dead Letter Queue con reintentos configurables y backoff exponencial
+- [x] Definir catálogo inicial de eventos de dominio (`TenantCreated/v1`, `SubscriptionChanged/v1`, `PaymentSucceeded/v1`, `TenantProvisioningFailed/v1`)
+- [x] Implementar publisher y subscriber base con garantía at-least-once
+- [x] Escribir tests de contrato para publisher/subscriber
 
 ---
 
