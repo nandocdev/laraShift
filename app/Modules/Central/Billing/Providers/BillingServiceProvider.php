@@ -8,7 +8,9 @@ use App\Modules\Central\Billing\Console\Commands\ReconcileSubscriptionsCommand;
 use App\Modules\Central\Billing\Livewire\GlobalInvoiceList;
 use App\Modules\Central\Billing\Livewire\HostedCheckout;
 use App\Modules\Central\Billing\Livewire\ManageBilling;
+use App\Modules\Central\Billing\Livewire\ReportsView;
 use App\Modules\Central\Billing\Livewire\SelectPlan;
+use App\Modules\Central\Billing\Livewire\SubscriptionDetail;
 use App\Modules\Central\Billing\Livewire\SubscriptionList;
 use App\Modules\Central\Billing\Livewire\TenantInvoiceList;
 use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
@@ -65,5 +67,7 @@ class BillingServiceProvider extends ServiceProvider
         Livewire::component('billing-update-payment-method', UpdatePaymentMethod::class);
         Livewire::component('billing-select-plan', SelectPlan::class);
         Livewire::component('billing-hosted-checkout', HostedCheckout::class);
+        Livewire::component('billing-subscription-detail', SubscriptionDetail::class);
+        Livewire::component('billing-reports-view', ReportsView::class);
     }
 }

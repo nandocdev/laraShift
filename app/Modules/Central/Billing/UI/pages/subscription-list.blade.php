@@ -43,6 +43,7 @@
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                 <flux:menu>
+                                    <flux:menu.item icon="eye" :href="route('central.billing.subscriptions.detail', $tenant->id)" wire:navigate>{{ __('View Details') }}</flux:menu.item>
                                     <flux:menu.item icon="credit-card" :href="route('central.billing.tenant.invoices', $tenant->id)" wire:navigate>{{ __('View Invoices') }}</flux:menu.item>
                                     <flux:menu.item icon="arrow-path">{{ __('Sync Status') }}</flux:menu.item>
                                     <flux:menu.separator />

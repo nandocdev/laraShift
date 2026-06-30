@@ -9,6 +9,8 @@ use App\Modules\Central\Billing\Http\Controllers\StripeWebhookController;
 use App\Modules\Central\Billing\Livewire\GlobalInvoiceList;
 use App\Modules\Central\Billing\Livewire\ManagePlan;
 use App\Modules\Central\Billing\Livewire\PlanList;
+use App\Modules\Central\Billing\Livewire\ReportsView;
+use App\Modules\Central\Billing\Livewire\SubscriptionDetail;
 use App\Modules\Central\Billing\Livewire\SubscriptionList;
 use App\Modules\Central\Billing\Livewire\TenantInvoiceList;
 use App\Modules\Central\Billing\Models\Invoice;
@@ -35,6 +37,8 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/plans/{plan}/edit', ManagePlan::class)->name('central.billing.plans.edit');
     Route::get('/central/billing/invoices/global', GlobalInvoiceList::class)->name('central.billing.invoices.global');
     Route::get('/central/billing/tenants/{tenant}/invoices', TenantInvoiceList::class)->name('central.billing.tenant.invoices');
+    Route::get('/central/billing/subscriptions/{tenant}', SubscriptionDetail::class)->name('central.billing.subscriptions.detail');
+    Route::get('/central/billing/reports', ReportsView::class)->name('central.billing.reports');
 
     Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {
         return $action->download($invoice);
