@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Actions\GenerateInvoicePdfAction;
 use App\Modules\Central\Billing\Http\Controllers\BillingApiController;
+use App\Modules\Central\Billing\Http\Controllers\InvoicePdfController;
 use App\Modules\Central\Billing\Http\Controllers\PaguelofacilCallbackController;
 use App\Modules\Central\Billing\Http\Controllers\StripeWebhookController;
 use App\Modules\Central\Billing\Livewire\GlobalInvoiceList;
@@ -13,7 +13,6 @@ use App\Modules\Central\Billing\Livewire\ReportsView;
 use App\Modules\Central\Billing\Livewire\SubscriptionDetail;
 use App\Modules\Central\Billing\Livewire\SubscriptionList;
 use App\Modules\Central\Billing\Livewire\TenantInvoiceList;
-use App\Modules\Central\Billing\Models\Invoice;
 use Illuminate\Support\Facades\Route;
 
 // Webhooks (Public with internal validation)
@@ -40,7 +39,5 @@ Route::middleware(['web', 'auth:central'])->group(function () {
     Route::get('/central/billing/subscriptions/{tenant}', SubscriptionDetail::class)->name('central.billing.subscriptions.detail');
     Route::get('/central/billing/reports', ReportsView::class)->name('central.billing.reports');
 
-    Route::get('/central/billing/invoices/{invoice}/pdf', function (Invoice $invoice, GenerateInvoicePdfAction $action) {
-        return $action->download($invoice);
-    })->name('central.billing.invoices.pdf');
+    Route::get('/central/billing/invoices/{invoice}/pdf', InvoicePdfController::class)->name('central.billing.invoices.pdf');
 });
