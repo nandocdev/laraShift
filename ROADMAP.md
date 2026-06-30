@@ -273,15 +273,15 @@ app/Modules
 **Módulo:** `Central/Payments`
 **Entregable:** Pagos reales procesándose en ambiente de staging. Webhooks de la pasarela manejados de forma idempotente. Reintentos automáticos con exponential backoff y reconciliación de discrepancias con la pasarela.
 
-- [ ] Implementar integración con pasarela elegida (Stripe / PayPal / Culqi / dLocal según mercado), Prioridad: dLocal para LATAM
-- [ ] Implementar creación de payment intents y subscriptions via API de pasarela
-- [ ] Implementar almacenamiento seguro de métodos de pago (tokenización, sin PAN en DB propia)
-- [ ] Implementar receptor de webhooks de pasarela con verificación de firma
-- [ ] Implementar handlers idempotentes para eventos: `payment.succeeded`, `payment.failed`, `invoice.paid`, `refund.created`
-- [ ] Implementar reintentos automáticos con exponential backoff para pagos fallidos
-- [ ] Implementar reconciliación de discrepancias entre estado local y estado en pasarela
-- [ ] Implementar reembolsos manuales desde el backoffice
-- [ ] Escribir tests de idempotencia: el mismo webhook procesado dos veces no genera duplicados
+- [x] Implementar integración con pasarela elegida (Stripe / PayPal / Culqi / dLocal según mercado), Prioridad: dLocal para LATAM
+- [x] Implementar creación de payment intents y subscriptions via API de pasarela
+- [x] Implementar almacenamiento seguro de métodos de pago (tokenización, sin PAN en DB propia)
+- [x] Implementar receptor de webhooks de pasarela con verificación de firma
+- [x] Implementar handlers idempotentes para eventos: `payment.succeeded`, `payment.failed`, `invoice.paid`, `refund.created`
+- [x] Implementar reintentos automáticos con exponential backoff para pagos fallidos
+- [x] Implementar reconciliación de discrepancias entre estado local y estado en pasarela
+- [x] Implementar reembolsos manuales desde el backoffice
+- [x] Escribir tests de idempotencia: el mismo webhook procesado dos veces no genera duplicados
 
 ---
 
