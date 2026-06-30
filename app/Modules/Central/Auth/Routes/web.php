@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Central\Auth\Actions\LogoutCentralUserAction;
+use App\Modules\Central\Auth\Http\Controllers\LogoutController;
 use App\Modules\Central\Auth\Http\Middleware\ValidateCentralSession;
 use App\Modules\Central\Auth\Livewire\Dashboard;
 use App\Modules\Central\Auth\Livewire\ForgotPassword;
@@ -23,10 +23,6 @@ Route::middleware('web')->group(function () {
         Route::get('/central/settings/2fa', TwoFactorEnrollment::class)->name('central.auth.2fa');
         Route::get('/central/audit/impersonations', ImpersonationLog::class)->name('central.auth.impersonations');
 
-        Route::post('/central/logout', function (LogoutCentralUserAction $action) {
-            $action->execute();
-
-            return redirect('/');
-        })->name('central.logout');
+        Route::post('/central/logout', LogoutController::class)->name('central.logout');
     });
 });
