@@ -481,11 +481,33 @@ app/Modules
 **Módulo:** `Tenant/Integrations`
 **Entregable:** Los tenants pueden conectar sistemas externos via webhooks y API keys con delivery garantizado.
 
-- [ ] Implementar configuración de webhooks outbound por tenant (URL, eventos suscritos, secret)
-- [ ] Implementar delivery de webhooks con retry (exponential backoff) y política configurable por tenant
-- [ ] Implementar dead-letter queue de webhooks visible para el admin del tenant
-- [ ] Implementar log de intentos de delivery con estado y respuesta del endpoint
-- [ ] Implementar CRUD de API keys scoped por tenant con permisos y fecha de expiración
+- [x] Implementar configuración de webhooks outbound por tenant (URL, eventos suscritos, secret)
+  - `TenantWebhook` model + `ManageWebhooks` Livewire con CRUD completo
+  - CreateWebhookAction / UpdateWebhookAction / DeleteWebhookAction
+  - Secret HMAC-SHA256 generado automáticamente, regenerable
+  - Eventos disponibles: user.created, user.updated, role.*, settings.*, etc.
+  - Commit: `feat(integrations): add webhook models, DTOs, and CRUD/dispatch/retry actions`
+- [x] Implementar delivery de webhooks con retry (exponential backoff) y política configurable por tenant
+  - `DeliverWebhookJob` tenant-aware con inicialización de tenancy
+  - Envío POST firmado con HMAC-SHA256, headers X-Webhook-Signature y X-Webhook-Event
+  - Retry con exponential backoff: 2^attempt minutos (max 120)
+  - Política configurable: max_retries (0-20) y timeout_seconds (1-30) por webhook
+  - Commit: `feat(integrations): add DeliverWebhookJob with retry, exponential backoff, and dead-letter queue`
+- [x] Implementar dead-letter queue de webhooks visible para el admin del tenant
+  - Status `dead_lettered` automático cuando se exceden los reintentos máximos
+  - `WebhookDeliveryLog` Livewire con filtro por status para ver dead letters
+  - Botón de retry para re-intentar desde la UI
+  - Commit: `feat(integrations): add DeliverWebhookJob with retry, exponential backoff, and dead-letter queue`
+- [x] Implementar log de intentos de delivery con estado y respuesta del endpoint
+  - `TenantWebhookDelivery` model con `attempt`, `response_status`, `response_body`, `next_retry_at`
+  - Todos los intentos se registran automáticamente en `tenant_webhook_deliveries`
+  - `WebhookDeliveryLog` Livewire con paginación y filtro por status
+  - `RetryWebhookDeliveryAction` para reintentar deliveries fallidos
+  - Commit: `feat(integrations): add ManageWebhooks and WebhookDeliveryLog Livewire components`
+- [x] Implementar CRUD de API keys scoped por tenant con permisos y fecha de expiración
+  - `ApiKey` model + `ManageApiKeys` Livewire + `GenerateApiKeyAction` + `RevokeApiKeyAction`
+  - `AuthenticateApiKey` middleware con verificación de scopes
+  - Commits (previos): `feat(identity): implement API key management`
 
 ---
 
