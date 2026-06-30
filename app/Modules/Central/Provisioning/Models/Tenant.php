@@ -59,6 +59,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase, TenantContract
             'suspended_at',
             'maintenance_mode',
             'read_only',
+            'provisioning_status',
             'archived_at',
         ];
     }
