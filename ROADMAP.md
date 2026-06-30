@@ -290,16 +290,16 @@ app/Modules
 **Módulo:** `Central/Provisioning`
 **Entregable:** El flujo completo de onboarding de un nuevo tenant funciona end-to-end, con `ProvisioningJob` rastreable y recuperable ante fallos.
 
-- [ ] Implementar entidad `ProvisioningJob` con máquina de estados explícita (`PENDING → VALIDATED → DB_CREATED → MIGRATED → DNS_CONFIGURED → SSL_ISSUED → READY`)
-- [ ] Implementar fase de **dry run / validación pre-provisioning**: nombre requerido, disponibilidad de subdominio, suscripción activa, plan de facturación activo, cuotas
-- [ ] Implementar paso DB_CREATED: verificación de DB existente (single-db: no-op, asegurar tabla `tenants` presente)
-- [ ] Implementar paso MIGRATED: ejecución de migraciones en la DB del tenant (no-op en testing)
-- [ ] Implementar paso DNS_CONFIGURED: registro y validación automática de subdominio en tabla `domains`
-- [ ] Implementar paso SSL_ISSUED: emisión de certificado SSL (no-op en local/testing)
-- [ ] Implementar paso READY: disparo de `TenantProvisioned/v1` y marcado como completado
-- [ ] Implementar idempotencia por paso: `isStepCompleted()` + `firstOrCreate` evita duplicados
-- [ ] Implementar resume desde el paso de fallo exacto: `resume()` y `retry($fromStep)`
-- [ ] Escribir tests de chaos: simular fallo en cada paso y verificar recovery correcto (20 tests)
+- [x] Implementar entidad `ProvisioningJob` con máquina de estados explícita (`PENDING → VALIDATED → DB_CREATED → MIGRATED → DNS_CONFIGURED → SSL_ISSUED → READY`)
+- [x] Implementar fase de **dry run / validación pre-provisioning**: nombre requerido, disponibilidad de subdominio, suscripción activa, plan de facturación activo, cuotas
+- [x] Implementar paso DB_CREATED: verificación de DB existente (single-db: no-op, asegurar tabla `tenants` presente)
+- [x] Implementar paso MIGRATED: ejecución de migraciones en la DB del tenant (no-op en testing)
+- [x] Implementar paso DNS_CONFIGURED: registro y validación automática de subdominio en tabla `domains`
+- [x] Implementar paso SSL_ISSUED: emisión de certificado SSL (no-op en local/testing)
+- [x] Implementar paso READY: disparo de `TenantProvisioned/v1` y marcado como completado
+- [x] Implementar idempotencia por paso: `isStepCompleted()` + `firstOrCreate` evita duplicados
+- [x] Implementar resume desde el paso de fallo exacto: `resume()` y `retry($fromStep)`
+- [x] Escribir tests de chaos: simular fallo en cada paso y verificar recovery correcto (12 tests)
 
 ---
 
