@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Central\Analytics\Jobs\RefreshPlatformMetricsJob;
+use App\Modules\Central\Support\Jobs\EscalateOverdueTicketsJob;
 use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
 use App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob;
 use App\Modules\Shared\Infrastructure\Jobs\ReconcileResourcesJob;
@@ -33,4 +34,8 @@ Schedule::job(new PurgeExpiredAuditLogsJob)
 
 Schedule::job(new RefreshPlatformMetricsJob)
     ->hourly()
+    ->withoutOverlapping();
+
+Schedule::job(new EscalateOverdueTicketsJob)
+    ->everyThirtyMinutes()
     ->withoutOverlapping();
