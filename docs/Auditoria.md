@@ -1,5 +1,5 @@
-Analiza el siguiente módulo: Billing
-Path: app/Modules/Central/Billing
+Analiza el siguiente módulo: Landing
+Path: app/Modules/Central/Landing
 
 Pasos a seguir:
 
@@ -194,3 +194,7 @@ La corrección no se considera completa hasta validar que:
 - las reglas de arquitectura siguen vigentes
 - los tests cubren los riesgos corregidos
 
+11. IMPLEMENTACIÓN DEL PLAN DE CORRECCIÓN
+
+Ejecutar el plan de mitigación generado, aplicando las correcciones en el orden de prioridad definido.
+Implementar cambios production-ready, actualizar tests afectados y validar que los hallazgos queden resueltos sin romper la arquitectura existente.
