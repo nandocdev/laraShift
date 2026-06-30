@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Central\Analytics\Jobs\RefreshPlatformMetricsJob;
 use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
 use App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob;
 use App\Modules\Shared\Infrastructure\Jobs\ReconcileResourcesJob;
@@ -28,4 +29,8 @@ Schedule::job(new RetryDeadLetterJob)
 
 Schedule::job(new PurgeExpiredAuditLogsJob)
     ->dailyAt('02:00')
+    ->withoutOverlapping();
+
+Schedule::job(new RefreshPlatformMetricsJob)
+    ->hourly()
     ->withoutOverlapping();
