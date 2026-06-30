@@ -167,3 +167,42 @@ test('remaining attempts decreases after failed login', function () {
     $lockout->recordAttempt('admin@security-test.com');
     expect($lockout->remainingAttempts('admin@security-test.com'))->toBe(3);
 });
+
+test('validate central session redirects revoked session to login', function () {
+    $action = app(LoginCentralUserAction::class);
+    $data = new LoginData(
+        email: 'admin@security-test.com',
+        password: $this->password,
+        remember: false,
+    );
+
+    $action->execute($data);
+    $action->completeLogin($this->user, false);
+
+    $session = CentralSession::where('user_id', $this->user->id)->first();
+    $session->revoke('Test revocation');
+
+    $this
+        ->withSession(['cart' => 'test'])
+        ->get(route('central.dashboard'))
+        ->assertRedirect(route('central.login'));
+});
+
+test('record session creates a central session entry', function () {
+    $action = app(LoginCentralUserAction::class);
+    $data = new LoginData(
+        email: 'admin@security-test.com',
+        password: $this->password,
+        remember: false,
+    );
+
+    $action->execute($data);
+    $action->completeLogin($this->user, false);
+
+    $session = CentralSession::where('user_id', $this->user->id)
+        ->whereNull('revoked_at')
+        ->first();
+
+    expect($session)->not->toBeNull();
+    expect($session->ip)->toBe('127.0.0.1');
+});
