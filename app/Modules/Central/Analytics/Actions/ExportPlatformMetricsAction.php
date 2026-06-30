@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Analytics\Actions;
 
+use App\Modules\Central\Analytics\Exceptions\ExportFailedException;
 use App\Modules\Central\Analytics\Models\PlatformMetric;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,7 +35,11 @@ final readonly class ExportPlatformMetricsAction
         fclose($handle);
 
         $fileName = 'exports/analytics/platform_metrics_'.Str::random(8).'.csv';
-        Storage::disk($disk ?? config('analytics.export_disk', 'private'))->put($fileName, $content);
+        $targetDisk = $disk ?? config('analytics.export_disk', 'private');
+
+        if (Storage::disk($targetDisk)->put($fileName, $content) === false) {
+            throw ExportFailedException::storageFailure($targetDisk, $fileName);
+        }
 
         return $fileName;
     }
