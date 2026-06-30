@@ -12,10 +12,10 @@
 | Métrica                  | Valor                       |
 | ------------------------ | --------------------------- |
 | **Total de tareas**      | 112                         |
-| **Completadas**          | 58                          |
-| **Pendientes**           | 54                          |
-| **% Global**             | 52%                         |
-| **Última actualización** | 2026-06-30 (U04 avanzado) |
+| **Completadas**          | 60                          |
+| **Pendientes**           | 52                          |
+| **% Global**             | 54%                         |
+| **Última actualización** | 2026-06-30 (U04 completado) |
 
 ### Status
 
@@ -30,7 +30,7 @@
 | 🧱 Fase UI-1 — Design System & Layouts  | U01     | 9      | 9           | 100% |
 | 🔐 Fase UI-2 — Auth (Central + Tenant)  | U02     | 10     | 10          | 100% |
 | 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 6           | 75%  |
-| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 17          | 68%  |
+| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 19          | 76%  |
 | 🏢 Fase UI-5 — Tenant Core              | U06–U07 | 22     | 13          | 59%  |
 | 🚀 Fase UI-6 — Features Avanzados       | U08–U09 | 17     | 8           | 47%  |
 | 📊 Fase UI-7 — Analytics, Support & Ops | U10–U11 | 13     | 7           | 54%  |
@@ -43,7 +43,7 @@
 | U01    | Design System & Componentes Globales          | `Shared`                                                             | 9      | 9   | 100% | ✅ Completado    |
 | U02    | Auth — Host & Tenant                          | `Central/Auth` · `Tenant/Identity`                                   | 10     | 10  | 100% | ✅ Completado    |
 | U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                      | 8      | 6   | 75%  | ✅ Casi completo |
-| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 13  | 93%  | ✅ Casi completo |
+| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 14  | 100% | ✅ Completado |
 | U05    | Provisioning — Jobs, Onboarding & Tenants     | `Central/Provisioning`                                               | 11     | 4   | 36%  | ⬜ En progreso   |
 | U06    | Tenant Identity — Usuarios, Roles & SSO       | `Tenant/Identity`                                                    | 13     | 8   | 62%  | ⬜ En progreso   |
 | U07    | Tenant Core — Settings, Branding & Audit      | `Tenant/Settings` · `Tenant/Audit`                                   | 9      | 5   | 56%  | ⬜ En progreso   |
@@ -150,8 +150,8 @@
 
 **`Central/Payments`**
 
-- [ ] `Payments/Livewire/GatewaySettings.php` —  (configuración de pasarela)
-- [ ] `Payments/Livewire/WebhookLog.php` —  (log de webhooks entrantes)
+- [x] `Payments/Livewire/GatewaySettings.php` — Configuración de pasarela con test de conexión y selector de entorno (ruta: `/central/payments/gateway`)
+- [x] `Payments/Livewire/WebhookLog.php` — Log de webhooks entrantes con filtros y payload expandible (ruta: `/central/payments/webhooks`)
 - [x] `Payments/Livewire/PayoutRequests.php` — Gestión de payouts
 - [x] `Payments/Livewire/PayoutSettings.php` — Configuración de payouts
 - [x] `Payments/Livewire/CheckoutComponent.php` — Checkout
