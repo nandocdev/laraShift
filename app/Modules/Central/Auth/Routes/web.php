@@ -4,6 +4,7 @@ use App\Modules\Central\Auth\Actions\LogoutCentralUserAction;
 use App\Modules\Central\Auth\Http\Middleware\ValidateCentralSession;
 use App\Modules\Central\Auth\Livewire\Dashboard;
 use App\Modules\Central\Auth\Livewire\ForgotPassword;
+use App\Modules\Central\Auth\Livewire\ImpersonationLog;
 use App\Modules\Central\Auth\Livewire\Login;
 use App\Modules\Central\Auth\Livewire\LoginChallenge;
 use App\Modules\Central\Auth\Livewire\ResetPassword;
@@ -20,6 +21,7 @@ Route::middleware('web')->group(function () {
     Route::middleware(['auth:central', ValidateCentralSession::class])->group(function () {
         Route::get('/central/dashboard', Dashboard::class)->name('central.dashboard');
         Route::get('/central/settings/2fa', TwoFactorEnrollment::class)->name('central.auth.2fa');
+        Route::get('/central/audit/impersonations', ImpersonationLog::class)->name('central.auth.impersonations');
 
         Route::post('/central/logout', function (LogoutCentralUserAction $action) {
             $action->execute();

@@ -6,6 +6,7 @@ namespace App\Modules\Central\Auth\Providers;
 
 use App\Modules\Central\Auth\Livewire\Dashboard;
 use App\Modules\Central\Auth\Livewire\ForgotPassword;
+use App\Modules\Central\Auth\Livewire\ImpersonationLog;
 use App\Modules\Central\Auth\Livewire\Login;
 use App\Modules\Central\Auth\Livewire\LoginChallenge;
 use App\Modules\Central\Auth\Livewire\ResetPassword;
@@ -31,5 +32,6 @@ class CentralAuthServiceProvider extends ServiceProvider
         Livewire::component('central-auth-reset-password', ResetPassword::class);
         Livewire::component('central-auth-2fa-enrollment', TwoFactorEnrollment::class);
         Livewire::component('central-auth-dashboard', Dashboard::class);
+        Livewire::component('central-auth-impersonation-log', ImpersonationLog::class);
     }
 }
