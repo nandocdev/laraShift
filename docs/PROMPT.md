@@ -701,3 +701,17 @@ Explicar:
 
 # SPRINT A EJECUTAR
 
+## Sprint 03 — Shared Layer — Tenancy Core
+
+**Entregable:** Resolución de tenant funcional, switching de conexiones DB operativo y tenant context propagándose correctamente en sync y async.
+
+- [ ] Implementar `TenantResolver`: resolución por dominio, subdominio, header y session
+- [ ] Implementar switching dinámico de conexiones DB según estrategia elegida (ADR-002)
+- [ ] Implementar scoped queries automáticas con `tenant_id` enforcement
+- [ ] Implementar cache de tenant configuration con TTL configurable
+- [ ] Implementar fallback a modo central cuando no hay tenant resuelto
+- [ ] Implementar propagación de tenant context en **async boundaries**: `tenant_id` embebido en el envelope del mensaje de cola, nunca inferido del worker
+- [ ] Implementar abstracción de Background Jobs con prioridad, retry y tenant context embebido
+- [ ] Escribir tests de aislamiento: verificar que queries de tenant A no filtran datos de tenant B
+- [ ] Escribir tests de chaos: simular conexión DB caída y verificar fallback
+- [ ] Documentar ADR-003: estrategia de tenant context propagation
