@@ -308,15 +308,15 @@ app/Modules
 **Módulo:** `Central/Provisioning`
 **Entregable:** Suspensión, archivado y eliminación de tenants funcionando con retención legal. Custom domains verificables.
 
-- [ ] Implementar flujo de suspensión de tenant (deshabilitar acceso, congelar datos, notificar)
-- [ ] Implementar flujo de archivado seguro (cold storage, registro de retención legal)
-- [ ] Implementar flujo de eliminación definitiva con purge tras período de retención configurable
-- [ ] Implementar upgrade/downgrade de plan con migración de recursos y ajuste de quotas
-- [ ] Implementar re-provisioning idempotente ante fallos con compensation events
-- [ ] Implementar verificación de custom domains (DNS challenge) y SSL automático para dominios custom
-- [ ] Definir y documentar SLA de RTO/RPO por tenant tier (trial, SMB, enterprise)
-- [ ] Implementar archivado con garantías de restauración según RTO definido
-- [ ] Escribir tests end-to-end del ciclo completo: onboarding → active → suspended → archived
+- [x] Implementar flujo de suspensión de tenant (deshabilitar acceso, congelar datos, notificar)
+- [x] Implementar flujo de archivado seguro (cold storage, registro de retención legal)
+- [x] Implementar flujo de eliminación definitiva con purge tras período de retención configurable
+- [x] Implementar upgrade/downgrade de plan con migración de recursos y ajuste de quotas
+- [x] Implementar re-provisioning idempotente ante fallos con compensation events
+- [x] Implementar verificación de custom domains (DNS challenge) y SSL automático para dominios custom
+- [x] Definir y documentar SLA de RTO/RPO por tenant tier (trial, SMB, enterprise)
+- [x] Implementar archivado con garantías de restauración según RTO definido
+- [x] Escribir tests end-to-end del ciclo completo: onboarding → active → suspended → archived
 
 ---
 
