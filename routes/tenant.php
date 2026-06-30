@@ -27,6 +27,8 @@ use App\Modules\Tenant\Identity\Livewire\ManageApiKeys;
 use App\Modules\Tenant\Identity\Livewire\RoleManagement;
 use App\Modules\Tenant\Identity\Livewire\TeamManagement;
 use App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment;
+use App\Modules\Tenant\Notifications\Livewire\ManageNotificationTemplates;
+use App\Modules\Tenant\Notifications\Livewire\NotificationPreferences;
 use App\Modules\Tenant\Settings\Livewire\BrandingSettings;
 use App\Modules\Tenant\Settings\Livewire\LocalizationSettings;
 use App\Modules\Tenant\Settings\Livewire\SmtpSettings;
@@ -117,6 +119,8 @@ Route::middleware([
         Route::get('/settings/smtp', SmtpSettings::class)->name('tenant.settings.smtp');
         Route::get('/settings/export', DataExport::class)->name('tenant.settings.export');
         Route::get('/settings/security/2fa', TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
+        Route::get('/settings/notifications/templates', ManageNotificationTemplates::class)->name('tenant.settings.notifications.templates');
+        Route::get('/settings/notifications/preferences', NotificationPreferences::class)->name('tenant.settings.notifications.preferences');
         Route::get('/audit', AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', AuditDownloadController::class)->name('tenant.audit.download');
 
