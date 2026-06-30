@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Auth\Actions\LoginCentralUserAction;
-use App\Modules\Central\Auth\DTOs\LoginData;
-use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Auth\Livewire\ImpersonationLog;
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Models\SupportSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
