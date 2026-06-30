@@ -234,13 +234,13 @@ app/Modules
 - [ ] Implementar SSO/SAML 2.0 configurable por tenant
 - [ ] Implementar OIDC configurable por tenant
 - [ ] Implementar SCIM para provisionamiento automático de usuarios (enterprise)
-- [ ] Implementar gestión de sesiones concurrentes con límite configurable por plan
-- [ ] Implementar invalidación de sesiones activas por admin del tenant
-- [ ] Implementar refresh token rotation con detección de reuse
-- [ ] Implementar audit de eventos de Identity (login, logout, cambio de rol, impersonation)
-- [ ] Documentar ADR-004: estrategia de sesiones (JWT stateless vs. stateful sessions)
+- [x] Implementar gestión de sesiones concurrentes con límite configurable por plan
+- [x] Implementar invalidación de sesiones activas por admin del tenant
+- [x] Implementar refresh token rotation con detección de reuse
+- [x] Implementar audit de eventos de Identity (login, logout, cambio de rol, impersonation)
+- [x] Documentar ADR-004: estrategia de sesiones (JWT stateless vs. stateful sessions)
 - [ ] Escribir tests de integración para flujos SSO/SAML y OIDC
-- [ ] Escribir tests de límites de sesiones concurrentes
+- [x] Escribir tests de límites de sesiones concurrentes
 
 ---
 
