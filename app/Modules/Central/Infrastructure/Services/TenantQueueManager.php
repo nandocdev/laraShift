@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Central\Infrastructure\Services;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Illuminate\Contracts\Queue\Job;
 
 class TenantQueueManager
 {
@@ -30,7 +29,7 @@ class TenantQueueManager
     /**
      * Helper to dispatch a job to the tenant's isolated queue.
      */
-    public static function dispatch(Tenant $tenant, $job, string $priority = 'default'): void
+    public static function dispatch(Tenant $tenant, object $job, string $priority = 'default'): void
     {
         $queue = self::resolve($tenant, $priority);
 
