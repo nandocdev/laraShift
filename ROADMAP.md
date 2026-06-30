@@ -213,16 +213,16 @@ app/Modules
 **Módulo:** `Tenant/Identity`
 **Entregable:** Dentro de un tenant, los usuarios pueden registrarse, loguearse y el admin puede gestionar roles y permisos con RBAC.
 
-- [ ] Implementar CRUD de usuarios dentro del contexto de tenant
-- [ ] Implementar sistema de roles y permisos RBAC fino (roles, permissions, asignaciones)
-- [ ] Implementar registro, login y recuperación de credenciales tenant-scoped
-- [ ] Implementar password policies configurables por tenant (complejidad, expiración, historial de reutilización)
-- [ ] Implementar flujo de invitaciones de usuarios (envío, token, aceptación)
-- [ ] Implementar impersonation por admin del tenant (auditado, registrado en Audit del tenant)
-- [ ] Implementar límites de usuarios concurrentes según plan del tenant
-- [ ] Implementar middleware de autorización RBAC aplicado en rutas tenant
-- [ ] Escribir tests de aislamiento: usuario de tenant A no puede acceder a datos de tenant B
-- [ ] Escribir tests de RBAC: verificar que permisos se evalúan correctamente por rol
+- [x] Implementar CRUD de usuarios dentro del contexto de tenant
+- [x] Implementar sistema de roles y permisos RBAC fino (roles, permissions, asignaciones)
+- [x] Implementar registro, login y recuperación de credenciales tenant-scoped
+- [x] Implementar password policies configurables por tenant (complejidad, expiración, historial de reutilización)
+- [x] Implementar flujo de invitaciones de usuarios (envío, token, aceptación)
+- [x] Implementar impersonation por admin del tenant (auditado, registrado en Audit del tenant)
+- [x] Implementar límites de usuarios concurrentes según plan del tenant
+- [x] Implementar middleware de autorización RBAC aplicado en rutas tenant
+- [x] Escribir tests de aislamiento: usuario de tenant A no puede acceder a datos de tenant B
+- [x] Escribir tests de RBAC: verificar que permisos se evalúan correctamente por rol
 
 ---
 
