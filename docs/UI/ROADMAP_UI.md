@@ -12,10 +12,10 @@
 | Métrica                  | Valor                       |
 | ------------------------ | --------------------------- |
 | **Total de tareas**      | 112                         |
-| **Completadas**          | 56                          |
-| **Pendientes**           | 56                          |
-| **% Global**             | 50%                         |
-| **Última actualización** | 2026-06-30 (U03 completado) |
+| **Completadas**          | 58                          |
+| **Pendientes**           | 54                          |
+| **% Global**             | 52%                         |
+| **Última actualización** | 2026-06-30 (U04 avanzado) |
 
 ### Status
 
@@ -30,7 +30,7 @@
 | 🧱 Fase UI-1 — Design System & Layouts  | U01     | 9      | 9           | 100% |
 | 🔐 Fase UI-2 — Auth (Central + Tenant)  | U02     | 10     | 10          | 100% |
 | 🏠 Fase UI-3 — Shells & Navegación      | U03     | 8      | 6           | 75%  |
-| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 15          | 60%  |
+| 💳 Fase UI-4 — Billing & Provisioning   | U04–U05 | 25     | 17          | 68%  |
 | 🏢 Fase UI-5 — Tenant Core              | U06–U07 | 22     | 13          | 59%  |
 | 🚀 Fase UI-6 — Features Avanzados       | U08–U09 | 17     | 8           | 47%  |
 | 📊 Fase UI-7 — Analytics, Support & Ops | U10–U11 | 13     | 7           | 54%  |
@@ -43,7 +43,7 @@
 | U01    | Design System & Componentes Globales          | `Shared`                                                             | 9      | 9   | 100% | ✅ Completado    |
 | U02    | Auth — Host & Tenant                          | `Central/Auth` · `Tenant/Identity`                                   | 10     | 10  | 100% | ✅ Completado    |
 | U03    | Shells de Navegación                          | `Central` · `Tenant` · `Shared`                                      | 8      | 6   | 75%  | ✅ Casi completo |
-| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 11  | 79%  | ✅ Casi completo |
+| U04    | Billing — Planes, Suscripciones & Pagos       | `Central/Billing` · `Central/Payments`                               | 14     | 13  | 93%  | ✅ Casi completo |
 | U05    | Provisioning — Jobs, Onboarding & Tenants     | `Central/Provisioning`                                               | 11     | 4   | 36%  | ⬜ En progreso   |
 | U06    | Tenant Identity — Usuarios, Roles & SSO       | `Tenant/Identity`                                                    | 13     | 8   | 62%  | ⬜ En progreso   |
 | U07    | Tenant Core — Settings, Branding & Audit      | `Tenant/Settings` · `Tenant/Audit`                                   | 9      | 5   | 56%  | ⬜ En progreso   |
@@ -142,8 +142,8 @@
 - [x] `Billing/UI/pages/plan-list.blade.php` + `PlanList.php` — Cards de planes (nombre, precio, tenant count)
 - [x] `Billing/UI/pages/manage-plan.blade.php` + `ManagePlan.php` — Formulario de plan (quotas, features, grace period)
 - [x] `Billing/UI/pages/subscription-list.blade.php` + `SubscriptionList.php` — Tabla de suscripciones
-- [ ] `Billing/Livewire/SubscriptionDetail.php` —  como pantalla dedicada
-- [ ] `Billing/Livewire/ReportsView.php` —  (reportes financieros con MRR/chart)
+- [x] `Billing/Livewire/SubscriptionDetail.php` — Pantalla dedicada de detalle de suscripción con info, facturas y resumen (ruta: `/central/billing/subscriptions/{tenant}`)
+- [x] `Billing/Livewire/ReportsView.php` — Reportes financieros con MRR/chart, desglose por plan y distribución de estados (ruta: `/central/billing/reports`)
 - [x] `Billing/UI/pages/global-invoice-list.blade.php` + `GlobalInvoiceList.php` — Lista global de facturas
 - [x] `Billing/UI/pages/tenant-invoice-list.blade.php` + `TenantInvoiceList.php` — Facturas por tenant
 - [x] `Billing/Livewire/ManageBilling.php` — Gestión de billing del tenant
