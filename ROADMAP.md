@@ -96,7 +96,7 @@ app/Modules
 | S13    | Tenant Audit                               | 6      | 6   | 100% | ✅ Completado  |
 | S14    | Tenant Notifications                       | 7      | 7   | 100% | ✅ Completado  |
 | S15    | Tenant Usage & Quotas                      | 6      | 6   | 100% | ✅ Completado  |
-| S16    | Host Features Flags                        | 5      | 5   | 100% | ✅ Completado  |
+| S16    | Host Feature Flags                         | 5      | 5   | 100% | ✅ Completado  |
 | S17    | Tenant Integrations — Webhooks y API Keys  | 5      | 5   | 100% | ✅ Completado  |
 | S18    | Tenant Data Management                     | 4      | 4   | 100% | ✅ Completado  |
 | S19    | Host Analytics & Reporting                 | 3      | 3   | 100% | ✅ Completado  |
@@ -451,11 +451,28 @@ app/Modules
 **Módulo:** `Central/Features`
 **Entregable:** Super-admins pueden controlar features por plan y hacer rollouts graduales por atributos de tenant.
 
-- [ ] Implementar CRUD de feature flags (nombre, tipo boolean/payload, estado por plan)
-- [ ] Implementar targeting por atributo de tenant (plan, región, fecha de creación, tamaño)
-- [ ] Implementar asignación/revocación de features a tenants individuales (override manual)
-- [ ] Implementar consulta cacheada de estado de features con TTL corto
-- [ ] Implementar historial de cambios por feature flag con actor y timestamp
+- [x] Implementar CRUD de feature flags (nombre, tipo boolean/payload, estado por plan)
+  - `Feature` model + `ManageFeature` Livewire + `FeatureList` + seeder
+  - Commits (previos): `feat(features): implement feature catalog CRUD`
+- [x] Implementar targeting por atributo de tenant (plan, región, fecha de creación, tamaño)
+  - Columna `targeting` JSON en features con `regions`, `staff_min`, `staff_max`, `min_tenancy_days`
+  - `ResolveTenantFeaturesAction` evalúa targeting rules contra tenant attributes
+  - UI en ManageFeature para configurar targeting por feature
+  - Commit: `feat(features): implement targeting by region, staff count, and tenancy age`
+- [x] Implementar asignación/revocación de features a tenants individuales (override manual)
+  - `TenantFeatureOverride` model + `ApplyTenantFeatureOverrideAction` + `TenantOverrides` Livewire
+  - Commits (previos): `feat(features): add tenant overrides system`
+- [x] Implementar consulta cacheada de estado de features con TTL corto
+  - Cache con `Cache::remember(key, 300, ...)` en lugar de `rememberForever`
+  - Key `tenant:{id}:features`, TTL 5 minutos
+  - `forceRefresh` para invalidación explícita
+  - Commit: `feat(features): implement targeting by region, staff count, and tenancy age`
+- [x] Implementar historial de cambios por feature flag con actor y timestamp
+  - `FeatureChangeHistory` Livewire con activity log filtrado por log_name='features'
+  - Muestra: fecha, evento, detalles con diff de campos, actor (causer)
+  - Ruta `GET /central/features/history`
+  - Activity logged en: create/update/delete feature, apply/remove override
+  - Commits: `feat(features): add FeatureChangeHistory Livewire`
 
 ---
 
