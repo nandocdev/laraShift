@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Features\Livewire;
 
+use App\Modules\Central\Features\Actions\UpsertFeatureAction;
+use App\Modules\Central\Features\DTOs\FeatureData;
 use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -72,7 +74,7 @@ class ManageFeature extends Component
         ));
     }
 
-    public function save(): void
+    public function save(UpsertFeatureAction $action): void
     {
         $this->validate([
             'key' => [
@@ -94,45 +96,18 @@ class ManageFeature extends Component
             'key.regex' => __('The key must follow the format module.action (e.g. auth.mfa_enforce)'),
         ]);
 
-        $attributes = [
-            'key' => $this->key,
-            'name' => $this->name,
-            'description' => $this->description,
-            'module' => $this->module,
-            'is_active' => $this->is_active,
-            'targeting' => $this->targeting,
-        ];
+        $data = new FeatureData(
+            key: $this->key,
+            name: $this->name,
+            description: $this->description ?: null,
+            module: $this->module ?: null,
+            is_active: $this->is_active,
+            targeting: $this->targeting,
+        );
 
-        if ($this->isEditing) {
-            $changes = [];
-            foreach ($attributes as $field => $value) {
-                if ($this->feature->getAttribute($field) != $value) {
-                    $changes[$field] = ['from' => $this->feature->getAttribute($field), 'to' => $value];
-                }
-            }
+        $action->execute($data, $this->feature);
 
-            $this->feature->update($attributes);
-
-            if (! empty($changes)) {
-                activity('features')
-                    ->performedOn($this->feature)
-                    ->withProperties(['changes' => $changes, 'actor' => auth('central')->id()])
-                    ->log('feature_updated');
-            }
-
-            session()->flash('status', __('Feature updated.'));
-        } else {
-            $attributes['id'] = Str::uuid()->toString();
-            $feature = Feature::create($attributes);
-
-            activity('features')
-                ->performedOn($feature)
-                ->withProperties(['actor' => auth('central')->id()])
-                ->log('feature_created');
-
-            session()->flash('status', __('Feature created.'));
-        }
-
+        session()->flash('status', $this->isEditing ? __('Feature updated.') : __('Feature created.'));
         $this->redirect(route('central.features.index'), navigate: true);
     }
 
