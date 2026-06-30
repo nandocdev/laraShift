@@ -27,7 +27,7 @@ class LandingBuilder extends Component
     public function mount(Landing $landing): void
     {
         if ($landing->tenant_id !== tenant('id')) {
-            abort(403, 'Unauthorized access to this landing page.');
+            abort(404);
         }
 
         $this->landing = $landing;
