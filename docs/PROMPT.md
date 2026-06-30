@@ -707,14 +707,14 @@ Explicar:
 
 ---
 
-### Sprint 12 — Tenant Settings y White-label
+### Sprint 13 — Tenant Audit
 
-**Módulo:** `Tenant/Settings`
-**Entregable:** Cada tenant puede personalizar su instancia con su identidad visual y configuraciones locales.
+**Módulo:** `Tenant/Audit`
+**Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
 
-- [ ] Implementar CRUD de configuraciones locales del tenant (timezone, moneda, formatos de fecha)
-- [ ] Implementar white-label: carga de logo, selección de colores primarios/secundarios
-- [ ] Implementar configuración de custom domain con verificación (integrado con Provisioning)
-- [ ] Implementar personalización de email templates del tenant
-- [ ] Implementar resolución jerárquica de configuración: Platform default → Plan default → Tenant override, en servicio único
-- [ ] Implementar CRUD de metadata dinámico y reglas de negocio específicas del tenant
+- [ ] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
+- [ ] Definir catálogo de eventos auditables con nivel de criticidad
+- [ ] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
+- [ ] Implementar export de audit trail (CSV / PDF)
+- [ ] Implementar retención configurable por plan y purge automático al expirar
+- [ ] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
