@@ -5,6 +5,7 @@ use App\Modules\Shared\Http\Middleware\CorrelationId;
 use App\Modules\Shared\Http\Middleware\GlobalRateLimiter;
 use App\Modules\Shared\Http\Middleware\ResolveTenant;
 use App\Modules\Shared\Http\Middleware\TraceContext;
+use App\Modules\Shared\Tenancy\Http\Middleware\EnsureUserQuota;
 use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'quota' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureWithinQuota::class,
             'resolve-tenant' => ResolveTenant::class,
             'throttle.global' => GlobalRateLimiter::class,
+            'user-quota' => EnsureUserQuota::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
