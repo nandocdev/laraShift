@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Central\Analytics\Jobs\RefreshPlatformMetricsJob;
+use App\Modules\Central\Monitoring\Jobs\RunTenantHealthChecksJob;
 use App\Modules\Central\Security\Jobs\RotateTenantSecretsJob;
 use App\Modules\Central\Support\Jobs\EscalateOverdueTicketsJob;
 use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
@@ -43,4 +44,8 @@ Schedule::job(new EscalateOverdueTicketsJob)
 
 Schedule::job(new RotateTenantSecretsJob)
     ->dailyAt('03:00')
+    ->withoutOverlapping();
+
+Schedule::job(new RunTenantHealthChecksJob)
+    ->everyFiveMinutes()
     ->withoutOverlapping();

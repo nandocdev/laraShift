@@ -7,6 +7,7 @@ use App\Modules\Central\Features\Providers\FeaturesServiceProvider;
 use App\Modules\Central\Infrastructure\Providers\InfrastructureServiceProvider;
 use App\Modules\Central\Landings\Providers\LandingServiceProvider;
 use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
+use App\Modules\Central\Monitoring\Providers\MonitoringServiceProvider;
 use App\Modules\Central\Payments\Providers\PaymentsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
 use App\Modules\Central\Security\Providers\SecurityServiceProvider;
@@ -30,6 +31,7 @@ return [
     TenancyServiceProvider::class,
     CentralAuthServiceProvider::class,
     SecurityServiceProvider::class,
+    MonitoringServiceProvider::class,
     AnalyticsServiceProvider::class,
     ProvisioningServiceProvider::class,
     BillingServiceProvider::class,
