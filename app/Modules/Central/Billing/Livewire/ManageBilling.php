@@ -13,13 +13,15 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class ManageBilling extends Component
 {
+    public function mount(): void
+    {
+        SyncTenantInvoicesJob::dispatch(tenant('id'));
+    }
+
     public function render(): View
     {
         $tenant = tenant();
         $subscription = $tenant->subscription('default');
-
-        // Dispatch sync as background job
-        SyncTenantInvoicesJob::dispatch($tenant);
 
         return view('billing::pages.manage-billing', [
             'tenant' => $tenant,
