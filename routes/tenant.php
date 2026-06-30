@@ -27,6 +27,8 @@ use App\Modules\Tenant\Identity\Livewire\ManageApiKeys;
 use App\Modules\Tenant\Identity\Livewire\RoleManagement;
 use App\Modules\Tenant\Identity\Livewire\TeamManagement;
 use App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment;
+use App\Modules\Tenant\Integrations\Livewire\ManageWebhooks;
+use App\Modules\Tenant\Integrations\Livewire\WebhookDeliveryLog;
 use App\Modules\Tenant\Notifications\Livewire\ManageNotificationTemplates;
 use App\Modules\Tenant\Notifications\Livewire\NotificationPreferences;
 use App\Modules\Tenant\Settings\Livewire\BrandingSettings;
@@ -122,6 +124,8 @@ Route::middleware([
         Route::get('/settings/security/2fa', TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/settings/notifications/templates', ManageNotificationTemplates::class)->name('tenant.settings.notifications.templates');
         Route::get('/settings/notifications/preferences', NotificationPreferences::class)->name('tenant.settings.notifications.preferences');
+        Route::get('/integrations/webhooks', ManageWebhooks::class)->name('tenant.integrations.webhooks');
+        Route::get('/integrations/webhooks/delivery-log', WebhookDeliveryLog::class)->name('tenant.integrations.webhooks.delivery-log');
         Route::get('/usage', UsageOverview::class)->name('tenant.usage.index');
         Route::get('/audit', AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', AuditDownloadController::class)->name('tenant.audit.download');

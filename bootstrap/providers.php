@@ -12,6 +12,7 @@ use App\Modules\Central\Settings\Providers\CentralSettingsServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
 use App\Modules\Tenant\Audit\Providers\AuditServiceProvider;
 use App\Modules\Tenant\Identity\Providers\IdentityServiceProvider;
+use App\Modules\Tenant\Integrations\Providers\IntegrationsServiceProvider;
 use App\Modules\Tenant\Notifications\Providers\NotificationsServiceProvider;
 use App\Modules\Tenant\Settings\Providers\SettingsServiceProvider;
 use App\Providers\AppServiceProvider;
@@ -37,5 +38,6 @@ return [
     IdentityServiceProvider::class,
     SettingsServiceProvider::class,
     NotificationsServiceProvider::class,
+    IntegrationsServiceProvider::class,
     AuditServiceProvider::class,
 ];
