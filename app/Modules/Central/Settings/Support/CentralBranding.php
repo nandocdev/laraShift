@@ -9,9 +9,11 @@ use Illuminate\Support\Facades\Cache;
 
 class CentralBranding
 {
+    private const int CACHE_TTL = 86400;
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::rememberForever("central_setting_{$key}", function () use ($key, $default) {
+        return Cache::remember("central_setting_{$key}", self::CACHE_TTL, function () use ($key, $default) {
             $setting = CentralSetting::find($key);
 
             return $setting ? self::castValue($setting->value, $setting->type) : $default;
