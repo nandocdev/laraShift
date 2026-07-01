@@ -6,7 +6,7 @@ namespace Tests\Feature;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Billing\Models\Subscription;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Enums\PaymentContext;
 use App\Modules\Central\Provisioning\Models\Domain;
@@ -66,7 +66,7 @@ class BillingFlowTest extends TestCase
             ], 200),
         ]);
 
-        $gateway = app(PaymentGateway::class);
+        $gateway = app(PaymentGatewayContract::class);
 
         $paymentData = new PaymentData(
             context: PaymentContext::Subscription,
