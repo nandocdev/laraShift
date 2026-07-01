@@ -6,6 +6,7 @@ namespace App\Modules\Central\Monitoring\Livewire;
 
 use App\Modules\Central\Monitoring\Actions\CheckCriticalAlertsAction;
 use App\Modules\Central\Monitoring\Models\TenantHealthCheck;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Models\Activity;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -32,17 +33,17 @@ class MonitoringDashboard extends Component
             ->groupBy('check_type', 'status')
             ->get();
 
-        $totalChecks = TenantHealthCheck::where('created_at', '>=', now()->subDay())->count();
-        $failedChecks = TenantHealthCheck::where('created_at', '>=', now()->subDay())
-            ->where('status', 'fail')
-            ->count();
+        $totalChecks = $healthSummary->sum('count');
+        $failedChecks = $healthSummary->where('status', 'fail')->sum('count');
 
+        $activeTenants = Tenant::where('status', 'active')->count();
         $recentActivity = Activity::latest()->take(50)->get();
 
         return view('monitoring::pages.dashboard', [
             'healthSummary' => $healthSummary,
             'totalChecks' => $totalChecks,
             'failedChecks' => $failedChecks,
+            'activeTenants' => $activeTenants,
             'recentActivity' => $recentActivity,
             'alerts' => $this->alerts,
         ]);

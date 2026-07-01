@@ -7,15 +7,11 @@ namespace App\Modules\Central\Monitoring\Actions;
 use App\Modules\Central\Monitoring\Models\TenantHealthCheck;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 final readonly class CheckCriticalAlertsAction
 {
-    /**
-     * Check for critical conditions across the platform and log alerts.
-     *
-     * Checks: recent health failures, provisioning failures, billing failures.
-     */
     public function execute(): array
     {
         $alerts = [];
@@ -62,32 +58,11 @@ final readonly class CheckCriticalAlertsAction
                 'message' => "{$suspendedByBilling} tenant(s) suspended for billing in the last 24h.",
                 'count' => $suspendedByBilling,
             ];
+
+            Log::warning('Billing suspensions detected', ['count' => $suspendedByBilling]);
         }
 
-        $resourceExhausted = Tenant::where('status', 'active')
-            ->whereHas('plan', function ($q) {
-                $q->whereNotNull('features');
-            })
-            ->get()
-            ->filter(function ($tenant) {
-                $plan = $tenant->plan;
-                $features = $plan?->features ?? [];
-                $quotas = $features['quotas'] ?? [];
-
-                foreach ($quotas as $metric => $limit) {
-                    if ($limit > 0) {
-                        $usage = app(QuotaManager::class)
-                            ->getCurrentUsage($tenant, $metric);
-
-                        if ($usage >= $limit) {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            })
-            ->count();
+        $resourceExhausted = $this->checkResourceExhaustion();
 
         if ($resourceExhausted > 0) {
             $alerts[] = [
@@ -96,8 +71,46 @@ final readonly class CheckCriticalAlertsAction
                 'message' => "{$resourceExhausted} tenant(s) at quota limit.",
                 'count' => $resourceExhausted,
             ];
+
+            Log::warning('Resource exhaustion detected', ['count' => $resourceExhausted]);
         }
 
         return $alerts;
+    }
+
+    private function checkResourceExhaustion(): int
+    {
+        try {
+            $count = 0;
+
+            Tenant::where('status', 'active')
+                ->whereHas('plan', fn ($q) => $q->whereNotNull('features'))
+                ->with('plan')
+                ->chunkById(100, function ($tenants) use (&$count) {
+                    foreach ($tenants as $tenant) {
+                        $plan = $tenant->plan;
+                        $quotas = $plan->features['quotas'] ?? [];
+
+                        foreach ($quotas as $metric => $limit) {
+                            if ($limit <= 0) {
+                                continue;
+                            }
+
+                            $usage = app(QuotaManager::class)->getCurrentUsage($tenant, $metric);
+
+                            if ($usage >= $limit) {
+                                $count++;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+            return $count;
+        } catch (\Throwable $e) {
+            Log::error('Resource exhaustion check failed', ['error' => $e->getMessage()]);
+
+            return 0;
+        }
     }
 }

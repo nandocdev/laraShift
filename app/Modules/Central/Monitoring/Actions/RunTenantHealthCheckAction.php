@@ -12,28 +12,26 @@ use Illuminate\Support\Str;
 
 final readonly class RunTenantHealthCheckAction
 {
-    /**
-     * Run a health check for a specific tenant.
-     * Checks: tenancy initialization, database connectivity, and basic model access.
-     */
     public function execute(Tenant $tenant): TenantHealthCheck
     {
+        $status = 'pass';
+        $message = 'Tenant is healthy';
+        $details = [
+            'tenant_initialized' => true,
+            'db_query_ok' => true,
+        ];
+
         try {
             tenancy()->initialize($tenant);
 
-            $canQuery = DB::table('tenant_settings')->count();
-
-            $status = 'pass';
-            $message = 'Tenant is healthy';
-            $details = [
-                'tenant_initialized' => true,
-                'db_query_ok' => true,
-            ];
+            DB::table('tenant_settings')->count();
 
             tenancy()->end();
-
-            $this->alertOnFailure($tenant, false);
         } catch (\Throwable $e) {
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+
             $status = 'fail';
             $message = $e->getMessage();
             $details = [
@@ -42,7 +40,16 @@ final readonly class RunTenantHealthCheckAction
                 'error' => $e->getMessage(),
             ];
 
-            $this->alertOnFailure($tenant, true, $e->getMessage());
+            Log::critical('Tenant health check FAILED', [
+                'tenant_id' => $tenant->id,
+                'tenant_name' => $tenant->name,
+                'error' => $e->getMessage(),
+            ]);
+
+            activity('monitoring')
+                ->performedOn($tenant)
+                ->withProperties(['error' => $e->getMessage(), 'check_type' => 'tenant_availability'])
+                ->log('tenant_health_check_failed');
         }
 
         return TenantHealthCheck::create([
@@ -53,23 +60,5 @@ final readonly class RunTenantHealthCheckAction
             'message' => $message,
             'details' => $details,
         ]);
-    }
-
-    private function alertOnFailure(Tenant $tenant, bool $isFailed, ?string $error = null): void
-    {
-        if (! $isFailed) {
-            return;
-        }
-
-        Log::critical('Tenant health check FAILED', [
-            'tenant_id' => $tenant->id,
-            'tenant_name' => $tenant->name,
-            'error' => $error,
-        ]);
-
-        activity('monitoring')
-            ->performedOn($tenant)
-            ->withProperties(['error' => $error, 'check_type' => 'tenant_availability'])
-            ->log('tenant_health_check_failed');
     }
 }

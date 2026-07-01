@@ -40,7 +40,7 @@
         </flux:card>
         <flux:card>
             <flux:heading size="sm">{{ __('Active Tenants') }}</flux:heading>
-            <flux:text class="text-2xl font-bold">{{ \App\Modules\Central\Provisioning\Models\Tenant::where('status', 'active')->count() }}</flux:text>
+            <flux:text class="text-2xl font-bold">{{ number_format($activeTenants) }}</flux:text>
         </flux:card>
         <flux:card>
             <flux:heading size="sm">{{ __('System Health') }}</flux:heading>
