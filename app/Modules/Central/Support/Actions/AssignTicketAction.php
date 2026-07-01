@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Actions;
 
+use App\Modules\Central\Support\DTOs\UpdateTicketData;
 use App\Modules\Central\Support\Models\SupportTicket;
 
 final readonly class AssignTicketAction
 {
-    public function execute(SupportTicket $ticket, string $assigneeId): SupportTicket
+    public function execute(SupportTicket $ticket, UpdateTicketData $data): SupportTicket
     {
+        $assigneeId = $data->assignedTo;
+
         $ticket->update([
             'assigned_to' => $assigneeId,
             'assigned_at' => now(),

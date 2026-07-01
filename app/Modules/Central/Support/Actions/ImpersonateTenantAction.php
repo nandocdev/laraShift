@@ -46,6 +46,8 @@ final readonly class ImpersonateTenantAction
             throw new \RuntimeException(__('Tenant has no primary domain configured.'));
         }
 
-        return "http://{$domain}/support/auth?token={$session->token}";
+        $protocol = app()->isProduction() ? 'https' : 'http';
+
+        return "{$protocol}://{$domain}/support/auth?token={$session->token}";
     }
 }

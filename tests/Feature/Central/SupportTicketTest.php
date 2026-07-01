@@ -114,7 +114,7 @@ it('assigns ticket to an agent', function () {
     ]);
 
     $action = app(AssignTicketAction::class);
-    $updated = $action->execute($ticket, $agent->id);
+    $updated = $action->execute($ticket, new \App\Modules\Central\Support\DTOs\UpdateTicketData(assignedTo: $agent->id));
 
     expect($updated->assigned_to)->toBe($agent->id);
     expect($updated->status)->toBe('in_progress');

@@ -33,7 +33,7 @@ class TenantImpersonationController extends Controller
 
         // 1. Authenticate the operator in the tenant guard
         // This ensures the operator has a real session on the tenant side.
-        auth()->loginUsingId($session->operator_id);
+        auth('web')->loginUsingId($session->operator_id);
 
         // 2. Mark session as used/active
         Session::put('impersonation_session_id', $session->id);
