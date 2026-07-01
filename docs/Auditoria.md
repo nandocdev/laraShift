@@ -1,5 +1,5 @@
-Analiza el siguiente módulo: Landing
-Path: app/Modules/Central/Landing
+Analiza el siguiente módulo: Support
+Path: app/Modules/Central/Support
 
 Pasos a seguir:
 
