@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Landings\Livewire;
 
 use App\Modules\Central\Landings\Actions\PublishLandingAction;
+use App\Modules\Central\Landings\Actions\SaveLandingAction;
 use App\Modules\Central\Landings\Models\Landing;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -15,9 +16,6 @@ class LandingBuilder extends Component
 {
     public Landing $landing;
 
-    /**
-     * Component State
-     */
     public array $blocks = [];
 
     public array $theme = [];
@@ -36,14 +34,9 @@ class LandingBuilder extends Component
         $this->title = $landing->title ?? '';
     }
 
-    public function save(array $blocks, array $theme): void
+    public function save(SaveLandingAction $action, array $blocks, array $theme): void
     {
-        // Checksum validation would go here in production
-
-        $this->landing->update([
-            'blocks' => $blocks,
-            'theme' => $theme,
-        ]);
+        $action->execute($this->landing, $blocks, $theme);
 
         $this->blocks = $blocks;
         $this->theme = $theme;
@@ -53,14 +46,11 @@ class LandingBuilder extends Component
 
     public function publish(): void
     {
-        // Ensure we save current state before publishing
         $this->landing->update([
             'blocks' => $this->blocks,
             'theme' => $this->theme,
         ]);
 
-        // Only track publisher if they are a central user (platform admin)
-        // because the DB column is constrained to 'central_users'
         $publisherId = auth('central')->check() ? auth('central')->id() : null;
 
         app(PublishLandingAction::class)->execute(
