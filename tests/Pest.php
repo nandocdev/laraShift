@@ -18,6 +18,7 @@ use Tests\TestCase;
 |
 */
 
+// Database-dependent Feature tests
 uses(TestCase::class, RefreshDatabase::class)
     ->beforeEach(function () {
         $this->withoutMiddleware(PreventRequestForgery::class);
