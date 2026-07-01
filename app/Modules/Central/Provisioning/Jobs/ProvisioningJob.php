@@ -83,7 +83,11 @@ final class ProvisioningJob implements ShouldQueue
             });
 
             $this->executeStep($tenant, 'ready', $stateMachine, function () use ($tenant) {
-                TenantProvisioned::dispatch($tenant, $this->adminEmail, 'Administrator', $this->adminPassword);
+                \Illuminate\Support\Facades\DB::afterCommit(function () use ($tenant) {
+                    TenantProvisioned::dispatch(
+                        $tenant, $this->adminEmail, 'Administrator', $this->adminPassword
+                    );
+                });
             });
 
             $tenant->update([

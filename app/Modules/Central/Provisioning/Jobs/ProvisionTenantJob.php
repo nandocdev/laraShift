@@ -21,9 +21,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
+ * @deprecated Use ProvisioningJob instead (more robust step-based approach).
  * [REALIZACIÓN DE CASO DE USO - RUP]
  * Desacoplamiento de la provisión de infraestructura del flujo síncrono de pago.
  * Garantiza que la pasarela no reciba Timeouts mientras se aprovisiona DNS y BD.
+ *
+ * Legacy: stores full Tenant model in queue payload.
+ * Replace with ProvisioningJob which uses tenantId string and
+ * has explicit step state machine, resume capability, and idempotency.
  */
 final class ProvisionTenantJob implements ShouldQueue
 {

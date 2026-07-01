@@ -6,6 +6,7 @@ namespace App\Modules\Central\Provisioning\Livewire;
 
 use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
+use App\Modules\Central\Provisioning\Actions\UpdateTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -39,7 +40,7 @@ class ManageTenant extends Component
         $this->read_only = $tenant->read_only;
     }
 
-    public function save(): void
+    public function save(UpdateTenantAction $action): void
     {
         $this->validate([
             'name' => 'required|string|max:255',
@@ -50,7 +51,7 @@ class ManageTenant extends Component
             'read_only' => 'boolean',
         ]);
 
-        $this->tenant->update([
+        $action->execute($this->tenant, [
             'name' => $this->name,
             'email' => $this->email,
             'plan_id' => $this->plan_id,
@@ -59,14 +60,9 @@ class ManageTenant extends Component
             'read_only' => $this->read_only,
         ]);
 
-        // Invalidate feature cache just in case plan changed
         if ($this->tenant->wasChanged('plan_id')) {
             app(ResolveTenantFeaturesAction::class)->execute($this->tenant, true);
         }
-
-        activity('provisioning')
-            ->performedOn($this->tenant)
-            ->log('tenant_updated');
 
         session()->flash('status', __('Tenant updated successfully.'));
         $this->redirect(route('central.provisioning.index'), navigate: true);
