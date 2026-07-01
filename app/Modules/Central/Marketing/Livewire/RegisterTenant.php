@@ -184,7 +184,6 @@ class RegisterTenant extends Component
         $this->loading = true;
         $this->error = null;
 
-        // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
         $allRules = array_merge(
             $this->rulesForStep(1),
             $this->rulesForStep(2),
@@ -194,11 +193,11 @@ class RegisterTenant extends Component
         try {
             $this->validate($allRules);
 
-            // Final lock check to prevent race conditions during checkout
             $lockKey = 'reserved_slug_'.$this->slug;
             $currentLock = Cache::get($lockKey);
             if ($currentLock && $currentLock !== $this->email) {
-                throw new \Exception(__('This workspace URL is temporarily reserved by another user.'));
+                $this->addError('slug', __('This workspace URL is temporarily reserved by another user.'));
+                return;
             }
 
             $tenant = $action->execute(new CreateTenantData(
@@ -212,7 +211,6 @@ class RegisterTenant extends Component
                 country: $this->country,
             ));
 
-            // Release lock on success
             Cache::forget($lockKey);
 
             $domain = $this->slug.'.'.config('tenancy.central_domain');
@@ -221,14 +219,13 @@ class RegisterTenant extends Component
             $port = parse_url($baseUrl, PHP_URL_PORT);
             $portSuffix = $port ? ":$port" : '';
 
-            // Immediate login redirection
             $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
         } catch (ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
             $this->paymentAlreadyApproved = $this->isPaymentAlreadyApproved();
-            $this->error = $e->getMessage();
-            $this->addError('payment_token', $e->getMessage());
+            $this->error = __('A registration error occurred. The workspace URL may already be taken.');
+            $this->addError('payment_token', $this->error);
         } finally {
             $this->loading = false;
         }

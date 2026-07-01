@@ -46,7 +46,13 @@ class ManageLegalDocuments extends Component
             'publish' => 'boolean',
         ]);
 
-        $doc = $action->execute($this->type, $this->title, $this->content, $this->publish);
+        $doc = $action->execute(
+            $this->type,
+            $this->title,
+            $this->content,
+            $this->publish,
+            auth('central')->id(),
+        );
 
         $this->resetForm();
         session()->flash('status', __(':type v:version saved.', ['type' => $doc->type, 'version' => $doc->version]));

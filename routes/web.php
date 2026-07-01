@@ -19,15 +19,19 @@ Route::get('/register', RegisterTenant::class)
     ->name('central.register');
 
 Route::get('/terms', function () {
-    $doc = LegalDocument::where('type', 'terms')
-        ->where('is_published', true)->latest('version')->first();
+    $doc = \Illuminate\Support\Facades\Cache::remember('legal_doc:terms', 86400, function () {
+        return LegalDocument::where('type', 'terms')
+            ->where('is_published', true)->latest('version')->first();
+    });
 
     return view('marketing::pages.public-legal', ['doc' => $doc]);
 })->name('legal.terms');
 
 Route::get('/privacy', function () {
-    $doc = LegalDocument::where('type', 'privacy')
-        ->where('is_published', true)->latest('version')->first();
+    $doc = \Illuminate\Support\Facades\Cache::remember('legal_doc:privacy', 86400, function () {
+        return LegalDocument::where('type', 'privacy')
+            ->where('is_published', true)->latest('version')->first();
+    });
 
     return view('marketing::pages.public-legal', ['doc' => $doc]);
 })->name('legal.privacy');

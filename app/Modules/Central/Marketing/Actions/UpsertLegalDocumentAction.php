@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 final readonly class UpsertLegalDocumentAction
 {
-    public function execute(string $type, string $title, string $content, bool $publish = false): LegalDocument
+    public function execute(string $type, string $title, string $content, bool $publish, string $createdBy): LegalDocument
     {
         $existing = LegalDocument::where('type', $type)
             ->orderByDesc('version')
@@ -26,7 +26,7 @@ final readonly class UpsertLegalDocumentAction
             'version' => $newVersion,
             'is_published' => $publish,
             'published_at' => $publish ? now() : null,
-            'created_by' => auth('central')->id(),
+            'created_by' => $createdBy,
         ]);
 
         if ($existing) {
@@ -35,7 +35,7 @@ final readonly class UpsertLegalDocumentAction
                 'legal_document_id' => $doc->id,
                 'version' => $existing->version,
                 'content' => $existing->content,
-                'created_by' => $existing->created_by,
+                'created_by' => $createdBy,
                 'created_at' => $existing->created_at,
             ]);
         }

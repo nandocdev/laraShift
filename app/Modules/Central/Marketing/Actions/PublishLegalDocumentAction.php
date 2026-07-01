@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Marketing\Actions;
 
-use App\Modules\Central\Marketing\Models\Legaldocument;
+use App\Modules\Central\Marketing\Models\LegalDocument;
 
 final readonly class PublishLegalDocumentAction
 {
-    public function execute(string $documentId): Legaldocument
+    public function execute(string $documentId): LegalDocument
     {
-        Legaldocument::where('type', fn ($q) => $q->select('type')->from('legal_documents')->where('id', $documentId))
+        $doc = LegalDocument::findOrFail($documentId);
+
+        LegalDocument::where('type', $doc->type)
             ->where('is_published', true)
             ->update(['is_published' => false]);
 
-        $doc = Legaldocument::findOrFail($documentId);
         $doc->update([
             'is_published' => true,
             'published_at' => now(),
