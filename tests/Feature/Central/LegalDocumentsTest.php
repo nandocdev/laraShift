@@ -23,10 +23,10 @@ beforeEach(function () {
     $this->actingAs($this->admin, 'central');
 });
 
-it('creates a new legal document version', function () {
+test('creates a new legal document version', function () {
     $action = app(UpsertLegalDocumentAction::class);
 
-    $doc = $action->execute('terms', 'Terms of Service v1', '<p>Terms content</p>');
+    $doc = $action->execute('terms', 'Terms of Service v1', '<p>Terms content</p>', false, $this->admin->id);
 
     expect($doc)->toBeInstanceOf(LegalDocument::class);
     expect($doc->type)->toBe('terms');
@@ -34,20 +34,20 @@ it('creates a new legal document version', function () {
     expect($doc->content)->toBe('<p>Terms content</p>');
 });
 
-it('increments version on each update', function () {
+test('increments version on each update', function () {
     $action = app(UpsertLegalDocumentAction::class);
 
-    $action->execute('privacy', 'Privacy v1', '<p>v1</p>');
-    $v2 = $action->execute('privacy', 'Privacy v2', '<p>v2</p>');
+    $action->execute('privacy', 'Privacy v1', '<p>v1</p>', false, $this->admin->id);
+    $v2 = $action->execute('privacy', 'Privacy v2', '<p>v2</p>', false, $this->admin->id);
 
     expect($v2->version)->toBe(2);
 });
 
-it('preserves previous version in history', function () {
+test('preserves previous version in history', function () {
     $action = app(UpsertLegalDocumentAction::class);
 
-    $v1 = $action->execute('terms', 'Terms v1', '<p>Version 1</p>');
-    $action->execute('terms', 'Terms v2', '<p>Version 2</p>');
+    $v1 = $action->execute('terms', 'Terms v1', '<p>Version 1</p>', false, $this->admin->id);
+    $action->execute('terms', 'Terms v2', '<p>Version 2</p>', false, $this->admin->id);
 
     $history = LegalDocument::where('type', 'terms')->latest('version')->first()->versions;
 
@@ -55,12 +55,12 @@ it('preserves previous version in history', function () {
     expect($history->first()->content)->toBe('<p>Version 1</p>');
 });
 
-it('publishes a document and unpublishes others of same type', function () {
+test('publishes a document and unpublishes others of same type', function () {
     $action = app(UpsertLegalDocumentAction::class);
     $publishAction = app(PublishLegalDocumentAction::class);
 
-    $v1 = $action->execute('terms', 'Terms v1', '<p>v1</p>', true);
-    $v2 = $action->execute('terms', 'Terms v2', '<p>v2</p>');
+    $v1 = $action->execute('terms', 'Terms v1', '<p>v1</p>', true, $this->admin->id);
+    $v2 = $action->execute('terms', 'Terms v2', '<p>v2</p>', false, $this->admin->id);
 
     expect($v1->fresh()->is_published)->toBeTrue();
     expect($v2->fresh()->is_published)->toBeFalse();
@@ -71,7 +71,7 @@ it('publishes a document and unpublishes others of same type', function () {
     expect($v2->fresh()->is_published)->toBeTrue();
 });
 
-it('renders legal documents livewire component', function () {
+test('renders legal documents livewire component', function () {
     Livewire::test(ManageLegalDocuments::class)
         ->assertStatus(200);
 });
