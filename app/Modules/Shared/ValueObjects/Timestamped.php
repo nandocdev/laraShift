@@ -29,7 +29,7 @@ final readonly class Timestamped
 
     public static function now(): self
     {
-        return new self(new DateTimeImmutable());
+        return new self(new DateTimeImmutable);
     }
 
     public function value(): DateTimeImmutable

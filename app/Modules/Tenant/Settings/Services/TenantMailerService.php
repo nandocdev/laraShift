@@ -7,8 +7,6 @@ namespace App\Modules\Tenant\Settings\Services;
 use App\Modules\Tenant\Settings\DTOs\SmtpConfigData;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
-use Symfony\Component\Mailer\Bridge\Smtp\Transport\EsmtpTransportFactory;
-use Symfony\Component\Mailer\Mailer as SymfonyMailer;
 use Symfony\Component\Mailer\Transport;
 
 class TenantMailerService
@@ -23,7 +21,7 @@ class TenantMailerService
 
         // Note: Using Config::set() is generally safe for the current request,
         // but we must be careful in Octane. For tests, we use a custom transport.
-        
+
         $smtpConfig = [
             'transport' => 'smtp',
             'host' => $config->host,
@@ -35,7 +33,7 @@ class TenantMailerService
         ];
 
         Config::set('mail.mailers.tenant_test', $smtpConfig);
-        
+
         try {
             return $callback(Mail::mailer('tenant_test'));
         } finally {

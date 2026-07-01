@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Actions;
 
+use App\Modules\Shared\Events\TenantUserInvited;
 use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
 use App\Modules\Shared\Infrastructure\Services\QuotaManager;
 use App\Modules\Tenant\Identity\DTOs\InvitationData;
@@ -24,14 +25,14 @@ final readonly class SendInvitationAction
         User $inviter
     ): Invitation {
         $tenant = tenant();
-        
+
         // 1. Check Quotas (US-T101, US-T401)
         $quota = app(QuotaManager::class);
-        
+
         if (! $quota->increment($tenant, 'invitations')) {
             throw new QuotaExceededException('invitations', __('Maximum limit of pending invitations reached for your plan.'));
         }
-        
+
         // 2. Resolve Role
         $role = Role::where('name', $data->roleName)->firstOrFail();
 
@@ -57,7 +58,7 @@ final readonly class SendInvitationAction
             ->performedOn($invitation)
             ->log('user_invited');
 
-        event(new \App\Modules\Shared\Events\TenantUserInvited($invitation));
+        event(new TenantUserInvited($invitation));
 
         return $invitation;
     }

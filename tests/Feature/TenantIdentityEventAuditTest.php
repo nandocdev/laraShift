@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Audit\Models\AuditLog;
 use App\Modules\Shared\Events\TenantUserRevoked;
+use App\Modules\Tenant\Audit\Models\AuditLog;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -34,7 +34,7 @@ it('automatically records an audit log when an identity event is fired', functio
 
     // Check Audit Log
     expect(AuditLog::count())->toBe(1);
-    
+
     $log = AuditLog::first();
     expect($log->action->value)->toBe('user.revoked');
     expect($log->resource)->toBe('users');

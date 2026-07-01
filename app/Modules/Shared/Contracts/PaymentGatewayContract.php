@@ -7,6 +7,8 @@ namespace App\Modules\Shared\Contracts;
 use App\Modules\Central\Payments\DTOs\MerchantData;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\DTOs\PaymentResultData;
+use App\Modules\Central\Payments\DTOs\PayoutData;
+use App\Modules\Central\Payments\DTOs\PayoutResultData;
 
 /**
  * Contrato compartido para pasarelas de pago.
@@ -48,12 +50,12 @@ interface PaymentGatewayContract
     /**
      * Submit a payout request.
      */
-    public function submitPayout(\App\Modules\Central\Payments\DTOs\PayoutData $payout): \App\Modules\Central\Payments\DTOs\PayoutResultData;
+    public function submitPayout(PayoutData $payout): PayoutResultData;
 
     /**
      * Get the status of a payout.
      */
-    public function getPayoutStatus(string $payoutId): \App\Modules\Central\Payments\DTOs\PayoutResultData;
+    public function getPayoutStatus(string $payoutId): PayoutResultData;
 
     /**
      * Unique gateway identifier (e.g. 'clave').

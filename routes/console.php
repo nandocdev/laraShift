@@ -1,7 +1,14 @@
 <?php
 
+use App\Modules\Central\Analytics\Jobs\RefreshPlatformMetricsJob;
+use App\Modules\Central\Monitoring\Jobs\RunTenantHealthChecksJob;
+use App\Modules\Central\Security\Jobs\RotateTenantSecretsJob;
+use App\Modules\Central\Support\Jobs\EscalateOverdueTicketsJob;
+use App\Modules\Shared\Events\Dlq\RetryDeadLetterJob;
+use App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob;
 use App\Modules\Shared\Infrastructure\Jobs\ReconcileResourcesJob;
 use App\Modules\Shared\Infrastructure\Jobs\SnapshotQuotasJob;
+use App\Modules\Tenant\Audit\Jobs\PurgeExpiredAuditLogsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,10 +22,30 @@ Schedule::job(new ReconcileResourcesJob)->daily();
 
 Schedule::command('billing:reconcile')->dailyAt('03:00');
 
-Schedule::job(new \App\Modules\Shared\Events\Outbox\PublishOutboxEventsJob)
+Schedule::job(new PublishOutboxEventsJob)
     ->everyMinute()
     ->withoutOverlapping();
 
-Schedule::job(new \App\Modules\Shared\Events\Dlq\RetryDeadLetterJob)
+Schedule::job(new RetryDeadLetterJob)
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::job(new PurgeExpiredAuditLogsJob)
+    ->dailyAt('02:00')
+    ->withoutOverlapping();
+
+Schedule::job(new RefreshPlatformMetricsJob)
+    ->hourly()
+    ->withoutOverlapping();
+
+Schedule::job(new EscalateOverdueTicketsJob)
+    ->everyThirtyMinutes()
+    ->withoutOverlapping();
+
+Schedule::job(new RotateTenantSecretsJob)
+    ->dailyAt('03:00')
+    ->withoutOverlapping();
+
+Schedule::job(new RunTenantHealthChecksJob)
     ->everyFiveMinutes()
     ->withoutOverlapping();

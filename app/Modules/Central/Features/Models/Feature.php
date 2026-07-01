@@ -21,10 +21,12 @@ class Feature extends Model
         'description',
         'module',
         'is_active',
+        'targeting',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'targeting' => 'array',
     ];
 
     public function plans(): BelongsToMany

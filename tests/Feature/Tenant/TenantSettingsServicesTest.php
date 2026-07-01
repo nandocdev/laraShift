@@ -24,7 +24,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'settings-svc-' . Str::random(4),
+        'slug' => 'settings-svc-'.Str::random(4),
         'name' => 'Settings Test',
         'email' => 'settings-svc@test.com',
         'plan_id' => 'free',

@@ -18,23 +18,24 @@ class SelectPlan extends Component
         try {
             $tenant = tenant();
             $action = app(CreateCheckoutSessionAction::class);
-            $plan = \App\Modules\Central\Billing\Models\Plan::findOrFail($planId);
-            
+            $plan = Plan::findOrFail($planId);
+
             // If they already have this plan and it's active, don't do anything
             if ($tenant->plan_id === $plan->slug) {
                 $subscription = $tenant->subscription('default');
                 if ($subscription && ($subscription->active() || $subscription->onGracePeriod())) {
                     $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));
+
                     return;
                 }
             }
 
             $this->dispatch('toast', text: __('Preparing secure checkout...'));
             $checkoutUrl = $action->execute($tenant, $planId);
-            
+
             $this->redirect($checkoutUrl, navigate: false);
         } catch (\Exception $e) {
-            \Log::error("SelectPlan Error: " . $e->getMessage());
+            \Log::error('SelectPlan Error: '.$e->getMessage());
             $this->addError('plan', $e->getMessage());
         }
     }

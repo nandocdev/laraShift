@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Tenant\Identity\Models\User;
 
 return [
@@ -74,7 +75,7 @@ return [
 
         'central_users' => [
             'driver' => 'eloquent',
-            'model' => \App\Modules\Central\Auth\Models\CentralUser::class,
+            'model' => CentralUser::class,
         ],
 
         // 'users' => [

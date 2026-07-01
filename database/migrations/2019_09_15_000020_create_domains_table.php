@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateDomainsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
@@ -25,17 +24,15 @@ class CreateDomainsTable extends Migration
         });
 
         // Enable RLS
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE domains ENABLE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE domains FORCE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON domains USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE domains ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE domains FORCE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON domains USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
         }
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down(): void
     {

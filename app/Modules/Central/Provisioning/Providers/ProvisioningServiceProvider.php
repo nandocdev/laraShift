@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Providers;
 
+use App\Modules\Central\Provisioning\Livewire\CreateTenant;
+use App\Modules\Central\Provisioning\Livewire\ManageTenant;
+use App\Modules\Central\Provisioning\Livewire\TenantList;
+use App\Modules\Central\Provisioning\Services\TenantDomainResolver;
+use App\Modules\Shared\Contracts\TenantDomainResolverContract;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class ProvisioningServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->bind(
-            \App\Modules\Shared\Contracts\TenantDomainResolverContract::class,
-            \App\Modules\Central\Provisioning\Services\TenantDomainResolver::class
+            TenantDomainResolverContract::class,
+            TenantDomainResolver::class
         );
     }
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../UI', 'provisioning');
-        $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+        $this->loadViewsFrom(__DIR__.'/../UI', 'provisioning');
+        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
 
-        \Livewire\Livewire::component('provisioning-tenant-list', \App\Modules\Central\Provisioning\Livewire\TenantList::class);
-        \Livewire\Livewire::component('provisioning-create-tenant', \App\Modules\Central\Provisioning\Livewire\CreateTenant::class);
-        \Livewire\Livewire::component('provisioning-manage-tenant', \App\Modules\Central\Provisioning\Livewire\ManageTenant::class);
+        Livewire::component('provisioning-tenant-list', TenantList::class);
+        Livewire::component('provisioning-create-tenant', CreateTenant::class);
+        Livewire::component('provisioning-manage-tenant', ManageTenant::class);
     }
 }

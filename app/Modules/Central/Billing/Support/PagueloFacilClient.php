@@ -6,19 +6,25 @@ namespace App\Modules\Central\Billing\Support;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Money\Money;
 
-class PagueloFacilClient {
+class PagueloFacilClient
+{
     private string $cclw;
+
     private string $apiToken;
+
     private string $baseUrl;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->cclw = config('billing.paguelofacil.cclw');
         $this->apiToken = config('billing.paguelofacil.api_token');
         $this->baseUrl = config('billing.paguelofacil.base_url');
     }
 
-    private function client(): PendingRequest {
+    private function client(): PendingRequest
+    {
         return Http::baseUrl($this->baseUrl)
             ->withHeaders([
                 'Authorization' => $this->apiToken,
@@ -32,8 +38,8 @@ class PagueloFacilClient {
      */
     public function generatePaymentLink(array $data): string
     {
-        $amount = $data['amount'] instanceof \Money\Money 
-            ? (float) $data['amount']->getAmount() / 100 
+        $amount = $data['amount'] instanceof Money
+            ? (float) $data['amount']->getAmount() / 100
             : (float) $data['amount'];
 
         $payload = [
@@ -46,11 +52,11 @@ class PagueloFacilClient {
         ];
 
         // Custom fields if provided (JSON Hex encoded)
-        if (!empty($data['custom_fields'])) {
+        if (! empty($data['custom_fields'])) {
             $payload['PF_CF'] = bin2hex(json_encode($data['custom_fields']));
         }
 
-        \Log::info("PagueloFacil generatePaymentLink Request", ['payload' => $payload]);
+        \Log::info('PagueloFacil generatePaymentLink Request', ['payload' => $payload]);
 
         // LinkDeamon.cfm usually lives at the root or under secure/sandbox
         // Based on docs: https://secure.paguelofacil.com/LinkDeamon.cfm
@@ -61,14 +67,14 @@ class PagueloFacilClient {
 
         $response = Http::asForm()->post($url, $payload);
 
-        \Log::info("PagueloFacil generatePaymentLink Response", [
+        \Log::info('PagueloFacil generatePaymentLink Response', [
             'status' => $response->status(),
-            'body' => $response->json()
+            'body' => $response->json(),
         ]);
 
         $responseData = $response->throw()->json();
 
-        if (!($responseData['success'] ?? false)) {
+        if (! ($responseData['success'] ?? false)) {
             throw new \Exception($responseData['message'] ?? 'Failed to generate PagueloFacil payment link.');
         }
 
@@ -86,7 +92,7 @@ class PagueloFacilClient {
 
         foreach ($prefixes as $prefix) {
             try {
-                $response = $this->client()->post($prefix . '/Customer', [
+                $response = $this->client()->post($prefix.'/Customer', [
                     'firstName' => $data['first_name'],
                     'lastName' => $data['last_name'],
                     'email' => $data['email'],
@@ -101,7 +107,7 @@ class PagueloFacilClient {
                 }
 
                 if ($response->status() !== 404 && ($responseData['message'] ?? '') !== 'Recurso no encontrado.') {
-                     throw new \Exception($responseData['message'] ?? 'API Error');
+                    throw new \Exception($responseData['message'] ?? 'API Error');
                 }
             } catch (\Exception $e) {
                 $lastException = $e;
@@ -133,22 +139,22 @@ class PagueloFacilClient {
                     'firstName' => $data['first_name'],
                     'lastName' => $data['last_name'],
                     'cardType' => $this->detectCardType($data['card_number']),
-                ]
-            ]
+                ],
+            ],
         ];
 
-        \Log::info("PagueloFacil createSubscription Request", [
+        \Log::info('PagueloFacil createSubscription Request', [
             'payload' => array_merge($payload, [
-                'requestPay' => ['cardInformation' => ['cardNumber' => 'REDACTED', 'cvv' => 'REDACTED']]
-            ])
+                'requestPay' => ['cardInformation' => ['cardNumber' => 'REDACTED', 'cvv' => 'REDACTED']],
+            ]),
         ]);
 
         $response = $this->client()->post('/subscriptions-api/v1/CustomerSubscriptions', $payload);
         $data = $response->json();
 
-        \Log::info("PagueloFacil createSubscription Response", [
+        \Log::info('PagueloFacil createSubscription Response', [
             'status' => $response->status(),
-            'body' => $data
+            'body' => $data,
         ]);
 
         if ($response->successful() && ($data['success'] ?? false) === false) {
@@ -192,13 +198,16 @@ class PagueloFacilClient {
         return $response->throw()->json();
     }
 
-
-
-    private function detectCardType(string $number): string {
+    private function detectCardType(string $number): string
+    {
         $number = preg_replace('/\D/', '', $number);
 
-        if (str_starts_with($number, '4')) return 'VISA';
-        if (preg_match('/^5[1-5]/', $number)) return 'MASTERCARD';
+        if (str_starts_with($number, '4')) {
+            return 'VISA';
+        }
+        if (preg_match('/^5[1-5]/', $number)) {
+            return 'MASTERCARD';
+        }
 
         return 'VISA'; // Default fallback
     }

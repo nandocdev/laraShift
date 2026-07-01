@@ -13,14 +13,18 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.central')]
-class TenantList extends Component {
+class TenantList extends Component
+{
     use WithPagination;
 
     public ?string $selectedTenantId = null;
+
     public string $impersonationReason = '';
+
     public string $confirmSlug = '';
 
-    public function getSelectedTenantProperty(): ?Tenant {
+    public function getSelectedTenantProperty(): ?Tenant
+    {
         if (! $this->selectedTenantId) {
             return null;
         }
@@ -28,11 +32,13 @@ class TenantList extends Component {
         return Tenant::find($this->selectedTenantId);
     }
 
-    public function selectTenant($tenantId): void {
+    public function selectTenant($tenantId): void
+    {
         $tenant = Tenant::find($tenantId);
 
         if (! $tenant) {
             $this->addError('selectedTenant', __('Tenant not found.'));
+
             return;
         }
 
@@ -40,16 +46,19 @@ class TenantList extends Component {
         $this->confirmSlug = '';
     }
 
-    public function delete(DeleteTenantAction $action): void {
+    public function delete(DeleteTenantAction $action): void
+    {
         $tenant = $this->selectedTenant;
 
         if (! $tenant) {
             $this->addError('confirmSlug', __('No tenant selected.'));
+
             return;
         }
 
         if ($this->confirmSlug !== $tenant->slug) {
             $this->addError('confirmSlug', __('Slug confirmation does not match.'));
+
             return;
         }
 
@@ -63,11 +72,13 @@ class TenantList extends Component {
         }
     }
 
-    public function impersonate(ImpersonateTenantAction $action): void {
+    public function impersonate(ImpersonateTenantAction $action): void
+    {
         $tenant = $this->selectedTenant;
 
         if (! $tenant) {
             $this->addError('impersonationReason', __('No tenant selected.'));
+
             return;
         }
 
@@ -85,7 +96,8 @@ class TenantList extends Component {
         }
     }
 
-    public function render(): View {
+    public function render(): View
+    {
         return view('provisioning::pages.tenant-list', [
             'tenants' => Tenant::with('domains')->latest()->paginate(10),
             'selectedTenant' => $this->selectedTenant,

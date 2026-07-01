@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Modules\Central\Payments\Livewire;
 
 use App\Modules\Central\Payments\Models\TenantBankAccount;
+use Illuminate\View\View;
 use Livewire\Component;
 
 final class PayoutSettings extends Component
 {
     public string $country = 'UY';
+
     public string $currency = 'USD';
+
     public string $method = 'BANK_TRANSFER';
+
     public array $beneficiary = [
         'name' => '',
         'id' => '',
@@ -56,7 +60,7 @@ final class PayoutSettings extends Component
         $this->dispatch('toast', variant: 'success', heading: __('Settings Saved'), text: __('Bank account details updated successfully.'));
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('payments::livewire.payout-settings');
     }

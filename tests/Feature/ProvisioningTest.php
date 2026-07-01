@@ -6,9 +6,11 @@ use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Models\User;
-use Illuminate\Support\Facades\Event;
+use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
@@ -29,7 +31,7 @@ it('provisions a tenant atomically and dispatches the event', function () {
     expect($tenant)->toBeInstanceOf(Tenant::class);
     expect($tenant->name)->toBe('Acme Corp');
     expect($tenant->domains)->toHaveCount(1);
-    expect($tenant->domains->first()->domain)->toBe('acme.' . config('tenancy.central_domain'));
+    expect($tenant->domains->first()->domain)->toBe('acme.'.config('tenancy.central_domain'));
 
     Event::assertDispatched(TenantProvisioned::class, function ($event) use ($tenant) {
         return $event->tenant->id === $tenant->id && $event->adminEmail === 'admin@acme.com';
@@ -54,10 +56,10 @@ it('creates the initial admin user via the listener', function () {
         expect($user->name)->toBe('Administrator');
 
         // Check for core data initialized by TenantDataSeeder
-        $rolesCount = \App\Modules\Tenant\Identity\Models\Role::count();
+        $rolesCount = Role::count();
         expect($rolesCount)->toBeGreaterThanOrEqual(2);
-        
-        $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::first();
+
+        $settings = TenantSetting::first();
         expect($settings)->not->toBeNull();
         expect($settings->locale)->toBe('en');
     });

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Central\Auth\Models\CentralUser>
+ * @extends Factory<CentralUser>
  */
 class CentralUserFactory extends Factory
 {

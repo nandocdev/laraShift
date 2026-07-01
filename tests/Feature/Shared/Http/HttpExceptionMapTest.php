@@ -7,7 +7,6 @@ use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 test('maps quota exceeded to 429', function () {

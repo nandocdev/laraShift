@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Infrastructure\Jobs;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\Domain;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -23,11 +23,11 @@ class ReconcileResourcesJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info("Starting platform resource reconciliation...");
+        Log::info('Starting platform resource reconciliation...');
 
         // 1. Detect orphaned domains (no tenant or tenant doesn't exist)
         $orphanedDomains = Domain::whereDoesntHave('tenant')->get();
-        
+
         foreach ($orphanedDomains as $domain) {
             Log::warning("Orphaned domain detected: {$domain->domain}. Deleting...");
             $domain->delete();
@@ -45,6 +45,6 @@ class ReconcileResourcesJob implements ShouldQueue
 
         // 3. Storage reconciliation could go here (detecting directories without tenants)
 
-        Log::info("Resource reconciliation completed.");
+        Log::info('Resource reconciliation completed.');
     }
 }

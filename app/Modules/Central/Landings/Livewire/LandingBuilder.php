@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Landings\Livewire;
 
+use App\Modules\Central\Landings\Actions\PublishLandingAction;
 use App\Modules\Central\Landings\Models\Landing;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -18,13 +19,15 @@ class LandingBuilder extends Component
      * Component State
      */
     public array $blocks = [];
+
     public array $theme = [];
+
     public string $title = '';
 
     public function mount(Landing $landing): void
     {
         if ($landing->tenant_id !== tenant('id')) {
-            abort(403, 'Unauthorized access to this landing page.');
+            abort(404);
         }
 
         $this->landing = $landing;
@@ -36,7 +39,7 @@ class LandingBuilder extends Component
     public function save(array $blocks, array $theme): void
     {
         // Checksum validation would go here in production
-        
+
         $this->landing->update([
             'blocks' => $blocks,
             'theme' => $theme,
@@ -60,7 +63,7 @@ class LandingBuilder extends Component
         // because the DB column is constrained to 'central_users'
         $publisherId = auth('central')->check() ? auth('central')->id() : null;
 
-        app(\App\Modules\Central\Landings\Actions\PublishLandingAction::class)->execute(
+        app(PublishLandingAction::class)->execute(
             $this->landing,
             $publisherId
         );

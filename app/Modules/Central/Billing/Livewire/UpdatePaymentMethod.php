@@ -10,11 +10,13 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 #[Layout('layouts.app')] // Using app layout for tenant context
-class UpdatePaymentMethod extends Component {
+class UpdatePaymentMethod extends Component
+{
     public string $paymentMethod;
 
     #[On('paymentMethodUpdated')]
-    public function updatePaymentMethod(string $paymentMethod, ?string $lastFour = null, ?string $brand = null): void {
+    public function updatePaymentMethod(string $paymentMethod, ?string $lastFour = null, ?string $brand = null): void
+    {
         try {
             $tenant = tenant();
             $gateway = $tenant->billing_gateway ?? config('payments.default', 'dlocal');
@@ -37,12 +39,13 @@ class UpdatePaymentMethod extends Component {
             session()->flash('status', __('Payment method updated successfully.'));
             $this->redirect(route('tenant.billing.manage'), navigate: true);
         } catch (\Exception $e) {
-            \Log::error("Failed to update payment method: " . $e->getMessage());
+            \Log::error('Failed to update payment method: '.$e->getMessage());
             $this->addError('payment_method', __('Failed to update payment method. Please try again.'));
         }
     }
 
-    public function render(): View {
+    public function render(): View
+    {
         $tenant = tenant();
         $gateway = $tenant->billing_gateway ?? config('cashier.driver', 'stripe');
 
@@ -53,7 +56,7 @@ class UpdatePaymentMethod extends Component {
             try {
                 $intent = $tenant->createSetupIntent();
             } catch (\Exception $e) {
-                \Log::error("Stripe SetupIntent Error: " . $e->getMessage());
+                \Log::error('Stripe SetupIntent Error: '.$e->getMessage());
             }
         }
 

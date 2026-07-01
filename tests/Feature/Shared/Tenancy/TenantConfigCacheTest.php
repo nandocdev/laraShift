@@ -63,7 +63,7 @@ test('flush clears cached config', function () {
 
     $this->configCache->flush($this->tenant);
 
-    $cacheKey = 'tenant_config:' . $this->tenant->id;
+    $cacheKey = 'tenant_config:'.$this->tenant->id;
     expect(Cache::get($cacheKey))->toBeNull();
 });
 

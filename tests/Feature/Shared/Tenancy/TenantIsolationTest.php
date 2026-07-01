@@ -15,7 +15,9 @@ class IsolationTestModel extends Model
     use BelongsToTenant;
 
     protected $table = 'tenant_api_keys';
+
     protected $fillable = ['id', 'tenant_id', 'name', 'key_hash', 'scopes', 'created_at', 'updated_at'];
+
     public $timestamps = true;
 }
 
@@ -32,17 +34,17 @@ beforeEach(function () {
 
     $this->tenantA = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'isolation-a-' . Str::random(5),
+        'slug' => 'isolation-a-'.Str::random(5),
         'name' => 'Isolation A',
-        'email' => Str::random(10) . '@a.com',
+        'email' => Str::random(10).'@a.com',
         'plan_id' => 'free',
     ]);
 
     $this->tenantB = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'isolation-b-' . Str::random(5),
+        'slug' => 'isolation-b-'.Str::random(5),
         'name' => 'Isolation B',
-        'email' => Str::random(10) . '@b.com',
+        'email' => Str::random(10).'@b.com',
         'plan_id' => 'free',
     ]);
 });

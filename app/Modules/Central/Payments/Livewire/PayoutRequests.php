@@ -8,11 +8,13 @@ use App\Modules\Central\Payments\Actions\RequestPayoutAction;
 use App\Modules\Central\Payments\DTOs\PayoutData;
 use App\Modules\Central\Payments\Models\PayoutRequest;
 use App\Modules\Central\Payments\Models\TenantBankAccount;
+use Illuminate\View\View;
 use Livewire\Component;
 
 final class PayoutRequests extends Component
 {
     public float $amount = 0.0;
+
     public ?string $error = null;
 
     public function requestPayout(RequestPayoutAction $action): void
@@ -23,13 +25,15 @@ final class PayoutRequests extends Component
             ->where('is_active', true)
             ->first();
 
-        if (!$account) {
+        if (! $account) {
             $this->error = __('Please configure your bank account details first.');
+
             return;
         }
 
         if ($this->amount <= 0) {
             $this->error = __('Amount must be greater than zero.');
+
             return;
         }
 
@@ -51,7 +55,7 @@ final class PayoutRequests extends Component
             externalId: (string) $payoutRequest->id,
             method: $account->method,
             beneficiary: $account->beneficiary,
-            description: "Payout for tenant " . tenancy()->tenant->id,
+            description: 'Payout for tenant '.tenancy()->tenant->id,
         );
 
         try {
@@ -76,7 +80,7 @@ final class PayoutRequests extends Component
         }
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         $requests = PayoutRequest::where('tenant_id', tenancy()->tenant->id)
             ->latest()

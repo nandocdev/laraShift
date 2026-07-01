@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Infrastructure\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Modules\Central\Infrastructure\Services\HorizonQueueResolver;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 
 class HorizonUpdateCommand extends Command
 {
@@ -32,18 +32,18 @@ class HorizonUpdateCommand extends Command
     {
         $currentQueues = HorizonQueueResolver::resolve();
         sort($currentQueues);
-        
+
         $cacheKey = 'horizon_active_queues_list';
         $lastQueues = Cache::get($cacheKey, []);
         sort($lastQueues);
 
         if ($this->option('force') || $currentQueues !== $lastQueues) {
             $this->info('Changes detected in queue catalog or force flag used. Restarting Horizon...');
-            
+
             Cache::forever($cacheKey, $currentQueues);
-            
+
             Artisan::call('horizon:terminate');
-            
+
             $this->info('Horizon termination signal sent. It should restart automatically via supervisor.');
         } else {
             $this->info('No changes detected in queue catalog.');

@@ -6,6 +6,7 @@ namespace App\Modules\Central\Billing\Support;
 
 use App\Modules\Central\Billing\Models\Plan;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class PlanManager
 {
@@ -16,7 +17,7 @@ class PlanManager
 
     public static function find(string $id): ?Plan
     {
-        if (\Illuminate\Support\Str::isUuid($id)) {
+        if (Str::isUuid($id)) {
             return Plan::find($id);
         }
 
@@ -28,7 +29,7 @@ class PlanManager
         // For now, stripe_id is expected to be part of features or a dedicated mapping
         // In this architecture, we could add a gateway_mappings table or just put it in features
         $plan = self::find($id);
-        
+
         return $plan?->features['stripe_id'] ?? null;
     }
 }

@@ -7,11 +7,13 @@ namespace App\Modules\Tenant\Audit\Jobs;
 use App\Modules\Tenant\Audit\Models\AuditLog;
 use App\Modules\Tenant\Audit\Notifications\AuditLogExportNotification;
 use App\Modules\Tenant\Identity\Models\User;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -32,15 +34,18 @@ class ExportAuditLogsJob implements ShouldQueue
 
         try {
             $user = User::find($this->userId);
-            
-            if (! $user) return;
 
-            $diff = \Carbon\Carbon::parse($this->dateFrom)->diffInDays($this->dateTo);
+            if (! $user) {
+                return;
+            }
+
+            $diff = Carbon::parse($this->dateFrom)->diffInDays($this->dateTo);
             if ($diff > 90) {
-                \Illuminate\Support\Facades\Log::error('ExportAuditLogsJob: Range exceeded security policy.', [
+                Log::error('ExportAuditLogsJob: Range exceeded security policy.', [
                     'tenant_id' => $this->tenantId,
                     'user_id' => $this->userId,
                 ]);
+
                 return;
             }
 
@@ -50,9 +55,9 @@ class ExportAuditLogsJob implements ShouldQueue
                 ->oldest()
                 ->get();
 
-            $fileName = "exports/audit/audit_log_{$this->tenantId}_" . Str::random(8) . ".csv";
+            $fileName = "exports/audit/audit_log_{$this->tenantId}_".Str::random(8).'.csv';
             $handle = fopen('php://temp', 'r+');
-            
+
             // CSV Headers
             fputcsv($handle, ['ID', 'Date', 'Action', 'Member', 'Resource', 'Resource ID', 'IP', 'Metadata']);
 

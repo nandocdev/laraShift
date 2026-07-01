@@ -1,10 +1,7 @@
 <?php
 
 use App\Modules\Tenant\Identity\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-
-
 
 test('profile page is displayed', function () {
     $this->actingAs($user = User::factory()->create());

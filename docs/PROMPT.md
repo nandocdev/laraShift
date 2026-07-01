@@ -701,20 +701,16 @@ Explicar:
 
 # SPRINT A EJECUTAR
 
-## 🏢 FASE 4 — Tenant Core (S12–S15)
+## 🔒 FASE 6 — Hardening & Compliance (S21–S24)
 
-> **Objetivo:** Los tenants tienen una aplicación funcional: configuración propia, audit trail, notificaciones y control de su consumo.
+> **Objetivo:** La plataforma está lista para producción: segura, observable, con superficie pública y procesos de go-live validados.
 
 ---
 
-### Sprint 13 — Tenant Audit
+### Sprint 24 — Hardening Final y Go-Live
 
-**Módulo:** `Tenant/Audit`
-**Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
+**Módulo:** N/A — checklist operativo, no produce código bajo `app/Modules/`
+**Entregable:** La plataforma pasa checklist de go-live y está en producción.
 
-- [ ] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
-- [ ] Definir catálogo de eventos auditables con nivel de criticidad
-- [ ] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
-- [ ] Implementar export de audit trail (CSV / PDF)
-- [ ] Implementar retención configurable por plan y purge automático al expirar
-- [ ] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
+- [ ] Ejecutar checklist de seguridad pre-producción: pen test de tenant isolation, revisión de secrets, HTTPS everywhere, headers de seguridad
+- [ ] Ejecutar runbook de go-live: smoke tests en producción, rollback plan documentado, on-call definido

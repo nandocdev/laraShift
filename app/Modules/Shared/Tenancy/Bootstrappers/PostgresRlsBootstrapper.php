@@ -12,7 +12,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
 {
     /**
      * Set the current tenant ID in the PostgreSQL database session.
-     * 
+     *
      * [RIESGOS]
      * - Only executed on PostgreSQL to avoid breaking SQLite in testing environments.
      */
@@ -26,7 +26,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
                 $connection->statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenantId]);
             }
         } catch (\Throwable $e) {
-            \Log::critical("RLS Bootstrapping failed for tenant {$tenantId}: " . $e->getMessage());
+            \Log::critical("RLS Bootstrapping failed for tenant {$tenantId}: ".$e->getMessage());
         }
     }
 
@@ -41,7 +41,7 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
                 $connection->statement("SELECT set_config('app.tenant_id', '', false)");
             }
         } catch (\Throwable $e) {
-            \Log::error("RLS Revert failed: " . $e->getMessage());
+            \Log::error('RLS Revert failed: '.$e->getMessage());
         }
     }
 }

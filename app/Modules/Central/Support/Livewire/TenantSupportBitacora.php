@@ -14,6 +14,7 @@ use Livewire\Component;
 class TenantSupportBitacora extends Component
 {
     public string $tenantId;
+
     public string $newNote = '';
 
     public function mount(Tenant $tenant): void

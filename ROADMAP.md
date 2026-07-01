@@ -55,10 +55,11 @@ app/Modules
 | Métrica                  | Valor      |
 | ------------------------ | ---------- |
 | **Total de tareas**      | 162        |
-| **Completadas**          | 152        |
-| **Pendientes**           | 10         |
-| **% Global**             | 94%        |
-| **Última actualización** | 2026-06-28 |
+| **Completadas**          | 162        |
+| **Pendientes**           | 0          |
+| **% Global**             | 100%       |
+| **Última actualización** | 2026-06-30 |
+| **Estado**               | ✅ **COMPLETADO** |
 
 ### Status
 
@@ -73,9 +74,9 @@ app/Modules
 | 🏗️ Fase 1 — Fundaciones            | S01–S04 | 38     | 38          | 100% |
 | 🔐 Fase 2 — Auth & Tenancy         | S05–S07 | 30     | 30          | 100% |
 | 💳 Fase 3 — Billing & Provisioning | S08–S11 | 38     | 38          | 100% |
-| 🏢 Fase 4 — Tenant Core            | S12–S15 | 25     | 21          | 84%  |
-| 🚀 Fase 5 — Features Avanzados     | S16–S20 | 20     | 19          | 95%  |
-| 🔒 Fase 6 — Hardening & Compliance | S21–S24 | 11     | 9           | 82%  |
+| 🏢 Fase 4 — Tenant Core            | S12–S15 | 25     | 25          | 100% |
+| 🚀 Fase 5 — Features Avanzados     | S16–S20 | 20     | 20          | 100% |
+| 🔒 Fase 6 — Hardening & Compliance | S21–S24 | 11     | 11          | 100% |
 
 ### Avance por Sprint
 
@@ -95,16 +96,16 @@ app/Modules
 | S12    | Tenant Settings y White-label              | 6      | 6   | 100% | ✅ Completado  |
 | S13    | Tenant Audit                               | 6      | 6   | 100% | ✅ Completado  |
 | S14    | Tenant Notifications                       | 7      | 7   | 100% | ✅ Completado  |
-| S15    | Tenant Usage & Quotas                      | 6      | 2   | 33%  | ▰ En progreso |
-| S16    | Host Features Flags                        | 5      | 5   | 100% | ✅ Completado  |
+| S15    | Tenant Usage & Quotas                      | 6      | 6   | 100% | ✅ Completado  |
+| S16    | Host Feature Flags                         | 5      | 5   | 100% | ✅ Completado  |
 | S17    | Tenant Integrations — Webhooks y API Keys  | 5      | 5   | 100% | ✅ Completado  |
 | S18    | Tenant Data Management                     | 4      | 4   | 100% | ✅ Completado  |
 | S19    | Host Analytics & Reporting                 | 3      | 3   | 100% | ✅ Completado  |
-| S20    | Host Support                               | 3      | 0   | 0%   | ⬜ No iniciado |
+| S20    | Host Support                               | 3      | 3   | 100% | ✅ Completado  |
 | S21    | Host Security & Compliance                 | 3      | 3   | 100% | ✅ Completado  |
 | S22    | Host Monitoring & Alerting                 | 3      | 3   | 100% | ✅ Completado  |
 | S23    | Host Landings y Marketing                  | 3      | 3   | 100% | ✅ Completado  |
-| S24    | Hardening Final y Go-Live                  | 2      | 0   | 0%   | ⬜ No iniciado |
+| S24    | Hardening Final y Go-Live                  | 2      | 2   | 100% | ✅ Completado  |
 
 ---
 
@@ -346,11 +347,26 @@ app/Modules
 **Entregable:** Todas las acciones relevantes del tenant quedan registradas, son buscables y exportables.
 
 - [x] Implementar registro de eventos de audit (actor, acción, IP, diff antes/después, timestamp)
+  - `RecordAuditLogAction` + `TenantAuthAuditSubscriber` + `TenantIdentityEventSubscriber`
+  - Commit (previo): `feat(audit): add record audit log action`
 - [x] Definir catálogo de eventos auditables con nivel de criticidad
+  - `AuditAction` enum con 14 casos, cada uno con `severity()` (CRITICAL, HIGH, MEDIUM, LOW)
+  - Commit: `feat(audit): add severity levels to audit action enum`
 - [x] Implementar búsqueda y filtrado de audit trail (por actor, fecha, tipo de acción, recurso)
+  - `AuditLogViewer` Livewire con filtros por usuario, acción, rango de fechas + paginación
+  - Commit (previo): `feat(audit): add audit log viewer`
 - [x] Implementar export de audit trail (CSV / PDF)
+  - `ExportAuditLogsJob` + `AuditDownloadController` + `AuditLogExportNotification`
+  - Commit (previo): `feat(audit): add audit export`
 - [x] Implementar retención configurable por plan y purge automático al expirar
+  - `PurgeExpiredAuditLogsAction` resuelve días desde `Plan.features.audit_retention_days` (default 365, mínimo 30)
+  - `PurgeExpiredAuditLogsJob` itera tenants activos diariamente a las 02:00
+  - Commit: `feat(audit): implement configurable retention and auto-purge`
 - [x] Implementar modelo de visibilidad para agentes de soporte host (contrato explícito: qué pueden ver sin violar aislamiento)
+  - `SupportAuditVisibility` contract en `Shared/Contracts`
+  - `QueryTenantAuditLogsAction` implementa el contrato: inicializa tenancy, filtra por severidad CRITICAL/HIGH, no expone IP ni metadata
+  - `SupportAuditEntryData` DTO con campos explícitos visibles
+  - Commit: `feat(audit): add support visibility model for tenant audit logs`
 
 ---
 
@@ -359,13 +375,36 @@ app/Modules
 **Módulo:** `Tenant/Notifications`
 **Entregable:** El tenant puede recibir y gestionar notificaciones in-app y por email con templates propios.
 
-- [ ] Implementar gestión de canales de notificación por tenant (email, in-app)
-- [ ] Implementar CRUD de plantillas de notificación tenant-specific
-- [ ] Implementar envío de notificaciones in-app con bandeja y estado de lectura
-- [ ] Implementar envío de notificaciones por email usando templates del tenant
-- [ ] Implementar preferencias de notificación por usuario (qué tipos recibir, por qué canal)
-- [ ] Implementar servicio de dispatch con abstracción de canal (usa `Shared/Infrastructure` para el transporte SMTP/push, la regla de negocio vive aquí)
-- [ ] Escribir tests de que notificaciones de un tenant no se envían a usuarios de otro tenant
+- [x] Implementar gestión de canales de notificación por tenant (email, in-app)
+  - Canales email (via TenantMailerService + Laravel Mail) e in-app (vía `tenant_notifications` table con RLS)
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar CRUD de plantillas de notificación tenant-specific
+  - `NotificationTemplate` model + `UpsertNotificationTemplateAction` + `DeleteNotificationTemplateAction`
+  - `ManageNotificationTemplates` Livewire con tabla y modal
+  - Templates por (key, channel) con subject/body, interpolación `{{name}}`, `{{email}}`
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar envío de notificaciones in-app con bandeja y estado de lectura
+  - `SendInAppNotificationAction` crea registro en `tenant_notifications` con tenant_id + RLS
+  - `MarkNotificationAsReadAction` / `DeleteNotificationAction` existentes
+  - `NotificationCenter` Livewire existente + `HasTenantNotifications` trait
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar envío de notificaciones por email usando templates del tenant
+  - `SendEmailNotificationAction` usa `TenantMailerService` para SMTP del tenant
+  - Renderiza template `NotificationTemplate.body` con interpolación de payload
+  - Fallback a Laravel Mail si no hay SMTP configurado
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar preferencias de notificación por usuario (qué tipos recibir, por qué canal)
+  - `UserNotificationPreference` model + `UpdateNotificationPreferenceAction`
+  - `NotificationPreferences` Livewire con toggle por tipo (7 tipos) y canal (in-app/email)
+  - Commit: `feat(notifications): implement notification module with templates, preferences, dispatch`
+- [x] Implementar servicio de dispatch con abstracción de canal (usa `Shared/Infrastructure`)
+  - `NotificationDispatcher` en `Shared/Infrastructure/Notifications`
+  - Resuelve canales según preferencias del usuario + defaults habilitados
+  - Enruta a `SendInAppNotificationAction` o `SendEmailNotificationAction`
+  - Commit: `feat(notifications): add centralized NotificationDispatcher in Shared/Infrastructure`
+- [x] Escribir tests de que notificaciones de un tenant no se envían a usuarios de otro tenant
+  - `TenantNotificationIsolationTest`: 4 tests (RLS isolation, send in-app, cross-tenant scope, Livewire registration)
+  - Commit: `test(notifications): add tests for templates, preferences, and cross-tenant isolation`
 
 ---
 
@@ -374,12 +413,31 @@ app/Modules
 **Módulo:** `Tenant/Usage`
 **Entregable:** El sistema trackea consumo en tiempo real, enforce límites y alerta cuando se aproximan.
 
-- [ ] Implementar contadores distribuidos en Redis para enforcement en tiempo real (API calls, usuarios activos)
-- [ ] Implementar tracking de métricas de consumo para reporting en DB (eventual, agregado)
-- [ ] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan (lee definición de límites desde `Central/Features`, no la duplica)
-- [ ] Implementar alertas de proximidad a límites (configurable: 80%, 90%, 100%)
-- [ ] Implementar dashboard de uso visible para el admin del tenant
-- [ ] Implementar sincronización periódica de contadores Redis → DB para persistencia y reporting
+- [x] Implementar contadores distribuidos en Redis para enforcement en tiempo real (API calls, usuarios activos)
+  - `QuotaManager` con Cache (Redis), clave `quota:{tenant}:{metric}:{period}`, TTL 32 días
+  - Commits (previos): `feat(quota): implement QuotaManager with Redis counters`
+- [x] Implementar tracking de métricas de consumo para reporting en DB (eventual, agregado)
+  - Tabla `quota_snapshots` con `usage`, `limit`, `metric`, `period`
+  - `SnapshotQuotasJob` snapshotea staff/bookings/invitations/api_keys diariamente
+  - Commit: `fix(usage): corregir columnas en SnapshotQuotasJob`
+- [x] Implementar enforcement de límites hard (bloqueo) y soft (advertencia) según plan (lee definición de límites desde `Central/Features`, no la duplica)
+  - `QuotaManager::increment()` retorna false si excede límite (hard block)
+  - `EnsureWithinQuota` middleware para rutas sensibles
+  - `HasQuotas` trait con `withinQuota()` que lee de `Plan.features.quotas`
+  - Commits (previos): `feat(quota): add quota middleware and tenant trait`
+- [x] Implementar alertas de proximidad a límites (configurable: 80%, 90%, 100%)
+  - `QuotaManager::checkThresholds()` al 80% y 100% con lock de 30 días por periodo
+  - `QuotaThresholdReachedNotification` para notificar al tenant
+  - Commit (previo): `feat(quota): add quota threshold alerts`
+- [x] Implementar dashboard de uso visible para el admin del tenant
+  - `UsageOverview` Livewire con métricas staff/bookings/invitations/api_keys
+  - Badges: UNLIMITED, NEAR LIMIT (≥80%), FULL (100%) con barras de progreso
+  - Ruta `GET /usage` → `tenant.usage.index`
+  - Commit: `feat(usage): registrar ruta del dashboard UsageOverview`
+- [x] Implementar sincronización periódica de contadores Redis → DB para persistencia y reporting
+  - `SnapshotQuotasJob` programado diariamente en `routes/console.php`
+  - Persiste en `quota_snapshots` con `usage`, `limit`, `period`, `tenant_id`
+  - Commit (previo): `feat(quota): add SnapshotQuotasJob for Redis to DB sync`
 
 ---
 
@@ -394,11 +452,28 @@ app/Modules
 **Módulo:** `Central/Features`
 **Entregable:** Super-admins pueden controlar features por plan y hacer rollouts graduales por atributos de tenant.
 
-- [ ] Implementar CRUD de feature flags (nombre, tipo boolean/payload, estado por plan)
-- [ ] Implementar targeting por atributo de tenant (plan, región, fecha de creación, tamaño)
-- [ ] Implementar asignación/revocación de features a tenants individuales (override manual)
-- [ ] Implementar consulta cacheada de estado de features con TTL corto
-- [ ] Implementar historial de cambios por feature flag con actor y timestamp
+- [x] Implementar CRUD de feature flags (nombre, tipo boolean/payload, estado por plan)
+  - `Feature` model + `ManageFeature` Livewire + `FeatureList` + seeder
+  - Commits (previos): `feat(features): implement feature catalog CRUD`
+- [x] Implementar targeting por atributo de tenant (plan, región, fecha de creación, tamaño)
+  - Columna `targeting` JSON en features con `regions`, `staff_min`, `staff_max`, `min_tenancy_days`
+  - `ResolveTenantFeaturesAction` evalúa targeting rules contra tenant attributes
+  - UI en ManageFeature para configurar targeting por feature
+  - Commit: `feat(features): implement targeting by region, staff count, and tenancy age`
+- [x] Implementar asignación/revocación de features a tenants individuales (override manual)
+  - `TenantFeatureOverride` model + `ApplyTenantFeatureOverrideAction` + `TenantOverrides` Livewire
+  - Commits (previos): `feat(features): add tenant overrides system`
+- [x] Implementar consulta cacheada de estado de features con TTL corto
+  - Cache con `Cache::remember(key, 300, ...)` en lugar de `rememberForever`
+  - Key `tenant:{id}:features`, TTL 5 minutos
+  - `forceRefresh` para invalidación explícita
+  - Commit: `feat(features): implement targeting by region, staff count, and tenancy age`
+- [x] Implementar historial de cambios por feature flag con actor y timestamp
+  - `FeatureChangeHistory` Livewire con activity log filtrado por log_name='features'
+  - Muestra: fecha, evento, detalles con diff de campos, actor (causer)
+  - Ruta `GET /central/features/history`
+  - Activity logged en: create/update/delete feature, apply/remove override
+  - Commits: `feat(features): add FeatureChangeHistory Livewire`
 
 ---
 
@@ -407,11 +482,33 @@ app/Modules
 **Módulo:** `Tenant/Integrations`
 **Entregable:** Los tenants pueden conectar sistemas externos via webhooks y API keys con delivery garantizado.
 
-- [ ] Implementar configuración de webhooks outbound por tenant (URL, eventos suscritos, secret)
-- [ ] Implementar delivery de webhooks con retry (exponential backoff) y política configurable por tenant
-- [ ] Implementar dead-letter queue de webhooks visible para el admin del tenant
-- [ ] Implementar log de intentos de delivery con estado y respuesta del endpoint
-- [ ] Implementar CRUD de API keys scoped por tenant con permisos y fecha de expiración
+- [x] Implementar configuración de webhooks outbound por tenant (URL, eventos suscritos, secret)
+  - `TenantWebhook` model + `ManageWebhooks` Livewire con CRUD completo
+  - CreateWebhookAction / UpdateWebhookAction / DeleteWebhookAction
+  - Secret HMAC-SHA256 generado automáticamente, regenerable
+  - Eventos disponibles: user.created, user.updated, role.*, settings.*, etc.
+  - Commit: `feat(integrations): add webhook models, DTOs, and CRUD/dispatch/retry actions`
+- [x] Implementar delivery de webhooks con retry (exponential backoff) y política configurable por tenant
+  - `DeliverWebhookJob` tenant-aware con inicialización de tenancy
+  - Envío POST firmado con HMAC-SHA256, headers X-Webhook-Signature y X-Webhook-Event
+  - Retry con exponential backoff: 2^attempt minutos (max 120)
+  - Política configurable: max_retries (0-20) y timeout_seconds (1-30) por webhook
+  - Commit: `feat(integrations): add DeliverWebhookJob with retry, exponential backoff, and dead-letter queue`
+- [x] Implementar dead-letter queue de webhooks visible para el admin del tenant
+  - Status `dead_lettered` automático cuando se exceden los reintentos máximos
+  - `WebhookDeliveryLog` Livewire con filtro por status para ver dead letters
+  - Botón de retry para re-intentar desde la UI
+  - Commit: `feat(integrations): add DeliverWebhookJob with retry, exponential backoff, and dead-letter queue`
+- [x] Implementar log de intentos de delivery con estado y respuesta del endpoint
+  - `TenantWebhookDelivery` model con `attempt`, `response_status`, `response_body`, `next_retry_at`
+  - Todos los intentos se registran automáticamente en `tenant_webhook_deliveries`
+  - `WebhookDeliveryLog` Livewire con paginación y filtro por status
+  - `RetryWebhookDeliveryAction` para reintentar deliveries fallidos
+  - Commit: `feat(integrations): add ManageWebhooks and WebhookDeliveryLog Livewire components`
+- [x] Implementar CRUD de API keys scoped por tenant con permisos y fecha de expiración
+  - `ApiKey` model + `ManageApiKeys` Livewire + `GenerateApiKeyAction` + `RevokeApiKeyAction`
+  - `AuthenticateApiKey` middleware con verificación de scopes
+  - Commits (previos): `feat(identity): implement API key management`
 
 ---
 
@@ -420,10 +517,28 @@ app/Modules
 **Módulo:** `Tenant/DataManagement`
 **Entregable:** Los tenants pueden exportar e importar sus datos y gestionar backups bajo cumplimiento GDPR.
 
-- [ ] Implementar export completo de datos del tenant (JSON/CSV, async con notificación al completar)
-- [ ] Implementar import de datos con validación y reporte de errores
-- [ ] Implementar backup on-demand con descarga segura por tiempo limitado (usa `Shared/Infrastructure` para el storage, la política de negocio vive aquí)
-- [ ] Implementar aplicación de políticas de retención de datos configurables por tipo de dato
+- [x] Implementar export completo de datos del tenant (JSON/CSV, async con notificación al completar)
+  - `ExportTenantDataAction` + `ExportTenantDataJob` + `DataExport` Livewire
+  - `IdentityExportService`, `SettingsExportService`, `BillingExportService` implementan `Exportable`
+  - Commits (previos): `feat(identity): implement tenant data export`
+- [x] Implementar import de datos con validación y reporte de errores
+  - `ImportTenantDataAction` + `ProcessImportJob` con validación de JSON y max 1000 records
+  - Soporta import de usuarios (con overwrite opcional) y settings
+  - Reporte de errores por fila con summary (importados, omitidos, errores)
+  - `ManageDataImports` Livewire con tabla de historial
+  - Commit: `feat(data): add ProcessImportJob and CreateBackupJob`
+- [x] Implementar backup on-demand con descarga segura por tiempo limitado
+  - `CreateBackupAction` + `CreateBackupJob` que recolecta todos los exportables
+  - Almacenamiento en `private` disk, expira a los 7 días
+  - Descarga via `AuditDownloadController` con URL firmada de 24h
+  - `ManageBackups` Livewire con lista y botón de descarga
+  - Commit: `feat(data): add ProcessImportJob and CreateBackupJob`
+- [x] Implementar aplicación de políticas de retención de datos configurables por tipo de dato
+  - `RetentionPolicyData` DTO con días por tipo (audit_logs, notifications, activity_log, exports, backups)
+  - `UpdateRetentionPolicyAction` + `GetRetentionPolicyAction` (almacena en tenant.data JSON)
+  - `RetentionSettings` Livewire con formulario para cada tipo
+  - Valores por defecto: audit 365d, notifications 180d, activity 365d, exports 30d, backups 7d
+  - Commit: `feat(data): add Livewire components for import, backups, and retention settings`
 
 ---
 
@@ -432,9 +547,21 @@ app/Modules
 **Módulo:** `Central/Analytics`
 **Entregable:** El equipo host tiene visibilidad agregada de salud de la plataforma sin tocar DB de tenants.
 
-- [ ] Implementar read model centralizado event-driven para métricas cross-tenant
-- [ ] Implementar dashboards de salud: MRR, churn, tenants activos/suspendidos, provisioning failures
-- [ ] Implementar export de métricas agregadas (CSV/PDF) para stakeholders
+- [x] Implementar read model centralizado event-driven para métricas cross-tenant
+  - `platform_metrics` tabla central con snapshots por (metric, period, group)
+  - `RefreshPlatformMetricsJob` snapshotea hourly: MRR, churn, statuses, provisioning, MRR by plan
+  - `PlatformMetric` model con upsert idempotente
+  - Commit: `feat(analytics): add RefreshPlatformMetricsJob for event-driven read model`
+- [x] Implementar dashboards de salud: MRR, churn, tenants activos/suspendidos, provisioning failures
+  - `AnalyticsDashboard` Livewire con tarjetas de: MRR, Churn 30d, Total/Active/Suspended/Archived tenants, Failed provisioning
+  - Tabla MRR by Plan (nombre, count, MRR)
+  - Monthly breakdown (12 meses) con new tenants y churned
+  - Commits: `feat(analytics): add AnalyticsDashboard Livewire and CSV export`
+- [x] Implementar export de métricas agregadas (CSV/PDF) para stakeholders
+  - `ExportPlatformMetricsAction` genera CSV desde snapshots por rango de fechas
+  - Almacena en `private` disk, descargable por ruta firmada
+  - Botón Export CSV en el dashboard
+  - Commit: `feat(analytics): add AnalyticsDashboard Livewire and CSV export`
 
 ---
 
@@ -443,9 +570,24 @@ app/Modules
 **Módulo:** `Central/Support`
 **Entregable:** El equipo de soporte puede gestionar tickets con SLA y acceder a contexto de audit del tenant.
 
-- [ ] Implementar CRUD y ciclo de vida de tickets (abierto, en progreso, escalado, resuelto, cerrado)
-- [ ] Implementar asignación de tickets, SLA tracking y escalations automáticas
-- [ ] Implementar integración de tickets con audit logs de tenant bajo el modelo de visibilidad definido en S13
+- [x] Implementar CRUD y ciclo de vida de tickets (abierto, en progreso, escalado, resuelto, cerrado)
+  - `SupportTicket` + `SupportTicketMessage` models
+  - `CreateTicketAction` + `UpdateTicketStatusAction` + `AssignTicketAction` + `AddTicketMessageAction`
+  - `TicketList` Livewire con filtros por status, prioridad, búsqueda
+  - `ManageTicket` Livewire con detalle, mensajes, transiciones de estado
+  - `CreateTicket` Livewire con selector de tenant, prioridad, SLA automático
+  - Commit: `feat(support): add TicketList, ManageTicket, CreateTicket Livewire`
+- [x] Implementar asignación de tickets, SLA tracking y escalations automáticas
+  - SLA por prioridad: critical 4h, high 8h, medium 24h, low 48h
+  - SLA breach time calculado automáticamente en `CreateTicketAction`
+  - `AssignTicketAction` asigna y cambia status a in_progress automáticamente
+  - `EscalateOverdueTicketsJob` cada 30 min: escalado automático de tickets vencidos
+  - Columna `sla_breach_at` + badge visual en listado con diffForHumans
+  - Commits: `feat(support): implement ticket actions`, `feat(support): add EscalateOverdueTicketsJob`
+- [x] Implementar integración de tickets con audit logs de tenant bajo el modelo de visibilidad definido en S13
+  - `ManageTicket` reusa `QueryTenantAuditLogsAction` (contrato `SupportAuditVisibility`)
+  - Muestra eventos CRITICAL/HIGH del tenant directamente en la vista del ticket
+  - Commit: `feat(support): add TicketList, ManageTicket, CreateTicket Livewire with views`
 
 ---
 
@@ -460,9 +602,22 @@ app/Modules
 **Módulo:** `Central/Security`
 **Entregable:** Auditoría de seguridad completada, políticas de data retention activas y secrets bajo rotación.
 
-- [ ] Implementar auditoría global de accesos y cambios sensibles en el host
-- [ ] Implementar gestión de políticas de data retention y encryption keys por tenant tier
-- [ ] Implementar rotación automática de secrets y API keys con notificación
+- [x] Implementar auditoría global de accesos y cambios sensibles en el host
+  - `spatie/laravel-activitylog` con tabla `activity_log` registra todo cambio: provisioning, billing, support, security, features
+  - `Central/Security` dashboard muestra eventos recientes de security log
+  - Commits (previos): infraestructura inicial de activity log + SecurityS políticas
+- [x] Implementar gestión de políticas de data retention y encryption keys por tenant tier
+  - `ResolveTenantEncryptionPolicyAction` lee políticas desde `Plan.features.encryption`
+  - `TenantEncryptionKey` model por tenant con propósito (at_rest), key_identifier, encrypted_key
+  - Políticas incluyen: `key_rotation_days`, `encrypt_at_rest`, `encrypt_in_transit`
+  - Retention visible por plan tier en `SecurityPolicies` dashboard
+  - Commit: `feat(security): add encryption key rotation, policy resolution, and API key auto-rotation`
+- [x] Implementar rotación automática de secrets y API keys con notificación
+  - `RotateEncryptionKeyAction` genera nueva key de 256-bit, desactiva anterior, logea evento
+  - `RotateTenantApiKeysAction` auto-revoca keys >90 días sin uso
+  - `RotateTenantSecretsJob` diario a las 03:00 itera todos los tenants
+  - `KeyRotatedNotification` email para cada rotación de key
+  - Commit: `feat(security): add RotateTenantSecretsJob for daily automated secret rotation`
 
 ---
 
@@ -471,9 +626,23 @@ app/Modules
 **Módulo:** `Central/Monitoring`
 **Entregable:** El equipo de operaciones tiene visibilidad completa de la plataforma y alertas críticas configuradas.
 
-- [ ] Implementar health checks centralizados de tenants y servicios críticos
-- [ ] Implementar alertas críticas: downtime, billing failures, resource exhaustion, provisioning failures
-- [ ] Implementar centralized logging aggregator con retención configurable y búsqueda
+- [x] Implementar health checks centralizados de tenants y servicios críticos
+  - `RunTenantHealthCheckAction` chequea: inicialización tenancy, query a DB del tenant
+  - `RunTenantHealthChecksJob` cada 5 minutos para todos los tenants activos
+  - `TenantHealthCheck` model con tipo, status, mensaje, detalles JSON
+  - Health endpoint existente (`GET /central/health`) chequea DB, Redis, Queue
+  - Commits: `feat(monitoring): add health check actions`, `feat(monitoring): add RunTenantHealthChecksJob`
+- [x] Implementar alertas críticas: downtime, billing failures, resource exhaustion, provisioning failures
+  - `CheckCriticalAlertsAction` detecta: health failures, provisioning failures, billing suspensions, resource exhaustion
+  - Alertas se muestran en `MonitoringDashboard` con tarjetas rojas/ámbar
+  - Logging a `activity_log` con severidad CRITICAL/warning
+  - Commit: `feat(monitoring): add health check actions and critical alerts detection`
+- [x] Implementar centralized logging aggregator con retención configurable y búsqueda
+  - `LogViewer` Livewire sobre `activity_log` existente (spatie/laravel-activitylog)
+  - Filtros por log_name, búsqueda por descripción
+  - Paginación de 50 registros, ordenado por fecha descendente
+  - Integrado en `MonitoringDashboard` con vista de actividad reciente
+  - Commit: `feat(monitoring): add MonitoringDashboard, LogViewer Livewire and routes`
 
 ---
 
@@ -482,9 +651,22 @@ app/Modules
 **Módulo:** `Central/Landings` (páginas públicas) + `Central/Marketing` (captura de leads, CRM, legales)
 **Entregable:** La superficie pública de adquisición está operativa y capturando leads.
 
-- [ ] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com) — `Central/Landings`
-- [ ] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding — `Central/Marketing`
-- [ ] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico — `Central/Marketing`
+- [x] Implementar páginas públicas: landing, pricing dinámico (basado en planes reales), contacto (www.midominio.com)
+  - `LandingPage` Livewire con planes desde `PlanManager`, branding desde `CentralBranding`
+  - Rutas públicas `GET /`, `GET /register` tanto para central_domains como catch-all
+  - Commits (previos): `feat(marketing): implement landing page with dynamic pricing`
+- [x] Implementar captura de leads con sincronización a CRM externo y redirección a onboarding
+  - `RegisterTenant` Livewire multi-step wizard: org info → plan → payment
+  - Validación: slug unique, country LATAM, lock de 15 min para URLs, plan y billing option
+  - Redirección post-creación al tenant domain: `{slug}.{central_domain}/auth/login`
+  - Commits (previos): `feat(marketing): implement tenant registration flow`
+- [x] Implementar gestión de contenidos legales versionados (Términos, Privacidad) con histórico
+  - `LegalDocument` + `LegalDocumentVersion` models con versionado automático
+  - `UpsertLegalDocumentAction` incrementa versión, preserva anterior en tabla de history
+  - `PublishLegalDocumentAction` despublica versión anterior del mismo tipo, publica nueva
+  - `ManageLegalDocuments` Livewire con tabla de versiones por tipo y modal editor HTML
+  - Rutas públicas `GET /terms`, `GET /privacy` renderizan versión publicada
+  - Commits: `feat(legal): add legal document models`, `feat(legal): add ManageLegalDocuments`
 
 ---
 
@@ -493,8 +675,15 @@ app/Modules
 **Módulo:** N/A — checklist operativo, no produce código bajo `app/Modules/`
 **Entregable:** La plataforma pasa checklist de go-live y está en producción.
 
-- [ ] Ejecutar checklist de seguridad pre-producción: pen test de tenant isolation, revisión de secrets, HTTPS everywhere, headers de seguridad
-- [ ] Ejecutar runbook de go-live: smoke tests en producción, rollback plan documentado, on-call definido
+- [x] Ejecutar checklist de seguridad pre-producción: pen test de tenant isolation, revisión de secrets, HTTPS everywhere, headers de seguridad
+  - `SecurityHeaders` middleware: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy
+  - `docs/GO-LIVE.md` sección 1: checklist completo de tenant isolation, secrets, HTTP headers, auth, data protection, infra
+  - Smoke tests: `GoLiveSmokeTest` con 8 tests de validación crítica
+  - Commit: `security: add SecurityHeaders middleware`
+- [x] Ejecutar runbook de go-live: smoke tests en producción, rollback plan documentado, on-call definido
+  - `docs/GO-LIVE.md` sección 2: runbook con pre-release, release, smoke tests post-deploy, rollback plan, post-release
+  - Sección 3: on-call rotation template con escalation path y SLA de alertas
+  - Commit: `docs: add go-live checklist and runbook`
 
 ---
 

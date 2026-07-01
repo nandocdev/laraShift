@@ -356,7 +356,7 @@
 | S10 — ProvisioningJob          | 100% (10/10) | 70% (7/10) | ⚠️ Sin SSL, chaos tests, resume                   |
 | S11 — Offboarding/Recovery     | 100% (9/9)   | 67% (6/9)  | ⚠️ Sin SLA docs, restoration flow                 |
 | S12 — Settings/White-label     | 100% (6/6)   | 67% (4/6)  | ⚠️ Sin email templates, metadata rules            |
-| S13 — Tenant Audit             | 100% (6/6)   | 67% (4/6)  | ⚠️ Sin retención, visibilidad soporte             |
+| S13 — Tenant Audit           | 100% (6/6)   | 100% (6/6) | ✅ Sprint completado                  |
 | S14 — Tenant Notifications     | 100% (7/7)   | 57% (4/7)  | ⚠️ Sin plantillas, preferencias, servicio central |
 | S15 — Usage & Quotas           | 33% (2/6)    | 83% (5/6)  | ✅ Dashboard existe sin ruta                      |
 | S16 — Host Feature Flags       | 100% (5/5)   | 80% (4/5)  | ⚠️ Sin historial de cambios                       |

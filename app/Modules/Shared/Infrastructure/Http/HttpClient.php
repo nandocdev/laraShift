@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Infrastructure\Http;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -12,7 +14,9 @@ use Throwable;
 final class HttpClient
 {
     private const int DEFAULT_TIMEOUT = 30;
+
     private const int DEFAULT_MAX_RETRIES = 3;
+
     private const int DEFAULT_RETRY_DELAY_MS = 100;
 
     public function __construct(
@@ -51,11 +55,11 @@ final class HttpClient
         return Http::timeout($this->timeout)
             ->withUserAgent('LaraShift/1.0')
             ->retry($this->maxRetries, $this->retryDelayMs, function (Throwable $e, PendingRequest $request) {
-                if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+                if ($e instanceof ConnectionException) {
                     return true;
                 }
 
-                if ($e instanceof \Illuminate\Http\Client\RequestException) {
+                if ($e instanceof RequestException) {
                     return in_array($e->response->status(), [429, 500, 502, 503, 504], true);
                 }
 

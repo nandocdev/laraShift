@@ -21,7 +21,7 @@ final class PaymentHandlerDispatcher
     private array $handlers = [];
 
     /**
-     * @param iterable<PaymentHandlerContract> $handlers Inyectados vía tagged binding
+     * @param  iterable<PaymentHandlerContract>  $handlers  Inyectados vía tagged binding
      */
     public function __construct(iterable $handlers)
     {
@@ -33,12 +33,12 @@ final class PaymentHandlerDispatcher
     /**
      * Despacha el resultado del pago al handler registrado para el contexto dado.
      *
-     * @param PaymentContext $context   Contexto del pago (subscription, service_order, etc.)
-     * @param string         $tenantId  Tenant propietario del pago
-     * @param string         $displayId Referencia interna del pago
-     * @param float          $amount    Monto procesado
-     * @param bool           $success   Si el pago fue exitoso
-     * @param array          $metadata  Datos adicionales para el handler
+     * @param  PaymentContext  $context  Contexto del pago (subscription, service_order, etc.)
+     * @param  string  $tenantId  Tenant propietario del pago
+     * @param  string  $displayId  Referencia interna del pago
+     * @param  float  $amount  Monto procesado
+     * @param  bool  $success  Si el pago fue exitoso
+     * @param  array  $metadata  Datos adicionales para el handler
      */
     public function dispatch(
         PaymentContext $context,
@@ -50,12 +50,13 @@ final class PaymentHandlerDispatcher
     ): void {
         $handler = $this->handlers[$context->value] ?? null;
 
-        if (!$handler) {
+        if (! $handler) {
             Log::warning('PaymentHandlerDispatcher: no handler registered for context', [
-                'context'   => $context->value,
+                'context' => $context->value,
                 'displayId' => $displayId,
-                'tenantId'  => $tenantId,
+                'tenantId' => $tenantId,
             ]);
+
             return;
         }
 

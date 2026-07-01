@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,7 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Consolidating all billing related tables into local migrations 
+        // Consolidating all billing related tables into local migrations
         // to avoid external package conflicts and ensure UUID/RLS compatibility.
 
         Schema::create('plans', function (Blueprint $table) {
@@ -22,13 +23,13 @@ return new class extends Migration
             $table->string('name');
             $table->integer('price_monthly')->default(0);
             $table->integer('price_yearly')->default(0);
-            
+
             // Decimal counterparts for easier external integrations
             $table->decimal('amount', 12, 2)->nullable();
             $table->string('currency', 3)->default('USD');
             $table->string('interval')->default('month');
             $table->integer('interval_count')->default(1);
-            
+
             $table->string('provider_plan_id')->nullable();
             $table->boolean('is_active')->default(true);
             $table->jsonb('features')->nullable();
@@ -44,7 +45,7 @@ return new class extends Migration
             $table->string('gateway')->default('stripe');
             $table->string('external_id')->nullable();
             $table->timestamp('current_period_end')->nullable();
-            
+
             // Cashier Compatibility Columns
             $table->string('type')->default('default');
             $table->string('stripe_id')->nullable();
@@ -67,7 +68,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('amount')->default(0);
             $table->integer('quantity')->default(1);
-            
+
             // Cashier Compatibility Columns
             $table->string('stripe_id')->nullable();
             $table->string('stripe_product')->nullable();
@@ -112,11 +113,11 @@ return new class extends Migration
         });
 
         // Enable RLS
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+        if (DB::getDriverName() === 'pgsql') {
             foreach (['subscriptions', 'subscription_items', 'invoices', 'ledger_entries'] as $table) {
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+                DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
+                DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
             }
         }
     }

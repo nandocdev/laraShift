@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Actions;
 
+use App\Modules\Shared\Events\TenantApiKeyCreated;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use App\Modules\Tenant\Identity\Models\ApiKey;
 use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Support\Str;
@@ -12,7 +16,7 @@ final readonly class GenerateApiKeyAction
 {
     /**
      * Generates a new secure API Key for the tenant.
-     * 
+     *
      * Returns an array with:
      * - 'key': The plain text key (only shown once)
      * - 'model': The saved ApiKey model
@@ -24,7 +28,7 @@ final readonly class GenerateApiKeyAction
     ): array {
         // 1. Generate high-entropy key
         // PRD: tnt_{random_32_bytes_hex}
-        $plainKey = 'tnt_' . bin2hex(random_bytes(32));
+        $plainKey = 'tnt_'.bin2hex(random_bytes(32));
 
         // 2. Create the model
         $apiKey = ApiKey::create([
@@ -36,9 +40,9 @@ final readonly class GenerateApiKeyAction
             'created_by' => $creator?->id,
         ]);
 
-        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_CREATED,
+        app(RecordAuditLogAction::class)->execute(
+            new AuditLogData(
+                action: AuditAction::API_KEY_CREATED,
                 resource: 'api_key',
                 resourceId: $apiKey->id,
                 metadata: ['name' => $name, 'scopes' => $scopes],
@@ -51,7 +55,7 @@ final readonly class GenerateApiKeyAction
             ->withProperties(['name' => $name, 'scopes' => $scopes])
             ->log('api_key_generated');
 
-        event(new \App\Modules\Shared\Events\TenantApiKeyCreated($apiKey));
+        event(new TenantApiKeyCreated($apiKey));
 
         return [
             'key' => $plainKey,

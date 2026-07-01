@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Features\Livewire;
 
 use App\Modules\Central\Features\Actions\ApplyTenantFeatureOverrideAction;
+use App\Modules\Central\Features\Actions\RemoveFeatureOverrideAction;
 use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
 use App\Modules\Central\Features\DTOs\TenantSummaryData;
 use App\Modules\Central\Features\Models\Feature;
@@ -18,12 +19,16 @@ use Livewire\Component;
 class TenantOverrides extends Component
 {
     public TenantSummaryData $tenantData;
+
     public string $tenantId;
-    
+
     // Form state for new override
     public string $selectedFeatureKey = '';
+
     public string $type = 'allow';
+
     public string $reason = '';
+
     public ?string $expiresAt = null;
 
     public function mount(Tenant $tenant): void
@@ -59,14 +64,11 @@ class TenantOverrides extends Component
         }
     }
 
-    public function removeOverride(string $id): void
+    public function removeOverride(string $id, RemoveFeatureOverrideAction $action): void
     {
         $tenant = Tenant::findOrFail($this->tenantId);
-        $override = TenantFeatureOverride::where('tenant_id', $this->tenantId)->findOrFail($id);
-        $override->delete();
 
-        // Refresh cache
-        app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
+        $action->execute($tenant, $id);
 
         session()->flash('status', __('Override removed.'));
     }

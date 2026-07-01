@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
 use App\Modules\Central\Payments\Http\Controllers\CheckoutController;
 use App\Modules\Central\Payments\Http\Controllers\WebhookController;
+use App\Modules\Central\Payments\Livewire\GatewaySettings;
+use App\Modules\Central\Payments\Livewire\WebhookLog;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +36,12 @@ Route::post('/webhooks/dlocal/payout', [WebhookController::class, 'handle'])
     ->name('payments.webhooks.dlocal_payout')
     ->middleware('throttle:webhooks')
     ->withoutMiddleware(['web', 'auth', 'tenant']);
+
+// ── Host Admin Routes ────────────────────────────────────────────────────────
+Route::middleware(['web', 'auth:central'])->prefix('central/payments')->name('central.payments.')->group(function (): void {
+    Route::get('/gateway', GatewaySettings::class)->name('gateway');
+    Route::get('/webhooks', WebhookLog::class)->name('webhooks');
+});
 
 // ── Tenant-scoped checkout ───────────────────────────────────────────────────
 Route::middleware(['web', 'tenant', 'auth', 'verified'])

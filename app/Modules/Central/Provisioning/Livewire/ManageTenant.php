@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Livewire;
 
 use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -14,12 +15,17 @@ use Livewire\Component;
 class ManageTenant extends Component
 {
     public Tenant $tenant;
-    
+
     public string $name = '';
+
     public string $email = '';
+
     public string $plan_id = '';
+
     public string $status = '';
+
     public bool $maintenance_mode = false;
+
     public bool $read_only = false;
 
     public function mount(Tenant $tenant): void
@@ -55,7 +61,7 @@ class ManageTenant extends Component
 
         // Invalidate feature cache just in case plan changed
         if ($this->tenant->wasChanged('plan_id')) {
-            app(\App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction::class)->execute($this->tenant, true);
+            app(ResolveTenantFeaturesAction::class)->execute($this->tenant, true);
         }
 
         activity('provisioning')

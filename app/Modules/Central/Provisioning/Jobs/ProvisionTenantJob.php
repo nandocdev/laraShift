@@ -30,6 +30,7 @@ final class ProvisionTenantJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 300; // 5 minutos máximo para provisionar
 
     public function __construct(
@@ -82,17 +83,18 @@ final class ProvisionTenantJob implements ShouldQueue
                     ->log('tenant_provisioned_successfully');
             });
         } catch (\Exception $e) {
-            Log::error("Fallo asíncrono en la provisión del tenant {$this->slug}: " . $e->getMessage());
-            
+            Log::error("Fallo asíncrono en la provisión del tenant {$this->slug}: ".$e->getMessage());
+
             $this->tenant->update([
-                'status' => 'provisioning_failed'
+                'status' => 'provisioning_failed',
             ]);
 
             throw $e;
         }
     }
 
-    private function logStep(string $step, callable $callback): void {
+    private function logStep(string $step, callable $callback): void
+    {
         $log = ProvisioningLog::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => $this->tenant->id,

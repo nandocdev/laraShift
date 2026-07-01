@@ -9,8 +9,7 @@ interface TenantDomainResolverContract
     /**
      * Resolves the primary domain for a given tenant ID.
      *
-     * @param string|int $tenantId
-     * @return string|null
+     * @param  string|int  $tenantId
      */
     public function resolveDomain($tenantId): ?string;
 }

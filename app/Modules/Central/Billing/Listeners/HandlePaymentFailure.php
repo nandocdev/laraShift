@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Listeners;
 
-use App\Modules\Central\Billing\Notifications\PaymentFailedNotification;
-use App\Modules\Central\Billing\Notifications\TenantSuspendedNotification;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Events\PaymentFailed;
 use App\Modules\Shared\Events\TenantSuspendedByDunning;
@@ -21,28 +19,29 @@ class HandlePaymentFailure
     {
         $tenant = Tenant::find($event->tenantId);
 
-        if (!$tenant) {
-            Log::error("Dunning: Tenant not found", ['tenant_id' => $event->tenantId]);
+        if (! $tenant) {
+            Log::error('Dunning: Tenant not found', ['tenant_id' => $event->tenantId]);
+
             return;
         }
 
         // Logic moved from StripeWebhookController for consistency
         $attemptCount = $event->attemptCount;
-        
+
         // We'd ideally have amount/currency in the event or fetch it from invoice
         // For now, we rely on the event or log as generic
-        
+
         if ($attemptCount < 3) {
             Log::info("Dunning: Payment attempt {$attemptCount} failed for tenant {$tenant->slug}");
             // Notification logic...
         } else {
             Log::alert("Dunning: Maximum attempts reached. Suspending tenant {$tenant->slug}");
-            
+
             $tenant->update([
                 'status' => 'suspended',
                 'suspended_at' => now(),
             ]);
-            
+
             TenantSuspendedByDunning::dispatch($tenant->id, $event->invoiceId);
 
             activity('billing')

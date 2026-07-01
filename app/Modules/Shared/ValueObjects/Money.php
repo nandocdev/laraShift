@@ -11,6 +11,7 @@ final readonly class Money
     private const array SUPPORTED_CURRENCIES = ['USD', 'EUR', 'GBP', 'MXN', 'COP', 'BRL', 'PEN', 'CLP', 'ARS'];
 
     private int $amount;
+
     private string $currency;
 
     public function __construct(int|float|string $amount, string $currency = 'USD')
@@ -95,6 +96,6 @@ final readonly class Money
 
     public function __toString(): string
     {
-        return number_format($this->toDecimal(), 2) . " {$this->currency}";
+        return number_format($this->toDecimal(), 2)." {$this->currency}";
     }
 }

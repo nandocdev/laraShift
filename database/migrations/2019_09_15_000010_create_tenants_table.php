@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('email'); // Tenant owner email
-            
+
             // Lifecycle & Status
             $table->string('status')->default('active'); // active, suspended, archived
             $table->boolean('maintenance_mode')->default(false);
@@ -30,7 +30,7 @@ return new class extends Migration
             // Billing
             $table->string('plan_id')->default('free');
             $table->string('billing_gateway')->default('dlocal'); // default per plan-mode strategy (dLocal)
-            
+
             $table->timestamps();
             $table->softDeletes();
             $table->json('data')->nullable();

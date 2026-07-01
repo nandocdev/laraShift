@@ -8,7 +8,7 @@ use App\Modules\Central\Landings\Models\Landing;
 use App\Modules\Central\Landings\Models\LandingVersion;
 use Illuminate\Support\Facades\DB;
 
-final class PublishLandingAction
+final readonly class PublishLandingAction
 {
     public function __construct(
         private RenderLandingAction $renderAction

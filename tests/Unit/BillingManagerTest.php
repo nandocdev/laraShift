@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Modules\Central\Billing\Support\BillingManager;
+use App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\InternalBillingProvider;
 use App\Modules\Central\Billing\Support\Drivers\StripeBillingProvider;
-use App\Modules\Central\Billing\Support\Drivers\DlocalBillingProvider;
 use Tests\TestCase;
 
 class BillingManagerTest extends TestCase

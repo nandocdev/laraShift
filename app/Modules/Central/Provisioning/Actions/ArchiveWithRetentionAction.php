@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Log;
 final readonly class ArchiveWithRetentionAction
 {
     private const int DEFAULT_RETENTION_DAYS = 90;
+
     private const int TRIAL_RETENTION_DAYS = 30;
+
     private const int ENTERPRISE_RETENTION_DAYS = 365;
 
     public function execute(Tenant $tenant): array
@@ -37,7 +39,7 @@ final readonly class ArchiveWithRetentionAction
             ])
             ->log('tenant_archived_with_retention');
 
-        Log::info("Tenant archived with retention", [
+        Log::info('Tenant archived with retention', [
             'tenant_id' => $tenant->id,
             'retention_days' => $retentionDays,
             'purge_at' => $purgeAt,

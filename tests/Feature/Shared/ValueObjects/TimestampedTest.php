@@ -47,5 +47,5 @@ test('timestamped diff in seconds', function () {
 });
 
 test('timestamped rejects invalid strings', function () {
-    expect(fn () => new Timestamped('not-a-date'))->toThrow(\InvalidArgumentException::class);
+    expect(fn () => new Timestamped('not-a-date'))->toThrow(InvalidArgumentException::class);
 });

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Auth\Models\CentralUser;
-use App\Modules\Central\Auth\Models\CentralSession;
 use App\Modules\Central\Auth\Actions\LoginCentralUserAction;
 use App\Modules\Central\Auth\DTOs\LoginData;
+use App\Modules\Central\Auth\Models\CentralSession;
+use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
@@ -35,7 +35,7 @@ it('revokes the oldest session when limit is exceeded', function () {
         Session::start();
         $action->execute($data);
         $action->recordSession($user);
-        
+
         // Manually adjust the last session's issued_at to ensure order
         $session = CentralSession::latest('created_at')->first();
         $session->update(['issued_at' => now()->subMinutes(10 - $i)]);
@@ -52,10 +52,10 @@ it('revokes the oldest session when limit is exceeded', function () {
     // Should still be 3 active sessions, and 1 revoked
     expect(CentralSession::where('user_id', $user->id)->whereNull('revoked_at')->count())->toBe(3);
     expect(CentralSession::where('user_id', $user->id)->whereNotNull('revoked_at')->count())->toBe(1);
-    
+
     // The oldest should be the revoked one
     $revoked = CentralSession::where('user_id', $user->id)->whereNotNull('revoked_at')->first();
     $oldest = CentralSession::where('user_id', $user->id)->orderBy('issued_at', 'asc')->first();
-    
+
     expect($revoked->id)->toBe($oldest->id);
 });

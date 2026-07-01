@@ -8,7 +8,8 @@ namespace App\Modules\Central\Payments\Enums;
  * Discriminador de contexto de pago.
  * Determina qué handler post-pago procesa el resultado.
  */
-enum PaymentContext: string {
+enum PaymentContext: string
+{
     /** Central: cobro de membresías/suscripciones recurrentes */
     case Subscription = 'subscription';
 

@@ -28,9 +28,9 @@ it('sends a welcome email to the initial admin user', function () {
     $tenant->run(function () {
         $user = User::where('email', 'admin@welcome.com')->first();
         expect($user)->not->toBeNull();
-        
+
         Notification::assertSentTo(
-            $user, 
+            $user,
             WelcomeTenantNotification::class
         );
     });

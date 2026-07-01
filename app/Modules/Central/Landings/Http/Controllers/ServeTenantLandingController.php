@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Landings\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Modules\Central\Landings\Models\Landing;
+use App\Modules\Shared\Http\Controllers\Controller;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
@@ -32,7 +32,7 @@ final class ServeTenantLandingController extends Controller
 
         // Fallback: Show a default landing/welcome if nothing is published
         return view('welcome', [
-            'tenant' => tenant()
+            'tenant' => tenant(),
         ]);
     }
 }

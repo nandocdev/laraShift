@@ -14,7 +14,7 @@ final readonly class GenerateInvoicePdfAction
     public function execute(Invoice $invoice): string
     {
         $tenant = $invoice->tenant;
-        
+
         $pdf = Pdf::loadView('billing::pdf.invoice-proforma', [
             'invoice' => $invoice,
             'tenant' => $tenant,
@@ -26,10 +26,10 @@ final readonly class GenerateInvoicePdfAction
         return $pdf->output();
     }
 
-    public function download(Invoice $invoice): \Illuminate\Http\Response
+    public function download(Invoice $invoice): Response
     {
         $filename = "proforma-{$invoice->number}.pdf";
-        
+
         return response($this->execute($invoice))
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");

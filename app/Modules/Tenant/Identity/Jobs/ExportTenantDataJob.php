@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Jobs;
 
+use App\Modules\Central\Billing\Services\BillingExportService;
 use App\Modules\Shared\Contracts\Exportable;
-use App\Modules\Tenant\Identity\Notifications\TenantDataExportNotification;
 use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Identity\Notifications\TenantDataExportNotification;
+use App\Modules\Tenant\Identity\Services\IdentityExportService;
+use App\Modules\Tenant\Settings\Services\SettingsExportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,15 +33,17 @@ class ExportTenantDataJob implements ShouldQueue
 
         try {
             $user = User::find($this->userId);
-            
-            if (! $user) return;
+
+            if (! $user) {
+                return;
+            }
 
             // Collect data from various modules that implement Exportable
             // Each service will now be scoped to the initialized tenant.
             $exportables = [
-                new \App\Modules\Tenant\Identity\Services\IdentityExportService(),
-                new \App\Modules\Tenant\Settings\Services\SettingsExportService(),
-                new \App\Modules\Central\Billing\Services\BillingExportService(),
+                new IdentityExportService,
+                new SettingsExportService,
+                new BillingExportService,
             ];
 
             $data = [];
@@ -46,7 +51,7 @@ class ExportTenantDataJob implements ShouldQueue
                 $data = array_merge($data, $exportable->getExportData());
             }
 
-            $fileName = "exports/tenant_data_{$this->tenantId}_" . Str::random(8) . ".json";
+            $fileName = "exports/tenant_data_{$this->tenantId}_".Str::random(8).'.json';
             Storage::disk('private')->put($fileName, json_encode($data));
 
             // Notify User

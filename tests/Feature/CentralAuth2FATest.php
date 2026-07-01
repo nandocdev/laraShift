@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Auth\Models\CentralUser;
-use App\Modules\Central\Auth\Models\Central2FA;
 use App\Modules\Central\Auth\Actions\LoginCentralUserAction;
 use App\Modules\Central\Auth\DTOs\LoginData;
+use App\Modules\Central\Auth\Livewire\TwoFactorEnrollment;
+use App\Modules\Central\Auth\Models\Central2FA;
+use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use PragmaRX\Google2FA\Google2FA;
 
 uses(RefreshDatabase::class);
@@ -23,7 +25,7 @@ it('requires 2fa if enabled', function () {
         'password' => Hash::make($password),
     ]);
 
-    $google2fa = new Google2FA();
+    $google2fa = new Google2FA;
     $secret = $google2fa->generateSecretKey();
 
     Central2FA::create([
@@ -68,4 +70,36 @@ it('logs in directly if 2fa is disabled', function () {
 
     expect($result)->toBe('success');
     expect(auth('central')->check())->toBeTrue();
+});
+
+it('renders two factor enrollment page when authenticated', function () {
+    $password = 'password123';
+    $user = CentralUser::create([
+        'id' => Str::uuid()->toString(),
+        'name' => 'Admin',
+        'email' => 'admin@2fa-test.com',
+        'password' => Hash::make($password),
+    ]);
+
+    $this->actingAs($user, 'central');
+
+    Livewire::test(TwoFactorEnrollment::class)
+        ->assertStatus(200)
+        ->assertSee(__('Two-Factor Authentication'));
+});
+
+it('initiates 2fa enrollment and shows qr code', function () {
+    $password = 'password123';
+    $user = CentralUser::create([
+        'id' => Str::uuid()->toString(),
+        'name' => 'Admin',
+        'email' => 'admin@2fa-enroll-test.com',
+        'password' => Hash::make($password),
+    ]);
+
+    $this->actingAs($user, 'central');
+
+    Livewire::test(TwoFactorEnrollment::class)
+        ->call('initiate')
+        ->assertSet('showingQrCode', true);
 });

@@ -6,6 +6,4 @@ namespace App\Modules\Central\Payments\Exceptions;
 
 use Exception;
 
-final class DlocalGatewayException extends Exception
-{
-}
+final class DlocalGatewayException extends Exception {}

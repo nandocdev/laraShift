@@ -6,20 +6,22 @@ namespace App\Modules\Central\Payments\Http\Controllers;
 
 use App\Modules\Central\Payments\Actions\InitiateCheckoutAction;
 use App\Modules\Central\Payments\DTOs\PaymentData;
+use App\Modules\Shared\Contracts\PaymentAmountResolverContract;
 use App\Modules\Shared\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class CheckoutController extends Controller {
+final class CheckoutController extends Controller
+{
     public function __construct(
         private readonly InitiateCheckoutAction $initiateAction
-    ) {
-    }
+    ) {}
 
     /**
      * Inicia una sesión de pago desde una petición HTTP estándar.
      */
-    public function initiate(Request $request): JsonResponse {
+    public function initiate(Request $request): JsonResponse
+    {
         $data = $request->validate([
             'description' => ['required', 'string', 'max:150'],
             'display_id' => ['required', 'string'],
@@ -30,7 +32,7 @@ final class CheckoutController extends Controller {
         ]);
 
         try {
-            $amountResolver = app(\App\Modules\Shared\Contracts\PaymentAmountResolverContract::class);
+            $amountResolver = app(PaymentAmountResolverContract::class);
             $amount = $amountResolver->resolveAmount($data['display_id']);
 
             $session = $this->initiateAction->execute(

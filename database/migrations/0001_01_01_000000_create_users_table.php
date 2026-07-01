@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,15 +19,15 @@ return new class extends Migration
             $table->string('email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            
+
             // Two Factor Authentication & Security
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->boolean('mfa_enabled')->default(false);
-            
+
             $table->string('status')->default('active'); // active, inactive, suspended
-            
+
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
@@ -35,9 +36,9 @@ return new class extends Migration
         });
 
         // Enable RLS for users
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE users ENABLE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON users USING (tenant_id::text = current_setting('app.tenant_id'));");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE users ENABLE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON users USING (tenant_id::text = current_setting('app.tenant_id'));");
         }
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

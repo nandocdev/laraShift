@@ -16,6 +16,7 @@ use App\Modules\Shared\Events\Outbox\OutboxEventPublisher;
 class TestSubscriber implements EventSubscriber
 {
     public int $handleCount = 0;
+
     public array $receivedEvents = [];
 
     public function handle(DomainEvent $event): void

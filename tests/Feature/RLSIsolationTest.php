@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -24,8 +25,8 @@ beforeEach(function () {
 });
 
 test('database prevents access to other tenant data at rls layer', function () {
-    $userStatus = DB::select("SELECT usename, usesuper FROM pg_user WHERE usename = CURRENT_USER")[0];
-    
+    $userStatus = DB::select('SELECT usename, usesuper FROM pg_user WHERE usename = CURRENT_USER')[0];
+
     if ($userStatus->usesuper) {
         $this->markTestSkipped("Current DB user ({$userStatus->usename}) is a SUPERUSER. PostgreSQL bypasses RLS for superusers, so isolation cannot be tested in this environment.");
     }
@@ -33,17 +34,17 @@ test('database prevents access to other tenant data at rls layer', function () {
     // 1. Setup two tenants
     $tenantA = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'tenant-a-' . Str::random(5),
+        'slug' => 'tenant-a-'.Str::random(5),
         'name' => 'Tenant A',
-        'email' => Str::random(10) . '@test.com',
+        'email' => Str::random(10).'@test.com',
         'plan_id' => 'free',
     ]);
 
     $tenantB = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'tenant-b-' . Str::random(5),
+        'slug' => 'tenant-b-'.Str::random(5),
         'name' => 'Tenant B',
-        'email' => Str::random(10) . '@test.com',
+        'email' => Str::random(10).'@test.com',
         'plan_id' => 'free',
     ]);
 
@@ -63,9 +64,9 @@ test('database prevents access to other tenant data at rls layer', function () {
 
     // 3. Change session to Tenant B and try to read Tenant A's data
     DB::statement("SELECT set_config('app.tenant_id', ?, false)", [$tenantB->id]);
-    
+
     $visibleKeys = DB::table('tenant_api_keys')->where('id', $apiKeyId)->get();
-    
+
     expect($visibleKeys)->toHaveCount(0);
 
     // 4. Try to insert data for Tenant A from Tenant B session (Should fail RLS CHECK)
@@ -80,22 +81,22 @@ test('database prevents access to other tenant data at rls layer', function () {
             'updated_at' => now(),
         ]);
         $this->fail('RLS should have prevented inserting data for another tenant.');
-    } catch (\Illuminate\Database\QueryException $e) {
+    } catch (QueryException $e) {
         expect($e->getMessage())->toContain('new row violates row-level security policy');
     }
 });
 
 test('empty tenant id returns no results when rls is forced', function () {
-    $userStatus = DB::select("SELECT usename, usesuper FROM pg_user WHERE usename = CURRENT_USER")[0];
+    $userStatus = DB::select('SELECT usename, usesuper FROM pg_user WHERE usename = CURRENT_USER')[0];
     if ($userStatus->usesuper) {
-        $this->markTestSkipped("Skipped: Superuser bypasses RLS.");
+        $this->markTestSkipped('Skipped: Superuser bypasses RLS.');
     }
 
     $tenantA = Tenant::create([
         'id' => (string) Str::uuid(),
-        'slug' => 'tenant-a-' . Str::random(5),
+        'slug' => 'tenant-a-'.Str::random(5),
         'name' => 'Tenant A',
-        'email' => Str::random(10) . '@test.com',
+        'email' => Str::random(10).'@test.com',
         'plan_id' => 'free',
     ]);
 

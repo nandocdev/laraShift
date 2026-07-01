@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class GlobalRateLimiter
 {
     private const int DEFAULT_MAX_ATTEMPTS = 120;
+
     private const int DEFAULT_DECAY_SECONDS = 60;
 
     public function __construct(
@@ -53,7 +54,7 @@ final class GlobalRateLimiter
 
     private function ipKey(Request $request): string
     {
-        return 'global_rate_ip:' . $request->ip();
+        return 'global_rate_ip:'.$request->ip();
     }
 
     private function tenantKey(Request $request): ?string
@@ -62,7 +63,7 @@ final class GlobalRateLimiter
             return null;
         }
 
-        return 'global_rate_tenant:' . tenant('id');
+        return 'global_rate_tenant:'.tenant('id');
     }
 
     private function tenantLimit(): int

@@ -1,0 +1,43 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+   <defs>
+      <linearGradient id="blueGradient" x1="250" y1="120" x2="780" y2="850" gradientUnits="userSpaceOnUse">
+         <stop stop-color="#4B3CFF" />
+         <stop offset="1" stop-color="#2D1BFF" />
+      </linearGradient>
+
+      <linearGradient id="darkGradient" x1="300" y1="600" x2="500" y2="900" gradientUnits="userSpaceOnUse">
+         <stop stop-color="#101828" />
+         <stop offset="1" stop-color="#0B1220" />
+      </linearGradient>
+   </defs>
+
+   <!-- Background -->
+   <rect width="1024" height="1024" fill="white" />
+
+   <!-- R top blue curve -->
+   <path d="M260 220
+       H610
+       C790 220 860 330 860 470
+       C860 610 770 680 650 700
+       L820 850
+       H620
+       L470 690
+       V520
+       H610
+       C670 520 700 500 700 460
+       C700 420 670 390 610 390
+       H260
+       Z" fill="url(#blueGradient)" />
+
+   <!-- R vertical dark stem -->
+   <path d="M260 520
+       H450
+       V850
+       H260
+       C245 850 230 835 230 820
+       V550
+       C230 535 245 520 260 520
+       Z" fill="url(#darkGradient)" />
+
+</svg>

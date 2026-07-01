@@ -11,7 +11,6 @@ use App\Modules\Shared\Events\PaymentSucceeded;
 use App\Modules\Shared\Events\SubscriptionCreated;
 use App\Modules\Shared\Events\SubscriptionUpdated;
 use App\Modules\Shared\Events\TenantReactivatedAfterPayment;
-use App\Modules\Shared\Events\TenantSuspendedByDunning;
 use Illuminate\Http\Request;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierController;
 use Symfony\Component\HttpFoundation\Response;
@@ -39,9 +38,9 @@ class StripeWebhookController extends CashierController
 
         try {
             $response = parent::handleWebhook($request);
-            
+
             $event->update(['processed_at' => now()]);
-            
+
             return $response;
         } catch (\Exception $e) {
             $event->update(['error' => $e->getMessage()]);
@@ -90,7 +89,7 @@ class StripeWebhookController extends CashierController
 
         if ($tenant) {
             $attemptCount = $payload['data']['object']['attempt_count'] ?? 1;
-            
+
             PaymentFailed::dispatch($tenant->id, $payload['data']['object']['id'], $attemptCount);
         }
 
@@ -117,7 +116,7 @@ class StripeWebhookController extends CashierController
                     'status' => 'active',
                     'suspended_at' => null,
                 ]);
-                
+
                 TenantReactivatedAfterPayment::dispatch($tenant->id, $payload['data']['object']['id']);
 
                 activity('billing')

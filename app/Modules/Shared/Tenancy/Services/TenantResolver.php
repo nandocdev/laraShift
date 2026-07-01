@@ -31,13 +31,13 @@ final readonly class TenantResolver
 
         $subdomain = null;
         foreach ($centralDomains as $domain) {
-            if (str_ends_with($host, '.' . $domain)) {
+            if (str_ends_with($host, '.'.$domain)) {
                 $subdomain = substr($host, 0, -(strlen($domain) + 1));
                 break;
             }
         }
 
-        if ($centralDomain && str_ends_with($host, '.' . $centralDomain)) {
+        if ($centralDomain && str_ends_with($host, '.'.$centralDomain)) {
             $subdomain = $subdomain ?? substr($host, 0, -(strlen($centralDomain) + 1));
         }
 

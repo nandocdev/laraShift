@@ -13,12 +13,12 @@ class EnsureUserIsActive
 {
     /**
      * Handle an incoming request.
-     * 
-     * Ensures that the authenticated user is active. 
+     *
+     * Ensures that the authenticated user is active.
      * If not, it logs them out and redirects to login.
      * This provides instantaneous session invalidation (< 60s).
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

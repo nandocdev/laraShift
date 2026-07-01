@@ -17,7 +17,7 @@ class DataExport extends Component
     public function export(ExportTenantDataAction $action): void
     {
         $this->exporting = true;
-        
+
         try {
             $action->execute(auth()->id());
             session()->flash('status', __('Data export queued successfully. You will receive an email shortly.'));

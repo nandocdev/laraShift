@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class TraceContext
 {
     public const string TRACEPARENT_HEADER = 'traceparent';
+
     public const string TRACESTATE_HEADER = 'tracestate';
 
     public function handle(Request $request, Closure $next): Response

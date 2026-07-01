@@ -12,5 +12,6 @@ class Activity extends SpatieActivity
     use HasUuids;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 }

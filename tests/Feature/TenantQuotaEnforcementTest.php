@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\PlanSeeder::class);
+    $this->seed(PlanSeeder::class);
 });
 
 it('enforces limits correctly using Redis counters', function () {
@@ -23,7 +24,7 @@ it('enforces limits correctly using Redis counters', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    
+
     $manager = app(QuotaManager::class);
     $manager->reset($tenant, 'invitations');
 
@@ -52,7 +53,7 @@ it('allows unlimited usage when limit is -1', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    
+
     $manager = app(QuotaManager::class);
     $manager->reset($tenant, 'invitations');
 

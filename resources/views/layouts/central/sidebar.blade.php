@@ -15,57 +15,25 @@
 
         <flux:sidebar.nav>
             <flux:sidebar.group :heading="__('Administration')" class="grid">
-                <flux:sidebar.item icon="home" :href="route('central.dashboard')"
-                    :current="request()->routeIs('central.dashboard')" wire:navigate>
-                    {{ __('Dashboard') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="server-stack" :href="route('central.provisioning.index')"
-                    :current="request()->routeIs('central.provisioning.*')" wire:navigate>
-                    {{ __('Tenants') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="heart" :href="route('central.health')"
-                    :current="request()->routeIs('central.health')" target="_blank">
-                    {{ __('Health Monitor') }}
-                </flux:sidebar.item>
+                <x-host-nav-item route="central.dashboard" icon="home" :label="__('Dashboard')" />
+                <x-host-nav-item route="central.provisioning.*" icon="server-stack" :label="__('Tenants')" />
+                <x-host-nav-item route="central.health" icon="heart" :label="__('Health Monitor')"
+                    href="{{ route('central.health') }}" target="_blank" />
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Support')" class="grid">
-                <flux:sidebar.item icon="megaphone" :href="route('central.support.broadcasts')"
-                    :current="request()->routeIs('central.support.broadcasts')" wire:navigate>
-                    {{ __('Broadcast Center') }}
-                </flux:sidebar.item>
+                <x-host-nav-item route="central.support.broadcasts" icon="megaphone" :label="__('Broadcast Center')" />
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Billing')" class="grid">
-                <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
-                    :current="request()->routeIs('central.billing.subscriptions')" wire:navigate>
-                    {{ __('Subscriptions') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="presentation-chart-line" :href="route('central.billing.plans')"
-                    :current="request()->routeIs('central.billing.plans')" wire:navigate>
-                    {{ __('Plans') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="receipt-percent" :href="route('central.billing.invoices.global')"
-                    :current="request()->routeIs('central.billing.invoices.global')" wire:navigate>
-                    {{ __('Global Invoices') }}
-                </flux:sidebar.item>
-{{-- 
-                <flux:sidebar.item icon="book-open" :href="route('central.billing.ledger')"
-                    :current="request()->routeIs('central.billing.ledger')" wire:navigate>
-                    {{ __('Ledger Audit') }}
-                </flux:sidebar.item>
-                --}}
+                <x-host-nav-item route="central.billing.subscriptions" icon="credit-card" :label="__('Subscriptions')" />
+                <x-host-nav-item route="central.billing.plans" icon="presentation-chart-line" :label="__('Plans')" />
+                <x-host-nav-item route="central.billing.invoices.global" icon="receipt-percent" :label="__('Global Invoices')" />
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Settings')" class="grid">
-                <flux:sidebar.item icon="paint-brush" :href="route('central.settings.branding')"
-                    :current="request()->routeIs('central.settings.*')" wire:navigate>
-                    {{ __('Platform Branding') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="command-line" :href="route('central.features.index')"
-                    :current="request()->routeIs('central.features.*')" wire:navigate>
-                    {{ __('Feature Catalog') }}
-                </flux:sidebar.item>
+                <x-host-nav-item route="central.settings.*" icon="paint-brush" :label="__('Platform Branding')" />
+                <x-host-nav-item route="central.features.*" icon="command-line" :label="__('Feature Catalog')" />
             </flux:sidebar.group>
         </flux:sidebar.nav>
         <flux:spacer />

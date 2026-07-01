@@ -6,17 +6,18 @@ namespace App\Modules\Central\Payments\DTOs;
 
 use Spatie\LaravelData\Data;
 
-final class ServiceData extends Data {
+final class ServiceData extends Data
+{
     public function __construct(
         public readonly string $idMerchantService,
         public readonly string $gatewayCode,
         public readonly float $txLimit,
         public readonly float $dailyAmountLimit,
         public readonly float $monthlyAmountLimit,
-    ) {
-    }
+    ) {}
 
-    public static function fromArray(array $data): self {
+    public static function fromArray(array $data): self
+    {
         return new self(
             idMerchantService: (string) $data['idMerchantService'],
             gatewayCode: $data['gatewayCode'],
@@ -26,7 +27,8 @@ final class ServiceData extends Data {
         );
     }
 
-    public function isClave(): bool {
+    public function isClave(): bool
+    {
         return in_array($this->gatewayCode, ['CLAVE', 'CROEM_CLAV'], true);
     }
 }

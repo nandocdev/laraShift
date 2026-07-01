@@ -13,6 +13,7 @@ class Role extends SpatieRole
     use BelongsToTenant, HasUuids;
 
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected static function booted(): void

@@ -40,7 +40,7 @@ class CentralSession extends Model
     public function revoke(string $reason = 'Manual revocation'): void
     {
         $this->update(['revoked_at' => now()]);
-        
+
         // Note: Ideally we should also remove the session from Laravel's storage
         // but it depends on the driver. If using DB driver, we can delete from 'sessions' table.
     }

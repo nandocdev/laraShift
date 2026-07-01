@@ -4,24 +4,33 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Identity\Livewire;
 
-use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Shared\Events\TenantRoleCreated;
+use App\Modules\Shared\Events\TenantRoleUpdated;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use App\Modules\Tenant\Identity\Models\Permission;
+use App\Modules\Tenant\Identity\Models\Role;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 
 #[Layout('layouts.app')]
 class RoleManagement extends Component
 {
     // Create Role State
     public string $name = '';
+
     public array $selectedPermissions = [];
 
     // Edit Role State
     public ?Role $editingRole = null;
+
     public string $editName = '';
+
     public array $editPermissions = [];
 
     public array $availablePermissions = [
@@ -62,7 +71,7 @@ class RoleManagement extends Component
             ->performedOn($role)
             ->log('role_created');
 
-        event(new \App\Modules\Shared\Events\TenantRoleCreated($role));
+        event(new TenantRoleCreated($role));
 
         $this->reset(['name', 'selectedPermissions']);
         session()->flash('status', __('Custom role created.'));
@@ -71,7 +80,7 @@ class RoleManagement extends Component
     public function edit(string $roleId): void
     {
         $this->editingRole = Role::findOrFail($roleId);
-        
+
         if ($this->editingRole->is_system) {
             $this->addError('editName', __('System roles cannot be renamed.'));
         }
@@ -94,11 +103,11 @@ class RoleManagement extends Component
         $this->editingRole->syncPermissions($this->editPermissions);
 
         // Explicitly flush Spatie permission cache to ensure < 5s effectiveness
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                action: \App\Modules\Tenant\Audit\Enums\AuditAction::ROLE_UPDATED,
+        app(RecordAuditLogAction::class)->execute(
+            new AuditLogData(
+                action: AuditAction::ROLE_UPDATED,
                 resource: 'role',
                 resourceId: $this->editingRole->id,
                 metadata: ['name' => $this->editName, 'permissions' => $this->editPermissions]
@@ -109,7 +118,7 @@ class RoleManagement extends Component
             ->performedOn($this->editingRole)
             ->log('role_updated');
 
-        event(new \App\Modules\Shared\Events\TenantRoleUpdated($this->editingRole, $this->editPermissions));
+        event(new TenantRoleUpdated($this->editingRole, $this->editPermissions));
 
         $this->reset(['editingRole', 'editName', 'editPermissions']);
         session()->flash('status', __('Role updated successfully.'));
@@ -121,18 +130,20 @@ class RoleManagement extends Component
 
         if ($role->is_system) {
             session()->flash('error', __('System roles cannot be deleted.'));
+
             return;
         }
 
         if ($role->users()->exists()) {
             abort(409, __('Cannot delete role with active users. Please reassign them first.'));
+
             return;
         }
 
         $role->delete();
 
         // Explicitly flush Spatie permission cache to ensure < 5s effectiveness
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         activity('identity')
             ->performedOn($role)

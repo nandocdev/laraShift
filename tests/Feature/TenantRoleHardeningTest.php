@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
 use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Identity\Livewire\RoleManagement;
+use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -29,7 +30,7 @@ it('protects system roles from deletion and name change', function () {
     try {
         $adminRole->delete();
         $this->fail('System role should not be deletable.');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         expect($e->getMessage())->toBe('System roles cannot be deleted.');
     }
 
@@ -37,7 +38,7 @@ it('protects system roles from deletion and name change', function () {
     try {
         $adminRole->update(['name' => 'super-admin']);
         $this->fail('System role should not be renamable.');
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         expect($e->getMessage())->toBe('System roles cannot be renamed.');
     }
 });
@@ -50,7 +51,7 @@ it('returns 409 conflict when deleting a role with active users', function () {
         'email' => 'conflict@test.com',
         'plan_id' => 'free',
     ]);
-    $domain = 'conflict.' . config('tenancy.central_domain');
+    $domain = 'conflict.'.config('tenancy.central_domain');
     $tenant->domains()->create(['domain' => $domain]);
 
     tenancy()->initialize($tenant);
@@ -76,9 +77,9 @@ it('returns 409 conflict when deleting a role with active users', function () {
 
     // Call the livewire component method or simulate the request
     // Since we are using abort(409) in the component, we can test it via Livewire
-    Livewire::test(\App\Modules\Tenant\Identity\Livewire\RoleManagement::class)
+    Livewire::test(RoleManagement::class)
         ->call('delete', $role->id)
         ->assertStatus(409);
-        
+
     expect(Role::where('id', $role->id)->exists())->toBeTrue();
 });

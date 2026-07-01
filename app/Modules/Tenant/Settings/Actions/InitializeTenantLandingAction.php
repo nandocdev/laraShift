@@ -17,11 +17,11 @@ final readonly class InitializeTenantLandingAction
         $tenant = tenant();
         $preset = BrandingPresets::get($themePreset);
         $primaryColor = $themePreset === 'custom' ? $customPrimaryColor : $preset['primary'];
-        
+
         return Landing::firstOrCreate(
             ['tenant_id' => $tenant->id, 'slug' => 'saas-landing'],
             [
-                'title' => $tenant->name . ' Landing',
+                'title' => $tenant->name.' Landing',
                 'status' => 'draft',
                 'theme' => [
                     'colors' => [
@@ -31,7 +31,7 @@ final readonly class InitializeTenantLandingAction
                     'typography' => [
                         'font_heading' => $preset['font_heading'],
                         'font_body' => $preset['font_body'],
-                    ]
+                    ],
                 ],
                 'blocks' => [
                     [
@@ -40,11 +40,11 @@ final readonly class InitializeTenantLandingAction
                         'variant' => 'centered',
                         'order' => 0,
                         'config' => [
-                            'headline' => 'Welcome to ' . $tenant->name,
+                            'headline' => 'Welcome to '.$tenant->name,
                             'subtitle' => 'This is your new public landing page. You can edit this content in the Visual Builder.',
                             'button_primary_text' => 'Get Started',
                         ],
-                        'styles' => ['padding' => 'xl']
+                        'styles' => ['padding' => 'xl'],
                     ],
                     [
                         'id' => 'footer-initial',
@@ -52,10 +52,10 @@ final readonly class InitializeTenantLandingAction
                         'variant' => 'simple',
                         'order' => 1,
                         'config' => [
-                            'copyright_text' => '© ' . date('Y') . ' ' . $tenant->name,
-                        ]
-                    ]
-                ]
+                            'copyright_text' => '© '.date('Y').' '.$tenant->name,
+                        ],
+                    ],
+                ],
             ]
         );
     }

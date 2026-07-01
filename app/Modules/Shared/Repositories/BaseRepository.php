@@ -60,7 +60,7 @@ abstract readonly class BaseRepository
         $model = $this->findBy($field, $value);
 
         if (! $model) {
-            throw (new ModelNotFoundException())->setModel($this->modelClass);
+            throw (new ModelNotFoundException)->setModel($this->modelClass);
         }
 
         return $model;

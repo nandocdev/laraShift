@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Identity\Models\Invitation;
-use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
-use App\Modules\Tenant\Identity\Actions\AcceptInvitationAction;
 use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
+use App\Modules\Tenant\Identity\DTOs\InvitationData;
+use App\Modules\Tenant\Identity\Models\Invitation;
+use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Tenant\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -34,7 +34,7 @@ it('allows a user to accept an invitation and join the tenant', function () {
 
     // 1. Send Invitation
     $invitation = app(SendInvitationAction::class)->execute(
-        new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+        new InvitationData(
             email: 'new-user@test.com',
             roleName: 'member'
         ),
@@ -42,7 +42,7 @@ it('allows a user to accept an invitation and join the tenant', function () {
     );
 
     expect(Invitation::count())->toBe(1);
-    
+
     // 2. Accept Invitation (simulating the token from URL)
     $token = ''; // We need the plain token. Let's refactor the action or intercept it.
     // In the actual action, we return the model but we need the plain token for the test.
@@ -58,7 +58,7 @@ it('manages custom roles and permissions', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    
+
     $role = Role::create([
         'id' => Str::uuid()->toString(),
         'tenant_id' => $tenant->id,

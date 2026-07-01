@@ -4,6 +4,26 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Events\Catalog;
 
+use App\Modules\Shared\Events\PaymentCompleted;
+use App\Modules\Shared\Events\PaymentFailed;
+use App\Modules\Shared\Events\PaymentSucceeded;
+use App\Modules\Shared\Events\SubscriptionCancelled;
+use App\Modules\Shared\Events\SubscriptionCreated;
+use App\Modules\Shared\Events\SubscriptionUpdated;
+use App\Modules\Shared\Events\TenantApiKeyCreated;
+use App\Modules\Shared\Events\TenantApiKeyRevoked;
+use App\Modules\Shared\Events\TenantMfaRequirementChanged;
+use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Shared\Events\TenantReactivatedAfterPayment;
+use App\Modules\Shared\Events\TenantRoleCreated;
+use App\Modules\Shared\Events\TenantRoleUpdated;
+use App\Modules\Shared\Events\TenantSettingsUpdated;
+use App\Modules\Shared\Events\TenantSmtpConfigured;
+use App\Modules\Shared\Events\TenantSuspendedByDunning;
+use App\Modules\Shared\Events\TenantUserInvited;
+use App\Modules\Shared\Events\TenantUserJoined;
+use App\Modules\Shared\Events\TenantUserRevoked;
+
 /**
  * Registry of all domain events in the system.
  *
@@ -22,19 +42,19 @@ final class DomainEventCatalog
             // === Tenant Lifecycle ===
             [
                 'type' => 'tenant_provisioned',
-                'class' => \App\Modules\Shared\Events\TenantProvisioned::class,
+                'class' => TenantProvisioned::class,
                 'version' => 1,
                 'description' => 'Emitted when a new tenant has been fully provisioned.',
             ],
             [
                 'type' => 'tenant_suspended_by_dunning',
-                'class' => \App\Modules\Shared\Events\TenantSuspendedByDunning::class,
+                'class' => TenantSuspendedByDunning::class,
                 'version' => 1,
                 'description' => 'Emitted when a tenant is suspended due to failed payment dunning.',
             ],
             [
                 'type' => 'tenant_reactivated_after_payment',
-                'class' => \App\Modules\Shared\Events\TenantReactivatedAfterPayment::class,
+                'class' => TenantReactivatedAfterPayment::class,
                 'version' => 1,
                 'description' => 'Emitted when a tenant is reactivated after a successful payment following suspension.',
             ],
@@ -42,19 +62,19 @@ final class DomainEventCatalog
             // === Subscription ===
             [
                 'type' => 'subscription_created',
-                'class' => \App\Modules\Shared\Events\SubscriptionCreated::class,
+                'class' => SubscriptionCreated::class,
                 'version' => 1,
                 'description' => 'Emitted when a new subscription is created for a tenant.',
             ],
             [
                 'type' => 'subscription_updated',
-                'class' => \App\Modules\Shared\Events\SubscriptionUpdated::class,
+                'class' => SubscriptionUpdated::class,
                 'version' => 1,
                 'description' => 'Emitted when a subscription is updated (plan change, etc.).',
             ],
             [
                 'type' => 'subscription_cancelled',
-                'class' => \App\Modules\Shared\Events\SubscriptionCancelled::class,
+                'class' => SubscriptionCancelled::class,
                 'version' => 1,
                 'description' => 'Emitted when a subscription is cancelled.',
             ],
@@ -62,19 +82,19 @@ final class DomainEventCatalog
             // === Payments ===
             [
                 'type' => 'payment_completed',
-                'class' => \App\Modules\Shared\Events\PaymentCompleted::class,
+                'class' => PaymentCompleted::class,
                 'version' => 1,
                 'description' => 'Emitted when a payment completes successfully.',
             ],
             [
                 'type' => 'payment_succeeded',
-                'class' => \App\Modules\Shared\Events\PaymentSucceeded::class,
+                'class' => PaymentSucceeded::class,
                 'version' => 1,
                 'description' => 'Emitted when a payment is confirmed as succeeded by the gateway.',
             ],
             [
                 'type' => 'payment_failed',
-                'class' => \App\Modules\Shared\Events\PaymentFailed::class,
+                'class' => PaymentFailed::class,
                 'version' => 1,
                 'description' => 'Emitted when a payment fails.',
             ],
@@ -82,31 +102,31 @@ final class DomainEventCatalog
             // === Tenant Identity ===
             [
                 'type' => 'tenant_user_invited',
-                'class' => \App\Modules\Shared\Events\TenantUserInvited::class,
+                'class' => TenantUserInvited::class,
                 'version' => 1,
                 'description' => 'Emitted when a user is invited to join a tenant.',
             ],
             [
                 'type' => 'tenant_user_joined',
-                'class' => \App\Modules\Shared\Events\TenantUserJoined::class,
+                'class' => TenantUserJoined::class,
                 'version' => 1,
                 'description' => 'Emitted when an invited user accepts and joins the tenant.',
             ],
             [
                 'type' => 'tenant_user_revoked',
-                'class' => \App\Modules\Shared\Events\TenantUserRevoked::class,
+                'class' => TenantUserRevoked::class,
                 'version' => 1,
                 'description' => 'Emitted when a user is revoked from a tenant.',
             ],
             [
                 'type' => 'tenant_role_created',
-                'class' => \App\Modules\Shared\Events\TenantRoleCreated::class,
+                'class' => TenantRoleCreated::class,
                 'version' => 1,
                 'description' => 'Emitted when a new role is created in a tenant.',
             ],
             [
                 'type' => 'tenant_role_updated',
-                'class' => \App\Modules\Shared\Events\TenantRoleUpdated::class,
+                'class' => TenantRoleUpdated::class,
                 'version' => 1,
                 'description' => 'Emitted when a role is updated.',
             ],
@@ -114,19 +134,19 @@ final class DomainEventCatalog
             // === Tenant Settings & Security ===
             [
                 'type' => 'tenant_settings_updated',
-                'class' => \App\Modules\Shared\Events\TenantSettingsUpdated::class,
+                'class' => TenantSettingsUpdated::class,
                 'version' => 1,
                 'description' => 'Emitted when tenant settings are updated.',
             ],
             [
                 'type' => 'tenant_smtp_configured',
-                'class' => \App\Modules\Shared\Events\TenantSmtpConfigured::class,
+                'class' => TenantSmtpConfigured::class,
                 'version' => 1,
                 'description' => 'Emitted when SMTP configuration is updated for a tenant.',
             ],
             [
                 'type' => 'tenant_mfa_requirement_changed',
-                'class' => \App\Modules\Shared\Events\TenantMfaRequirementChanged::class,
+                'class' => TenantMfaRequirementChanged::class,
                 'version' => 1,
                 'description' => 'Emitted when a tenant\'s MFA requirement policy changes.',
             ],
@@ -134,13 +154,13 @@ final class DomainEventCatalog
             // === API Keys ===
             [
                 'type' => 'tenant_api_key_created',
-                'class' => \App\Modules\Shared\Events\TenantApiKeyCreated::class,
+                'class' => TenantApiKeyCreated::class,
                 'version' => 1,
                 'description' => 'Emitted when a new API key is created for a tenant.',
             ],
             [
                 'type' => 'tenant_api_key_revoked',
-                'class' => \App\Modules\Shared\Events\TenantApiKeyRevoked::class,
+                'class' => TenantApiKeyRevoked::class,
                 'version' => 1,
                 'description' => 'Emitted when an API key is revoked.',
             ],

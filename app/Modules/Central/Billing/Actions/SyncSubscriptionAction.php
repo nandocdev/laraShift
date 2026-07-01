@@ -12,7 +12,7 @@ final readonly class SyncSubscriptionAction
     public function execute(Tenant $tenant): void
     {
         app(BillingManager::class)->syncSubscription($tenant);
-        
+
         activity('billing')
             ->performedOn($tenant)
             ->log('subscription_synced');

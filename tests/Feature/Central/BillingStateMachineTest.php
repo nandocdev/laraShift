@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Services\TenantStateMachine;
-use App\Modules\Central\Billing\Services\ProrationCalculator;
-use App\Modules\Central\Billing\Services\DunningEngine;
 use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Billing\Services\DunningEngine;
+use App\Modules\Central\Billing\Services\ProrationCalculator;
+use App\Modules\Central\Billing\Services\TenantStateMachine;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Infrastructure\Casts\MoneyCast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -20,7 +19,7 @@ beforeEach(function () {
 
     $this->tenant = Tenant::create([
         'id' => Str::uuid()->toString(),
-        'slug' => 'billing-state-' . Str::random(4),
+        'slug' => 'billing-state-'.Str::random(4),
         'name' => 'Billing State Test',
         'email' => 'billing-state@test.com',
         'plan_id' => 'free',
@@ -44,7 +43,7 @@ test('state machine executes transition', function () {
 
 test('state machine rejects invalid transitions', function () {
     expect(fn () => $this->stateMachine->transition($this->tenant, 'provisioning'))
-        ->toThrow(\InvalidArgumentException::class);
+        ->toThrow(InvalidArgumentException::class);
 });
 
 test('state machine can reactivate from suspended', function () {

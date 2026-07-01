@@ -29,8 +29,9 @@ final class PublishOutboxEventsJob implements ShouldQueue
                         $eventClass = $this->resolveEventClass($outbox->event_type);
 
                         if ($eventClass === null) {
-                            $outbox->markFailed('No handler registered for event type: ' . $outbox->event_type);
+                            $outbox->markFailed('No handler registered for event type: '.$outbox->event_type);
                             $this->sendToDlq($outbox);
+
                             continue;
                         }
 

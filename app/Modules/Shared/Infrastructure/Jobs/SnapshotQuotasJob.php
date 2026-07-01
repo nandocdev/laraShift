@@ -38,8 +38,8 @@ class SnapshotQuotasJob implements ShouldQueue
                         ],
                         [
                             'id' => Str::uuid()->toString(),
-                            'value' => $usage,
-                            'captured_at' => now(),
+                            'usage' => $usage,
+                            'limit' => $quotaManager->getLimit($tenant, $metric),
                             'updated_at' => now(),
                         ]
                     );

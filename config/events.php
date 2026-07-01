@@ -1,6 +1,25 @@
 <?php
 
 declare(strict_types=1);
+use App\Modules\Shared\Events\PaymentCompleted;
+use App\Modules\Shared\Events\PaymentFailed;
+use App\Modules\Shared\Events\PaymentSucceeded;
+use App\Modules\Shared\Events\SubscriptionCancelled;
+use App\Modules\Shared\Events\SubscriptionCreated;
+use App\Modules\Shared\Events\SubscriptionUpdated;
+use App\Modules\Shared\Events\TenantApiKeyCreated;
+use App\Modules\Shared\Events\TenantApiKeyRevoked;
+use App\Modules\Shared\Events\TenantMfaRequirementChanged;
+use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Shared\Events\TenantReactivatedAfterPayment;
+use App\Modules\Shared\Events\TenantRoleCreated;
+use App\Modules\Shared\Events\TenantRoleUpdated;
+use App\Modules\Shared\Events\TenantSettingsUpdated;
+use App\Modules\Shared\Events\TenantSmtpConfigured;
+use App\Modules\Shared\Events\TenantSuspendedByDunning;
+use App\Modules\Shared\Events\TenantUserInvited;
+use App\Modules\Shared\Events\TenantUserJoined;
+use App\Modules\Shared\Events\TenantUserRevoked;
 
 return [
 
@@ -14,25 +33,25 @@ return [
     |
     */
     'map' => [
-        'tenant_provisioned' => \App\Modules\Shared\Events\TenantProvisioned::class,
-        'subscription_created' => \App\Modules\Shared\Events\SubscriptionCreated::class,
-        'subscription_updated' => \App\Modules\Shared\Events\SubscriptionUpdated::class,
-        'subscription_cancelled' => \App\Modules\Shared\Events\SubscriptionCancelled::class,
-        'payment_completed' => \App\Modules\Shared\Events\PaymentCompleted::class,
-        'payment_succeeded' => \App\Modules\Shared\Events\PaymentSucceeded::class,
-        'payment_failed' => \App\Modules\Shared\Events\PaymentFailed::class,
-        'tenant_api_key_created' => \App\Modules\Shared\Events\TenantApiKeyCreated::class,
-        'tenant_api_key_revoked' => \App\Modules\Shared\Events\TenantApiKeyRevoked::class,
-        'tenant_mfa_requirement_changed' => \App\Modules\Shared\Events\TenantMfaRequirementChanged::class,
-        'tenant_reactivated_after_payment' => \App\Modules\Shared\Events\TenantReactivatedAfterPayment::class,
-        'tenant_role_created' => \App\Modules\Shared\Events\TenantRoleCreated::class,
-        'tenant_role_updated' => \App\Modules\Shared\Events\TenantRoleUpdated::class,
-        'tenant_settings_updated' => \App\Modules\Shared\Events\TenantSettingsUpdated::class,
-        'tenant_smtp_configured' => \App\Modules\Shared\Events\TenantSmtpConfigured::class,
-        'tenant_suspended_by_dunning' => \App\Modules\Shared\Events\TenantSuspendedByDunning::class,
-        'tenant_user_invited' => \App\Modules\Shared\Events\TenantUserInvited::class,
-        'tenant_user_joined' => \App\Modules\Shared\Events\TenantUserJoined::class,
-        'tenant_user_revoked' => \App\Modules\Shared\Events\TenantUserRevoked::class,
+        'tenant_provisioned' => TenantProvisioned::class,
+        'subscription_created' => SubscriptionCreated::class,
+        'subscription_updated' => SubscriptionUpdated::class,
+        'subscription_cancelled' => SubscriptionCancelled::class,
+        'payment_completed' => PaymentCompleted::class,
+        'payment_succeeded' => PaymentSucceeded::class,
+        'payment_failed' => PaymentFailed::class,
+        'tenant_api_key_created' => TenantApiKeyCreated::class,
+        'tenant_api_key_revoked' => TenantApiKeyRevoked::class,
+        'tenant_mfa_requirement_changed' => TenantMfaRequirementChanged::class,
+        'tenant_reactivated_after_payment' => TenantReactivatedAfterPayment::class,
+        'tenant_role_created' => TenantRoleCreated::class,
+        'tenant_role_updated' => TenantRoleUpdated::class,
+        'tenant_settings_updated' => TenantSettingsUpdated::class,
+        'tenant_smtp_configured' => TenantSmtpConfigured::class,
+        'tenant_suspended_by_dunning' => TenantSuspendedByDunning::class,
+        'tenant_user_invited' => TenantUserInvited::class,
+        'tenant_user_joined' => TenantUserJoined::class,
+        'tenant_user_revoked' => TenantUserRevoked::class,
     ],
 
     /*

@@ -4,23 +4,39 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Features\Livewire;
 
+use App\Modules\Central\Features\Actions\UpsertFeatureAction;
+use App\Modules\Central\Features\DTOs\FeatureData;
 use App\Modules\Central\Features\Models\Feature;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Illuminate\Support\Str;
 
 #[Layout('layouts.central')]
 class ManageFeature extends Component
 {
     public ?Feature $feature = null;
+
     public bool $isEditing = false;
 
     public string $key = '';
+
     public string $name = '';
+
     public string $description = '';
+
     public string $module = '';
+
     public bool $is_active = true;
+
+    public array $targeting = [
+        'regions' => [],
+        'staff_min' => null,
+        'staff_max' => null,
+        'min_tenancy_days' => null,
+    ];
+
+    public string $regionInput = '';
 
     public function mount(?Feature $feature = null): void
     {
@@ -32,6 +48,7 @@ class ManageFeature extends Component
             $this->description = $feature->description ?? '';
             $this->module = $feature->module ?? '';
             $this->is_active = $feature->is_active;
+            $this->targeting = $feature->targeting ?? $this->targeting;
         }
     }
 
@@ -40,7 +57,24 @@ class ManageFeature extends Component
         $this->key = Str::lower(Str::slug($value, '.'));
     }
 
-    public function save(): void
+    public function addRegion(): void
+    {
+        $region = strtoupper(trim($this->regionInput));
+        if ($region && ! in_array($region, $this->targeting['regions'])) {
+            $this->targeting['regions'][] = $region;
+        }
+        $this->regionInput = '';
+    }
+
+    public function removeRegion(string $region): void
+    {
+        $this->targeting['regions'] = array_values(array_filter(
+            $this->targeting['regions'],
+            fn ($r) => $r !== $region
+        ));
+    }
+
+    public function save(UpsertFeatureAction $action): void
     {
         $this->validate([
             'key' => [
@@ -48,43 +82,48 @@ class ManageFeature extends Component
                 'string',
                 'max:100',
                 'regex:/^[a-z0-9]+\.[a-z0-9_]+$/',
-                'unique:features,key,' . ($this->feature->id ?? 'NULL') . ',id'
+                'unique:features,key,'.($this->feature->id ?? 'NULL').',id',
             ],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'module' => 'nullable|string|max:100',
             'is_active' => 'boolean',
+            'targeting.regions' => 'nullable|array',
+            'targeting.staff_min' => 'nullable|integer|min:0',
+            'targeting.staff_max' => 'nullable|integer|min:0',
+            'targeting.min_tenancy_days' => 'nullable|integer|min:0',
         ], [
             'key.regex' => __('The key must follow the format module.action (e.g. auth.mfa_enforce)'),
         ]);
 
-        $attributes = [
-            'key' => $this->key,
-            'name' => $this->name,
-            'description' => $this->description,
-            'module' => $this->module,
-            'is_active' => $this->is_active,
-        ];
+        $data = new FeatureData(
+            key: $this->key,
+            name: $this->name,
+            description: $this->description ?: null,
+            module: $this->module ?: null,
+            is_active: $this->is_active,
+            targeting: $this->targeting,
+        );
 
-        if ($this->isEditing) {
-            $this->feature->update($attributes);
-            session()->flash('status', __('Feature updated.'));
-        } else {
-            $attributes['id'] = Str::uuid()->toString();
-            Feature::create($attributes);
-            session()->flash('status', __('Feature created.'));
-        }
+        $action->execute($data, $this->feature);
 
+        session()->flash('status', $this->isEditing ? __('Feature updated.') : __('Feature created.'));
         $this->redirect(route('central.features.index'), navigate: true);
     }
 
     public function delete(): void
     {
-        if (! $this->feature) return;
+        if (! $this->feature) {
+            return;
+        }
 
-        // Perform soft delete
+        activity('features')
+            ->performedOn($this->feature)
+            ->withProperties(['actor' => auth('central')->id()])
+            ->log('feature_deleted');
+
         $this->feature->delete();
-        
+
         session()->flash('status', __('Feature retired. Historical data remains valid.'));
         $this->redirect(route('central.features.index'), navigate: true);
     }

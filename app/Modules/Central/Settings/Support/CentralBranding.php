@@ -13,6 +13,7 @@ class CentralBranding
     {
         return Cache::rememberForever("central_setting_{$key}", function () use ($key, $default) {
             $setting = CentralSetting::find($key);
+
             return $setting ? self::castValue($setting->value, $setting->type) : $default;
         });
     }
