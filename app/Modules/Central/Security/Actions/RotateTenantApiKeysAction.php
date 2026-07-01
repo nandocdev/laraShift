@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Security\Actions;
 
+use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Identity\Models\ApiKey;
 use Illuminate\Support\Facades\Log;
 
@@ -11,47 +12,40 @@ final readonly class RotateTenantApiKeysAction
 {
     /**
      * Auto-rotate expired or soon-to-expire API keys for a tenant.
-     * Notifies the tenant admin about the rotation.
+     * Expects tenancy to be initialized before calling.
      */
-    public function execute(string $tenantId): int
+    public function execute(Tenant $tenant): int
     {
-        tenancy()->initialize($tenantId);
+        $rotated = 0;
+        $cutoff = now()->subDays(90);
 
-        try {
-            $rotated = 0;
-            $cutoff = now()->subDays(90);
+        $keys = ApiKey::where('tenant_id', $tenant->id)
+            ->where('created_at', '<', $cutoff)
+            ->whereNull('revoked_at')
+            ->get();
 
-            $keys = ApiKey::where('created_at', '<', $cutoff)
-                ->whereNull('revoked_at')
-                ->get();
+        foreach ($keys as $key) {
+            $key->update(['revoked_at' => now()]);
 
-            foreach ($keys as $key) {
-                $key->update([
-                    'revoked_at' => now(),
-                ]);
+            activity('security')
+                ->performedOn($key)
+                ->withProperties([
+                    'tenant_id' => $tenant->id,
+                    'key_name' => $key->name,
+                    'rotation' => 'auto',
+                ])
+                ->log('api_key_auto_rotated');
 
-                activity('security')
-                    ->performedOn($key)
-                    ->withProperties([
-                        'tenant_id' => $tenantId,
-                        'key_name' => $key->name,
-                        'rotation' => 'auto',
-                    ])
-                    ->log('api_key_auto_rotated');
-
-                $rotated++;
-            }
-
-            if ($rotated > 0) {
-                Log::info('Auto-rotated API keys', [
-                    'tenant_id' => $tenantId,
-                    'count' => $rotated,
-                ]);
-            }
-
-            return $rotated;
-        } finally {
-            tenancy()->end();
+            $rotated++;
         }
+
+        if ($rotated > 0) {
+            Log::info('Auto-rotated API keys', [
+                'tenant_id' => $tenant->id,
+                'count' => $rotated,
+            ]);
+        }
+
+        return $rotated;
     }
 }

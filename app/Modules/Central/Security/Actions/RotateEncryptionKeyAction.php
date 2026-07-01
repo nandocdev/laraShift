@@ -10,11 +10,6 @@ use Illuminate\Support\Str;
 
 final readonly class RotateEncryptionKeyAction
 {
-    /**
-     * Rotate the active encryption key for a tenant.
-     *
-     * Generates a new key, rotates the old one, and logs the event.
-     */
     public function execute(Tenant $tenant, string $purpose = 'at_rest', ?string $rotatedBy = null): TenantEncryptionKey
     {
         TenantEncryptionKey::where('tenant_id', $tenant->id)
@@ -42,6 +37,8 @@ final readonly class RotateEncryptionKeyAction
                 'key_identifier' => $key->key_identifier,
             ])
             ->log('encryption_key_rotated');
+
+        $tenant->notify(new \App\Modules\Central\Security\Notifications\KeyRotatedNotification($purpose, $tenant->name ?? 'Unknown'));
 
         return $key;
     }

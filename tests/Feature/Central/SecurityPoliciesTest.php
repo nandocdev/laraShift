@@ -123,8 +123,9 @@ it('rotates expired API keys for a tenant', function () {
 
     tenancy()->end();
 
+    tenancy()->initialize($this->tenant);
     $action = app(RotateTenantApiKeysAction::class);
-    $rotated = $action->execute($this->tenant->id);
+    $rotated = $action->execute($this->tenant);
 
     expect($rotated)->toBe(1);
 

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Security\Livewire;
 
+use App\Modules\Central\Billing\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Security\Models\TenantEncryptionKey;
+use App\Modules\Shared\Models\Activity;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -37,9 +39,35 @@ class SecurityPolicies extends Component
             ->get()
             ->keyBy('tenant_id');
 
+        $totalActiveKeys = TenantEncryptionKey::where('is_active', true)->count();
+        $keysNearingRotation = TenantEncryptionKey::where('is_active', true)
+            ->where('created_at', '<', now()->subDays(85))
+            ->count();
+        $activeTenants = Tenant::whereNull('archived_at')->count();
+        $plans = Plan::where('is_active', true)->get();
+
+        $planKeyCounts = [];
+        foreach ($plans as $plan) {
+            $planTenantIds = Tenant::where('plan_id', $plan->slug)->pluck('id');
+            $planKeyCounts[$plan->slug] = TenantEncryptionKey::whereIn('tenant_id', $planTenantIds)
+                ->where('is_active', true)
+                ->count();
+        }
+
+        $recentEvents = Activity::whereIn('log_name', ['security'])
+            ->latest()
+            ->take(50)
+            ->get();
+
         return view('security::pages.policies', [
             'tenants' => $tenants,
             'activeKeys' => $activeKeys,
+            'totalActiveKeys' => $totalActiveKeys,
+            'keysNearingRotation' => $keysNearingRotation,
+            'activeTenants' => $activeTenants,
+            'plans' => $plans,
+            'planKeyCounts' => $planKeyCounts,
+            'recentEvents' => $recentEvents,
         ]);
     }
 }

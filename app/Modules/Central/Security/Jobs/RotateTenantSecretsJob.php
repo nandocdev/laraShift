@@ -37,7 +37,9 @@ class RotateTenantSecretsJob implements ShouldQueue
                         app(RotateEncryptionKeyAction::class)->execute($tenant, 'at_rest');
                     }
 
-                    $apiRotated = app(RotateTenantApiKeysAction::class)->execute($tenant->id);
+                    tenancy()->initialize($tenant);
+                    $apiRotated = app(RotateTenantApiKeysAction::class)->execute($tenant);
+                    tenancy()->end();
 
                     if ($apiRotated > 0 || ($activeKey && $activeKey->created_at->diffInDays(now()) >= $rotationDays)) {
                         Log::info('Secrets rotated for tenant', [
