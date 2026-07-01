@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Central\Payments\Providers;
 
 use App\Modules\Central\Billing\Handlers\SubscriptionPaymentHandler;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Payments\Livewire\CheckoutComponent;
 use App\Modules\Central\Payments\Livewire\GatewaySettings;
 use App\Modules\Central\Payments\Livewire\PayoutRequests;
@@ -36,8 +35,6 @@ final class PaymentsServiceProvider extends ServiceProvider
                 default => $app->make(ClaveGateway::class),
             };
         });
-
-        $this->app->alias(PaymentGatewayContract::class, PaymentGateway::class);
 
         // ── Payment Handler Bindings (Strategy Pattern) ──────────────────────
         // Tagged bindings para handlers post-pago por contexto.

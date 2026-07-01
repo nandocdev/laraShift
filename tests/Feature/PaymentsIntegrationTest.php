@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Actions\SyncInvoicesAction;
 use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
+use App\Modules\Shared\Contracts\PaymentGatewayContract;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Enums\PaymentContext;
 use App\Modules\Central\Payments\Models\Payment;
@@ -33,7 +33,7 @@ beforeEach(function () {
 it('resolves the correct gateway based on tenant settings', function () {
     // 1. Default (from config)
     $defaultGateway = config('payments.default', 'clave');
-    $gateway = app(PaymentGateway::class);
+    $gateway = app(PaymentGatewayContract::class);
 
     if ($defaultGateway === 'dlocal') {
         expect($gateway)->toBeInstanceOf(DlocalGateway::class);
@@ -45,7 +45,7 @@ it('resolves the correct gateway based on tenant settings', function () {
     $this->tenant->update(['billing_gateway' => 'clave']);
     tenancy()->initialize($this->tenant);
 
-    $gateway = app(PaymentGateway::class);
+    $gateway = app(PaymentGatewayContract::class);
     expect($gateway)->toBeInstanceOf(ClaveGateway::class);
 });
 
