@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Settings\Models\TenantSetting;
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 

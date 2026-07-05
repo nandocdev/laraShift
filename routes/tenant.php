@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Livewire\ManageBilling;
-use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
-use App\Modules\Shared\Tenancy\Http\Middleware\ApplyTenantRateLimits;
-use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
+use App\Modules\Central\Billing\Interface\Livewire\ManageBilling;
+use App\Modules\Central\Billing\Interface\Livewire\UpdatePaymentMethod;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\ApplyTenantRateLimits;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -31,11 +31,11 @@ Route::middleware([
 ])->group(function () {
     Route::get('/', \App\Modules\Central\Landings\Http\Controllers\ServeTenantLandingController::class)->name('tenant.home');
 
-    Route::get('/auth/login', \App\Modules\Tenant\Identity\Livewire\Login::class)->name('login');
+    Route::get('/auth/login', \App\Modules\Tenant\Access\Interface\Livewire\Login::class)->name('login');
     Route::post('/auth/login', [\Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'store'])->name('login.store');
     Route::post('/auth/logout', [\Laravel\Fortify\Http\Controllers\AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::get('/auth/2fa/verify', \App\Modules\Tenant\Identity\Livewire\LoginChallenge::class)->name('two-factor.login');
+    Route::get('/auth/2fa/verify', \App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge::class)->name('two-factor.login');
     Route::post('/auth/2fa/verify', [\Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController::class, 'store'])->name('two-factor.login.store');
 
     Route::post('/auth/forgot-password', [\Laravel\Fortify\Http\Controllers\PasswordResetLinkController::class, 'store'])->name('password.email');
@@ -60,7 +60,7 @@ Route::middleware([
     Route::post('/auth/passkeys/confirm', [\Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController::class, 'store'])->name('passkey.confirm');
     Route::get('/auth/passkeys/confirm/options', [\Laravel\Passkeys\Http\Controllers\PasskeyConfirmationController::class, 'index'])->name('passkey.confirm-options');
 
-    Route::get('/auth/invitations/{token}/accept', \App\Modules\Tenant\Identity\Livewire\AcceptInvitation::class)->name('tenant.invitations.accept');
+    Route::get('/auth/invitations/{token}/accept', \App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation::class)->name('tenant.invitations.accept');
 
     // Support & Impersonation
     Route::get('/support/auth', [\App\Modules\Central\Support\Http\Controllers\TenantImpersonationController::class, 'authenticate'])->name('tenant.support.auth');
@@ -68,28 +68,28 @@ Route::middleware([
 
     Route::middleware([
         'auth', 
-        \App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive::class,
-        \App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant::class
+        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnforceTenantMfa::class,
+        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserIsActive::class,
+        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserBelongsToTenant::class
     ])->group(function () {
         Route::view('dashboard', 'dashboard')->name('dashboard');
         
-        Route::get('/team/members', \App\Modules\Tenant\Identity\Livewire\TeamManagement::class)->name('tenant.team.index');
-        Route::get('/settings/roles', \App\Modules\Tenant\Identity\Livewire\RoleManagement::class)->name('tenant.roles.index');
-        Route::get('/settings/api-keys', \App\Modules\Tenant\Identity\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
-        Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
-        Route::get('/settings/localization', \App\Modules\Tenant\Settings\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
-        Route::get('/settings/smtp', \App\Modules\Tenant\Settings\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
-        Route::get('/settings/export', \App\Modules\Tenant\Identity\Livewire\DataExport::class)->name('tenant.settings.export');
-        Route::get('/settings/security/2fa', \App\Modules\Tenant\Identity\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
+        Route::get('/team/members', \App\Modules\Tenant\Access\Interface\Livewire\TeamManagement::class)->name('tenant.team.index');
+        Route::get('/settings/roles', \App\Modules\Tenant\Access\Interface\Livewire\RoleManagement::class)->name('tenant.roles.index');
+        Route::get('/settings/api-keys', \App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
+        Route::get('/settings/branding', \App\Modules\Tenant\Experience\Interface\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
+        Route::get('/settings/localization', \App\Modules\Tenant\Experience\Interface\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
+        Route::get('/settings/smtp', \App\Modules\Tenant\Integrations\Interface\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
+        Route::get('/settings/export', \App\Modules\Tenant\Access\Interface\Livewire\DataExport::class)->name('tenant.settings.export');
+        Route::get('/settings/security/2fa', \App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');
         Route::get('/audit/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.audit.download');
 
         Route::get('/data/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.data.download');
         
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
-        Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
-        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
+        Route::get('/billing/plans', \App\Modules\Central\Billing\Interface\Livewire\SelectPlan::class)->name('tenant.billing.plans');
+        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Interface\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
         Route::get('/billing/success', function () {

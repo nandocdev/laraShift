@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Tenant\Access\Application\Actions;
+
+use App\Modules\Platform\Tenancy\Domain\Exceptions\QuotaExceededException;
+use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
+use App\Modules\Tenant\Access\Application\DTO\InvitationData;
+use App\Modules\Tenant\Access\Domain\Models\Invitation;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Access\Infrastructure\Notifications\TenantInvitationNotification;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+
+final readonly class SendInvitation
+{
+    /**
+     * Sends an invitation to a new or existing user.
+     */
+    public function execute(
+        InvitationData $data,
+        User $inviter
+    ): Invitation {
+        $tenant = tenant();
+        
+        // 1. Check Quotas (US-T101, US-T401)
+        $quota = app(QuotaManager::class);
+        
+        if (! $quota->increment($tenant, 'invitations')) {
+            throw new QuotaExceededException('invitations', __('Maximum limit of pending invitations reached for your plan.'));
+        }
+        
+        // 2. Resolve Role
+        $role = Role::where('name', $data->roleName)->firstOrFail();
+
+        // 3. Generate token
+        $token = Str::random(64);
+
+        // 4. Create Invitation
+        $invitation = Invitation::create([
+            'id' => Str::uuid()->toString(),
+            'tenant_id' => $tenant->id,
+            'email' => $data->email,
+            'role_id' => $role->id,
+            'token_hash' => hash('sha256', $token),
+            'invited_by' => $inviter->id,
+            'expires_at' => now()->addHours(48),
+        ]);
+
+        // 5. Send Notification
+        Notification::route('mail', $data->email)
+            ->notify(new TenantInvitationNotification($token, $tenant->name));
+
+        activity('identity')
+            ->performedOn($invitation)
+            ->log('user_invited');
+
+        event(new \App\Modules\Platform\Events\TenantUserInvited($invitation));
+
+        return $invitation;
+    }
+}

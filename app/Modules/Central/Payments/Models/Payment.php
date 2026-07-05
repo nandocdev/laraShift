@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Shared\Tenancy\Models\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
 
 /**
  * @property string       $id

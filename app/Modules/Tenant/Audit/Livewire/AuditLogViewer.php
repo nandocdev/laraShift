@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Audit\Livewire;
 
 use App\Modules\Tenant\Audit\Models\AuditLog;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;

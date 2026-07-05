@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Actions\SyncInvoicesAction;
-use App\Modules\Central\Billing\Models\Invoice;
-use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Billing\Application\Actions\SyncInvoices;
+use App\Modules\Central\Billing\Domain\Models\Invoice;
+use App\Modules\Central\Billing\Domain\Models\Plan;
 use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Payments\DTOs\PaymentData;
 use App\Modules\Central\Payments\Enums\PaymentStatus;
@@ -78,7 +78,7 @@ it('generates a PagueloFacil hosted checkout URL', function () {
 });
 
 it('syncs invoices from multiple gateways', function () {
-    // Mock PagueloFacil transactions (must match SyncInvoicesAction mapping)
+    // Mock PagueloFacil transactions (must match SyncInvoices mapping)
     $pfData = [
         'codOper' => 'TX123',
         'totalPay' => '29.99',
@@ -94,7 +94,7 @@ it('syncs invoices from multiple gateways', function () {
         'created_date' => now()->toDateTimeString(),
     ];
 
-    $action = app(SyncInvoicesAction::class);
+    $action = app(SyncInvoices::class);
     
     // Test mapping for PF
     $reflection = new ReflectionClass($action);
@@ -128,7 +128,7 @@ it('fulfills a subscription when payment is approved', function () {
         'gateway' => 'paguelofacil',
     ]);
 
-    // Mock the attempt with metadata (SyncInvoicesAction uses this)
+    // Mock the attempt with metadata (SyncInvoices uses this)
     $payment->attempts()->create([
         'tenant_id' => $this->tenant->id,
         'slug' => 'test-slug',

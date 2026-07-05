@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Audit\Http\Controllers;
 
-use App\Modules\Shared\Http\Controllers\Controller;
+use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;

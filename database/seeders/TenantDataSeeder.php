@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Settings\Models\TenantSetting;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 

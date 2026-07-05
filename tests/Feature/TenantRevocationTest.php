@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserIsActive;
-use App\Modules\Tenant\Identity\Http\Middleware\EnsureUserBelongsToTenant;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserBelongsToTenant;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -76,12 +76,12 @@ it('allows inviting an email that belongs to another tenant', function () {
     tenancy()->initialize($tenantB);
     
     // We need roles to exist for the invitation to work
-    app(\App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction::class)->execute($tenantB);
+    app(\App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist::class)->execute($tenantB);
 
-    $action = app(\App\Modules\Tenant\Identity\Actions\SendInvitationAction::class);
+    $action = app(\App\Modules\Tenant\Access\Application\Actions\SendInvitation::class);
 
     // This should NOT throw an exception anymore
-    $invitation = $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+    $invitation = $action->execute(new \App\Modules\Tenant\Access\Application\DTO\InvitationData(
         email: 'shared@test.com',
         roleName: 'member'
     ), $userA);

@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Audit\Models\AuditLog;
-use App\Modules\Shared\Events\TenantUserRevoked;
+use App\Modules\Platform\Events\TenantUserRevoked;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 

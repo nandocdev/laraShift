@@ -35,7 +35,7 @@ return [
      * To configure their behavior, see the config keys below.
      */
     'bootstrappers' => array_filter([
-        \App\Modules\Shared\Tenancy\Bootstrappers\PostgresRlsBootstrapper::class,
+        \App\Modules\Platform\Tenancy\Infrastructure\Bootstrappers\PostgresRlsBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
         // env('TENANCY_CACHE_BOOTSTRAPPER', true) ? Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class : null,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,

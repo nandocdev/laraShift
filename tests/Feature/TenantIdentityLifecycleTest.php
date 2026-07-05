@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Identity\Models\Invitation;
-use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
-use App\Modules\Tenant\Identity\Actions\AcceptInvitationAction;
-use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Access\Domain\Models\Invitation;
+use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
+use App\Modules\Tenant\Access\Application\Actions\AcceptInvitation;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -23,7 +23,7 @@ it('allows a user to accept an invitation and join the tenant', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    app(EnsureTenantRolesExistAction::class)->execute($tenant);
+    app(EnsureTenantRolesExist::class)->execute($tenant);
 
     $admin = User::create([
         'tenant_id' => $tenant->id,
@@ -33,8 +33,8 @@ it('allows a user to accept an invitation and join the tenant', function () {
     ]);
 
     // 1. Send Invitation
-    $invitation = app(SendInvitationAction::class)->execute(
-        new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+    $invitation = app(SendInvitation::class)->execute(
+        new \App\Modules\Tenant\Access\Application\DTO\InvitationData(
             email: 'new-user@test.com',
             roleName: 'member'
         ),

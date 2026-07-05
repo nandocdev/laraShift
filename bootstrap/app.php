@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('universal', []);
 
         $middleware->alias([
-            'feature' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureHasFeature::class,
-            'quota' => \App\Modules\Shared\Tenancy\Http\Middleware\EnsureWithinQuota::class,
+            'feature' => \App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureHasFeature::class,
+            'quota' => \App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureWithinQuota::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

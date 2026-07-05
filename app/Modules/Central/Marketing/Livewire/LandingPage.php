@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Marketing\Livewire;
 
-use App\Modules\Central\Billing\Support\PlanManager;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Settings\Support\CentralBranding;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;

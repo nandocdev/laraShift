@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Audit\Models;
 
-use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

@@ -17,7 +17,7 @@ return [
          * `Spatie\Permission\Contracts\Permission` contract.
          */
 
-        'permission' => \App\Modules\Tenant\Identity\Models\Permission::class,
+        'permission' => \App\Modules\Tenant\Access\Domain\Models\Permission::class,
 
         /*
          * When using the \"HasRoles\" trait from this package, we need to know which
@@ -28,7 +28,7 @@ return [
          * `Spatie\\Permission\\Contracts\\Role` contract.
          */
 
-        'role' => \App\Modules\Tenant\Identity\Models\Role::class,
+        'role' => \App\Modules\Tenant\Access\Domain\Models\Role::class,
 
         /*
          * When using the "Teams" feature from this package, we need to know which

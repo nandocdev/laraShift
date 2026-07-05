@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Billing\Models\Subscription;
+use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\Domain;
 use App\Modules\Central\Payments\DTOs\PaymentData;

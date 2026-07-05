@@ -8,7 +8,7 @@ use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Actions\SwitchMaintenanceModeAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 

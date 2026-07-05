@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Actions;
 
-use App\Modules\Shared\Contracts\TenantContract;
+use App\Modules\Platform\Contracts\TenantContract;
 use App\Modules\Central\Support\Models\SupportNote;
 use Illuminate\Support\Str;
 

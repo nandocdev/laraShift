@@ -9,7 +9,7 @@
 
     if ($tenant) {
         $brandName = $tenant->name ?? $brandName;
-        $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::where('tenant_id', $tenant->getTenantKey())->first();
+        $settings = \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::where('tenant_id', $tenant->getTenantKey())->first();
         if ($settings && $settings->logo_path) {
             $logoUrl = tenant_asset($settings->logo_path);
         }

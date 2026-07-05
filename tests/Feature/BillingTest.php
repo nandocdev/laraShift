@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Billing\Support\PlanManager;
+use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Laravel\Cashier\Billable;
 use Illuminate\Foundation\Testing\RefreshDatabase;

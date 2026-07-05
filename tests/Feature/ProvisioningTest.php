@@ -5,8 +5,8 @@ declare(strict_types=1);
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\TenantProvisioned;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Platform\Events\TenantProvisioned;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -54,10 +54,10 @@ it('creates the initial admin user via the listener', function () {
         expect($user->name)->toBe('Administrator');
 
         // Check for core data initialized by TenantDataSeeder
-        $rolesCount = \App\Modules\Tenant\Identity\Models\Role::count();
+        $rolesCount = \App\Modules\Tenant\Access\Domain\Models\Role::count();
         expect($rolesCount)->toBeGreaterThanOrEqual(2);
         
-        $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::first();
+        $settings = \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::first();
         expect($settings)->not->toBeNull();
         expect($settings->locale)->toBe('en');
     });

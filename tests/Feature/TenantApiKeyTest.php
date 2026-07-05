@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Actions\GenerateApiKeyAction;
-use App\Modules\Tenant\Identity\Models\ApiKey;
+use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
+use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -20,7 +20,7 @@ it('generates a secure api key with specific scopes', function () {
 
     tenancy()->initialize($tenant);
 
-    $action = app(GenerateApiKeyAction::class);
+    $action = app(GenerateApiKey::class);
     $result = $action->execute(
         name: 'Test Key',
         scopes: ['orders:read', 'orders:write']
@@ -32,7 +32,7 @@ it('generates a secure api key with specific scopes', function () {
     $model = $result['model'];
     expect($model->name)->toBe('Test Key');
     expect($model->scopes)->toBe(['orders:read', 'orders:write']);
-    expect($model->key_hash)->toBe(hash('sha256', $result['key']));
+    expect($model->key_hash)->toBe(hash_hmac('sha256', $result['key'], config('app.key')));
 });
 
 it('revokes an api key immediately', function () {
@@ -45,7 +45,7 @@ it('revokes an api key immediately', function () {
 
     tenancy()->initialize($tenant);
 
-    $action = app(GenerateApiKeyAction::class);
+    $action = app(GenerateApiKey::class);
     $result = $action->execute('Revoke Me', ['identity:read']);
     $apiKey = $result['model'];
 

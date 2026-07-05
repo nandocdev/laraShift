@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Features\Models\Concerns;
 
-use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 
 trait HasQuotas {
     /**

@@ -6,7 +6,7 @@ namespace App\Modules\Central\Payments\Http\Controllers;
 
 use App\Modules\Central\Payments\Actions\InitiateCheckoutAction;
 use App\Modules\Central\Payments\DTOs\PaymentData;
-use App\Modules\Shared\Http\Controllers\Controller;
+use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,7 +30,7 @@ final class CheckoutController extends Controller {
         ]);
 
         try {
-            $amountResolver = app(\App\Modules\Shared\Contracts\PaymentAmountResolverContract::class);
+            $amountResolver = app(\App\Modules\Platform\Contracts\PaymentAmountResolverContract::class);
             $amount = $amountResolver->resolveAmount($data['display_id']);
 
             $session = $this->initiateAction->execute(

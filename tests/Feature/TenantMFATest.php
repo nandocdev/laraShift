@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Http\Middleware\EnforceTenantMfa;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Settings\Models\TenantSetting;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnforceTenantMfa;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;

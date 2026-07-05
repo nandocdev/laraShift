@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Features\Models;
 
-use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Billing\Domain\Models\Plan;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

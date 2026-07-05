@@ -7,7 +7,7 @@ namespace App\Modules\Central\Payments\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Modules\Shared\Tenancy\Models\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
 
 /**
  * Tracks individual checkout attempts for a payment.

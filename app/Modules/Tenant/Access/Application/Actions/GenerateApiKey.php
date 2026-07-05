@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Tenant\Access\Application\Actions;
+
+use App\Modules\Tenant\Access\Domain\Models\ApiKey;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use Illuminate\Support\Str;
+
+final readonly class GenerateApiKey
+{
+    /**
+     * Generates a new secure API Key for the tenant.
+     * 
+     * Returns an array with:
+     * - 'key': The plain text key (only shown once)
+     * - 'model': The saved ApiKey model
+     */
+    public function execute(
+        string $name,
+        array $scopes,
+        ?User $creator = null
+    ): array {
+        // 1. Generate high-entropy key
+        // PRD: tnt_{random_32_bytes_hex}
+        $plainKey = 'tnt_' . bin2hex(random_bytes(32));
+
+        // 2. Create the model
+        $apiKey = ApiKey::create([
+            'id' => Str::uuid()->toString(),
+            'tenant_id' => tenant('id'),
+            'name' => $name,
+            'key_hash' => hash_hmac('sha256', $plainKey, config('app.key')),
+            'scopes' => $scopes,
+            'created_by' => $creator?->id,
+        ]);
+
+        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
+            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
+                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_CREATED,
+                resource: 'api_key',
+                resourceId: $apiKey->id,
+                metadata: ['name' => $name, 'scopes' => $scopes],
+                userId: $creator?->id
+            )
+        );
+
+        activity('identity')
+            ->performedOn($apiKey)
+            ->withProperties(['name' => $name, 'scopes' => $scopes])
+            ->log('api_key_generated');
+
+        event(new \App\Modules\Platform\Events\TenantApiKeyCreated($apiKey));
+
+        return [
+            'key' => $plainKey,
+            'model' => $apiKey,
+        ];
+    }
+}

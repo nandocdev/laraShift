@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 
 test('confirm password screen can be rendered', function () {
     $user = User::factory()->create();

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Models;
 
-use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Billing\Domain\Models\Plan;
 use App\Modules\Central\Features\Models\Concerns\HasFeatures;
 use App\Modules\Central\Features\Models\Concerns\HasQuotas;
-use App\Modules\Shared\Contracts\TenantContract;
+use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;

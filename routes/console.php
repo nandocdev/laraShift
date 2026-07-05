@@ -1,7 +1,7 @@
 <?php
 
-use App\Modules\Shared\Infrastructure\Jobs\ReconcileResourcesJob;
-use App\Modules\Shared\Infrastructure\Jobs\SnapshotQuotasJob;
+use App\Modules\Platform\Tenancy\Application\Jobs\ReconcileResourcesJob;
+use App\Modules\Platform\Tenancy\Application\Jobs\SnapshotQuotasJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
