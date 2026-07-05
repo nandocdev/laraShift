@@ -9,6 +9,10 @@ use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
+use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveEnvironment;
+use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use Laravel\Cashier\Cashier;
 
 class BillingServiceProvider extends ServiceProvider
@@ -17,6 +21,17 @@ class BillingServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PlanManager::class, function ($app) {
             return new PlanManager();
+        });
+
+        $this->app->bind(ClaveEnvironment::class, fn() => ClaveEnvironment::fromConfig());
+
+        $this->app->bind(PaymentGateway::class, function ($app) {
+            $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
+
+            return match ($gateway) {
+                'dlocal' => new DlocalGateway(),
+                default => $app->make(ClaveGateway::class),
+            };
         });
 
         $this->app->bind(
@@ -28,7 +43,7 @@ class BillingServiceProvider extends ServiceProvider
 
         // Event Listeners
         Event::listen(
-            \App\Modules\Central\Payments\Events\PaymentApproved::class,
+            \App\Modules\Central\Billing\Domain\Events\PaymentApproved::class,
             \App\Modules\Central\Billing\Application\Listeners\FulfillSubscription::class
         );
 
@@ -52,6 +67,14 @@ class BillingServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__ . '/../Interface/Views', 'billing');
         $this->loadRoutesFrom(__DIR__ . '/../Interface/Routes/web.php');
+        
+        // Payments integration
+        \Illuminate\Support\Facades\RateLimiter::for('webhooks', function ($request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->ip());
+        });
+        $this->loadRoutesFrom(__DIR__ . '/../Interface/Routes/payments.php');
+        $this->loadViewsFrom(__DIR__ . '/../Interface/Views', 'payments');
+        \Livewire\Livewire::component('payments.checkout', \App\Modules\Central\Billing\Interface\Livewire\CheckoutComponent::class);
 
         \Livewire\Livewire::component('billing-subscription-list', \App\Modules\Central\Billing\Interface\Livewire\SubscriptionList::class);
         \Livewire\Livewire::component('billing-tenant-invoice-list', \App\Modules\Central\Billing\Interface\Livewire\TenantInvoiceList::class);

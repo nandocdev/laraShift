@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Application\Actions;
 
-use App\Modules\Central\Landings\Models\Landing;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Tenant\Experience\Infrastructure\Support\BrandingPresets;
 
 final readonly class InitializeTenantLanding

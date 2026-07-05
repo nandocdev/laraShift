@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Modules\Central\Features\Models\Feature;
+use App\Modules\Central\Catalog\Domain\Models\Feature;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\Domain;
-use App\Modules\Central\Payments\DTOs\PaymentData;
-use App\Modules\Central\Payments\Services\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Application\DTO\PaymentData;
+use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -64,7 +64,7 @@ class BillingFlowTest extends TestCase
             ], 200)
         ]);
 
-        $gateway = app(\App\Modules\Central\Payments\Contracts\PaymentGateway::class);
+        $gateway = app(\App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway::class);
         
         $paymentData = new PaymentData(
             amount: 29.99,

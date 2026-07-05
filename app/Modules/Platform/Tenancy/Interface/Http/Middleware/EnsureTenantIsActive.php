@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
-use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
+use App\Modules\Central\Catalog\Application\Actions\ResolveTenantFeatures;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,7 +43,7 @@ class EnsureTenantIsActive
 
         // Prime Features Cache (Redis-first)
         try {
-            app(ResolveTenantFeaturesAction::class)->execute(tenant());
+            app(ResolveTenantFeatures::class)->execute(tenant());
         } catch (\Exception $e) {
             // Log and continue if features can't be resolved
             \Log::warning("Could not resolve features for tenant: " . tenant('id'));

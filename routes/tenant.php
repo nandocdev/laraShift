@@ -23,7 +23,7 @@ Route::middleware([
 ])->group(function () {
     
     // Landings & Builders
-    require base_path('app/Modules/Central/Landings/Interface/Routes/tenant.php');
+    Route::get('/', \App\Modules\Tenant\Experience\Interface\Http\Controllers\ServeTenantLandingController::class)->name('tenant.home');
 
     // Access Web & Auth (Guest & Common routes)
     require base_path('app/Modules/Tenant/Access/Interface/Routes/web.php');
