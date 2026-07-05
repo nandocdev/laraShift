@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    \App\Modules\Central\Billing\Models\Plan::updateOrCreate(
+    \App\Modules\Central\Billing\Domain\Models\Plan::updateOrCreate(
         ['slug' => 'free'],
         [
             'name' => 'Free',

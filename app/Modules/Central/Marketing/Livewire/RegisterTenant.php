@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Marketing\Livewire;
 
-use App\Modules\Central\Billing\Models\Plan;
-use App\Modules\Central\Billing\Support\PlanManager;
+use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
@@ -156,7 +156,7 @@ class RegisterTenant extends Component
 
         // If it's a paid plan, redirect to the hosted checkout page within the tenant context
         if (! $this->isPlanFree()) {
-            $checkoutUrl = app(\App\Modules\Central\Billing\Support\BillingManager::class)
+            $checkoutUrl = app(\App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager::class)
                 ->createCheckoutSession($tenant, $this->selectedPlan->id);
 
             $this->redirect($checkoutUrl, navigate: false);

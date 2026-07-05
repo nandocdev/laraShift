@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Actions;
 
-use App\Modules\Central\Billing\Actions\RegisterPaymentMethodAction;
+use App\Modules\Central\Billing\Application\Actions\RegisterPaymentMethod;
 use App\Modules\Central\Infrastructure\Actions\ProvisionInfrastructureAction;
-use App\Modules\Central\Billing\Models\Plan;
+use App\Modules\Central\Billing\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
@@ -20,7 +20,7 @@ final readonly class CreateTenantAction {
         private ReserveTenantDomainAction $reserveDomain,
         private SetupTenantCoreDataAction $setupCoreData,
         private ProvisionInfrastructureAction $provisionInfra,
-        private RegisterPaymentMethodAction $registerPaymentMethod,
+        private RegisterPaymentMethod $registerPaymentMethod,
     ) {
     }
 

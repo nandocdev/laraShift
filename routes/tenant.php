@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Livewire\ManageBilling;
-use App\Modules\Central\Billing\Livewire\UpdatePaymentMethod;
+use App\Modules\Central\Billing\Interface\Livewire\ManageBilling;
+use App\Modules\Central\Billing\Interface\Livewire\UpdatePaymentMethod;
 use App\Modules\Shared\Tenancy\Http\Middleware\ApplyTenantRateLimits;
 use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Support\Facades\Route;
@@ -88,8 +88,8 @@ Route::middleware([
         Route::get('/data/download', \App\Modules\Tenant\Audit\Http\Controllers\AuditDownloadController::class)->name('tenant.data.download');
         
         Route::get('/billing', ManageBilling::class)->name('tenant.billing.manage');
-        Route::get('/billing/plans', \App\Modules\Central\Billing\Livewire\SelectPlan::class)->name('tenant.billing.plans');
-        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
+        Route::get('/billing/plans', \App\Modules\Central\Billing\Interface\Livewire\SelectPlan::class)->name('tenant.billing.plans');
+        Route::get('/billing/checkout/hosted/{tenant_uuid}/{plan_uuid}', \App\Modules\Central\Billing\Interface\Livewire\HostedCheckout::class)->name('tenant.billing.checkout.hosted');
         Route::get('/billing/update-payment', UpdatePaymentMethod::class)->name('tenant.billing.update-payment');
 
         Route::get('/billing/success', function () {

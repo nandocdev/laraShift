@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Livewire;
 
-use App\Modules\Central\Billing\Models\Invoice;
-use App\Modules\Central\Billing\Models\Subscription;
+use App\Modules\Central\Billing\Domain\Models\Invoice;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Shared\Models\Activity;
 use Illuminate\Contracts\View\View;

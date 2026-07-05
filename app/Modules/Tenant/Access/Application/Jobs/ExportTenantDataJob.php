@@ -38,7 +38,7 @@ class ExportTenantDataJob implements ShouldQueue
             $exportables = [
                 new \App\Modules\Tenant\Access\Application\Services\IdentityExportService(),
                 new \App\Modules\Tenant\Settings\Services\SettingsExportService(),
-                new \App\Modules\Central\Billing\Services\BillingExportService(),
+                new \App\Modules\Central\Billing\Application\Services\BillingExportService(),
             ];
 
             $data = [];
