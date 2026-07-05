@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Billing\Domain\Models\Plan;
-use App\Modules\Central\Features\Actions\ResolveTenantFeaturesAction;
-use App\Modules\Central\Features\Models\Feature;
-use App\Modules\Central\Features\Models\TenantFeatureOverride;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Application\Actions\ResolveTenantFeatures;
+use App\Modules\Central\Catalog\Domain\Models\Feature;
+use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -80,7 +80,7 @@ it('can override plan features with deny type', function () {
     ]);
 
     // Force refresh to clear cache
-    app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
+    app(ResolveTenantFeatures::class)->execute($tenant, true);
 
     expect($tenant->hasFeature('reports.advanced'))->toBeFalse();
 });
@@ -119,7 +119,7 @@ it('can grant additional features via allow override', function () {
         'type' => 'allow',
     ]);
 
-    app(ResolveTenantFeaturesAction::class)->execute($tenant, true);
+    app(ResolveTenantFeatures::class)->execute($tenant, true);
 
     expect($tenant->hasFeature('api.access'))->toBeTrue();
 });

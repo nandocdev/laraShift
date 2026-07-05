@@ -32,7 +32,7 @@
                 </flux:sidebar.item>
                 
                 @php
-                    $rootLanding = \App\Modules\Central\Landings\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
+                    $rootLanding = \App\Modules\Tenant\Experience\Domain\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
                 @endphp
                 @if($rootLanding)
                     <flux:sidebar.item icon="megaphone" :href="route('tenant.landings.builder', $rootLanding)" target="_blank">

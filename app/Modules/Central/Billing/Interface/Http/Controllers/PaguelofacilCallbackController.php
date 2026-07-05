@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Payments\DTOs\PaymentResultData;
-use App\Modules\Central\Payments\Enums\PaymentStatus;
+use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
+use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

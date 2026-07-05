@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Tenant\Experience\Interface\Livewire;
+
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
+use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class LandingBuilder extends Component
+{
+    public Landing $landing;
+
+    /**
+     * Component State
+     */
+    public array $blocks = [];
+    public array $theme = [];
+    public string $title = '';
+
+    public function mount(Landing $landing): void
+    {
+        if ($landing->tenant_id !== tenant('id')) {
+            abort(403, 'Unauthorized access to this landing page.');
+        }
+
+        $this->landing = $landing;
+        $this->blocks = $landing->blocks ?? [];
+        $this->theme = $landing->theme ?? [];
+        $this->title = $landing->title ?? '';
+    }
+
+    public function save(array $blocks, array $theme): void
+    {
+        // Checksum validation would go here in production
+        
+        $this->landing->update([
+            'blocks' => $blocks,
+            'theme' => $theme,
+        ]);
+
+        $this->blocks = $blocks;
+        $this->theme = $theme;
+
+        $this->dispatch('landing-saved');
+    }
+
+    public function publish(): void
+    {
+        // Ensure we save current state before publishing
+        $this->landing->update([
+            'blocks' => $this->blocks,
+            'theme' => $this->theme,
+        ]);
+
+        // Only track publisher if they are a central user (platform admin)
+        // because the DB column is constrained to 'central_users'
+        $publisherId = auth('central')->check() ? auth('central')->id() : null;
+
+        app(\App\Modules\Tenant\Experience\Application\Actions\PublishLanding::class)->execute(
+            $this->landing,
+            $publisherId
+        );
+
+        $this->dispatch('landing-published');
+    }
+
+    public function render(): View
+    {
+        return view('settings-tenant::landings.livewire.landing-builder');
+    }
+}

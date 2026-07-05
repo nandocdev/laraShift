@@ -77,7 +77,7 @@
             </div>
 
             @php
-                $landing = \App\Modules\Central\Landings\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
+                $landing = \App\Modules\Tenant\Experience\Domain\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
             @endphp
 
             @if($landing)

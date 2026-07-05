@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Application\Actions;
 
 use App\Modules\Central\Billing\Domain\Models\Invoice;
-use App\Modules\Central\Settings\Support\CentralBranding;
+use App\Modules\Central\Operations\Infrastructure\Support\CentralBranding;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 

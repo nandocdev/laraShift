@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Livewire;
 
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Support\Actions\SendBroadcastAction;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Contracts\View\View;

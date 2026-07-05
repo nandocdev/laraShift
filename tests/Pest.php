@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

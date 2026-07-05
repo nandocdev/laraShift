@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Closure;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -71,7 +71,7 @@ class ApplyTenantRateLimits
             
             if (! $plan) {
                 // Find by ID or Slug if relation not loaded
-                $plan = \App\Modules\Central\Billing\Domain\Models\Plan::where('id', $tenant->plan_id)
+                $plan = \App\Modules\Central\Catalog\Domain\Models\Plan::where('id', $tenant->plan_id)
                     ->orWhere('slug', $tenant->plan_id)
                     ->first();
             }

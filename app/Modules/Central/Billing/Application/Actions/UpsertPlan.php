@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Application\Actions;
 
 use App\Modules\Central\Billing\Application\DTO\PlanData;
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Landings\Models\Landing;
-use App\Modules\Central\Landings\Actions\RenderLandingAction;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
+use App\Modules\Tenant\Experience\Application\Actions\RenderLanding;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -30,7 +30,7 @@ it('prevents view injection / LFI by filtering invalid block types', function ()
         ]
     ]);
 
-    $action = app(RenderLandingAction::class);
+    $action = app(RenderLanding::class);
     
     try {
         $action->execute($landing);

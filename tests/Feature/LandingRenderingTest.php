@@ -1,7 +1,7 @@
 <?php
 
-use App\Modules\Central\Landings\Actions\RenderLandingAction;
-use App\Modules\Central\Landings\Models\Landing;
+use App\Modules\Tenant\Experience\Application\Actions\RenderLanding;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -40,7 +40,7 @@ it('renders a landing page with blocks', function () {
     ]);
 
     // 3. Render
-    $html = app(RenderLandingAction::class)->execute($landing);
+    $html = app(RenderLanding::class)->execute($landing);
 
     // 4. Assert
     expect($html)->toContain('Welcome to Test');

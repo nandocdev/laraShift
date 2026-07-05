@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Modules\Central\Landings\Models\Landing;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\Seeder;
 
@@ -81,7 +81,7 @@ class LandingSeeder extends Seeder
         );
 
         $landing = Landing::where('slug', 'saas-landing')->first();
-        app(\App\Modules\Central\Landings\Actions\PublishLandingAction::class)->execute($landing);
+        app(\App\Modules\Tenant\Experience\Application\Actions\PublishLanding::class)->execute($landing);
 
         $this->command->info('Landing seeder finished and published.');
     }

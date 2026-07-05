@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Application\Actions;
 
-use App\Modules\Central\Billing\Domain\Models\Plan as MonolithPlan;
+use App\Modules\Central\Catalog\Domain\Models\Plan as MonolithPlan;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Log;

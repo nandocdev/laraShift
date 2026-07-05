@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Application\Actions\SyncInvoices;
 use App\Modules\Central\Billing\Domain\Models\Invoice;
-use App\Modules\Central\Billing\Domain\Models\Plan;
-use App\Modules\Central\Payments\Contracts\PaymentGateway;
-use App\Modules\Central\Payments\DTOs\PaymentData;
-use App\Modules\Central\Payments\Enums\PaymentStatus;
-use App\Modules\Central\Payments\Events\PaymentApproved;
-use App\Modules\Central\Payments\Services\Gateways\ClaveGateway;
-use App\Modules\Central\Payments\Services\Gateways\DlocalGateway;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
+use App\Modules\Central\Billing\Application\DTO\PaymentData;
+use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
+use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
+use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -64,7 +64,7 @@ it('generates a PagueloFacil hosted checkout URL', function () {
         ], 200)
     ]);
 
-    $gateway = new ClaveGateway(App\Modules\Central\Payments\Services\Gateways\ClaveEnvironment::Sandbox);
+    $gateway = new ClaveGateway(App\Modules\Central\Billing\Infrastructure\Gateways\ClaveEnvironment::Sandbox);
     $url = $gateway->buildCheckoutUrl(new PaymentData(
         amount: 29.99,
         description: 'Test',
@@ -117,7 +117,7 @@ it('fulfills a subscription when payment is approved', function () {
         'amount' => 29.99,
     ]);
 
-    $payment = \App\Modules\Central\Payments\Models\Payment::create([
+    $payment = \App\Modules\Central\Billing\Domain\Models\Payment::create([
         'tenant_id' => $this->tenant->id,
         'display_id' => 'sub_' . $this->tenant->id,
         'slug' => 'test-slug',
@@ -142,7 +142,7 @@ it('fulfills a subscription when payment is approved', function () {
         ]
     ]);
 
-    $result = new \App\Modules\Central\Payments\DTOs\PaymentResultData(
+    $result = new \App\Modules\Central\Billing\Application\DTO\PaymentResultData(
         gatewayReference: 'TX_SUCCESS',
         displayId: 'sub_' . $this->tenant->id,
         status: PaymentStatus::Approved,

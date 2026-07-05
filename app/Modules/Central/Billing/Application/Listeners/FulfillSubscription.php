@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Application\Listeners;
 
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Billing\Domain\Models\Plan;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Payments\Events\PaymentApproved;
+use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
