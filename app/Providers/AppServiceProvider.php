@@ -28,8 +28,8 @@ class AppServiceProvider extends ServiceProvider
         }
 
         \Illuminate\Support\Facades\Gate::policy(
-            \App\Modules\Tenant\Settings\Models\TenantSetting::class,
-            \App\Modules\Tenant\Settings\Policies\TenantSettingPolicy::class
+            \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::class,
+            \App\Modules\Tenant\Experience\Domain\Policies\TenantSettingPolicy::class
         );
 
         $this->configureDefaults();

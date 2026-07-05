@@ -77,9 +77,9 @@ Route::middleware([
         Route::get('/team/members', \App\Modules\Tenant\Access\Interface\Livewire\TeamManagement::class)->name('tenant.team.index');
         Route::get('/settings/roles', \App\Modules\Tenant\Access\Interface\Livewire\RoleManagement::class)->name('tenant.roles.index');
         Route::get('/settings/api-keys', \App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys::class)->name('tenant.api-keys.index');
-        Route::get('/settings/branding', \App\Modules\Tenant\Settings\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
-        Route::get('/settings/localization', \App\Modules\Tenant\Settings\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
-        Route::get('/settings/smtp', \App\Modules\Tenant\Settings\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
+        Route::get('/settings/branding', \App\Modules\Tenant\Experience\Interface\Livewire\BrandingSettings::class)->name('tenant.settings.branding');
+        Route::get('/settings/localization', \App\Modules\Tenant\Experience\Interface\Livewire\LocalizationSettings::class)->name('tenant.settings.localization');
+        Route::get('/settings/smtp', \App\Modules\Tenant\Integrations\Interface\Livewire\SmtpSettings::class)->name('tenant.settings.smtp');
         Route::get('/settings/export', \App\Modules\Tenant\Access\Interface\Livewire\DataExport::class)->name('tenant.settings.export');
         Route::get('/settings/security/2fa', \App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment::class)->name('tenant.settings.security.2fa');
         Route::get('/audit', \App\Modules\Tenant\Audit\Livewire\AuditLogViewer::class)->name('tenant.audit.index');

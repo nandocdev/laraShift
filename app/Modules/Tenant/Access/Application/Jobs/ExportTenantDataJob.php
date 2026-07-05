@@ -37,7 +37,7 @@ class ExportTenantDataJob implements ShouldQueue
             // Each service will now be scoped to the initialized tenant.
             $exportables = [
                 new \App\Modules\Tenant\Access\Application\Services\IdentityExportService(),
-                new \App\Modules\Tenant\Settings\Services\SettingsExportService(),
+                new \App\Modules\Tenant\Experience\Application\Services\SettingsExportService(),
                 new \App\Modules\Central\Billing\Application\Services\BillingExportService(),
             ];
 

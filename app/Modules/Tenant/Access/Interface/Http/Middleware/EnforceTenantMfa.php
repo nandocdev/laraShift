@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Interface\Http\Middleware;
 
-use App\Modules\Tenant\Settings\Models\TenantSetting;
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

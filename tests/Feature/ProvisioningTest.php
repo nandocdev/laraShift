@@ -57,7 +57,7 @@ it('creates the initial admin user via the listener', function () {
         $rolesCount = \App\Modules\Tenant\Access\Domain\Models\Role::count();
         expect($rolesCount)->toBeGreaterThanOrEqual(2);
         
-        $settings = \App\Modules\Tenant\Settings\Models\TenantSetting::first();
+        $settings = \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::first();
         expect($settings)->not->toBeNull();
         expect($settings->locale)->toBe('en');
     });
