@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 
@@ -26,7 +26,7 @@ it('scopes roles and permissions per tenant', function () {
         'email' => 'b@test.com',
     ]);
 
-    $ensureRoles = app(EnsureTenantRolesExistAction::class);
+    $ensureRoles = app(EnsureTenantRolesExist::class);
     $ensureRoles->execute($tenantA);
     $ensureRoles->execute($tenantB);
 

@@ -15,7 +15,7 @@ return [
     App\Modules\Central\Payments\Providers\PaymentsServiceProvider::class,
     App\Modules\Central\Infrastructure\Providers\InfrastructureServiceProvider::class,
     App\Modules\Central\Marketing\Providers\MarketingServiceProvider::class,
-    App\Modules\Tenant\Identity\Providers\IdentityServiceProvider::class,
+    App\Modules\Tenant\Access\Providers\AccessServiceProvider::class,
     App\Modules\Tenant\Settings\Providers\SettingsServiceProvider::class,
     App\Modules\Tenant\Audit\Providers\AuditServiceProvider::class,
 ];

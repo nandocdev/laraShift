@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Shared\Events;
 
-use App\Modules\Tenant\Identity\Models\Role;
+use App\Modules\Tenant\Access\Domain\Models\Role;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

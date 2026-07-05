@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Notifications\WelcomeTenantNotification;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 

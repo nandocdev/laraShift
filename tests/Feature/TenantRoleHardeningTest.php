@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -21,7 +21,7 @@ it('protects system roles from deletion and name change', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    app(EnsureTenantRolesExistAction::class)->execute($tenant);
+    app(EnsureTenantRolesExist::class)->execute($tenant);
 
     $adminRole = Role::where('name', 'admin')->first();
 
@@ -76,7 +76,7 @@ it('returns 409 conflict when deleting a role with active users', function () {
 
     // Call the livewire component method or simulate the request
     // Since we are using abort(409) in the component, we can test it via Livewire
-    Livewire::test(\App\Modules\Tenant\Identity\Livewire\RoleManagement::class)
+    Livewire::test(\App\Modules\Tenant\Access\Interface\Livewire\RoleManagement::class)
         ->call('delete', $role->id)
         ->assertStatus(409);
         

@@ -1,6 +1,6 @@
 <?php
 
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;

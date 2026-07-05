@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Settings\Policies;
 
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Settings\Models\TenantSetting;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

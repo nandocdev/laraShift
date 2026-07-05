@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Tenant\Identity\Http\Controllers\Api\IdentityApiController;
-use App\Modules\Tenant\Identity\Http\Middleware\AuthenticateApiKey;
+use App\Modules\Tenant\Access\Interface\Http\Controllers\Api\IdentityApiController;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\AuthenticateApiKey;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;

@@ -6,7 +6,7 @@ namespace App\Modules\Tenant\Audit\Jobs;
 
 use App\Modules\Tenant\Audit\Models\AuditLog;
 use App\Modules\Tenant\Audit\Notifications\AuditLogExportNotification;
-use App\Modules\Tenant\Identity\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Tenant\Access\Application\Actions;
+
+use App\Modules\Shared\Models\Notification;
+
+final readonly class MarkNotificationAsRead
+{
+    public function execute(string $notificationId): void
+    {
+        Notification::where('id', $notificationId)
+            ->where('notifiable_id', auth()->id())
+            ->update(['read_at' => now()]);
+    }
+}

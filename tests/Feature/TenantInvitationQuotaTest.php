@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Tenant\Identity\Models\User;
-use App\Modules\Tenant\Identity\Models\Role;
-use App\Modules\Tenant\Identity\Models\Invitation;
-use App\Modules\Tenant\Identity\Actions\SendInvitationAction;
-use App\Modules\Tenant\Identity\Actions\EnsureTenantRolesExistAction;
+use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use App\Modules\Tenant\Access\Domain\Models\Invitation;
+use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -36,7 +36,7 @@ it('enforces a limit of pending invitations based on plan', function () {
     ]);
 
     tenancy()->initialize($tenant);
-    app(EnsureTenantRolesExistAction::class)->execute($tenant);
+    app(EnsureTenantRolesExist::class)->execute($tenant);
 
     $admin = User::create([
         'tenant_id' => $tenant->id,
@@ -46,11 +46,11 @@ it('enforces a limit of pending invitations based on plan', function () {
     ]);
 
     Notification::fake();
-    $action = app(SendInvitationAction::class);
+    $action = app(SendInvitation::class);
 
     // Create 5 invitations
     for ($i = 0; $i < 5; $i++) {
-        $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+        $action->execute(new \App\Modules\Tenant\Access\Application\DTO\InvitationData(
             email: "user{$i}@test.com",
             roleName: 'member'
         ), $admin);
@@ -61,7 +61,7 @@ it('enforces a limit of pending invitations based on plan', function () {
     // 6th should fail
     $this->expectException(\App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException::class);
     
-    $action->execute(new \App\Modules\Tenant\Identity\DTOs\InvitationData(
+    $action->execute(new \App\Modules\Tenant\Access\Application\DTO\InvitationData(
         email: "extra@test.com",
         roleName: 'member'
     ), $admin);
@@ -79,7 +79,7 @@ it('aborts with 410 if invitation is expired', function () {
     $tenant->domains()->create(['domain' => $domain]);
 
     tenancy()->initialize($tenant);
-    app(EnsureTenantRolesExistAction::class)->execute($tenant);
+    app(EnsureTenantRolesExist::class)->execute($tenant);
     $role = Role::where('name', 'member')->first();
 
     $invitation = Invitation::create([
