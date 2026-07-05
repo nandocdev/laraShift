@@ -7,8 +7,8 @@ namespace App\Modules\Central\Billing\Application\Listeners;
 use App\Modules\Central\Billing\Infrastructure\Notifications\PaymentFailedNotification;
 use App\Modules\Central\Billing\Infrastructure\Notifications\TenantSuspendedNotification;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\PaymentFailed;
-use App\Modules\Shared\Events\TenantSuspendedByDunning;
+use App\Modules\Platform\Events\PaymentFailed;
+use App\Modules\Platform\Events\TenantSuspendedByDunning;
 use Illuminate\Support\Facades\Log;
 
 class HandlePaymentFailure

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Support\Http\Controllers;
 
 use App\Modules\Central\Support\Models\SupportSession;
-use App\Modules\Shared\Http\Controllers\Controller;
+use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;

@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Platform\Events;
+
+use App\Modules\Tenant\Access\Domain\Models\Role;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class TenantRoleCreated
+{
+    use Dispatchable, SerializesModels;
+
+    public string $tenantId;
+    public string $roleId;
+
+    public function __construct(public Role $role) {
+        $this->tenantId = (string) $role->tenant_id;
+        $this->roleId = (string) $role->id;
+    }
+}

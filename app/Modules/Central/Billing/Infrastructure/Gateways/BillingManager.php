@@ -7,7 +7,7 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 use App\Modules\Central\Billing\Infrastructure\Gateways\InternalBillingProvider;
 use App\Modules\Central\Billing\Infrastructure\Gateways\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Contracts\BillingProvider;
+use App\Modules\Platform\Contracts\BillingProvider;
 use Illuminate\Support\Manager;
 
 class BillingManager extends Manager implements BillingProvider

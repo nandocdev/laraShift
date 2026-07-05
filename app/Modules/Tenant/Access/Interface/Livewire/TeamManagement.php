@@ -123,7 +123,7 @@ class TeamManagement extends Component
             ->performedOn($user)
             ->log('user_access_revoked');
 
-        event(new \App\Modules\Shared\Events\TenantUserRevoked($user, auth()->id()));
+        event(new \App\Modules\Platform\Events\TenantUserRevoked($user, auth()->id()));
 
         session()->flash('status', __('User access revoked.'));
     }

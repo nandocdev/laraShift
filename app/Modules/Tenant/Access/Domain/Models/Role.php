@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Domain\Models;
 
-use App\Modules\Shared\Tenancy\Models\Concerns\BelongsToTenant;
+use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Spatie\Permission\Models\Role as SpatieRole;
 

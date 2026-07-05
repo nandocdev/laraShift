@@ -20,7 +20,7 @@ class BillingServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(
-            \App\Modules\Shared\Contracts\PaymentAmountResolverContract::class,
+            \App\Modules\Platform\Contracts\PaymentAmountResolverContract::class,
             \App\Modules\Central\Billing\Application\Services\PaymentAmountResolver::class
         );
 
@@ -33,7 +33,7 @@ class BillingServiceProvider extends ServiceProvider
         );
 
         Event::listen(
-            \App\Modules\Shared\Events\PaymentFailed::class,
+            \App\Modules\Platform\Events\PaymentFailed::class,
             \App\Modules\Central\Billing\Application\Listeners\HandlePaymentFailure::class
         );
     }

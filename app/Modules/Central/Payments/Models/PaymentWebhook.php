@@ -6,7 +6,7 @@ namespace App\Modules\Central\Payments\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use App\Modules\Shared\Tenancy\Models\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
 
 /**
  * Immutable log of every inbound webhook from the gateway.

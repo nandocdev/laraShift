@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Interface\Livewire;
 
-use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 

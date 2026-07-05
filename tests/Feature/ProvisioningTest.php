@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -104,7 +104,7 @@ class TenancyServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \App\Modules\Shared\Tenancy\Console\Commands\EnableRlsCommand::class,
+                \App\Modules\Platform\Tenancy\Infrastructure\Console\EnableRlsCommand::class,
             ]);
         }
 

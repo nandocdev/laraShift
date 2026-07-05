@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Application\Actions;
 
 use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\SubscriptionCancelled;
+use App\Modules\Platform\Events\SubscriptionCancelled;
 
 final readonly class CancelSubscription
 {

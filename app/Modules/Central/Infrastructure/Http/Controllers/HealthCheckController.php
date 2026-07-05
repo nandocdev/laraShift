@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Infrastructure\Http\Controllers;
 
-use App\Modules\Shared\Http\Controllers\Controller;
+use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;

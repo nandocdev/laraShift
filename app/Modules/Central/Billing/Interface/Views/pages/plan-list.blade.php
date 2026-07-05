@@ -29,10 +29,10 @@
                             <div class="text-xs text-neutral-500">{{ $plan->slug }}</div>
                         </flux:table.cell>
                         <flux:table.cell>
-                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_monthly) }}
+                            {{ \App\Modules\Platform\Data\Services\PriceFormatter::format($plan->price_monthly) }}
                         </flux:table.cell>
                         <flux:table.cell>
-                            {{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($plan->price_yearly) }}
+                            {{ \App\Modules\Platform\Data\Services\PriceFormatter::format($plan->price_yearly) }}
                         </flux:table.cell>
                         <flux:table.cell>
                             <div class="flex items-center gap-2">

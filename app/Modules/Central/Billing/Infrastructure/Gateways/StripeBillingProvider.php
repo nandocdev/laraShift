@@ -7,7 +7,7 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 use App\Modules\Central\Billing\Application\Actions\SyncInvoices;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Contracts\BillingProvider;
+use App\Modules\Platform\Contracts\BillingProvider;
 
 class StripeBillingProvider implements BillingProvider
 {

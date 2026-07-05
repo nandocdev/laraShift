@@ -8,7 +8,7 @@ use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PagueloFacilClient;
 use App\Modules\Central\Payments\Contracts\PaymentGateway;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Contracts\BillingProvider;
+use App\Modules\Platform\Contracts\BillingProvider;
 
 class InternalBillingProvider implements BillingProvider
 {

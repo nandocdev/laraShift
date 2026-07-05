@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Experience\Application\Actions;
 
 use App\Modules\Central\Landings\Models\Landing;
-use App\Modules\Shared\Events\TenantMfaRequirementChanged;
-use App\Modules\Shared\Events\TenantSettingsUpdated;
+use App\Modules\Platform\Events\TenantMfaRequirementChanged;
+use App\Modules\Platform\Events\TenantSettingsUpdated;
 use App\Modules\Tenant\Experience\Application\DTO\BrandingData;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Experience\Infrastructure\Support\BrandingPresets;

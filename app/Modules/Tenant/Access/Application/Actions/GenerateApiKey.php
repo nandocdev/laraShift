@@ -51,7 +51,7 @@ final readonly class GenerateApiKey
             ->withProperties(['name' => $name, 'scopes' => $scopes])
             ->log('api_key_generated');
 
-        event(new \App\Modules\Shared\Events\TenantApiKeyCreated($apiKey));
+        event(new \App\Modules\Platform\Events\TenantApiKeyCreated($apiKey));
 
         return [
             'key' => $plainKey,

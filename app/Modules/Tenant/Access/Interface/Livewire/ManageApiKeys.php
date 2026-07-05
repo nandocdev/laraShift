@@ -38,7 +38,7 @@ class ManageApiKeys extends Component
         ]);
 
         // Check Limit (US-T104, US-T401)
-        $quota = app(\App\Modules\Shared\Infrastructure\Services\QuotaManager::class);
+        $quota = app(\App\Modules\Platform\Tenancy\Application\Services\QuotaManager::class);
         if (! $quota->increment(tenant(), 'api_keys')) {
             $this->addError('name', __('Maximum limit of API keys reached for your plan.'));
             return;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Domain\Models;
 
 use App\Modules\Central\Features\Models\Feature;
-use App\Modules\Shared\Infrastructure\Casts\MoneyCast;
+use App\Modules\Platform\Data\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

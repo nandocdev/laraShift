@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Application\Services;
 
 use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Domain\Models\Plan;
-use App\Modules\Shared\Contracts\PaymentAmountResolverContract;
+use App\Modules\Platform\Contracts\PaymentAmountResolverContract;
 
 class PaymentAmountResolver implements PaymentAmountResolverContract
 {

@@ -59,7 +59,7 @@ it('enforces a limit of pending invitations based on plan', function () {
     expect(Invitation::count())->toBe(5);
 
     // 6th should fail
-    $this->expectException(\App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException::class);
+    $this->expectException(\App\Modules\Platform\Tenancy\Domain\Exceptions\QuotaExceededException::class);
     
     $action->execute(new \App\Modules\Tenant\Access\Application\DTO\InvitationData(
         email: "extra@test.com",

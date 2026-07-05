@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Services;
 
-use App\Modules\Shared\Contracts\Exportable;
+use App\Modules\Platform\Contracts\Exportable;
 use App\Modules\Tenant\Access\Domain\Models\User;
 
 class IdentityExportService implements Exportable

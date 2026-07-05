@@ -9,7 +9,7 @@ use App\Modules\Central\Billing\Application\Actions\CreateCheckoutSession;
 use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Http\Controllers\Controller;
+use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

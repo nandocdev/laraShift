@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Listeners;
 
-use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Support\Facades\Hash;

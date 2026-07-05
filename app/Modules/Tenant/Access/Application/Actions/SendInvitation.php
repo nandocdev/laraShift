@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
-use App\Modules\Shared\Infrastructure\Exceptions\QuotaExceededException;
-use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use App\Modules\Platform\Tenancy\Domain\Exceptions\QuotaExceededException;
+use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use App\Modules\Tenant\Access\Application\DTO\InvitationData;
 use App\Modules\Tenant\Access\Domain\Models\Invitation;
 use App\Modules\Tenant\Access\Domain\Models\Role;
@@ -57,7 +57,7 @@ final readonly class SendInvitation
             ->performedOn($invitation)
             ->log('user_invited');
 
-        event(new \App\Modules\Shared\Events\TenantUserInvited($invitation));
+        event(new \App\Modules\Platform\Events\TenantUserInvited($invitation));
 
         return $invitation;
     }

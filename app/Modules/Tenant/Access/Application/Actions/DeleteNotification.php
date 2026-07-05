@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
-use App\Modules\Shared\Models\Notification;
+use App\Modules\Platform\Data\Models\Notification;
 
 final readonly class DeleteNotification
 {

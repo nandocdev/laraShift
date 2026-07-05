@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Providers;
 
-use App\Modules\Shared\Events\TenantProvisioned;
+use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Application\Listeners\CreateInitialAdminUser;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;

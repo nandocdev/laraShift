@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Infrastructure\Services\QuotaManager;
+use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 

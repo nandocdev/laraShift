@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Application\Actions;
 
-use App\Modules\Shared\Events\TenantSmtpConfigured;
+use App\Modules\Platform\Events\TenantSmtpConfigured;
 use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Support\Facades\DB;

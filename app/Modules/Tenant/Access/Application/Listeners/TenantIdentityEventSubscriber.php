@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Listeners;
 
-use App\Modules\Shared\Events\TenantApiKeyCreated;
-use App\Modules\Shared\Events\TenantApiKeyRevoked;
-use App\Modules\Shared\Events\TenantMfaRequirementChanged;
-use App\Modules\Shared\Events\TenantRoleCreated;
-use App\Modules\Shared\Events\TenantRoleUpdated;
-use App\Modules\Shared\Events\TenantSettingsUpdated;
-use App\Modules\Shared\Events\TenantSmtpConfigured;
-use App\Modules\Shared\Events\TenantUserInvited;
-use App\Modules\Shared\Events\TenantUserJoined;
-use App\Modules\Shared\Events\TenantUserRevoked;
+use App\Modules\Platform\Events\TenantApiKeyCreated;
+use App\Modules\Platform\Events\TenantApiKeyRevoked;
+use App\Modules\Platform\Events\TenantMfaRequirementChanged;
+use App\Modules\Platform\Events\TenantRoleCreated;
+use App\Modules\Platform\Events\TenantRoleUpdated;
+use App\Modules\Platform\Events\TenantSettingsUpdated;
+use App\Modules\Platform\Events\TenantSmtpConfigured;
+use App\Modules\Platform\Events\TenantUserInvited;
+use App\Modules\Platform\Events\TenantUserJoined;
+use App\Modules\Platform\Events\TenantUserRevoked;
 use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
 use App\Modules\Tenant\Audit\DTOs\AuditLogData;
 use App\Modules\Tenant\Audit\Enums\AuditAction;

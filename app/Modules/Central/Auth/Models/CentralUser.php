@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Models;
 
-use App\Modules\Shared\Contracts\CentralUserContract;
+use App\Modules\Platform\Contracts\CentralUserContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Services;
 
 use App\Modules\Central\Provisioning\Models\Domain;
-use App\Modules\Shared\Contracts\TenantDomainResolverContract;
+use App\Modules\Platform\Contracts\TenantDomainResolverContract;
 
 class TenantDomainResolver implements TenantDomainResolverContract
 {

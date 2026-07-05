@@ -113,7 +113,7 @@
                     @forelse($invoices as $invoice)
                         <flux:table.row :key="$invoice->id">
                             <flux:table.cell>{{ $invoice->created_at->format('M j, Y') }}</flux:table.cell>
-                            <flux:table.cell>{{ \App\Modules\Shared\Infrastructure\Services\PriceFormatter::format($invoice->amount) }}</flux:table.cell>
+                            <flux:table.cell>{{ \App\Modules\Platform\Data\Services\PriceFormatter::format($invoice->amount) }}</flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm"
                                     :variant="$invoice->status === 'paid' ? 'success' : 'warning'">

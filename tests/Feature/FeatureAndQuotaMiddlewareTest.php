@@ -110,7 +110,7 @@ it('allows access if tenant is within quota', function () {
 });
 
 it('denies access if tenant exceeds quota', function () {
-    $quotaManager = app(\App\Modules\Shared\Infrastructure\Services\QuotaManager::class);
+    $quotaManager = app(\App\Modules\Platform\Tenancy\Application\Services\QuotaManager::class);
     $quotaManager->forceIncrement($this->tenant, 'users', 6);
 
     Route::middleware(['web', \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class, 'quota:users'])

@@ -6,12 +6,12 @@ namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
 use App\Modules\Central\Billing\Domain\Models\PaymentGatewayEvent;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Shared\Events\PaymentFailed;
-use App\Modules\Shared\Events\PaymentSucceeded;
-use App\Modules\Shared\Events\SubscriptionCreated;
-use App\Modules\Shared\Events\SubscriptionUpdated;
-use App\Modules\Shared\Events\TenantReactivatedAfterPayment;
-use App\Modules\Shared\Events\TenantSuspendedByDunning;
+use App\Modules\Platform\Events\PaymentFailed;
+use App\Modules\Platform\Events\PaymentSucceeded;
+use App\Modules\Platform\Events\SubscriptionCreated;
+use App\Modules\Platform\Events\SubscriptionUpdated;
+use App\Modules\Platform\Events\TenantReactivatedAfterPayment;
+use App\Modules\Platform\Events\TenantSuspendedByDunning;
 use Illuminate\Http\Request;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierController;
 use Symfony\Component\HttpFoundation\Response;

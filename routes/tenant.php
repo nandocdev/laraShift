@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Interface\Livewire\ManageBilling;
 use App\Modules\Central\Billing\Interface\Livewire\UpdatePaymentMethod;
-use App\Modules\Shared\Tenancy\Http\Middleware\ApplyTenantRateLimits;
-use App\Modules\Shared\Tenancy\Http\Middleware\EnsureTenantIsActive;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\ApplyTenantRateLimits;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantIsActive;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
