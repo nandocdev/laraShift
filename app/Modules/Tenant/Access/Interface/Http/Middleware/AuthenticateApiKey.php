@@ -24,7 +24,7 @@ class AuthenticateApiKey
             return response()->json(['message' => 'Unauthorized. Invalid API Key format.'], 401);
         }
 
-        $hash = hash_hmac('sha256', $token, config('app.key'));
+        $hash = \App\Modules\Platform\Security\Hmac\HmacSigner::hash($token, (string) config('app.key'));
 
         $apiKey = ApiKey::where('key_hash', $hash)
             ->whereNull('revoked_at')
