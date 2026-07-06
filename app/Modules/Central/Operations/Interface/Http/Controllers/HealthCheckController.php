@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Http\Controllers;
+namespace App\Modules\Central\Operations\Interface\Http\Controllers;
 
 use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;

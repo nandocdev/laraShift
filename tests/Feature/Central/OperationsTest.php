@@ -1,7 +1,7 @@
 <?php
 
 use App\Modules\Central\Auth\Models\CentralUser;
-use App\Modules\Central\Infrastructure\Services\TenantQueueManager;
+use App\Modules\Central\Operations\Application\Services\TenantQueueManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Redis;
 

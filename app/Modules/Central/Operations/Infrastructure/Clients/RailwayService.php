@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Services;
+namespace App\Modules\Central\Operations\Infrastructure\Clients;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Http;

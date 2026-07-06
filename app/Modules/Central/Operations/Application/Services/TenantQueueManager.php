@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Services;
+namespace App\Modules\Central\Operations\Application\Services;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Illuminate\Contracts\Queue\Job;
 
 class TenantQueueManager
 {

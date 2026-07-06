@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Console\Commands;
+namespace App\Modules\Central\Operations\Infrastructure\Console;
 
 use Illuminate\Console\Command;
-use App\Modules\Central\Infrastructure\Services\HorizonQueueResolver;
+use App\Modules\Central\Operations\Infrastructure\Horizon\HorizonQueueResolver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 

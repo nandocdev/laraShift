@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Infrastructure\Services\HorizonQueueResolver;
+use App\Modules\Central\Operations\Infrastructure\Horizon\HorizonQueueResolver;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

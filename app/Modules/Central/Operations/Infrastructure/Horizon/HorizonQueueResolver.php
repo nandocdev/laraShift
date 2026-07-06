@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Services;
-
-use App\Modules\Central\Provisioning\Models\Tenant;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
+namespace App\Modules\Central\Operations\Infrastructure\Horizon;
 
 class HorizonQueueResolver
 {

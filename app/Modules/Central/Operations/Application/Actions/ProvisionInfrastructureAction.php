@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Infrastructure\Actions;
+namespace App\Modules\Central\Operations\Application\Actions;
 
-use App\Modules\Central\Infrastructure\Services\RailwayService;
+use App\Modules\Central\Operations\Infrastructure\Clients\RailwayService;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Log;
 
