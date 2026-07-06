@@ -2,17 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-foreach (config('tenancy.central_domains', []) as $domain) {
-    Route::domain($domain)->group(function () use ($domain) {
-        Route::get('/', \App\Modules\Central\Marketing\Livewire\LandingPage::class)->name('home.' . str_replace('.', '-', $domain));
-        Route::get('/register', \App\Modules\Central\Marketing\Livewire\RegisterTenant::class)->name('register.' . str_replace('.', '-', $domain));
-    });
-}
-
-// Catch-all home route for other central domains or fallbacks
-Route::get('/', \App\Modules\Central\Marketing\Livewire\LandingPage::class)->name('home');
-Route::get('/register', \App\Modules\Central\Marketing\Livewire\RegisterTenant::class)
-    ->middleware(['throttle:5,1'])
-    ->name('central.register');
+require base_path('app/Modules/Central/Marketing/Interface/Routes/web.php');
 
 require __DIR__.'/settings.php';
