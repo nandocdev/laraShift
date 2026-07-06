@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Experience\Interface\Livewire;
+namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
 use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use Illuminate\Contracts\View\View;
@@ -37,7 +37,7 @@ class UsageOverview extends Component
             ];
         }
 
-        return view('settings-tenant::livewire.usage-overview', [
+        return view('workspace::livewire.usage-overview', [
             'stats' => $stats,
         ]);
     }

@@ -42,6 +42,9 @@ Route::middleware([
         // Tenant Access (Authenticated routes like dashboard, team, roles, etc.)
         require base_path('app/Modules/Tenant/Access/Interface/Routes/web_auth.php');
 
+        // Workspace
+        require base_path('app/Modules/Tenant/Workspace/Interface/Routes/web.php');
+
         // Experience
         require base_path('app/Modules/Tenant/Experience/Interface/Routes/web.php');
 

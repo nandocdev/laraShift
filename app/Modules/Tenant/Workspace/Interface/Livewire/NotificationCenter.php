@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Interface\Livewire;
+namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
-use App\Modules\Tenant\Access\Application\Actions\MarkNotificationAsRead;
-use App\Modules\Tenant\Access\Application\Actions\DeleteNotification;
+use App\Modules\Tenant\Workspace\Application\Actions\MarkNotificationAsRead;
+use App\Modules\Tenant\Workspace\Application\Actions\DeleteNotification;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -23,7 +23,7 @@ class NotificationCenter extends Component
 
     public function render(): View
     {
-        return view('identity::livewire.notification-center', [
+        return view('workspace::livewire.notification-center', [
             'notifications' => auth()->user()->tenantNotifications()->paginate(10),
         ]);
     }

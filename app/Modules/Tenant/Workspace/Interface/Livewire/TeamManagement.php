@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Interface\Livewire;
+namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
 use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
 use App\Modules\Tenant\Access\Domain\Models\Invitation;
@@ -123,14 +123,14 @@ class TeamManagement extends Component
             ->performedOn($user)
             ->log('user_access_revoked');
 
-        event(new \App\Modules\Platform\Events\TenantUserRevoked($user, auth()->id()));
+        event(new \App\Modules\Platform\Events\TenantUserRevoked((string) $user->id, (string) $user->tenant_id, (string) auth()->id()));
 
         session()->flash('status', __('User access revoked.'));
     }
 
     public function render(): View
     {
-        return view('identity::livewire.team-management', [
+        return view('workspace::livewire.team-management', [
             'members' => User::with('roles')->latest()->paginate(10),
             'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->get(),
             'availableRoles' => Role::all(),

@@ -20,6 +20,5 @@ class ExperienceServiceProvider extends ServiceProvider
         
         Livewire::component('tenant-branding-settings', \App\Modules\Tenant\Experience\Interface\Livewire\BrandingSettings::class);
         Livewire::component('tenant-localization-settings', \App\Modules\Tenant\Experience\Interface\Livewire\LocalizationSettings::class);
-        Livewire::component('tenant-usage-overview', \App\Modules\Tenant\Experience\Interface\Livewire\UsageOverview::class);
     }
 }

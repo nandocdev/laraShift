@@ -38,10 +38,8 @@ class AccessServiceProvider extends ServiceProvider
         \Livewire\Livewire::component('tenant-accept-invitation', \App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation::class);
         \Livewire\Livewire::component('tenant-login-challenge', \App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge::class);
         \Livewire\Livewire::component('tenant-2fa-enrollment', \App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment::class);
-        \Livewire\Livewire::component('tenant-team-management', \App\Modules\Tenant\Access\Interface\Livewire\TeamManagement::class);
         Livewire::component('tenant-role-management', \App\Modules\Tenant\Access\Interface\Livewire\RoleManagement::class);
         Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys::class);
-        Livewire::component('tenant-notification-center', \App\Modules\Tenant\Access\Interface\Livewire\NotificationCenter::class);
         Livewire::component('tenant-data-export', \App\Modules\Tenant\Access\Interface\Livewire\DataExport::class);
 
         // 4. Register Event Subscriber
