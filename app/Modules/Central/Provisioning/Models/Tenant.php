@@ -48,6 +48,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase, TenantContract
         return $this->domains->first()?->domain ?? '';
     }
 
+    public function getQuotaLimit(string $metric): int {
+        $plan = $this->plan;
+        if (! $plan) return -1;
+        return (int) ($plan->features['quotas'][$metric] ?? -1);
+    }
+
     public static function getCustomColumns(): array {
         return [
             'id',

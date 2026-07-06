@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Application\Services;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Platform\Contracts\TenantContract;
 use App\Modules\Platform\Tenancy\Infrastructure\Notifications\QuotaThresholdReachedNotification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +16,7 @@ class QuotaManager
     /**
      * Increments a metric and checks if it exceeds the plan limit.
      */
-    public function increment(Tenant $tenant, string $metric, int $amount = 1): bool
+    public function increment(TenantContract $tenant, string $metric, int $amount = 1): bool
     {
         $limit = $this->getLimit($tenant, $metric);
 
@@ -38,22 +38,17 @@ class QuotaManager
         return true;
     }
 
-    public function getCurrentUsage(Tenant $tenant, string $metric): int
+    public function getCurrentUsage(TenantContract $tenant, string $metric): int
     {
         return (int) Cache::get($this->getCacheKey($tenant, $metric), 0);
     }
 
-    public function getLimit(Tenant $tenant, string $metric): int
+    public function getLimit(TenantContract $tenant, string $metric): int
     {
-        // Load plan with features JSON (caching recommended in production)
-        $plan = $tenant->plan;
-        
-        if (! $plan) return -1;
-        
-        return (int) ($plan->features['quotas'][$metric] ?? -1);
+        return $tenant->getQuotaLimit($metric);
     }
 
-    public function forceIncrement(Tenant $tenant, string $metric, int $amount = 1): void
+    public function forceIncrement(TenantContract $tenant, string $metric, int $amount = 1): void
     {
         $key = $this->getCacheKey($tenant, $metric);
         
@@ -64,19 +59,19 @@ class QuotaManager
         }
     }
 
-    public function reset(Tenant $tenant, string $metric): void
+    public function reset(TenantContract $tenant, string $metric): void
     {
         Cache::forget($this->getCacheKey($tenant, $metric));
     }
 
-    private function getCacheKey(Tenant $tenant, string $metric): string
+    private function getCacheKey(TenantContract $tenant, string $metric): string
     {
         $period = now()->format('Y-m');
         $prefix = self::KEY_PREFIX;
-        return "{$prefix}:{$tenant->id}:{$metric}:{$period}";
+        return "{$prefix}:{$tenant->getId()}:{$metric}:{$period}";
     }
 
-    private function checkThresholds(Tenant $tenant, string $metric, int $current, int $limit): void
+    private function checkThresholds(TenantContract $tenant, string $metric, int $current, int $limit): void
     {
         if ($limit <= 0) return;
 
@@ -86,7 +81,7 @@ class QuotaManager
 
         foreach ([80, 100] as $threshold) {
             if ($percentage >= $threshold) {
-                $lockKey = "{$prefix}:alert:{$tenant->id}:{$metric}:{$threshold}:{$period}";
+                $lockKey = "{$prefix}:alert:{$tenant->getId()}:{$metric}:{$threshold}:{$period}";
                 
                 if (Cache::add($lockKey, '1', now()->addDays(30))) {
                     $tenant->notify(new QuotaThresholdReachedNotification($metric, $current, $limit, $threshold));

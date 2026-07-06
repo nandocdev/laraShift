@@ -8,11 +8,16 @@ use App\Modules\Central\Billing\Application\Actions\SyncInvoices;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\BillingProvider;
+use App\Modules\Platform\Contracts\TenantContract;
 
 class StripeBillingProvider implements BillingProvider
 {
-    public function createCheckoutSession(Tenant $tenant, string $planId): string
+    public function createCheckoutSession(TenantContract $tenant, string $planId): string
     {
+        if (! $tenant instanceof Tenant) {
+            throw new \InvalidArgumentException("Stripe billing requires a Tenant model.");
+        }
+
         $stripeId = PlanManager::getStripeId($planId);
 
         if (! $stripeId) {
@@ -32,8 +37,12 @@ class StripeBillingProvider implements BillingProvider
             ])->url;
     }
 
-    public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void
+    public function cancelSubscription(TenantContract $tenant, string $subscriptionId, bool $immediately = false): void
     {
+        if (! $tenant instanceof Tenant) {
+            throw new \InvalidArgumentException("Stripe billing requires a Tenant model.");
+        }
+
         $subscription = $tenant->subscriptions()->where('stripe_id', $subscriptionId)->first();
 
         if (! $subscription) {
@@ -47,8 +56,12 @@ class StripeBillingProvider implements BillingProvider
         }
     }
 
-    public function syncSubscription(Tenant $tenant): void
+    public function syncSubscription(TenantContract $tenant): void
     {
+        if (! $tenant instanceof Tenant) {
+            throw new \InvalidArgumentException("Stripe billing requires a Tenant model.");
+        }
+
         $tenant->updateStripeCustomer();
         
         $subscription = $tenant->subscription('default');
@@ -60,8 +73,12 @@ class StripeBillingProvider implements BillingProvider
         app(SyncInvoices::class)->execute($tenant);
     }
 
-    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    public function getSubscriptionData(TenantContract $tenant, string $subscriptionId): ?array
     {
+        if (! $tenant instanceof Tenant) {
+            throw new \InvalidArgumentException("Stripe billing requires a Tenant model.");
+        }
+
         $subscription = $tenant->subscriptions()->where('stripe_id', $subscriptionId)->first();
 
         if (! $subscription) {
@@ -77,8 +94,12 @@ class StripeBillingProvider implements BillingProvider
         ];
     }
 
-    public function getInvoices(Tenant $tenant): array
+    public function getInvoices(TenantContract $tenant): array
     {
+        if (! $tenant instanceof Tenant) {
+            throw new \InvalidArgumentException("Stripe billing requires a Tenant model.");
+        }
+
         return $tenant->invoices()->toArray();
     }
 }

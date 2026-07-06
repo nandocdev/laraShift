@@ -30,7 +30,7 @@ it('automatically records an audit log when an identity event is fired', functio
     ]);
 
     // Dispatch event manually
-    event(new TenantUserRevoked($user, 'admin-uuid'));
+    event(new TenantUserRevoked((string) $user->id, (string) $user->tenant_id, 'admin-uuid'));
 
     // Check Audit Log
     expect(AuditLog::count())->toBe(1);

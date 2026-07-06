@@ -31,7 +31,7 @@ final readonly class GenerateApiKey
             'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $name,
-            'key_hash' => hash_hmac('sha256', $plainKey, config('app.key')),
+            'key_hash' => \App\Modules\Platform\Security\Hmac\HmacSigner::hash($plainKey, (string) config('app.key')),
             'scopes' => $scopes,
             'created_by' => $creator?->id,
         ]);
@@ -51,7 +51,7 @@ final readonly class GenerateApiKey
             ->withProperties(['name' => $name, 'scopes' => $scopes])
             ->log('api_key_generated');
 
-        event(new \App\Modules\Platform\Events\TenantApiKeyCreated($apiKey));
+        event(new \App\Modules\Platform\Events\TenantApiKeyCreated((string) $apiKey->id, $apiKey->name, (string) $apiKey->tenant_id, $apiKey->scopes));
 
         return [
             'key' => $plainKey,

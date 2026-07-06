@@ -30,7 +30,7 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::USER_INVITED,
             resource: 'invitations',
-            resourceId: (string) $event->invitation->id,
+            resourceId: $event->invitationId,
             metadata: ['email' => $event->email, 'role_id' => $event->roleId]
         ));
     }
@@ -40,7 +40,7 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::USER_JOINED,
             resource: 'users',
-            resourceId: (string) $event->user->id,
+            resourceId: $event->userId,
             metadata: ['via_invite_id' => $event->viaInviteId]
         ));
     }
@@ -50,7 +50,7 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::USER_REVOKED,
             resource: 'users',
-            resourceId: (string) $event->user->id,
+            resourceId: $event->userId,
             metadata: ['revoked_by' => $event->revokedBy]
         ));
     }
@@ -60,8 +60,8 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::ROLE_CREATED,
             resource: 'roles',
-            resourceId: (string) $event->role->id,
-            metadata: ['name' => $event->role->name]
+            resourceId: $event->roleId,
+            metadata: ['name' => $event->roleName]
         ));
     }
 
@@ -70,7 +70,7 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::ROLE_UPDATED,
             resource: 'roles',
-            resourceId: (string) $event->role->id,
+            resourceId: $event->roleId,
             metadata: ['changed_permissions' => $event->changedPermissions]
         ));
     }
@@ -80,9 +80,9 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::API_KEY_CREATED,
             resource: 'api_keys',
-            resourceId: (string) $event->apiKey->id,
+            resourceId: $event->keyId,
             metadata: [
-                'name' => $event->apiKey->name, 
+                'name' => $event->keyName, 
                 'scopes' => $event->scopes,
                 'ua' => request()->userAgent()
             ],
@@ -95,7 +95,7 @@ class TenantIdentityEventSubscriber
         $this->recordAuditLog->execute(new AuditLogData(
             action: AuditAction::API_KEY_REVOKED,
             resource: 'api_keys',
-            resourceId: (string) $event->apiKey->id,
+            resourceId: $event->keyId,
             metadata: ['ua' => request()->userAgent()],
             ip: request()->ip()
         ));

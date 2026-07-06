@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Closure;
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,7 +25,15 @@ class ApplyTenantRateLimits
         }
 
         $tenant = tenant();
-        $limitRpm = $this->resolveLimit($tenant);
+        $limitRpm = 60;
+
+        if ($tenant instanceof \App\Modules\Platform\Contracts\TenantContract) {
+            $limit = $tenant->getQuotaLimit('rate_limit_rpm');
+            if ($limit > 0) {
+                $limitRpm = $limit;
+            }
+        }
+
         $key = 'tenant_rate_limit:' . $tenant->id;
 
         try {
@@ -59,26 +65,5 @@ class ApplyTenantRateLimits
         }
 
         return $response;
-    }
-
-    protected function resolveLimit($tenant): int
-    {
-        // Default fallback
-        $defaultLimit = 60;
-
-        try {
-            $plan = $tenant->plan; // Assuming relation exists or plan_id is used to find
-            
-            if (! $plan) {
-                // Find by ID or Slug if relation not loaded
-                $plan = \App\Modules\Central\Catalog\Domain\Models\Plan::where('id', $tenant->plan_id)
-                    ->orWhere('slug', $tenant->plan_id)
-                    ->first();
-            }
-
-            return (int) ($plan->features['quotas']['rate_limit_rpm'] ?? $defaultLimit);
-        } catch (\Exception $e) {
-            return $defaultLimit;
-        }
     }
 }

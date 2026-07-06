@@ -28,6 +28,6 @@ final readonly class RevokeApiKey
             ->performedOn($apiKey)
             ->log('api_key_revoked');
 
-        event(new \App\Modules\Platform\Events\TenantApiKeyRevoked($apiKey));
+        event(new \App\Modules\Platform\Events\TenantApiKeyRevoked((string) $apiKey->id, (string) $apiKey->tenant_id));
     }
 }

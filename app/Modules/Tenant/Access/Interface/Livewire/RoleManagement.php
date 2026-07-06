@@ -62,7 +62,7 @@ class RoleManagement extends Component
             ->performedOn($role)
             ->log('role_created');
 
-        event(new \App\Modules\Platform\Events\TenantRoleCreated($role));
+        event(new \App\Modules\Platform\Events\TenantRoleCreated((string) $role->id, $role->name, (string) $role->tenant_id));
 
         $this->reset(['name', 'selectedPermissions']);
         session()->flash('status', __('Custom role created.'));
@@ -109,7 +109,7 @@ class RoleManagement extends Component
             ->performedOn($this->editingRole)
             ->log('role_updated');
 
-        event(new \App\Modules\Platform\Events\TenantRoleUpdated($this->editingRole, $this->editPermissions));
+        event(new \App\Modules\Platform\Events\TenantRoleUpdated((string) $this->editingRole->id, (string) $this->editingRole->tenant_id, $this->editPermissions));
 
         $this->reset(['editingRole', 'editName', 'editPermissions']);
         session()->flash('status', __('Role updated successfully.'));

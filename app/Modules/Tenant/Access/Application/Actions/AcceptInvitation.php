@@ -73,7 +73,7 @@ final readonly class AcceptInvitation
                 ->performedOn($user)
                 ->log('user_joined_via_invite');
 
-            event(new \App\Modules\Platform\Events\TenantUserJoined($user, $invitation->id));
+            event(new \App\Modules\Platform\Events\TenantUserJoined((string) $user->id, (string) $user->tenant_id, (string) $invitation->id));
 
             return $user;
         });

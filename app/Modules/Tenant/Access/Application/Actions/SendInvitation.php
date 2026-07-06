@@ -57,7 +57,13 @@ final readonly class SendInvitation
             ->performedOn($invitation)
             ->log('user_invited');
 
-        event(new \App\Modules\Platform\Events\TenantUserInvited($invitation));
+        event(new \App\Modules\Platform\Events\TenantUserInvited(
+            (string) $invitation->id,
+            (string) $invitation->tenant_id,
+            (string) $invitation->invited_by,
+            $invitation->email,
+            (string) $invitation->role_id
+        ));
 
         return $invitation;
     }

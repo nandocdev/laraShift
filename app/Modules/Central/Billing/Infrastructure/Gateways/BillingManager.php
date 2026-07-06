@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Infrastructure\Gateways\InternalBillingProvider;
 use App\Modules\Central\Billing\Infrastructure\Gateways\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\BillingProvider;
+use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Support\Manager;
 
 class BillingManager extends Manager implements BillingProvider
@@ -38,32 +39,33 @@ class BillingManager extends Manager implements BillingProvider
     }
 
 
-    public function forTenant(Tenant $tenant): BillingProvider
+    public function forTenant(TenantContract $tenant): BillingProvider
     {
-        return $this->driver($tenant->billing_gateway ?? $this->getDefaultDriver());
+        $gateway = $tenant instanceof Tenant ? $tenant->billing_gateway : ($tenant->billing_gateway ?? null);
+        return $this->driver($gateway ?? $this->getDefaultDriver());
     }
 
-    public function createCheckoutSession(Tenant $tenant, string $planId): string
+    public function createCheckoutSession(TenantContract $tenant, string $planId): string
     {
         return $this->forTenant($tenant)->createCheckoutSession($tenant, $planId);
     }
 
-    public function cancelSubscription(Tenant $tenant, string $subscriptionId, bool $immediately = false): void
+    public function cancelSubscription(TenantContract $tenant, string $subscriptionId, bool $immediately = false): void
     {
         $this->forTenant($tenant)->cancelSubscription($tenant, $subscriptionId, $immediately);
     }
 
-    public function getSubscriptionData(Tenant $tenant, string $subscriptionId): ?array
+    public function getSubscriptionData(TenantContract $tenant, string $subscriptionId): ?array
     {
         return $this->forTenant($tenant)->getSubscriptionData($tenant, $subscriptionId);
     }
 
-    public function syncSubscription(Tenant $tenant): void
+    public function syncSubscription(TenantContract $tenant): void
     {
         $this->forTenant($tenant)->syncSubscription($tenant);
     }
 
-    public function getInvoices(Tenant $tenant): array
+    public function getInvoices(TenantContract $tenant): array
     {
         return $this->forTenant($tenant)->getInvoices($tenant);
     }

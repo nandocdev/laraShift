@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Application\Jobs;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Platform\Data\PlatformTenant;
 use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,8 +23,9 @@ class SnapshotQuotasJob implements ShouldQueue
         $quotaManager = app(QuotaManager::class);
         $period = now()->format('Y-m');
 
-        Tenant::chunk(100, function ($tenants) use ($quotaManager, $period) {
-            foreach ($tenants as $tenant) {
+        DB::table('tenants')->chunkById(100, function ($tenants) use ($quotaManager, $period) {
+            foreach ($tenants as $tenantData) {
+                $tenant = new PlatformTenant((string) $tenantData->id, $tenantData->name ?? 'Unknown');
                 $metrics = ['staff', 'bookings', 'invitations', 'api_keys'];
 
                 foreach ($metrics as $metric) {
@@ -32,7 +33,7 @@ class SnapshotQuotasJob implements ShouldQueue
 
                     DB::table('quota_snapshots')->updateOrInsert(
                         [
-                            'tenant_id' => $tenant->id,
+                            'tenant_id' => $tenant->getId(),
                             'metric' => $metric,
                             'period' => $period,
                         ],

@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Application\Jobs;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Provisioning\Models\Domain;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ReconcileResourcesJob implements ShouldQueue
@@ -26,20 +25,27 @@ class ReconcileResourcesJob implements ShouldQueue
         Log::info("Starting platform resource reconciliation...");
 
         // 1. Detect orphaned domains (no tenant or tenant doesn't exist)
-        $orphanedDomains = Domain::whereDoesntHave('tenant')->get();
+        $orphanedDomains = DB::table('domains')
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('tenants')
+                    ->whereRaw('tenants.id = domains.tenant_id');
+            })
+            ->get();
         
         foreach ($orphanedDomains as $domain) {
             Log::warning("Orphaned domain detected: {$domain->domain}. Deleting...");
-            $domain->delete();
+            DB::table('domains')->where('id', $domain->id)->delete();
         }
 
         // 2. Detect failed tenants with residual resources
-        $failedTenants = Tenant::where('status', 'failed')->get();
+        $failedTenants = DB::table('tenants')->where('status', 'failed')->get();
 
         foreach ($failedTenants as $tenant) {
-            if ($tenant->domains()->exists()) {
+            $hasDomains = DB::table('domains')->where('tenant_id', $tenant->id)->exists();
+            if ($hasDomains) {
                 Log::info("Cleaning up residual domains for failed tenant: {$tenant->slug}");
-                $tenant->domains()->delete();
+                DB::table('domains')->where('tenant_id', $tenant->id)->delete();
             }
         }
 
