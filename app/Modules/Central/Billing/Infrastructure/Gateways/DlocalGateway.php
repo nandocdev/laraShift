@@ -4,22 +4,28 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
 use App\Modules\Central\Billing\Application\DTO\MerchantData;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
-use App\Modules\Central\Billing\Domain\Exceptions\ClaveGatewayException; // We might want to rename this to a generic PaymentGatewayException later
+use App\Modules\Platform\Contracts\TenantDomainResolverContract;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
-final class DlocalGateway implements PaymentGateway {
+ // We might want to rename this to a generic PaymentGatewayException later
+
+final class DlocalGateway implements PaymentGateway
+{
     private string $baseUrl;
+
     private string $login;
+
     private string $transKey;
+
     private string $secretKey;
 
-    public function __construct() {
+    public function __construct()
+    {
         $config = config('payments.dlocal');
         $this->login = (string) $config['login'];
         $this->transKey = (string) $config['trans_key'];
@@ -30,11 +36,13 @@ final class DlocalGateway implements PaymentGateway {
             : 'https://sandbox.dlocal.com';
     }
 
-    public function identifier(): string {
+    public function identifier(): string
+    {
         return 'dlocal';
     }
 
-    public function listTransactions(string $apiKey, array $filters = []): array {
+    public function listTransactions(string $apiKey, array $filters = []): array
+    {
         $url = "{$this->baseUrl}/api_v1/payments";
 
         try {
@@ -51,12 +59,14 @@ final class DlocalGateway implements PaymentGateway {
 
             return $response->json() ?? [];
         } catch (\Exception $e) {
-            Log::error("dLocal listTransactions failure: " . $e->getMessage());
+            Log::error('dLocal listTransactions failure: '.$e->getMessage());
+
             return [];
         }
     }
 
-    public function loadMerchant(string $apiKey): MerchantData {
+    public function loadMerchant(string $apiKey): MerchantData
+    {
         // dLocal doesn't usually have a 'loadMerchant' like PagueloFacil
         // We'll return a static/mocked structure if not strictly needed for the flow
         return new MerchantData(
@@ -70,17 +80,18 @@ final class DlocalGateway implements PaymentGateway {
         );
     }
 
-    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string {
+    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
+    {
         $url = "{$this->baseUrl}/api_v1/payments";
 
         // Signature for dLocal (Simplified version for Go/Legacy)
         // Usually it involves Login + Amount + Currency + Secret
         // Check actual dLocal Go docs for exact signature if needed
 
-        $domainResolver = app(\App\Modules\Platform\Contracts\TenantDomainResolverContract::class);
-        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId) 
-            ?? $payment->tenantId . '.' . config('tenancy.central_domain');
-            
+        $domainResolver = app(TenantDomainResolverContract::class);
+        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId)
+            ?? $payment->tenantId.'.'.config('tenancy.central_domain');
+
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
         $port = parse_url(config('app.url'), PHP_URL_PORT);
         $portSuffix = $port ? ":$port" : '';
@@ -102,7 +113,7 @@ final class DlocalGateway implements PaymentGateway {
             'metadata' => array_merge($payment->customFieldValues, ['tenant_id' => $payment->tenantId]),
         ];
 
-        Log::info("dLocal: Creating payment session", ['payload' => $payload]);
+        Log::info('dLocal: Creating payment session', ['payload' => $payload]);
 
         $response = Http::withHeaders([
             'X-Login' => $this->login,
@@ -112,24 +123,27 @@ final class DlocalGateway implements PaymentGateway {
         ])->post($url, $payload);
 
         if ($response->failed()) {
-            Log::error("dLocal API Error", ['status' => $response->status(), 'body' => $response->body()]);
-            throw new \Exception("dLocal payment initiation failed.");
+            Log::error('dLocal API Error', ['status' => $response->status(), 'body' => $response->body()]);
+            throw new \Exception('dLocal payment initiation failed.');
         }
 
         $data = $response->json();
 
         // dLocal Go usually returns 'redirect_url' or 'payment_url'
-        return $data['redirect_url'] ?? $data['payment_url'] ?? throw new \Exception("No redirect URL returned by dLocal");
+        return $data['redirect_url'] ?? $data['payment_url'] ?? throw new \Exception('No redirect URL returned by dLocal');
     }
 
-    public function verifyWebhook(string $payload, string $signature, string $secret): bool {
+    public function verifyWebhook(string $payload, string $signature, string $secret): bool
+    {
         // dLocal Go webhooks verification
         // Usually a signature header: X-Signature
         $expected = hash_hmac('sha256', $payload, $secret);
+
         return hash_equals($expected, $signature);
     }
 
-    public function parseWebhookPayload(array $payload): PaymentResultData {
+    public function parseWebhookPayload(array $payload): PaymentResultData
+    {
         // Map dLocal status to LaraShift status
         $status = match ($payload['status'] ?? '') {
             'PAID', 'SUCCESS' => PaymentStatus::Approved,

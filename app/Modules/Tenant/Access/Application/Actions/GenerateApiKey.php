@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
+use App\Modules\Platform\Events\TenantApiKeyCreated;
+use App\Modules\Platform\Security\Hmac\HmacSigner;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use Illuminate\Support\Str;
 
 final readonly class GenerateApiKey
 {
     /**
      * Generates a new secure API Key for the tenant.
-     * 
+     *
      * Returns an array with:
      * - 'key': The plain text key (only shown once)
      * - 'model': The saved ApiKey model
@@ -24,21 +29,21 @@ final readonly class GenerateApiKey
     ): array {
         // 1. Generate high-entropy key
         // PRD: tnt_{random_32_bytes_hex}
-        $plainKey = 'tnt_' . bin2hex(random_bytes(32));
+        $plainKey = 'tnt_'.bin2hex(random_bytes(32));
 
         // 2. Create the model
         $apiKey = ApiKey::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $name,
-            'key_hash' => \App\Modules\Platform\Security\Hmac\HmacSigner::hash($plainKey, (string) config('app.key')),
+            'key_hash' => HmacSigner::hash($plainKey, (string) config('app.key')),
             'scopes' => $scopes,
             'created_by' => $creator?->id,
         ]);
 
-        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_CREATED,
+        app(RecordAuditLogAction::class)->execute(
+            new AuditLogData(
+                action: AuditAction::API_KEY_CREATED,
                 resource: 'api_key',
                 resourceId: $apiKey->id,
                 metadata: ['name' => $name, 'scopes' => $scopes],
@@ -51,7 +56,7 @@ final readonly class GenerateApiKey
             ->withProperties(['name' => $name, 'scopes' => $scopes])
             ->log('api_key_generated');
 
-        event(new \App\Modules\Platform\Events\TenantApiKeyCreated((string) $apiKey->id, $apiKey->name, (string) $apiKey->tenant_id, $apiKey->scopes));
+        event(new TenantApiKeyCreated((string) $apiKey->id, $apiKey->name, (string) $apiKey->tenant_id, $apiKey->scopes));
 
         return [
             'key' => $plainKey,

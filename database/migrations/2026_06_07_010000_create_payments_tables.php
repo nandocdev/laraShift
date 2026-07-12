@@ -76,9 +76,9 @@ return new class extends Migration
         // RLS policies — tenant isolation at the DB layer
         // These complement (never replace) the Eloquent TenantScope
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement("ALTER TABLE payments ENABLE ROW LEVEL SECURITY;");
-            DB::statement("ALTER TABLE payment_attempts ENABLE ROW LEVEL SECURITY;");
-            DB::statement("ALTER TABLE payment_webhooks ENABLE ROW LEVEL SECURITY;");
+            DB::statement('ALTER TABLE payments ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE payment_attempts ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE payment_webhooks ENABLE ROW LEVEL SECURITY;');
 
             // Policies are applied per-connection in the tenancy middleware via SET app.tenant_id
             DB::statement("CREATE POLICY tenant_isolation ON payments USING (tenant_id::text = current_setting('app.tenant_id'));");

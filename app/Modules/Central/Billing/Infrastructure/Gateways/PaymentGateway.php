@@ -8,7 +8,8 @@ use App\Modules\Central\Billing\Application\DTO\MerchantData;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 
-interface PaymentGateway {
+interface PaymentGateway
+{
     /**
      * Validate API key and load merchant + services from gateway.
      * Throws if API key is invalid or CLAVE service not found.

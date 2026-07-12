@@ -35,6 +35,6 @@ class ReservedSlugs
 
     public static function regex(): string
     {
-        return '/^(' . implode('|', self::$list) . ')$/i';
+        return '/^('.implode('|', self::$list).')$/i';
     }
 }

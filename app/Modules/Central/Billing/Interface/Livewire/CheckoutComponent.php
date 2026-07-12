@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Livewire;
 
-use Livewire\Component;
 use App\Modules\Central\Billing\Application\Actions\InitiateCheckout;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
-use App\Modules\Central\Billing\Domain\Exceptions\ClaveGatewayException;
-use App\Modules\Central\Billing\Infrastructure\Gateways\CheckoutSession;
+use Illuminate\View\View;
+use Livewire\Attributes\Locked;
+use Livewire\Component;
 
 /**
  * Checkout widget component.
@@ -24,28 +24,31 @@ use App\Modules\Central\Billing\Infrastructure\Gateways\CheckoutSession;
  * On success: dispatches browser event 'payment-approved' with payment data.
  * On error:   exposes $error string for the view.
  */
-final class CheckoutComponent extends Component {
+final class CheckoutComponent extends Component
+{
     // -------------------------------------------------------------------------
     // Props
     // -------------------------------------------------------------------------
 
-    #[\Livewire\Attributes\Locked]
+    #[Locked]
     public float $amount = 0.0;
 
-    #[\Livewire\Attributes\Locked]
+    #[Locked]
     public float $taxAmount = 0.0;
 
-    #[\Livewire\Attributes\Locked]
+    #[Locked]
     public float $discount = 0.0;
 
-    #[\Livewire\Attributes\Locked]
+    #[Locked]
     public string $displayId = '';
 
-    #[\Livewire\Attributes\Locked]
+    #[Locked]
     public array $customFieldValues = [];
 
     public string $description = '';
+
     public string $email = '';
+
     public string $lang = 'es';
 
     // -------------------------------------------------------------------------
@@ -53,15 +56,19 @@ final class CheckoutComponent extends Component {
     // -------------------------------------------------------------------------
 
     public ?string $checkoutUrl = null;
+
     public ?string $error = null;
+
     public bool $loading = false;
+
     public bool $completed = false;
 
     // -------------------------------------------------------------------------
     // Lifecycle
     // -------------------------------------------------------------------------
 
-    public function mount(): void {
+    public function mount(): void
+    {
         // Email defaults to authenticated user
         if (empty($this->email) && auth()->check()) {
             $this->email = auth()->user()->email;
@@ -72,7 +79,8 @@ final class CheckoutComponent extends Component {
     // Actions
     // -------------------------------------------------------------------------
 
-    public function initiateCheckout(InitiateCheckout $action): void {
+    public function initiateCheckout(InitiateCheckout $action): void
+    {
         $this->loading = true;
         $this->error = null;
 
@@ -117,7 +125,8 @@ final class CheckoutComponent extends Component {
      * Called by the JS adapter via Livewire.dispatch when the iframe posts
      * a payment result back to the parent window.
      */
-    public function handlePaymentResult(string $status, string $displayId): void {
+    public function handlePaymentResult(string $status, string $displayId): void
+    {
         if ($status === 'approved') {
             $this->completed = true;
             $this->dispatch('payment-approved', displayId: $displayId);
@@ -127,7 +136,8 @@ final class CheckoutComponent extends Component {
         }
     }
 
-    public function render(): \Illuminate\View\View {
+    public function render(): View
+    {
         return view('payments::livewire.checkout-component');
     }
 }

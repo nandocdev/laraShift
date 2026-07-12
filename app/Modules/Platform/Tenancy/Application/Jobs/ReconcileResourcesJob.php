@@ -22,7 +22,7 @@ class ReconcileResourcesJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info("Starting platform resource reconciliation...");
+        Log::info('Starting platform resource reconciliation...');
 
         // 1. Detect orphaned domains (no tenant or tenant doesn't exist)
         $orphanedDomains = DB::table('domains')
@@ -32,7 +32,7 @@ class ReconcileResourcesJob implements ShouldQueue
                     ->whereRaw('tenants.id = domains.tenant_id');
             })
             ->get();
-        
+
         foreach ($orphanedDomains as $domain) {
             Log::warning("Orphaned domain detected: {$domain->domain}. Deleting...");
             DB::table('domains')->where('id', $domain->id)->delete();
@@ -51,6 +51,6 @@ class ReconcileResourcesJob implements ShouldQueue
 
         // 3. Storage reconciliation could go here (detecting directories without tenants)
 
-        Log::info("Resource reconciliation completed.");
+        Log::info('Resource reconciliation completed.');
     }
 }

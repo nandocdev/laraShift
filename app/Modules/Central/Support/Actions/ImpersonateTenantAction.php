@@ -12,7 +12,7 @@ final readonly class ImpersonateTenantAction
 {
     /**
      * Initiates an audited impersonation session.
-     * 
+     *
      * [SIDE-EFFECTS]
      * - Records the session with reason.
      * - Generates a secure one-time token.
@@ -41,7 +41,7 @@ final readonly class ImpersonateTenantAction
 
         // Construct transition URL: http://tenant.domain.com/support/auth?token=XXX
         $domain = $tenant->domains->first()?->domain;
-        
+
         if (! $domain) {
             throw new \RuntimeException(__('Tenant has no primary domain configured.'));
         }

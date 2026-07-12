@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Application\Actions;
 
-use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Platform\Events\TenantMfaRequirementChanged;
 use App\Modules\Platform\Events\TenantSettingsUpdated;
 use App\Modules\Tenant\Experience\Application\DTO\BrandingData;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Experience\Infrastructure\Support\BrandingPresets;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +23,7 @@ final readonly class UpdateTenantBranding
     {
         return DB::transaction(function () use ($data) {
             $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-            
+
             $oldLogoPath = $settings->logo_path;
             $updateData = [
                 'name' => $data->name,
@@ -50,20 +50,20 @@ final readonly class UpdateTenantBranding
             if ($landing) {
                 $preset = BrandingPresets::get($data->themePreset);
                 $theme = $landing->theme ?? [];
-                
+
                 $theme['colors']['primary'] = $data->primaryColor;
                 $theme['colors']['secondary'] = $preset['secondary'];
                 $theme['typography']['font_heading'] = $preset['font_heading'];
                 $theme['typography']['font_body'] = $preset['font_body'];
-                
+
                 $landing->update(['theme' => $theme]);
             }
 
             // 4. Fire Events
             event(new TenantSettingsUpdated(tenant('id'), array_keys($updateData)));
-            
+
             if (isset($updateData['mfa_required'])) {
-                event(new TenantMfaRequirementChanged(tenant('id'), (bool)$data->mfaRequired));
+                event(new TenantMfaRequirementChanged(tenant('id'), (bool) $data->mfaRequired));
             }
 
             return $settings;

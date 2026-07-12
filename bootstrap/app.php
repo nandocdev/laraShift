@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureHasFeature;
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureWithinQuota;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,8 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('universal', []);
 
         $middleware->alias([
-            'feature' => \App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureHasFeature::class,
-            'quota' => \App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureWithinQuota::class,
+            'feature' => EnsureHasFeature::class,
+            'quota' => EnsureWithinQuota::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

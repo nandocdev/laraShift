@@ -5,33 +5,36 @@ declare(strict_types=1);
 namespace App\Modules\Central\Provisioning\Actions;
 
 use App\Modules\Central\Billing\Application\Actions\RegisterPaymentMethod;
-use App\Modules\Central\Operations\Application\Actions\ProvisionInfrastructureAction;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Operations\Application\Actions\ProvisionInfrastructureAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Events\TenantProvisioned;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-final readonly class CreateTenantAction {
+final readonly class CreateTenantAction
+{
     public function __construct(
         private ReserveTenantDomainAction $reserveDomain,
         private SetupTenantCoreDataAction $setupCoreData,
         private ProvisionInfrastructureAction $provisionInfra,
         private RegisterPaymentMethod $registerPaymentMethod,
-    ) {
-    }
+    ) {}
 
     /**
      * Executes the atomic provisioning of a new tenant with Step-based tracking and Rollback.
-     * 
+     *
      * [SIDE-EFFECTS]
      * - Records infrastructure steps in provisioning_logs.
      * - Triggers automatic cleanup on critical failure.
      */
-    public function execute(CreateTenantData $data): Tenant {
+    public function execute(CreateTenantData $data): Tenant
+    {
         /** @var Tenant|null $tenant */
         $tenant = Tenant::where('slug', $data->slug)->first();
 
@@ -85,7 +88,7 @@ final readonly class CreateTenantAction {
                 // Step 5: Billing Setup — only for paid plans
                 $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
                     $plan = null;
-                    if (\Illuminate\Support\Facades\Schema::hasColumn('plans', 'slug')) {
+                    if (Schema::hasColumn('plans', 'slug')) {
                         $plan = Plan::where('slug', $data->plan_id)->first();
                     } else {
                         $plan = Plan::where('provider_plan_id', $data->plan_id)->first()
@@ -110,7 +113,7 @@ final readonly class CreateTenantAction {
                 ]);
 
                 // Invalidate infrastructure caches
-                \Illuminate\Support\Facades\Cache::forget('horizon_tenant_queues');
+                Cache::forget('horizon_tenant_queues');
 
                 activity('provisioning')
                     ->performedOn($tenant)
@@ -126,7 +129,8 @@ final readonly class CreateTenantAction {
         }
     }
 
-    private function logStep(Tenant $tenant, string $step, callable $callback): void {
+    private function logStep(Tenant $tenant, string $step, callable $callback): void
+    {
         $log = ProvisioningLog::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => $tenant->id,
@@ -144,8 +148,9 @@ final readonly class CreateTenantAction {
         }
     }
 
-    private function handleFailure(Tenant $tenant, \Exception $exception): void {
-        Log::error("Provisioning failed for tenant {$tenant->slug}: " . $exception->getMessage());
+    private function handleFailure(Tenant $tenant, \Exception $exception): void
+    {
+        Log::error("Provisioning failed for tenant {$tenant->slug}: ".$exception->getMessage());
 
         // Compensation Logic (Rollback)
         DB::transaction(function () use ($tenant) {
@@ -154,7 +159,7 @@ final readonly class CreateTenantAction {
             // Clean up resources that might cause orphan state
             $tenant->domains()->delete();
 
-            // Note: DB cleanup depends on config. 
+            // Note: DB cleanup depends on config.
             // In LaraShift, we might preserve the failed tenant record for support analysis,
             // but delete it if the user wants an atomic "nothing happened" experience.
             // For now, we move to 'failed' to block access.

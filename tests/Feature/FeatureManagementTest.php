@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Catalog\Application\Actions\ResolveTenantFeatures;
 use App\Modules\Central\Catalog\Domain\Models\Feature;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;

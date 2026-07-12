@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
-use App\Modules\Central\Billing\Infrastructure\Gateways\InternalBillingProvider;
-use App\Modules\Central\Billing\Infrastructure\Gateways\StripeBillingProvider;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\BillingProvider;
 use App\Modules\Platform\Contracts\TenantContract;
@@ -38,10 +36,10 @@ class BillingManager extends Manager implements BillingProvider
         return $this->createPaguelofacilDriver();
     }
 
-
     public function forTenant(TenantContract $tenant): BillingProvider
     {
         $gateway = $tenant instanceof Tenant ? $tenant->billing_gateway : ($tenant->billing_gateway ?? null);
+
         return $this->driver($gateway ?? $this->getDefaultDriver());
     }
 

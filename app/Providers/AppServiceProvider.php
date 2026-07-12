@@ -2,11 +2,22 @@
 
 namespace App\Providers;
 
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
+use App\Modules\Tenant\Experience\Domain\Policies\TenantSettingPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Features\SupportFileUploads\FilePreviewController;
+use Livewire\Livewire;
+use Livewire\Mechanisms\HandleRequests\EndpointResolver;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,43 +35,44 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if (app()->isProduction()) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
 
-        \Illuminate\Support\Facades\Gate::policy(
-            \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::class,
-            \App\Modules\Tenant\Experience\Domain\Policies\TenantSettingPolicy::class
+        Gate::policy(
+            TenantSetting::class,
+            TenantSettingPolicy::class
         );
 
         $this->configureDefaults();
 
-        \Illuminate\Database\Eloquent\Factories\Factory::guessFactoryNamesUsing(function (string $modelName) {
+        Factory::guessFactoryNamesUsing(function (string $modelName) {
             if (str_starts_with($modelName, 'App\\Modules\\')) {
-                return str_replace('\\Models\\', '\\Database\\Factories\\', $modelName) . 'Factory';
+                return str_replace('\\Models\\', '\\Database\\Factories\\', $modelName).'Factory';
             }
-            return 'Database\\Factories\\' . class_basename($modelName) . 'Factory';
+
+            return 'Database\\Factories\\'.class_basename($modelName).'Factory';
         });
 
-        \Illuminate\Support\Facades\Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
+        Blade::anonymousComponentPath(resource_path('views/layouts'), 'layouts');
 
-        \Livewire\Livewire::setUpdateRoute(function ($handle) {
-            $path = class_exists(\Livewire\Mechanisms\HandleRequests\EndpointResolver::class) 
-                ? \Livewire\Mechanisms\HandleRequests\EndpointResolver::updatePath() 
+        Livewire::setUpdateRoute(function ($handle) {
+            $path = class_exists(EndpointResolver::class)
+                ? EndpointResolver::updatePath()
                 : '/livewire/update';
 
-            return \Illuminate\Support\Facades\Route::post($path, $handle)
+            return Route::post($path, $handle)
                 ->middleware([
                     'web',
                     'universal',
-                    \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+                    InitializeTenancyByDomain::class,
                 ]);
         });
 
         // Inject tenancy middleware into file preview route so it resolves the tenant disk.
-        \Livewire\Features\SupportFileUploads\FilePreviewController::$middleware = [
+        FilePreviewController::$middleware = [
             'web',
             'universal',
-            \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+            InitializeTenancyByDomain::class,
         ];
     }
 

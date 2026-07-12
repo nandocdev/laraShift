@@ -13,7 +13,7 @@ class PriceFormatter
 {
     public static function format(Money $money, string $locale = 'en_US'): string
     {
-        $currencies = new ISOCurrencies();
+        $currencies = new ISOCurrencies;
         $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
         $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
 

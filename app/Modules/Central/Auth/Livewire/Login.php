@@ -12,7 +12,8 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 #[Layout('layouts.auth')]
-class Login extends Component {
+class Login extends Component
+{
     #[Validate('required|email')]
     public string $email = '';
 
@@ -24,7 +25,8 @@ class Login extends Component {
     /**
      * Procesa el intento de login para el área central.
      */
-    public function authenticate(LoginCentralUserAction $action): void {
+    public function authenticate(LoginCentralUserAction $action): void
+    {
         $this->validate();
 
         $data = new LoginData(
@@ -40,18 +42,21 @@ class Login extends Component {
             $action->completeLogin(auth('central')->user(), $data->remember);
 
             $this->redirectIntended(default: route('central.dashboard'));
+
             return;
         }
 
         if ($result === 'requires_2fa') {
             $this->redirect(route('central.login.challenge'), navigate: true);
+
             return;
         }
 
         $this->addError('email', __('auth.failed'));
     }
 
-    public function render(): View {
+    public function render(): View
+    {
         return view('central-auth::pages.login')
             ->title(__('Login Central'));
     }

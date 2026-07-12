@@ -6,22 +6,24 @@ namespace App\Modules\Tenant\Access\Domain\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
+use App\Modules\Tenant\Access\Database\Factories\UserFactory;
 use App\Modules\Tenant\Access\Domain\Models\Concerns\HasTenantNotifications;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Passkeys\PasskeyAuthenticatable;
-use Laravel\Passkeys\Contracts\PasskeyUser;
-use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Str;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\PasskeyAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements PasskeyUser
 {
-    use BelongsToTenant, HasFactory, HasRoles, HasTenantNotifications, HasUuids, Notifiable, SoftDeletes, TwoFactorAuthenticatable, PasskeyAuthenticatable;
+    use BelongsToTenant, HasFactory, HasRoles, HasTenantNotifications, HasUuids, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -90,9 +92,8 @@ class User extends Authenticatable implements PasskeyUser
             ->implode('');
     }
 
-    protected static function newFactory(): \Illuminate\Database\Eloquent\Factories\Factory
+    protected static function newFactory(): Factory
     {
-        return \App\Modules\Tenant\Access\Database\Factories\UserFactory::new();
+        return UserFactory::new();
     }
 }
-

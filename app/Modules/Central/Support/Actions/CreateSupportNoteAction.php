@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Actions;
 
-use App\Modules\Platform\Contracts\TenantContract;
 use App\Modules\Central\Support\Models\SupportNote;
+use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Support\Str;
 
 final readonly class CreateSupportNoteAction

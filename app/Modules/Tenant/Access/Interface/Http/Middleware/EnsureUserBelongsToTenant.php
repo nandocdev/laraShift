@@ -12,11 +12,11 @@ class EnsureUserBelongsToTenant
 {
     /**
      * Handle an incoming request.
-     * 
+     *
      * Ensures that the authenticated user belongs to the current tenant.
      * Mandatory for strict isolation.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

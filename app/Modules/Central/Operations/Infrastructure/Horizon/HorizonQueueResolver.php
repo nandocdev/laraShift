@@ -9,7 +9,7 @@ class HorizonQueueResolver
     /**
      * Resolves the list of queues Horizon should monitor.
      * Includes default platform queues and dynamic tenant queues.
-     * 
+     *
      * [PERFORMANCE]
      * - Uses Cache to avoid DB queries on every Horizon loop if needed.
      * - Safely checks for table existence to avoid errors during migrations.
@@ -17,8 +17,8 @@ class HorizonQueueResolver
     public static function resolve(): array
     {
         $queues = [
-            'default', 
-            'notifications', 
+            'default',
+            'notifications',
             'broadcasts',
             'webhooks-priority',
         ];

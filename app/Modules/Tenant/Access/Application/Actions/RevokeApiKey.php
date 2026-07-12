@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
+use App\Modules\Platform\Events\TenantApiKeyRevoked;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 
 final readonly class RevokeApiKey
 {
@@ -15,9 +19,9 @@ final readonly class RevokeApiKey
     {
         $apiKey->update(['revoked_at' => now()]);
 
-        app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-            new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                action: \App\Modules\Tenant\Audit\Enums\AuditAction::API_KEY_REVOKED,
+        app(RecordAuditLogAction::class)->execute(
+            new AuditLogData(
+                action: AuditAction::API_KEY_REVOKED,
                 resource: 'api_key',
                 resourceId: $apiKey->id,
                 metadata: ['name' => $apiKey->name]
@@ -28,6 +32,6 @@ final readonly class RevokeApiKey
             ->performedOn($apiKey)
             ->log('api_key_revoked');
 
-        event(new \App\Modules\Platform\Events\TenantApiKeyRevoked((string) $apiKey->id, (string) $apiKey->tenant_id));
+        event(new TenantApiKeyRevoked((string) $apiKey->id, (string) $apiKey->tenant_id));
     }
 }

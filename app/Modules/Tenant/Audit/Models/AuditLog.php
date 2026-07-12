@@ -6,6 +6,7 @@ namespace App\Modules\Tenant\Audit\Models;
 
 use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
 use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,7 +30,7 @@ class AuditLog extends Model
 
     protected $casts = [
         'metadata' => 'array',
-        'action' => \App\Modules\Tenant\Audit\Enums\AuditAction::class,
+        'action' => AuditAction::class,
     ];
 
     public function user(): BelongsTo

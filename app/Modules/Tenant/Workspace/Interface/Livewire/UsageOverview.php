@@ -26,7 +26,7 @@ class UsageOverview extends Component
         foreach ($this->metrics as $key => $label) {
             $current = $quota->getCurrentUsage($tenant, $key);
             $limit = $quota->getLimit($tenant, $key);
-            
+
             $stats[] = [
                 'key' => $key,
                 'label' => __($label),

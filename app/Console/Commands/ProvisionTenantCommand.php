@@ -25,9 +25,10 @@ class ProvisionTenantCommand extends Command
         try {
             $tenant = $action->execute($data);
             $this->info("Tenant created successfully: {$tenant->id}");
-            $this->info("Domain: " . $tenant->domains()->first()->domain);
+            $this->info('Domain: '.$tenant->domains()->first()->domain);
         } catch (\Exception $e) {
-            $this->error("Failed to provision tenant: " . $e->getMessage());
+            $this->error('Failed to provision tenant: '.$e->getMessage());
+
             return 1;
         }
 

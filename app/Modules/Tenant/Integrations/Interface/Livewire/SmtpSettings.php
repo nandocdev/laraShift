@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Interface\Livewire;
 
+use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Integrations\Application\Actions\UpdateTenantSmtp;
 use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
-use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Integrations\Application\Services\TenantMailerService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
@@ -17,20 +17,27 @@ use Livewire\Component;
 class SmtpSettings extends Component
 {
     public string $smtp_host = '';
+
     public int $smtp_port = 587;
+
     public string $smtp_user = '';
+
     public string $smtp_password = '';
+
     public string $smtp_from_email = '';
+
     public string $smtp_from_name = '';
 
     public string $test_email = '';
+
     public ?string $test_status = null;
+
     public ?string $test_error = null;
 
     public function mount(): void
     {
         $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
-        
+
         if ($settings) {
             $this->smtp_host = $settings->smtp_host ?? '';
             $this->smtp_port = $settings->smtp_port ?? 587;

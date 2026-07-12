@@ -18,12 +18,16 @@ use Livewire\Component;
 class TenantOverrides extends Component
 {
     public TenantSummaryData $tenantData;
+
     public string $tenantId;
-    
+
     // Form state for new override
     public string $selectedFeatureKey = '';
+
     public string $type = 'allow';
+
     public string $reason = '';
+
     public ?string $expiresAt = null;
 
     public function mount(Tenant $tenant): void

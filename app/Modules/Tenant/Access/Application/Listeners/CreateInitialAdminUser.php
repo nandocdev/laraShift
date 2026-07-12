@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Listeners;
 
+use App\Modules\Central\Provisioning\Notifications\WelcomeTenantNotification;
 use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use App\Modules\Tenant\Access\Domain\Models\User;
@@ -20,7 +21,7 @@ class CreateInitialAdminUser
 
             // 2. Create the user
             $password = $event->password ?: (app()->environment(['local', 'testing']) ? 'password' : Str::random(16));
-            
+
             $user = User::create([
                 'tenant_id' => $event->tenant->id,
                 'name' => $event->adminName,
@@ -33,7 +34,7 @@ class CreateInitialAdminUser
             $user->assignRole('admin');
 
             // 4. Notify user as per PRD US-101
-            $user->notify(new \App\Modules\Central\Provisioning\Notifications\WelcomeTenantNotification(
+            $user->notify(new WelcomeTenantNotification(
                 $event->tenant->name,
                 $event->tenant->domains->first()?->domain ?? 'localhost'
             ));

@@ -2,8 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions;
 use App\Modules\Platform\Tenancy\Interface\Http\Middleware\ApplyTenantRateLimits;
 use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantIsActive;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnforceTenantMfa;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserBelongsToTenant;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Experience\Interface\Http\Controllers\ServeTenantLandingController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -19,11 +24,11 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
     ApplyTenantRateLimits::class,
-    \App\Modules\Central\Support\Http\Middleware\AuditImpersonationActions::class,
+    AuditImpersonationActions::class,
 ])->group(function () {
-    
+
     // Landings & Builders
-    Route::get('/', \App\Modules\Tenant\Experience\Interface\Http\Controllers\ServeTenantLandingController::class)->name('tenant.home');
+    Route::get('/', ServeTenantLandingController::class)->name('tenant.home');
 
     // Access Web & Auth (Guest & Common routes)
     require base_path('app/Modules/Tenant/Access/Interface/Routes/web.php');
@@ -33,12 +38,12 @@ Route::middleware([
 
     // Authenticated Tenant Group
     Route::middleware([
-        'auth', 
-        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnforceTenantMfa::class,
-        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserIsActive::class,
-        \App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserBelongsToTenant::class
+        'auth',
+        EnforceTenantMfa::class,
+        EnsureUserIsActive::class,
+        EnsureUserBelongsToTenant::class,
     ])->group(function () {
-        
+
         // Tenant Access (Authenticated routes like dashboard, team, roles, etc.)
         require base_path('app/Modules/Tenant/Access/Interface/Routes/web_auth.php');
 
@@ -53,7 +58,7 @@ Route::middleware([
 
         // Audit Logs
         require base_path('app/Modules/Tenant/Audit/Interface/Routes/web.php');
-        
+
         // Central Billing SaaS
         require base_path('app/Modules/Central/Billing/Interface/Routes/tenant.php');
     });

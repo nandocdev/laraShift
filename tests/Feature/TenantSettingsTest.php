@@ -55,7 +55,7 @@ it('encrypts smtp passwords automatically', function () {
     // Check that it's encrypted in the DB
     $raw = DB::table('tenant_settings')->where('tenant_id', $tenant->id)->first();
     expect($raw->smtp_password)->not->toBe('secret-key');
-    
+
     // Check that model decrypts it
     expect($settings->fresh()->smtp_password)->toBe('secret-key');
 });

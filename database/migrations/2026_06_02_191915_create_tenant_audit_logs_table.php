@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -27,13 +28,13 @@ return new class extends Migration
             $table->index(['tenant_id', 'created_at']);
             $table->index(['user_id', 'created_at']);
             $table->index('action');
-            
+
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
 
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_audit_logs ENABLE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON tenant_audit_logs USING (tenant_id::text = current_setting('app.tenant_id'));");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE tenant_audit_logs ENABLE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON tenant_audit_logs USING (tenant_id::text = current_setting('app.tenant_id'));");
         }
     }
 

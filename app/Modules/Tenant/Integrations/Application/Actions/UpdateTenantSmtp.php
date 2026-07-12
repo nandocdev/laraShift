@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Integrations\Application\Actions;
 
 use App\Modules\Platform\Events\TenantSmtpConfigured;
-use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
+use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateTenantSmtp
@@ -18,7 +21,7 @@ final readonly class UpdateTenantSmtp
     {
         return DB::transaction(function () use ($data) {
             $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-            
+
             $updateData = [
                 'smtp_host' => $data->host,
                 'smtp_port' => $data->port,
@@ -34,9 +37,9 @@ final readonly class UpdateTenantSmtp
 
             $settings->update($updateData);
 
-            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::SETTINGS_SMTP_CONFIGURED,
+            app(RecordAuditLogAction::class)->execute(
+                new AuditLogData(
+                    action: AuditAction::SETTINGS_SMTP_CONFIGURED,
                     resource: 'settings',
                     resourceId: $settings->id,
                     metadata: ['from_email' => $data->fromEmail]

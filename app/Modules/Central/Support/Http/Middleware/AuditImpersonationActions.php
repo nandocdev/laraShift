@@ -28,7 +28,7 @@ class AuditImpersonationActions
             // We use the beforeLogging hook to inject context globally for this request.
             PendingActivityLog::beforeLogging(function ($activity) use ($impersonatorId, $sessionId) {
                 $properties = $activity->properties ? $activity->properties->toArray() : [];
-                
+
                 $activity->properties = collect(array_merge($properties, [
                     'impersonated_by' => $impersonatorId,
                     'support_session_id' => $sessionId,
@@ -40,7 +40,7 @@ class AuditImpersonationActions
             return $next($request);
         } finally {
             // Security: Clear the static hook to prevent leakage in persistent environments like Octane.
-            PendingActivityLog::beforeLogging(fn() => null);
+            PendingActivityLog::beforeLogging(fn () => null);
         }
     }
 }

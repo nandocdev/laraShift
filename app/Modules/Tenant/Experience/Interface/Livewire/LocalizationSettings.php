@@ -17,13 +17,15 @@ use Livewire\Component;
 class LocalizationSettings extends Component
 {
     public string $timezone = 'America/Panama';
+
     public string $locale = 'es';
+
     public string $currency = 'USD';
 
     public function mount(): void
     {
         $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
-        
+
         if ($settings) {
             $this->timezone = $settings->timezone;
             $this->locale = $settings->locale;

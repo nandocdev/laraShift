@@ -26,7 +26,7 @@ it('can advance through the wizard steps', function () {
         ->call('nextStep')
         ->assertHasNoErrors()
         ->assertSet('step', 2)
-        
+
         // Step 2
         ->set('plan_id', 'pro')
         ->call('nextStep')

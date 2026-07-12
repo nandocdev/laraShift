@@ -1,5 +1,7 @@
 <?php
 
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+
 return [
 
     /*
@@ -134,7 +136,7 @@ return [
         'directory' => 'livewire-tmp',
         'middleware' => [
             'universal',
-            \Stancl\Tenancy\Middleware\InitializeTenancyByDomain::class,
+            InitializeTenancyByDomain::class,
         ],
         'preview_mimes' => [                                  // Supported file types for temporary pre-signed file URLs...
             'png', 'gif', 'bmp', 'svg', 'wav', 'mp4',

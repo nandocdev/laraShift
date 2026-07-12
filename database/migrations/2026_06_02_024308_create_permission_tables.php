@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -113,12 +114,12 @@ return new class extends Migration
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
             ->forget(config('permission.cache.key'));
 
-        if ($teams && \Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+        if ($teams && DB::getDriverName() === 'pgsql') {
             $teamKey = $columnNames['team_foreign_key'];
             foreach ([$tableNames['roles'], $tableNames['model_has_permissions'], $tableNames['model_has_roles']] as $table) {
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING ({$teamKey}::text = current_setting('app.tenant_id')) WITH CHECK ({$teamKey}::text = current_setting('app.tenant_id'));");
+                DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
+                DB::statement("CREATE POLICY tenant_isolation ON {$table} USING ({$teamKey}::text = current_setting('app.tenant_id')) WITH CHECK ({$teamKey}::text = current_setting('app.tenant_id'));");
             }
         }
     }

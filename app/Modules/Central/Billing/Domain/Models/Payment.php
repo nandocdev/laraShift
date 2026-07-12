@@ -4,32 +4,35 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Domain\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Modules\Central\Billing\Database\Factories\PaymentFactory;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property string       $id
- * @property string       $tenant_id
- * @property string       $display_id       Your order/invoice ID
- * @property string       $slug             Unique slug sent to gateway
- * @property float        $amount
- * @property float        $tax_amount
- * @property float        $discount
- * @property string       $description
- * @property string       $email
- * @property string       $currency
- * @property string       $status           PaymentStatus value
- * @property string       $gateway
- * @property string|null  $gateway_reference
- * @property string|null  $authorization_code
- * @property string|null  $error_code
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $display_id Your order/invoice ID
+ * @property string $slug Unique slug sent to gateway
+ * @property float $amount
+ * @property float $tax_amount
+ * @property float $discount
+ * @property string $description
+ * @property string $email
+ * @property string $currency
+ * @property string $status PaymentStatus value
+ * @property string $gateway
+ * @property string|null $gateway_reference
+ * @property string|null $authorization_code
+ * @property string|null $error_code
  */
-class Payment extends Model {
-    use HasUuids, HasFactory;
+class Payment extends Model
+{
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'tenant_id',
@@ -58,19 +61,22 @@ class Payment extends Model {
     // Tenant scope (complements RLS)
     // -------------------------------------------------------------------------
 
-    protected static function booted(): void {
-        static::addGlobalScope(new TenantScope());
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new TenantScope);
     }
 
     // -------------------------------------------------------------------------
     // Relations
     // -------------------------------------------------------------------------
 
-    public function attempts(): HasMany {
+    public function attempts(): HasMany
+    {
         return $this->hasMany(PaymentAttempt::class);
     }
 
-    public function webhooks(): HasMany {
+    public function webhooks(): HasMany
+    {
         return $this->hasMany(PaymentWebhook::class, 'display_id', 'display_id');
     }
 
@@ -78,20 +84,23 @@ class Payment extends Model {
     // Helpers
     // -------------------------------------------------------------------------
 
-    public function statusEnum(): PaymentStatus {
+    public function statusEnum(): PaymentStatus
+    {
         return PaymentStatus::from($this->status);
     }
 
-    public function isApproved(): bool {
+    public function isApproved(): bool
+    {
         return $this->statusEnum() === PaymentStatus::Approved;
     }
 
-    public function netAmount(): float {
+    public function netAmount(): float
+    {
         return round($this->amount - $this->discount + $this->tax_amount, 2);
     }
 
-    protected static function newFactory(): \Illuminate\Database\Eloquent\Factories\Factory
+    protected static function newFactory(): Factory
     {
-        return \App\Modules\Central\Billing\Database\Factories\PaymentFactory::new();
+        return PaymentFactory::new();
     }
 }

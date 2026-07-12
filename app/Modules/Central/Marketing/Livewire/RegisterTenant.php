@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Marketing\Livewire;
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
@@ -31,9 +32,13 @@ class RegisterTenant extends Component
 {
     // Step 1: Organization
     public string $name = '';
+
     public string $email = '';
+
     public string $company = '';
+
     public string $slug = '';
+
     public string $password = '';
 
     // Step 2: Plan
@@ -41,6 +46,7 @@ class RegisterTenant extends Component
 
     // Wizard state
     public int $step = 1;
+
     public bool $autoGenerateSlug = true;
 
     /**
@@ -50,13 +56,13 @@ class RegisterTenant extends Component
     {
         return match ($step) {
             1 => [
-                'name'     => 'required|string|max:255',
-                'email'    => 'required|email|max:255|unique:central_users,email',
-                'company'  => 'required|string|max:255',
-                'slug'     => [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:central_users,email',
+                'company' => 'required|string|max:255',
+                'slug' => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:' . implode(',', ReservedSlugs::$list),
+                    'not_in:'.implode(',', ReservedSlugs::$list),
                     'unique:tenants,slug',
                 ],
                 'password' => ['required', 'string', Password::defaults()],
@@ -148,7 +154,7 @@ class RegisterTenant extends Component
             payment_token: null,
         ));
 
-        $domain = $this->slug . '.' . config('tenancy.central_domain');
+        $domain = $this->slug.'.'.config('tenancy.central_domain');
         $baseUrl = config('app.url');
         $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
         $port = parse_url($baseUrl, PHP_URL_PORT);
@@ -156,10 +162,11 @@ class RegisterTenant extends Component
 
         // If it's a paid plan, redirect to the hosted checkout page within the tenant context
         if (! $this->isPlanFree()) {
-            $checkoutUrl = app(\App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager::class)
+            $checkoutUrl = app(BillingManager::class)
                 ->createCheckoutSession($tenant, $this->selectedPlan->id);
 
             $this->redirect($checkoutUrl, navigate: false);
+
             return;
         }
 
@@ -187,9 +194,9 @@ class RegisterTenant extends Component
     public function render(): View
     {
         return view('marketing::pages.register-tenant', [
-            'plans'        => PlanManager::all(),
+            'plans' => PlanManager::all(),
             'selectedPlan' => $this->selectedPlan,
-            'isPlanFree'   => $this->isPlanFree(),
+            'isPlanFree' => $this->isPlanFree(),
         ]);
     }
 }

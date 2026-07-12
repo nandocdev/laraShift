@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
-use Illuminate\Support\Facades\DB;
-use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Domain\Events\CheckoutSessionCreated;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
+use Illuminate\Support\Facades\DB;
 
-final readonly class CheckoutManager {
+final readonly class CheckoutManager
+{
     public function __construct(
         private PaymentGateway $gateway,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a new Payment record and return a ready-to-embed checkout URL.
      *
      * Wraps in a transaction: if anything fails, no partial records survive.
      */
-    public function initiate(PaymentData $data, string $tenantId, string $apiKey): CheckoutSession {
+    public function initiate(PaymentData $data, string $tenantId, string $apiKey): CheckoutSession
+    {
         return DB::transaction(function () use ($data, $tenantId, $apiKey): CheckoutSession {
             $slug = $data->resolvedSlug();
 

@@ -16,11 +16,12 @@ class PaymentFactory extends Factory
     public function definition(): array
     {
         $id = (string) Str::uuid();
+
         return [
             'id' => $id,
             'tenant_id' => null,
-            'display_id' => 'INV-' . strtoupper(Str::random(6)),
-            'slug' => 'pay-' . Str::random(10),
+            'display_id' => 'INV-'.strtoupper(Str::random(6)),
+            'slug' => 'pay-'.Str::random(10),
             'amount' => 99.99,
             'tax_amount' => 0.00,
             'discount' => 0.00,

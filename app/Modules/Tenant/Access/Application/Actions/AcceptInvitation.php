@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
+use App\Modules\Platform\Events\TenantUserJoined;
 use App\Modules\Tenant\Access\Application\DTO\UserAcceptanceData;
 use App\Modules\Tenant\Access\Domain\Models\Invitation;
 use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Audit\DTOs\AuditLogData;
+use App\Modules\Tenant\Audit\Enums\AuditAction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,7 +23,7 @@ final readonly class AcceptInvitation
     public function execute(UserAcceptanceData $data): User
     {
         $tokenHash = hash('sha256', $data->token);
-        
+
         $invitation = Invitation::where('token_hash', $tokenHash)
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
@@ -59,9 +63,9 @@ final readonly class AcceptInvitation
             // 3. Mark invitation as accepted
             $invitation->update(['accepted_at' => now()]);
 
-            app(\App\Modules\Tenant\Audit\Actions\RecordAuditLogAction::class)->execute(
-                new \App\Modules\Tenant\Audit\DTOs\AuditLogData(
-                    action: \App\Modules\Tenant\Audit\Enums\AuditAction::USER_JOINED,
+            app(RecordAuditLogAction::class)->execute(
+                new AuditLogData(
+                    action: AuditAction::USER_JOINED,
                     resource: 'user',
                     resourceId: $user->id,
                     metadata: ['email' => $user->email, 'role' => $invitation->role->name],
@@ -73,7 +77,7 @@ final readonly class AcceptInvitation
                 ->performedOn($user)
                 ->log('user_joined_via_invite');
 
-            event(new \App\Modules\Platform\Events\TenantUserJoined((string) $user->id, (string) $user->tenant_id, (string) $invitation->id));
+            event(new TenantUserJoined((string) $user->id, (string) $user->tenant_id, (string) $invitation->id));
 
             return $user;
         });

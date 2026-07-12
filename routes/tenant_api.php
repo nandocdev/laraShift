@@ -18,7 +18,7 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
     AuthenticateApiKey::class,
 ])->group(function () {
-    
+
     // Access / Identity API endpoints
     require base_path('app/Modules/Tenant/Access/Interface/Routes/api.php');
 });

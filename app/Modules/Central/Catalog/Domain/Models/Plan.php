@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Catalog\Domain\Models;
 
-use App\Modules\Central\Catalog\Domain\Models\Feature;
 use App\Modules\Platform\Data\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;

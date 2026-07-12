@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Actions;
 
-use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Auth\Models\Central2FA;
+use App\Modules\Central\Auth\Models\CentralUser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
@@ -66,7 +66,7 @@ final readonly class EnrollCentral2FAAction
     private function generateRecoveryCodes(): array
     {
         return Collection::times(8, function () {
-            return Str::random(10) . '-' . Str::random(10);
+            return Str::random(10).'-'.Str::random(10);
         })->toArray();
     }
 }

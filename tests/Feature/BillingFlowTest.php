@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
-use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Provisioning\Models\Domain;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
-use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Models\Domain;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -20,6 +20,7 @@ class BillingFlowTest extends TestCase
     use RefreshDatabase;
 
     protected Tenant $tenant;
+
     protected Plan $plan;
 
     protected function setUp(): void
@@ -60,22 +61,22 @@ class BillingFlowTest extends TestCase
         Http::fake([
             '*/LinkDeamon.cfm' => Http::response([
                 'success' => true,
-                'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout/LK-123']
-            ], 200)
+                'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout/LK-123'],
+            ], 200),
         ]);
 
-        $gateway = app(\App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway::class);
-        
+        $gateway = app(PaymentGateway::class);
+
         $paymentData = new PaymentData(
             amount: 29.99,
             description: 'Subscription to Pro',
-            displayId: 'sub_' . $this->tenant->id,
+            displayId: 'sub_'.$this->tenant->id,
             email: $this->tenant->email,
             tenantId: $this->tenant->id,
             customFieldValues: [
                 'type' => 'subscription',
                 'plan_id' => $this->plan->id,
-                'tenant_id' => $this->tenant->id
+                'tenant_id' => $this->tenant->id,
             ]
         );
 
@@ -84,7 +85,7 @@ class BillingFlowTest extends TestCase
         $this->assertSame('https://sandbox.paguelofacil.com/checkout/LK-123', $checkoutUrl);
 
         // --- STEP 2: Handle Callback (Simulate Paguelofacil Redirect) ---
-        
+
         $callbackParams = [
             'Estado' => 'Aprobada',
             'TotalPagado' => '29.99',

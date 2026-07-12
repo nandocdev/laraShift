@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Log;
 class RailwayService
 {
     private ?string $apiToken;
+
     private ?string $projectId;
+
     private ?string $serviceId;
 
     public function __construct()
@@ -23,15 +25,16 @@ class RailwayService
 
     /**
      * Provisions a custom domain in Railway for the tenant.
-     * 
+     *
      * [RIESGOS]
      * - API Rate limits.
      * - DNS propagation delays.
      */
     public function provisionDomain(Tenant $tenant, string $domain): bool
     {
-        if (!$this->apiToken || !$this->projectId || !$this->serviceId) {
-            Log::info("Railway infrastructure skipped: Missing configuration.");
+        if (! $this->apiToken || ! $this->projectId || ! $this->serviceId) {
+            Log::info('Railway infrastructure skipped: Missing configuration.');
+
             return true; // No-op for local/unconfigured envs
         }
 
@@ -65,7 +68,8 @@ class RailwayService
 
             return true;
         } catch (\Exception $e) {
-            Log::error("Railway domain provisioning failed: " . $e->getMessage());
+            Log::error('Railway domain provisioning failed: '.$e->getMessage());
+
             return false;
         }
     }

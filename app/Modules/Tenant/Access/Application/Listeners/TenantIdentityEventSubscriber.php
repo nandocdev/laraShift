@@ -82,9 +82,9 @@ class TenantIdentityEventSubscriber
             resource: 'api_keys',
             resourceId: $event->keyId,
             metadata: [
-                'name' => $event->keyName, 
+                'name' => $event->keyName,
                 'scopes' => $event->scopes,
-                'ua' => request()->userAgent()
+                'ua' => request()->userAgent(),
             ],
             ip: request()->ip()
         ));

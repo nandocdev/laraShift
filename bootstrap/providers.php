@@ -1,20 +1,37 @@
 <?php
 
+use App\Modules\Central\Auth\Providers\CentralAuthServiceProvider;
+use App\Modules\Central\Billing\Providers\BillingServiceProvider;
+use App\Modules\Central\Catalog\Providers\CatalogServiceProvider;
+use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
+use App\Modules\Central\Operations\Providers\OperationsServiceProvider;
+use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
+use App\Modules\Central\Support\Providers\SupportServiceProvider;
+use App\Modules\Tenant\Access\Providers\AccessServiceProvider;
+use App\Modules\Tenant\Audit\Providers\AuditServiceProvider;
+use App\Modules\Tenant\Experience\Providers\ExperienceServiceProvider;
+use App\Modules\Tenant\Integrations\Providers\IntegrationsServiceProvider;
+use App\Modules\Tenant\Workspace\Providers\WorkspaceServiceProvider;
+use App\Providers\AppServiceProvider;
+use App\Providers\FortifyServiceProvider;
+use App\Providers\HorizonServiceProvider;
+use App\Providers\TenancyServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    App\Providers\HorizonServiceProvider::class,
-    App\Providers\TenancyServiceProvider::class,
-    App\Modules\Central\Auth\Providers\CentralAuthServiceProvider::class,
-    App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider::class,
-    App\Modules\Central\Billing\Providers\BillingServiceProvider::class,
-    App\Modules\Central\Catalog\Providers\CatalogServiceProvider::class,
-    App\Modules\Central\Operations\Providers\OperationsServiceProvider::class,
-                App\Modules\Central\Support\Providers\SupportServiceProvider::class,
-    App\Modules\Central\Marketing\Providers\MarketingServiceProvider::class,
-    App\Modules\Tenant\Access\Providers\AccessServiceProvider::class,
-    App\Modules\Tenant\Workspace\Providers\WorkspaceServiceProvider::class,
-    App\Modules\Tenant\Experience\Providers\ExperienceServiceProvider::class,
-    App\Modules\Tenant\Integrations\Providers\IntegrationsServiceProvider::class,
-    App\Modules\Tenant\Audit\Providers\AuditServiceProvider::class,
+    AppServiceProvider::class,
+    FortifyServiceProvider::class,
+    HorizonServiceProvider::class,
+    TenancyServiceProvider::class,
+    CentralAuthServiceProvider::class,
+    ProvisioningServiceProvider::class,
+    BillingServiceProvider::class,
+    CatalogServiceProvider::class,
+    OperationsServiceProvider::class,
+    SupportServiceProvider::class,
+    MarketingServiceProvider::class,
+    AccessServiceProvider::class,
+    WorkspaceServiceProvider::class,
+    ExperienceServiceProvider::class,
+    IntegrationsServiceProvider::class,
+    AuditServiceProvider::class,
 ];

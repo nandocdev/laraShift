@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Interface\Livewire;
 
+use App\Modules\Tenant\Experience\Application\Actions\PublishLanding;
 use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -18,7 +19,9 @@ class LandingBuilder extends Component
      * Component State
      */
     public array $blocks = [];
+
     public array $theme = [];
+
     public string $title = '';
 
     public function mount(Landing $landing): void
@@ -36,7 +39,7 @@ class LandingBuilder extends Component
     public function save(array $blocks, array $theme): void
     {
         // Checksum validation would go here in production
-        
+
         $this->landing->update([
             'blocks' => $blocks,
             'theme' => $theme,
@@ -60,7 +63,7 @@ class LandingBuilder extends Component
         // because the DB column is constrained to 'central_users'
         $publisherId = auth('central')->check() ? auth('central')->id() : null;
 
-        app(\App\Modules\Tenant\Experience\Application\Actions\PublishLanding::class)->execute(
+        app(PublishLanding::class)->execute(
             $this->landing,
             $publisherId
         );

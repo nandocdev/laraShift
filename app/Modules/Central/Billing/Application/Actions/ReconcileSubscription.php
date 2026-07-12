@@ -30,13 +30,14 @@ final readonly class ReconcileSubscription
 
             if (! $gatewayData) {
                 Log::warning("Reconciliation: No gateway data found for tenant {$tenant->id} subscription {$subscriptionId}");
+
                 return;
             }
 
             $this->reconcile($tenant, $localSubscription, $gatewayData);
 
         } catch (\Exception $e) {
-            Log::error("Reconciliation Error for tenant {$tenant->id}: " . $e->getMessage());
+            Log::error("Reconciliation Error for tenant {$tenant->id}: ".$e->getMessage());
         }
     }
 
@@ -52,19 +53,19 @@ final readonly class ReconcileSubscription
         // Standardize status for comparison if needed
         // Stripe uses: trialing, active, past_due, canceled, unpaid, paused
         // Our system should align or map them
-        
+
         if ($gatewayStatus !== $localStatus) {
             DB::transaction(function () use ($tenant, $localSubscription, $gatewayStatus) {
                 $localSubscription->update(['status' => $gatewayStatus]);
 
                 // Update tenant status if subscription is no longer active
                 $inactiveStatuses = ['canceled', 'unpaid', 'cancelled', 'expired'];
-                
+
                 if (in_array($gatewayStatus, $inactiveStatuses) && $tenant->status === 'active') {
                     $tenant->update(['status' => 'suspended']);
                 }
 
-                if (!in_array($gatewayStatus, $inactiveStatuses) && $tenant->status === 'suspended') {
+                if (! in_array($gatewayStatus, $inactiveStatuses) && $tenant->status === 'suspended') {
                     $tenant->update(['status' => 'active']);
                 }
 
@@ -73,7 +74,7 @@ final readonly class ReconcileSubscription
                     ->withProperties([
                         'old_status' => $localSubscription->getOriginal('status'),
                         'new_status' => $gatewayStatus,
-                        'source' => 'reconciliation_engine'
+                        'source' => 'reconciliation_engine',
                     ])
                     ->log('subscription_reconciled');
             });

@@ -15,6 +15,7 @@ use Livewire\Component;
 class HostedCheckout extends Component
 {
     public Tenant $tenant;
+
     public Plan $plan;
 
     public function mount(string $tenant_uuid, string $plan_uuid): void
@@ -27,7 +28,7 @@ class HostedCheckout extends Component
     public function handleSuccess(): void
     {
         $this->dispatch('toast', variant: 'success', heading: __('Payment Approved'), text: __('Your subscription has been activated successfully.'));
-        
+
         session()->flash('success', __('Your subscription has been activated successfully.'));
         $this->redirect(route('tenant.billing.success'), navigate: true);
     }

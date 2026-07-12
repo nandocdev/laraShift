@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -52,11 +53,11 @@ return new class extends Migration
         });
 
         // Enable RLS
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+        if (DB::getDriverName() === 'pgsql') {
             foreach (['support_sessions', 'support_notes'] as $table) {
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
-                \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+                DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
+                DB::statement("CREATE POLICY tenant_isolation ON {$table} USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
             }
         }
     }

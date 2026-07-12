@@ -15,15 +15,15 @@ class ValidateCentralSession
 {
     /**
      * Handle an incoming request.
-     * 
-     * Verifies that the current session is valid and not revoked in the 
+     *
+     * Verifies that the current session is valid and not revoked in the
      * central_sessions tracking table.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::guard('central')->check()) {
             $sessionId = Session::getId();
-            
+
             $trackingSession = CentralSession::where('session_id', $sessionId)
                 ->where('user_id', Auth::guard('central')->id())
                 ->first();

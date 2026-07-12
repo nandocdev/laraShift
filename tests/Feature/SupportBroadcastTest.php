@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Actions\SendBroadcastAction;
+use App\Modules\Central\Support\DTOs\BroadcastData;
 use App\Modules\Central\Support\Livewire\GlobalAnnouncements;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,7 +22,7 @@ it('renders active banners for the target tenant', function () {
         'email' => 'admin@test.com',
         'password' => 'password',
     ]);
-    
+
     $this->actingAs($admin, 'central');
 
     $tenant = Tenant::create([
@@ -35,7 +36,7 @@ it('renders active banners for the target tenant', function () {
 
     // Create a broadcast with banner channel
     $action = app(SendBroadcastAction::class);
-    $action->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
+    $action->execute(new BroadcastData(
         title: 'Platform Maintenance',
         body: 'Scheduled for tonight.',
         filterType: 'all',
@@ -56,7 +57,7 @@ it('hides dismissed banners', function () {
         'email' => 'admin@test.com',
         'password' => 'password',
     ]);
-    
+
     $this->actingAs($admin, 'central');
 
     $tenant = Tenant::create([
@@ -67,7 +68,7 @@ it('hides dismissed banners', function () {
         'plan_id' => 'pro',
     ]);
 
-    $broadcast = app(SendBroadcastAction::class)->execute(new \App\Modules\Central\Support\DTOs\BroadcastData(
+    $broadcast = app(SendBroadcastAction::class)->execute(new BroadcastData(
         title: 'Discount!',
         body: 'Upgrade now.',
         filterType: 'all',
@@ -80,6 +81,6 @@ it('hides dismissed banners', function () {
         ->assertSee('Discount!')
         ->call('dismiss', $broadcast->id)
         ->assertDontSee('Discount!');
-        
+
     expect(DB::table('broadcast_dismissals')->count())->toBe(1);
 });

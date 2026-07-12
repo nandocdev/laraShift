@@ -13,7 +13,7 @@ class QuotaExceededException extends Exception
 {
     public function __construct(
         public readonly string $metric,
-        string $message = "",
+        string $message = '',
         int $code = 429
     ) {
         $defaultMessage = __('You have exceeded your quota limit for :metric. Please upgrade your plan.', ['metric' => $metric]);

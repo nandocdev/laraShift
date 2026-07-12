@@ -2,13 +2,14 @@
 
 namespace Tests;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Str;
 
 abstract class TenantTestCase extends TestCase
 {
     protected Tenant $tenant;
+
     protected string $tenantId;
 
     protected function setUp(): void
@@ -30,17 +31,17 @@ abstract class TenantTestCase extends TestCase
 
         $this->tenant = Tenant::create([
             'id' => $id,
-            'slug' => 'test-' . substr($id, 0, 8),
+            'slug' => 'test-'.substr($id, 0, 8),
             'name' => 'Test Tenant',
-            'email' => 'test-' . substr($id, 0, 8) . '@tenant.com',
+            'email' => 'test-'.substr($id, 0, 8).'@tenant.com',
             'plan_id' => 'free',
             'status' => 'active',
             'billing_gateway' => 'paguelofacil',
         ]);
 
         $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
-        $domain = $this->tenant->slug . '.' . $centralDomain;
-        
+        $domain = $this->tenant->slug.'.'.$centralDomain;
+
         $this->tenant->domains()->create(['domain' => $domain]);
 
         tenancy()->initialize($this->tenant);

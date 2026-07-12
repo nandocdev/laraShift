@@ -43,7 +43,7 @@ class BrandingPresets
                 'secondary' => '#1e293b',
                 'font_heading' => 'Inter',
                 'font_body' => 'Inter',
-            ]
+            ],
         ];
     }
 

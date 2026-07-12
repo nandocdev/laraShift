@@ -34,7 +34,7 @@ class PaymentFailedNotification extends Notification implements ShouldQueue
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('We were unable to process the payment of :amount :currency for your subscription.', [
                 'amount' => $this->amount,
-                'currency' => strtoupper($this->currency)
+                'currency' => strtoupper($this->currency),
             ]));
 
         if ($isWarning) {

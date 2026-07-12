@@ -1,27 +1,36 @@
 {
-  "$schema": "https://opencode.ai/config.json",
-  "watcher": {
-    "ignore": [
-      "vendor/**",
-      "node_modules/**",
-      "storage/framework/**",
-      "bootstrap/cache/**",
-      ".phpunit.cache/**",
-      "public/build/**"
-    ]
-  },
-  "instructions": [
-    ".opencode/rules/laravel-livewire.md"
-  ],
-  "mcp": {
-    "codegraph": {
-      "type": "local",
-      "command": [
-        "codegraph",
-        "serve",
-        "--mcp"
-      ],
-      "enabled": true
+    "$schema": "https://opencode.ai/config.json",
+    "watcher": {
+        "ignore": [
+            "vendor/**",
+            "node_modules/**",
+            "storage/framework/**",
+            "bootstrap/cache/**",
+            ".phpunit.cache/**",
+            "public/build/**"
+        ]
+    },
+    "instructions": [
+        ".opencode/rules/laravel-livewire.md"
+    ],
+    "mcp": {
+        "codegraph": {
+            "type": "local",
+            "command": [
+                "codegraph",
+                "serve",
+                "--mcp"
+            ],
+            "enabled": true
+        },
+        "laravel-boost": {
+            "type": "local",
+            "enabled": true,
+            "command": [
+                "php",
+                "artisan",
+                "boost:mcp"
+            ]
+        }
     }
-  }
 }

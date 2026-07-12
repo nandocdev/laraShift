@@ -16,7 +16,7 @@ final readonly class LogoutCentralUserAction
     public function execute(): void
     {
         $sessionId = Session::getId();
-        
+
         Auth::guard('central')->logout();
 
         // Mark central_session as revoked

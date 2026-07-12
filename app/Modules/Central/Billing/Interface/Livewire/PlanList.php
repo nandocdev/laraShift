@@ -23,7 +23,7 @@ class PlanList extends Component
     public function delete(string $planId, DeletePlan $action): void
     {
         $plan = Plan::findOrFail($planId);
-        
+
         try {
             $action->execute($plan);
             session()->flash('status', __('Plan retired successfully.'));

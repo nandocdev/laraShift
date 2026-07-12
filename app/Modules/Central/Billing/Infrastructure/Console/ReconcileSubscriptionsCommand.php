@@ -34,14 +34,14 @@ class ReconcileSubscriptionsCommand extends Command
         if ($tenantId) {
             $tenants = Tenant::where('id', $tenantId)->get();
         } else {
-            // Reconcile all tenants with a plan that isn't 'free' 
+            // Reconcile all tenants with a plan that isn't 'free'
             // or those who have existing subscriptions
             $tenants = Tenant::where('plan_id', '!=', 'free')
                 ->orWhereHas('subscriptions')
                 ->get();
         }
 
-        $this->info("Starting reconciliation for " . $tenants->count() . " tenants...");
+        $this->info('Starting reconciliation for '.$tenants->count().' tenants...');
         $bar = $this->output->createProgressBar($tenants->count());
 
         foreach ($tenants as $tenant) {

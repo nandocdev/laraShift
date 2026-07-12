@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateTenantUserImpersonationTokensTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
@@ -27,17 +26,15 @@ class CreateTenantUserImpersonationTokensTable extends Migration
         });
 
         // Enable RLS
-        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_user_impersonation_tokens ENABLE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("ALTER TABLE tenant_user_impersonation_tokens FORCE ROW LEVEL SECURITY;");
-            \Illuminate\Support\Facades\DB::statement("CREATE POLICY tenant_isolation ON tenant_user_impersonation_tokens USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE tenant_user_impersonation_tokens ENABLE ROW LEVEL SECURITY;');
+            DB::statement('ALTER TABLE tenant_user_impersonation_tokens FORCE ROW LEVEL SECURITY;');
+            DB::statement("CREATE POLICY tenant_isolation ON tenant_user_impersonation_tokens USING (tenant_id::text = current_setting('app.tenant_id')) WITH CHECK (tenant_id::text = current_setting('app.tenant_id'));");
         }
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down(): void
     {

@@ -6,5 +6,4 @@ namespace App\Modules\Central\Billing\Domain\Exceptions;
 
 use RuntimeException;
 
-class ClaveGatewayException extends RuntimeException {
-}
+class ClaveGatewayException extends RuntimeException {}

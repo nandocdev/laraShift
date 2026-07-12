@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Central\Auth\Actions;
 
 use App\Modules\Central\Auth\Models\CentralUser;
-use App\Modules\Central\Auth\Models\CentralSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
@@ -27,7 +26,7 @@ final readonly class RevokeOldestSessionAction
 
             foreach ($sessionsToRevoke as $session) {
                 $session->revoke('Concurrent limit exceeded');
-                
+
                 // If using database session driver, clean up Laravel session table
                 if (config('session.driver') === 'database') {
                     DB::table('sessions')->where('id', $session->session_id)->delete();

@@ -31,7 +31,7 @@ class TenantSuspendedNotification extends Notification implements ShouldQueue
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('Your subscription has been suspended due to multiple failed payment attempts for the amount of :amount :currency.', [
                 'amount' => $this->amount,
-                'currency' => strtoupper($this->currency)
+                'currency' => strtoupper($this->currency),
             ]))
             ->line(__('Your access to the platform has been restricted until the outstanding balance is cleared.'))
             ->action(__('Pay Outstanding Balance', []), route('central.billing.subscriptions'))

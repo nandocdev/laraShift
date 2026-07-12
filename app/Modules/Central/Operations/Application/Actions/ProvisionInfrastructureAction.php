@@ -29,7 +29,7 @@ final readonly class ProvisionInfrastructureAction
         }
 
         // Add other infrastructure steps here (e.g. Cloudflare, AWS, etc.)
-        
+
         activity('infrastructure')
             ->performedOn($tenant)
             ->log('infrastructure_provisioned');
