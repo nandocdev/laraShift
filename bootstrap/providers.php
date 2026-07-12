@@ -8,6 +8,7 @@ use App\Modules\Central\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
 use App\Modules\Central\Settings\Providers\SettingsServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
+use App\Modules\Platform\Integrations\Dlocal\Providers\DlocalServiceProvider;
 use App\Modules\Platform\UI\Providers\UiServiceProvider;
 use App\Modules\Tenant\Access\Providers\AccessServiceProvider;
 use App\Modules\Tenant\Compliance\Providers\ComplianceServiceProvider;
@@ -33,6 +34,7 @@ return [
     SupportServiceProvider::class,
     GrowthServiceProvider::class,
     UiServiceProvider::class,
+    DlocalServiceProvider::class,
     AccessServiceProvider::class,
     WorkspaceServiceProvider::class,
     ExperienceServiceProvider::class,
