@@ -1,14 +1,12 @@
 > **Objetivo**
 >
-> Este documento define las reglas obligatorias para implementar nuevas funcionalidades en SaaSiFy. Su propósito es mantener una arquitectura consistente, simple y mantenible, evitando deriva arquitectónica (Architecture Drift).
->
-> **Nota de versión:** Esta revisión unifica el nombre del proyecto (SaaSiFy, sin referencias previas a "LaraShift"), renombra el Bounded Context "Central" a **Host** para evitar ambigüedad con la clasificación de módulos, actualiza la lista de módulos Tenant a scaffolding puro, y añade el mecanismo obligatorio de propagación de Tenant Context vía RLS, incluyendo su contrato para Jobs bajo Octane.
+> Este documento define las reglas obligatorias para implementar nuevas funcionalidades en LaraShift. Su propósito es mantener una arquitectura consistente, simple y mantenible, evitando deriva arquitectónica (Architecture Drift).
 
 ---
 
 # Filosofía
 
-SaaSiFy es un **framework/boilerplate reutilizable**, no un producto SaaS. La prioridad es:
+LaraShift es un **framework/boilerplate reutilizable**, no un producto SaaS. La prioridad es:
 
 1. Simplicidad
 2. Consistencia
@@ -32,113 +30,116 @@ No existe lógica compartida entre módulos de negocio.
 
 ```
 ✔ Billing conoce Billing
-
-✔ Identity conoce Identity
-
-✘ Billing conoce Features
-
-✘ Features conoce Identity internamente
+✔ Auth conoce Auth
+✘ Billing conoce Catalog (acceso directo a modelos)
+✘ Auth conoce Access (acceso directo a modelos)
 ```
 
-Toda reutilización ocurre mediante módulos Shared.
+Toda reutilización ocurre mediante módulos Platform.
 
-**Esta regla aplica igual entre módulos Host (antes referidos como "Central"), no solo entre módulos Tenant.** `Billing` no accede directamente a modelos de `Plans`, ni `Features` accede directamente a modelos de `Tenants`, aunque ambos vivan en el mismo Bounded Context. La comunicación siempre ocurre vía Actions públicas, Contracts o Domain Events — nunca `Model::find()` cruzado entre módulos, sin importar si ambos son Host o ambos son Tenant.
+**Esta regla aplica igual entre módulos Central, no solo entre módulos Tenant.** `Billing` no accede directamente a modelos de `Catalog`, ni `Provisioning` accede directamente a modelos de `Auth`, aunque todos vivan en el mismo Bounded Context. La comunicación siempre ocurre vía Actions públicas, Contracts o Domain Events — nunca `Model::find()` cruzado entre módulos, sin importar si ambos son Central o ambos son Tenant.
 
 ---
 
-## Host vs Tenant
+## Scopes
 
-Toda funcionalidad pertenece a exactamente uno de estos contextos.
+Toda funcionalidad pertenece a exactamente uno de estos scopes.
 
-### Host
+### Platform
 
-Administra la plataforma SaaS. Es infraestructura del framework, no lógica de producto.
+Infraestructura transversal reutilizable. Independiente de Central y Tenant.
 
 Módulos:
 
-- Identity
-- Tenants
-- Provisioning
-- Plans
-- Features
+- Contracts
+- Data
+- Events
+- Foundation
+- Observability
+- Security
+- Tenancy
+- UI
+
+Nunca contiene reglas de negocio. No depende de Central ni de Tenant.
+
+---
+
+### Central
+
+Operación de la plataforma SaaS. Es infraestructura del framework, no lógica de producto.
+
+Módulos:
+
+- Auth
 - Billing
-- Monitoring
+- Catalog
+- Growth
+- Operations
+- Provisioning
+- Settings
+- Support
 
 ---
 
 ### Tenant
 
-Representa el punto de extensión sobre el cual cada producto construye su propio dominio de negocio. **El core de SaaSiFy solo provee scaffolding genérico aquí, nunca módulos de dominio específico.**
+Representa el punto de extensión sobre el cual cada producto construye su propio dominio de negocio. **El core de LaraShift solo provee scaffolding genérico aquí, nunca módulos de dominio específico.**
 
-Módulos que sí pertenecen al core:
+Módulos que pertenecen al core:
 
-- Users
-- Teams
-- Branding
-- API Keys
+- Access (usuarios, roles, API keys)
+- Compliance (auditoría, exportación)
+- Experience (branding, localización, landings)
+- Integrations (SMTP)
+- Workspace (dashboard, equipo, notificaciones)
 
 **Módulos que NO pertenecen al core bajo ninguna circunstancia:** CRM, Documents, Forms, Automation, Reports, o cualquier otro módulo de dominio vertical. Estos son responsabilidad exclusiva del producto que se construye sobre el framework. No se aceptan como "scaffolding de referencia" ni como ejemplo dentro del repositorio — un framework y el producto que lo consume deben poder evolucionar en ciclos de release independientes, y lógica de dominio en el core rompe esa independencia.
 
 ---
 
-### Shared
-
-Contiene infraestructura reutilizable.
-
-Módulos:
-
-- Notifications
-- Media
-- Search
-- Audit
-- Settings
-- Integrations
-- Authorization
-
-Nunca contiene reglas de negocio.
-
----
-
 # Estructura de módulos
 
-Cada módulo debe seguir la misma estructura.
+Cada módulo complejo debe seguir la misma estructura de sub-capas:
 
 ```
 Module/
-
-Actions/
-
-DTOs/
-
-Events/
-
-Exceptions/
-
-Http/
-    Controllers/
-    Livewire/
-    Requests/
-
-Jobs/
-
-Listeners/
-
-Models/
-
-Policies/
-
-Providers/
-
-Queries/
-
-Resources/
-
-Routes/
-
-Tests/
+├── Domain/
+│   ├── Models/
+│   ├── ValueObjects/
+│   ├── Enums/
+│   ├── Events/
+│   ├── Exceptions/
+│   ├── Policies/
+│   └── Rules/
+├── Application/
+│   ├── Actions/
+│   ├── Commands/
+│   ├── Queries/
+│   ├── DTO/
+│   ├── Jobs/
+│   ├── Listeners/
+│   └── Services/
+├── Infrastructure/
+│   ├── Persistence/
+│   ├── Clients/
+│   ├── Gateways/
+│   ├── Mail/
+│   ├── Notifications/
+│   └── Console/
+├── Interface/
+│   ├── Http/
+│   ├── Api/
+│   ├── Livewire/
+│   ├── Routes/
+│   └── Views/
+├── Database/
+│   ├── Factories/
+│   ├── Seeders/
+│   └── Migrations/
+└── Providers/
 ```
 
-No agregar carpetas nuevas sin una justificación arquitectónica.
+Módulos simples pueden omitir sub-capas y usar una estructura plana. La decisión de usar sub-capas se justifica por complejidad real, no por costumbre.
 
 ---
 
@@ -259,7 +260,7 @@ Permitir únicamente:
 
 # Queries
 
-Consultas complejas deben vivir en Queries.
+Consultas complejas deben vivir en Queries (dentro de Application/Queries/).
 
 Especialmente:
 
@@ -304,9 +305,7 @@ Ejemplo:
 
 ```
 TenantCreated
-
 SubscriptionActivated
-
 UserInvited
 ```
 
@@ -322,16 +321,14 @@ SendWelcomeEmail
 
 # Integration Events
 
-Las integraciones externas utilizan eventos separados.
+Las integraciones externas utilizan eventos separados. Viven en Platform/Events.
 
 Ejemplos:
 
 ```
 PaymentWebhookReceived
-
-EmailDelivered
-
-CloudflareZoneCreated
+TenantProvisioned
+SubscriptionUpdated
 ```
 
 Nunca mezclar con eventos del dominio.
@@ -359,33 +356,17 @@ Provisioning utiliza Jobs reanudables.
 
 # Integraciones
 
-Toda integración externa vive bajo:
+Toda integración externa vive bajo el módulo que la necesita (Central/Billing/Infrastructure/Gateways/ para pasarelas de pago, Tenant/Integrations/ para SMTP, etc.).
 
-```
-Shared/Integrations
-```
+Cada proveedor implementa un contrato común desde Platform/Contracts.
 
-Ejemplo:
-
-```
-Stripe
-
-PagueloFacil
-
-Resend
-
-Cloudflare
-```
-
-Cada proveedor implementa un contrato común.
-
-Nunca llamar SDKs externos directamente desde una Action.
+Nunca llamar SDKs externos directamente desde una Action sin pasar por una clase adapter.
 
 ---
 
 # Multi-Tenancy y Row Level Security
 
-Esta sección es de cumplimiento obligatorio para cualquier módulo Tenant o Host que toque datos aislados por tenant. No es opcional ni queda a criterio del desarrollador.
+Esta sección es de cumplimiento obligatorio para cualquier módulo Tenant o Central que toque datos aislados por tenant. No es opcional ni queda a criterio del desarrollador.
 
 ## Estrategia oficial
 
@@ -393,7 +374,7 @@ Single Database + `tenant_id` + PostgreSQL Row Level Security (RLS). Ningún mó
 
 ## Tenant Context
 
-El contexto de tenant vive en una clase `TenantContext`, registrada como binding `scoped()`, **nunca** `singleton()`.
+El contexto de tenant vive en Platform/Tenancy, registrada como binding `scoped()`, **nunca** `singleton()`.
 
 Razón: con Octane, un binding `singleton()` sobrevive entre requests dentro del mismo worker, y puede filtrar el tenant de un request anterior al siguiente si no se limpia manualmente. `scoped()` se resetea automáticamente por request, sin depender de disciplina del desarrollador.
 
@@ -433,63 +414,16 @@ Todo módulo Tenant debe incluir un `CrossTenantLeakTest` como parte de su Defin
 
 Una tarea que toque datos tenant-aware **no se considera terminada sin este test**, sin excepción.
 
-### Patrón obligatorio del CrossTenantLeakTest
-
-Todo archivo `*CrossTenantLeakTest.php` debe seguir esta estructura:
-
-```php
-<?php
-
-declare(strict_types=1);
-
-use Illuminate\Support\Facades\DB;
-use Modules\Shared\Support\CrossTenantLeakTest;
-
-uses(CrossTenantLeakTest::class);
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
-
-beforeEach(function () {
-    $this->setUpCrossTenantLeakTest();
-});
-
-it('prevents cross-tenant data leakage', function () {
-    if (DB::getDriverName() !== 'pgsql') {
-        $this->markTestSkipped('Cross-tenant RLS requires PostgreSQL');
-    }
-
-    $this->assertTenantBSeesNoDataFromA(function ($tenantA, $tenantB) {
-        // Query que busca datos del tenant A estando en contexto de B
-        return TenantBModel::where('tenant_id', $tenantA->id);
-    });
-});
-
-it('resets tenant context between units of work', function () {
-    if (DB::getDriverName() !== 'pgsql') {
-        $this->markTestSkipped('SET LOCAL reset requires PostgreSQL');
-    }
-
-    $this->assertNoLingeringTenantContext();
-});
-```
-
-El trait `CrossTenantLeakTest` en `Shared/Support` provee:
-- `setUpCrossTenantLeakTest()` — crea dos tenants (A y B) con datos de prueba
-- `assertTenantBSeesNoDataFromA(callable)` — verifica que B no ve datos de A
-- `assertNoLingeringTenantContext()` — verifica que no hay contexto residual (Octane)
-- `simulateTenantContext(string $tenantId)` — hidrata contexto para la prueba
-
-No se aceptan variaciones que omitan el escenario de conexión reutilizada.
-
 ---
 
-# Identidad: Host vs Tenant
+# Identidad: Central vs Tenant
 
-Host y Tenant tienen sistemas de autenticación completamente separados, cada uno con su propio guard de Laravel y su propio modelo:
+Central y Tenant tienen sistemas de autenticación completamente separados, cada uno con su propio guard de Laravel y su propio modelo:
 
-- `Identity` (Host) autentica staff de la plataforma vía guard `host`, modelo `HostUser`. Nunca conoce ni referencia el modelo de usuario de Tenant.
-- `Users` (Tenant) autentica usuarios finales del cliente vía guard `tenant`, modelo `TenantUser`. Nunca conoce ni referencia el modelo de usuario de Host.
+- `Auth` (Central) autentica staff de la plataforma vía guard `central`, modelo `CentralUser`. Nunca conoce ni referencia el modelo de usuario de Tenant.
+- `Access` (Tenant) autentica usuarios finales del cliente vía guard `tenant`, modelo `User`. Nunca conoce ni referencia el modelo de usuario de Central.
 
-Si en el futuro se requiere SSO compartido entre ambos, se resuelve mediante un Contract en Shared (ej. `AuthenticatableIdentity`), nunca acoplando ambos módulos directamente ni fusionando ambos modelos en una sola tabla con un campo `type`. Esta última práctica está explícitamente prohibida: rompe el aislamiento Host/Tenant a nivel de esquema.
+Si en el futuro se requiere SSO compartido entre ambos, se resuelve mediante un Contract en Platform (ej. `AuthenticatableIdentity`), nunca acoplando ambos módulos directamente ni fusionando ambos modelos en una sola tabla con un campo `type`. Esta última práctica está explícitamente prohibida: rompe el aislamiento Central/Tenant a nivel de esquema.
 
 ---
 
@@ -507,7 +441,7 @@ Nunca confiar únicamente en middleware.
 
 # Feature Flags
 
-Las funcionalidades se habilitan mediante Features.
+Las funcionalidades se habilitan mediante Features (Central/Catalog).
 
 No escribir condiciones dispersas como:
 
@@ -524,11 +458,11 @@ Siempre utilizar el sistema de Features.
 Dependencia permitida:
 
 ```
-Shared
+Platform
 
 ↑
 
-Host
+Central
 
 Tenant
 ```
@@ -536,14 +470,12 @@ Tenant
 Nunca:
 
 ```
-Features → Identity
-
-Billing → Plans (acceso directo a modelos)
-
-Identity → Users
+Features → Auth (acceso directo)
+Billing → Catalog (acceso directo a modelos)
+Auth → Access (cruce Central-Tenant)
 ```
 
-La comunicación entre módulos —**tanto Host-Host, Tenant-Tenant, como Host-Tenant**— ocurre siempre mediante:
+La comunicación entre módulos —**tanto Central-Central, Tenant-Tenant, como Central-Tenant**— ocurre siempre mediante:
 
 - Actions públicas
 - Events
@@ -587,7 +519,7 @@ La respuesta normalmente será:
 
 "No."
 
-Esto aplica también a la separación de módulos: no crear un módulo Host o Tenant nuevo si su única responsabilidad es envolver un módulo Shared existente sin lógica propia (ej. un módulo "Roles" en Tenant que solo delega en `Authorization` de Shared no se justifica como módulo independiente).
+Esto aplica también a la separación de módulos: no crear un módulo nuevo si su única responsabilidad es envolver funcionalidad existente sin lógica propia.
 
 ---
 
@@ -596,7 +528,7 @@ Esto aplica también a la separación de módulos: no crear un módulo Host o Te
 Antes de considerar una tarea terminada verificar:
 
 - [ ] Pertenece al módulo correcto
-- [ ] Respeta Host/Tenant/Shared
+- [ ] Respeta Platform/Central/Tenant
 - [ ] La lógica está en Actions
 - [ ] Usa DTOs
 - [ ] No duplica lógica existente

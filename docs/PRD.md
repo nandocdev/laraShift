@@ -1,20 +1,16 @@
-# SaaSiFy
+# LaraShift
 
-**Versión:** 1.1 **Estado:** En desarrollo **Tipo:** Framework / Boilerplate SaaS Multitenant reutilizable **Stack:** Laravel · Livewire · FluxUI · PostgreSQL · Redis
-
-> **Nota de versión:** Esta revisión corrige una inconsistencia de nombre (el proyecto se referenciaba también como "LaraShift" en documentación de soporte) y reestructura el Bounded Context Tenant para eliminar módulos de dominio específico que no corresponden a un framework reutilizable. Ver sección 10.1.
+**Versión:** 2.0 **Estado:** En desarrollo **Tipo:** Framework / Boilerplate SaaS Multitenant reutilizable **Stack:** Laravel · Livewire · FluxUI · PostgreSQL · Redis
 
 ---
 
 # 1. Visión
 
-SaaSiFy es un **framework/boilerplate reutilizable** para desarrollar aplicaciones SaaS multitenant modernas utilizando Laravel y una arquitectura de Monolito Modular.
+LaraShift es un **framework/boilerplate reutilizable** para desarrollar aplicaciones SaaS multitenant modernas utilizando Laravel y una arquitectura de Monolito Modular con tres scopes: Platform, Central y Tenant.
 
 Su objetivo es eliminar el trabajo repetitivo asociado a la construcción de la **infraestructura de plataforma** de un SaaS, proporcionando una base sólida, escalable y lista para producción sobre la cual se construyen productos de negocio vendibles.
 
-SaaSiFy **no es un producto SaaS en sí mismo**. No contiene ni debe contener lógica de dominio de negocio (CRM, gestión documental, formularios, automatizaciones, o cualquier vertical específico). Esos módulos pertenecen exclusivamente a los productos que se construyen sobre el framework.
-
-No pretende ser un framework adicional sobre Laravel, sino una arquitectura de referencia con componentes reutilizables y procesos bien definidos.
+LaraShift **no es un producto SaaS en sí mismo**. No contiene ni debe contener lógica de dominio de negocio (CRM, gestión documental, formularios, automatizaciones, o cualquier vertical específico). Esos módulos pertenecen exclusivamente a los productos que se construyen sobre el framework.
 
 ---
 
@@ -28,7 +24,6 @@ Construir un SaaS desde cero implica desarrollar repetidamente infraestructura d
 - gestión de usuarios
 - roles y permisos
 - feature flags
-- onboarding
 - aprovisionamiento
 - auditoría
 - configuración
@@ -46,7 +41,7 @@ Reducir el tiempo necesario para construir aplicaciones SaaS proporcionando un f
 
 # 4. Público objetivo
 
-SaaSiFy está dirigido a:
+LaraShift está dirigido a:
 
 - Freelancers
 - Startups
@@ -91,7 +86,7 @@ No está diseñado para:
 
 # 7. Alcance
 
-SaaSiFy proporciona toda la infraestructura de plataforma de un SaaS.
+LaraShift proporciona toda la infraestructura de plataforma de un SaaS.
 
 Incluye:
 
@@ -99,15 +94,15 @@ Incluye:
 - Autenticación (staff de plataforma y usuarios finales, como identidades separadas)
 - Billing
 - Gestión de usuarios y equipos
-- Roles y permisos (contratos genéricos, vía Authorization)
-- Feature Flags
+- Roles y permisos
+- Feature flags
 - Configuración
 - Auditoría
 - Notificaciones
 - Aprovisionamiento
 - Branding / white-labeling
 - API Keys para integraciones del cliente
-- Panel Host
+- Panel Central (administración)
 - Panel Tenant (scaffolding)
 - Landing pública
 
@@ -121,7 +116,7 @@ Arquitectura basada en:
 
 - Modular Monolith
 - Domain Oriented Modules
-- Shared Infrastructure
+- Platform (infraestructura transversal)
 - Event Driven cuando aporta valor
 - PostgreSQL con Row Level Security
 - Redis (cache, colas, locks, sesiones)
@@ -133,34 +128,37 @@ Arquitectura basada en:
 
 # 9. Contextos (Bounded Contexts)
 
-## Public
+## Platform
 
-Landing pública.
+Infraestructura transversal reutilizable, sin reglas de negocio. Consumida por Central y Tenant, nunca al revés.
 
 Responsable de:
 
-- marketing
-- registro
-- documentación
-- precios
-- contacto
+- contratos compartidos (Contracts)
+- eventos de integración (Events)
+- primitivas de datos (Data)
+- tenancy (contexto, RLS, middleware)
+- seguridad (MFA, HMAC, API keys, rate limiting)
+- UI base (layouts, componentes, navegación)
+- observabilidad (audit, health)
+- foundation (base controllers, helpers)
 
 ---
 
-## Host (antes "Central")
+## Central
 
-Administración de la plataforma. Contiene exclusivamente infraestructura de negocio del framework, no del producto final.
+Administración de la plataforma SaaS. Contiene exclusivamente infraestructura de negocio del framework, no del producto final.
 
 Responsable de:
 
-- identidad de staff/plataforma
-- tenants
-- billing
-- provisioning
-- monitoring
-- soporte
-- analytics
-- features
+- autenticación de staff
+- billing y pagos
+- catálogo de planes y features
+- provisioning de tenants
+- operaciones (health, colas, infraestructura)
+- settings de plataforma
+- soporte (impersonation, broadcasts)
+- growth (landing pública, registro)
 
 ---
 
@@ -170,57 +168,61 @@ Aplicación del cliente. Contiene únicamente scaffolding genérico reutilizable
 
 Responsable de:
 
-- usuarios finales y equipos
-- branding / personalización
-- API keys de integración
-- el punto de extensión donde cada producto añade sus propios módulos de negocio
+- usuarios finales, roles y API keys (Access)
+- auditoría y exportación de datos (Compliance)
+- branding y localización (Experience)
+- integraciones SMTP (Integrations)
+- dashboard, equipo y notificaciones (Workspace)
 
 ---
 
 # 10. Clasificación oficial de módulos
 
-## Shared
+## Platform
 
-Infraestructura reutilizable, sin reglas de negocio. Consumida por Host y Tenant, nunca al revés.
+Infraestructura reutilizable, sin reglas de negocio. Consumida por Central y Tenant, nunca al revés.
 
-|Módulo|Responsabilidad|
+| Módulo | Responsabilidad |
 |---|---|
-|Audit|Registro inmutable de eventos de dominio|
-|Notifications|Envío multicanal desacoplado del proveedor|
-|Integrations|Contratos comunes para proveedores externos (Stripe, PagueloFacil, Resend, Cloudflare)|
-|Media|Almacenamiento y gestión de archivos, con aislamiento por tenant|
-|Search|Abstracción de búsqueda, motor intercambiable|
-|Settings|Configuración jerárquica (platform-level y tenant-level)|
-|Authorization|Contratos de permisos/roles reutilizables (Policies base, gates genéricos)|
+| Contracts | Interfaces compartidas (TenantContract, BillingProvider, FeatureResolver, etc.) |
+| Data | Casts (MoneyCast), formatters, PlatformTenant DTO |
+| Events | Eventos de integración (TenantProvisioned, SubscriptionCreated, etc.) |
+| Foundation | Controller base, providers base |
+| Observability | Audit Activity, HealthChecker |
+| Security | HmacSigner, MfaService, ApiKeyHasher, TenantRateLimiter |
+| Tenancy | BelongsToTenant trait, RLS bootstrapper, middleware tenant-aware |
+| UI | Layouts, componentes Blade, DesignSystem, SidebarBuilder |
 
-## Host
+## Central
 
-Administración de la plataforma SaaS. Ninguno de estos módulos accede directamente a modelos de otro módulo Host; la comunicación ocurre vía Actions públicas, Contracts o Events.
+Administración de la plataforma SaaS. Ninguno de estos módulos accede directamente a modelos de otro módulo Central; la comunicación ocurre vía Actions públicas, Contracts o Events.
 
-|Módulo|Responsabilidad|
+| Módulo | Responsabilidad |
 |---|---|
-|Identity|Autenticación y autorización de staff/Host (guard `host`, modelo `HostUser`). Nunca conoce el modelo de usuario de Tenant.|
-|Tenants|Ciclo de vida del tenant: creación, suspensión, reanudación, eliminación, estado|
-|Provisioning|Orquestación de creación de tenant: seed inicial, jobs reanudables, configuración de dominio|
-|Plans|Catálogo de planes y límites|
-|Features|Motor de feature flags por tenant/plan|
-|Billing|Facturación y pagos (ciclos de facturación, invoices, métodos de pago, estado de cobro)|
-|Monitoring|Telemetría de uso por tenant y salud del sistema|
+| Auth | Autenticación de staff (guard `central`, modelo `CentralUser`). Nunca conoce el modelo de usuario de Tenant. |
+| Billing | Facturación y pagos: planes, suscripciones, checkouts, webhooks, invoices. Payments integrado. |
+| Catalog | Catálogo de planes, features, quotas y overrides. Source of truth del modelo Plan. |
+| Growth | Landing pública, registro de tenants, adquisición. |
+| Operations | Health checks, colas Horizon, Railway infraestructura, metrics. |
+| Provisioning | Ciclo de vida del tenant: creación, suspensión, archivado, purga. |
+| Settings | Configuración de plataforma: CentralSetting, CentralBranding. |
+| Support | Impersonation, broadcasts, notas de soporte. |
 
 ## Tenant
 
 Scaffolding genérico del producto del cliente. **No contiene módulos de dominio específico.**
 
-|Módulo|Responsabilidad|
+| Módulo | Responsabilidad |
 |---|---|
-|Users|Usuarios finales del tenant (guard `tenant`, modelo `TenantUser`). Nunca conoce el modelo de usuario de Host.|
-|Teams|Agrupación de usuarios dentro de un tenant (workspaces)|
-|Branding|Personalización visual: logo, colores, dominio custom|
-|API Keys|Credenciales que el tenant genera para integrar su propio ecosistema externo|
+| Access | Usuarios finales (guard `tenant`), roles, permisos, API keys, invitaciones, MFA. |
+| Compliance | Auditoría de eventos de identidad, exportación de datos. |
+| Experience | Branding, localización, landing builder. |
+| Integrations | SMTP, futuras integraciones externas. |
+| Workspace | Dashboard, equipo, notificaciones, usage overview. |
 
 ### 10.1 Nota de alcance — módulos de dominio excluidos
 
-Módulos como CRM, Documents, Forms, Automation o Reports **no forman parte del repositorio core de SaaSiFy**, bajo ninguna circunstancia, ni siquiera como scaffolding de referencia o ejemplo. Pertenecen exclusivamente al producto que se construye sobre el framework.
+Módulos como CRM, Documents, Forms, Automation o Reports **no forman parte del repositorio core de LaraShift**, bajo ninguna circunstancia, ni siquiera como scaffolding de referencia o ejemplo. Pertenecen exclusivamente al producto que se construye sobre el framework.
 
 Razón: si lógica de dominio vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto. Deben poder evolucionar de forma independiente.
 
@@ -243,19 +245,29 @@ Todo el rendering ocurre del lado del servidor.
 
 # 12. Arquitectura Backend
 
-Laravel organiza la aplicación mediante módulos.
+Laravel organiza la aplicación mediante módulos con una estructura interna consistente:
+
+```
+Module/
+├── Domain/
+├── Application/
+├── Infrastructure/
+├── Interface/
+├── Database/
+└── Providers/
+```
 
 Cada módulo contiene:
 
-- Models
-- Actions
-- DTOs
-- Policies
-- Queries
-- Events
-- Jobs
-- Livewire
-- Views
+- Models (en Domain)
+- Actions (en Application)
+- DTOs (en Application)
+- Policies (en Domain)
+- Queries (en Application)
+- Events (en Domain)
+- Jobs (en Application)
+- Livewire (en Interface)
+- Views (en Interface)
 - Tests
 
 Cada Action representa un caso de uso.
@@ -278,7 +290,7 @@ La seguridad es multicapa:
 - Scopes
 - PostgreSQL Row Level Security
 
-**Estrategia de multitenancy oficial:** Single Database + `tenant_id` + PostgreSQL Row Level Security (RLS). El contexto de tenant se propaga vía `TenantContext` (binding `scoped`, no `singleton`, para compatibilidad con Octane) y se aplica mediante `SET LOCAL` dentro de una transacción explícita. Todo Job en cola debe implementar el contrato `TenantAware` y re-hidratar su propio contexto de tenant al ejecutarse; nunca se asume herencia del contexto vía conexión reutilizada. El detalle técnico completo de este mecanismo vive en el ADR correspondiente, no en este documento.
+**Estrategia de multitenancy oficial:** Single Database + `tenant_id` + PostgreSQL Row Level Security (RLS). El contexto de tenant se propaga vía `TenantContext` (binding `scoped`, no `singleton`, para compatibilidad con Octane) y se aplica mediante `SET LOCAL` dentro de una transacción explícita. Todo Job en cola debe implementar el contrato `TenantAware` y re-hidratar su propio contexto de tenant al ejecutarse; nunca se asume herencia del contexto vía conexión reutilizada.
 
 ---
 
@@ -339,4 +351,4 @@ No se aceptan implementaciones que comprometan la arquitectura por acelerar una 
 
 # 18. Definición de éxito
 
-SaaSiFy será exitoso cuando permita desarrollar un nuevo SaaS con autenticación, multitenancy, billing y panel administrativo en una fracción del tiempo requerido para construirlo desde cero, manteniendo una arquitectura consistente, escalable y preparada para producción — sin que el framework mismo contenga ni una línea de lógica de negocio vertical.
+LaraShift será exitoso cuando permita desarrollar un nuevo SaaS con autenticación, multitenancy, billing y panel administrativo en una fracción del tiempo requerido para construirlo desde cero, manteniendo una arquitectura consistente, escalable y preparada para producción — sin que el framework mismo contenga ni una línea de lógica de negocio vertical.

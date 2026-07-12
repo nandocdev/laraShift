@@ -1,10 +1,8 @@
 # PROJECT DECISIONS
 
-> Este documento contiene las decisiones arquitectónicas oficiales de SaaSiFy.
-> 
+> Este documento contiene las decisiones arquitectónicas oficiales de LaraShift.
+>
 > Son obligatorias para cualquier implementación. Ningún agente o desarrollador debe asumir una alternativa distinta sin actualizar previamente este documento.
-> 
-> **Nota de versión:** Esta revisión corrige la clasificación de módulos Tenant (eliminando módulos de dominio específico que no corresponden a un framework reutilizable), renombra "Central" a **Host**, fusiona Payments dentro de Billing, añade Authorization a la lista oficial de Shared, fija Redis Sessions como default (no opcional), y formaliza el mecanismo de propagación de Tenant Context bajo RLS + Octane.
 
 ---
 
@@ -12,7 +10,7 @@
 
 Nombre oficial:
 
-**SaaSiFy**
+**LaraShift**
 
 Este nombre debe utilizarse en:
 
@@ -23,7 +21,7 @@ Este nombre debe utilizarse en:
 - PRD
 - ROADMAP
 
-No utilizar nombres anteriores o alternativos (incluyendo "LaraShift", usado por error en documentación de soporte previa).
+No utilizar nombres anteriores o alternativos.
 
 ---
 
@@ -117,7 +115,7 @@ Métodos soportados:
 Ejemplos:
 
 ```
-empresa.saasify.app
+empresa.LaraShift.app
 
 app.cliente.com
 ```
@@ -202,50 +200,53 @@ Por lo tanto:
 
 # 11. Clasificación de módulos
 
-## Shared
+## Platform
 
-- Audit
-- Notifications
-- Integrations
-- Media
-- Search
-- Settings
-- Authorization
+Infraestructura transversal reutilizable. Independiente de Central y Tenant — no importa clases de estos scopes.
 
----
+| Módulo | Responsabilidad |
+|---|---|
+| Contracts | Interfaces compartidas entre módulos (TenantContract, BillingProvider, FeatureResolver) |
+| Data | Casts, DTOs base, formatters, PlatformTenant DTO |
+| Events | Eventos de integración entre módulos (TenantProvisioned, SubscriptionCreated, etc.) |
+| Foundation | Providers base, Controller base, helpers técnicos |
+| Observability | Audit primitives, HealthChecker |
+| Security | HmacSigner, MfaService, ApiKeyHasher, TenantRateLimiter |
+| Tenancy | TenantContext, BelongsToTenant trait, RLS bootstrapper, middleware tenant-aware |
+| UI | Layouts, componentes Blade, DesignSystem, SidebarBuilder |
 
-## Host
+## Central
 
-_(Anteriormente referido como "Central"; renombrado para evitar ambigüedad entre Bounded Context y clasificación de módulo.)_
+Operación de la plataforma SaaS. Administración del negocio multi-tenant.
 
-- Identity
-- Billing _(incluye la gestión de pagos; no existe un módulo Payments separado — ver nota)_
-- Plans
-- Provisioning
-- Features
-- Tenants
-- Monitoring
-
-**Nota — Payments fusionado en Billing:** un módulo Payments separado de Billing no aporta separación real de responsabilidades; ambos comparten el mismo ciclo de vida (una invoice se paga, un pago actualiza una invoice), y la llamada real al gateway ya vive en `Shared/Integrations` por regla de ARCHITECTURE_RULES. Separarlos sería una abstracción sin necesidad real. Si en el futuro se requiere reconciliación multi-gateway compleja, se evalúa entonces con un ADR — no antes.
-
----
+| Módulo | Responsabilidad |
+|---|---|
+| Auth | Autenticación de staff/plataforma (guard `central`, modelo `CentralUser`). Nunca conoce el modelo de usuario de Tenant. |
+| Billing | Facturación y pagos: planes, suscripciones, checkouts, webhooks, invoices. Payments gestionado aquí, no como módulo separado. |
+| Catalog | Catálogo de planes, features, quotas y overrides por tenant. Source of truth del modelo Plan. |
+| Growth | Landing pública, registro de tenants, adquisición. |
+| Operations | Health checks, colas Horizon, Railway infrastructure, configuración operativa. |
+| Provisioning | Ciclo de vida del tenant: creación, suspensión, archivado, purga. |
+| Settings | Configuración de plataforma: CentralSetting model, CentralBranding (logo, colores, nombre). |
+| Support | Impersonation, broadcasts, notas de soporte. |
 
 ## Tenant
 
-_(Reducido a scaffolding genérico. Ver nota de alcance más abajo.)_
+Scaffolding genérico del producto del cliente. **No contiene módulos de dominio específico.**
 
-- Users
-- Teams
-- Branding
-- API Keys
+| Módulo | Responsabilidad |
+|---|---|
+| Access | Usuarios finales (guard `tenant`), roles, permisos, API keys, invitaciones, MFA. |
+| Compliance | Auditoría de eventos de identidad, exportación de datos. |
+| Experience | Branding, localización, landing builder. |
+| Integrations | SMTP, futuras integraciones externas. |
+| Workspace | Dashboard, equipo, notificaciones, usage overview. |
 
 ### Nota de alcance — módulos excluidos del core
 
-**CRM, Documents, Forms, Automation, Reports** y cualquier otro módulo de dominio vertical **no forman parte del repositorio core de SaaSiFy**, bajo ninguna circunstancia — ni como módulos a construir, ni como scaffolding de referencia o ejemplo dentro del repo.
+**CRM, Documents, Forms, Automation, Reports** y cualquier otro módulo de dominio vertical **no forman parte del repositorio core de LaraShift**, bajo ninguna circunstancia — ni como módulos a construir, ni como scaffolding de referencia o ejemplo dentro del repo.
 
-Razón: SaaSiFy es un framework reutilizable, no un producto SaaS. Cada producto que se construye sobre el framework implementa su propio dominio de negocio en su propio repositorio o capa de extensión. Si lógica vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto de forma permanente.
-
-También se descarta un módulo `Roles` independiente dentro de Tenant: su única responsabilidad sería delegar en `Authorization` (Shared) sin lógica propia, lo cual viola la regla de simplicidad de ARCHITECTURE_RULES ("¿Existe una necesidad real o estoy diseñando para un problema hipotético?").
+Razón: LaraShift es un framework reutilizable, no un producto SaaS. Cada producto que se construye sobre el framework implementa su propio dominio de negocio en su propio repositorio o capa de extensión. Si lógica vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto de forma permanente.
 
 ---
 
@@ -256,6 +257,7 @@ Permitido:
 - Actions públicas
 - Contracts
 - Domain Events
+- Jobs
 
 No permitido:
 
@@ -263,7 +265,7 @@ No permitido:
 - consultas SQL cruzadas
 - dependencias circulares
 
-**Esta regla aplica por igual entre módulos del mismo Bounded Context.** Por ejemplo, `Billing` no accede directamente a modelos de `Plans`, ni `Features` accede directamente a modelos de `Tenants`, aunque los tres sean módulos Host. Compartir Bounded Context no es excepción a la regla de aislamiento entre módulos.
+**Esta regla aplica por igual entre módulos del mismo Bounded Context.** Por ejemplo, `Billing` no accede directamente a modelos de `Catalog`, ni `Provisioning` accede directamente a modelos de `Auth`, aunque todos sean módulos Central. Compartir Bounded Context no es excepción a la regla de aislamiento entre módulos.
 
 ---
 
@@ -294,24 +296,42 @@ No marcar tareas como completas sin pruebas. Una tarea que toque datos aislados 
 
 ---
 
-# 15. Identidad: Host vs Tenant
+# 15. Identidad: Central vs Tenant
 
-Host y Tenant son identidades completamente separadas, sin tabla ni modelo compartido:
+Central y Tenant son identidades completamente separadas, sin tabla ni modelo compartido:
 
-- **Identity** (Host) gestiona autenticación de staff/plataforma vía guard `host`, modelo `HostUser`. Nunca conoce ni referencia el modelo de usuario de Tenant.
-- **Users** (Tenant) gestiona autenticación de usuarios finales del cliente vía guard `tenant`, modelo `TenantUser`. Nunca conoce ni referencia el modelo de usuario de Host.
+- **Auth** (Central) gestiona autenticación de staff/plataforma vía guard `central`, modelo `CentralUser`. Nunca conoce ni referencia el modelo de usuario de Tenant.
+- **Access** (Tenant) gestiona autenticación de usuarios finales del cliente vía guard `tenant`, modelo `User`. Nunca conoce ni referencia el modelo de usuario de Central.
 
-Queda explícitamente prohibido unificar ambas identidades en una sola tabla `users` con un campo discriminador (`type` o similar). Si en el futuro se requiere SSO compartido entre Host y Tenant, se resuelve mediante un Contract en Shared (ej. `AuthenticatableIdentity`), nunca acoplando ambos módulos directamente.
+Queda explícitamente prohibido unificar ambas identidades en una sola tabla `users` con un campo discriminador (`type` o similar). Si en el futuro se requiere SSO compartido entre Central y Tenant, se resuelve mediante un Contract en Platform (ej. `AuthenticatableIdentity`), nunca acoplando ambos módulos directamente.
 
 ---
 
-# 16. Inteligencia Artificial
+# 16. Dependencias entre scopes
+
+```
+Central  ─┐
+           ├──> Platform
+Tenant   ─┘
+
+Central <──contratos/eventos──> Tenant
+```
+
+- **Central → Platform**: permitido para Contracts, Data, Events, Tenancy, Security, UI, Observability.
+- **Tenant → Platform**: permitido para Contracts, Data, Events, Tenancy, Security, UI, Observability.
+- **Tenant → Central**: evitar dependencias directas. Usar Contracts o eventos.
+- **Central → Tenant**: evitar dependencias directas. Usar Read Models, eventos o jobs.
+- **Platform → Central/Tenant**: prohibido. Platform debe ser 100% independiente.
+
+---
+
+# 17. Inteligencia Artificial
 
 Todo agente AI debe considerar este documento como la fuente de verdad para las decisiones arquitectónicas.
 
 Todo agente AI debe además:
 
-- respetar la clasificación Shared/Host/Tenant de la sección 11 sin excepción
+- respetar la clasificación Platform/Central/Tenant de la sección 11 sin excepción
 - nunca introducir módulos de dominio de negocio dentro de Tenant
 - aplicar el contrato `TenantAware` en todo Job que acceda a datos tenant-aware
 - incluir `CrossTenantLeakTest` en todo módulo Tenant-aware nuevo
