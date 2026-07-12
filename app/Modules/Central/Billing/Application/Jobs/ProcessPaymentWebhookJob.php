@@ -6,6 +6,8 @@ namespace App\Modules\Central\Billing\Application\Jobs;
 
 use App\Modules\Central\Billing\Application\Actions\HandleWebhook;
 use App\Modules\Central\Billing\Domain\Exceptions\WebhookVerificationException;
+use App\Modules\Platform\Contracts\TenantAware;
+use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class ProcessPaymentWebhookJob implements ShouldQueue
+final class ProcessPaymentWebhookJob implements ShouldQueue, TenantAware
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,43 +33,38 @@ final class ProcessPaymentWebhookJob implements ShouldQueue
         $this->onQueue('webhooks-priority');
     }
 
-    public function handle(): void
+    public function tenantId(): string
     {
-        // Tenant context must be initialized before business logic.
-        // This follows the mandatory queue isolation pattern in Architecture.md.
-        tenancy()->initialize($this->tenantId);
-
-        try {
-            $action = app(HandleWebhook::class);
-
-            $action->execute(
-                rawPayload: $this->rawPayload,
-                signature: $this->signature,
-                webhookSecret: $this->webhookSecret,
-                tenantId: $this->tenantId,
-            );
-        } finally {
-            tenancy()->end();
-        }
+        return $this->tenantId;
     }
 
-    public function failed(Throwable $e): void
+    public function middleware(): array
     {
-        // Signature failures are not retryable. Exhaust immediately.
-        if ($e instanceof WebhookVerificationException) {
-            Log::critical('ClaveGateway: webhook signature failure — not retrying', [
+        return [new RehydrateTenantContext];
+    }
+
+    public function handle(): void
+    {
+        try {
+            app(HandleWebhook::class)->execute(
+                $this->rawPayload,
+                $this->signature,
+                $this->webhookSecret
+            );
+        } catch (WebhookVerificationException $e) {
+            Log::warning('Webhook verification failed', [
                 'tenant_id' => $this->tenantId,
                 'error' => $e->getMessage(),
             ]);
 
-            $this->fail($e);
+            throw $e;
+        } catch (Throwable $e) {
+            Log::error('ProcessPaymentWebhookJob failed', [
+                'tenant_id' => $this->tenantId,
+                'error' => $e->getMessage(),
+            ]);
 
-            return;
+            throw $e;
         }
-
-        Log::error('ProcessPaymentWebhookJob failed', [
-            'tenant_id' => $this->tenantId,
-            'error' => $e->getMessage(),
-        ]);
     }
 }

@@ -19,7 +19,7 @@ class ManageBilling extends Component
         $subscription = $tenant->subscription('default');
 
         // Dispatch sync as background job
-        SyncTenantInvoicesJob::dispatch($tenant);
+        SyncTenantInvoicesJob::dispatch((string) $tenant->id);
 
         return view('billing::pages.manage-billing', [
             'tenant' => $tenant,
