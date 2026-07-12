@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Interface\Livewire;
+namespace App\Modules\Tenant\Audit\Interface\Livewire;
 
-use App\Modules\Tenant\Access\Application\Actions\ExportTenantData;
+use App\Modules\Tenant\Audit\Application\Actions\ExportTenantData;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -17,7 +17,7 @@ class DataExport extends Component
     public function export(ExportTenantData $action): void
     {
         $this->exporting = true;
-        
+
         try {
             $action->execute(auth()->id());
             session()->flash('status', __('Data export queued successfully. You will receive an email shortly.'));
@@ -30,6 +30,6 @@ class DataExport extends Component
 
     public function render(): View
     {
-        return view('identity::livewire.data-export');
+        return view('audit::livewire.data-export');
     }
 }

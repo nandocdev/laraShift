@@ -13,12 +13,12 @@
     <flux:card>
         <div class="space-y-4">
             <flux:text>{{ __('By initiating an export, we will collect all available data from your organization across identity, settings, and billing modules. The process runs in the background and you will be notified via email when the JSON file is ready for download.') }}</flux:text>
-            
+
             <div class="pt-4">
-                <flux:button 
-                    wire:click="export" 
-                    variant="primary" 
-                    icon="document-arrow-down" 
+                <flux:button
+                    wire:click="export"
+                    variant="primary"
+                    icon="document-arrow-down"
                     :loading="$exporting"
                 >
                     {{ __('Request Data Export') }}

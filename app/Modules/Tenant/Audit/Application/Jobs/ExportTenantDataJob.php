@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Application\Jobs;
+namespace App\Modules\Tenant\Audit\Application\Jobs;
 
-use App\Modules\Platform\Contracts\Exportable;
-use App\Modules\Tenant\Access\Infrastructure\Notifications\TenantDataExportNotification;
+use App\Modules\Central\Billing\Application\Services\BillingExportService;
 use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Audit\Application\Services\IdentityExportService;
+use App\Modules\Tenant\Audit\Infrastructure\Notifications\TenantDataExportNotification;
+use App\Modules\Tenant\Experience\Application\Services\SettingsExportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,15 +32,15 @@ class ExportTenantDataJob implements ShouldQueue
 
         try {
             $user = User::find($this->userId);
-            
-            if (! $user) return;
 
-            // Collect data from various modules that implement Exportable
-            // Each service will now be scoped to the initialized tenant.
+            if (! $user) {
+                return;
+            }
+
             $exportables = [
-                new \App\Modules\Tenant\Access\Application\Services\IdentityExportService(),
-                new \App\Modules\Tenant\Experience\Application\Services\SettingsExportService(),
-                new \App\Modules\Central\Billing\Application\Services\BillingExportService(),
+                new IdentityExportService,
+                new SettingsExportService,
+                new BillingExportService,
             ];
 
             $data = [];
@@ -46,10 +48,9 @@ class ExportTenantDataJob implements ShouldQueue
                 $data = array_merge($data, $exportable->getExportData());
             }
 
-            $fileName = "exports/tenant_data_{$this->tenantId}_" . Str::random(8) . ".json";
+            $fileName = 'exports/tenant_data_'.$this->tenantId.'_'.Str::random(8).'.json';
             Storage::disk('private')->put($fileName, json_encode($data));
 
-            // Notify User
             $user->notify(new TenantDataExportNotification($fileName));
         } finally {
             tenancy()->end();

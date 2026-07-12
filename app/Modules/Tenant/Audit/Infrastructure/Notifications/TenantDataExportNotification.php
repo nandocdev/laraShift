@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Infrastructure\Notifications;
+namespace App\Modules\Tenant\Audit\Infrastructure\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,7 +25,6 @@ class TenantDataExportNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        // Generate a signed URL that expires in 24 hours
         $url = URL::temporarySignedRoute(
             'tenant.data.download',
             now()->addHours(24),

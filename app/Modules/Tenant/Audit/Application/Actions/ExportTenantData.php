@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Application\Actions;
+namespace App\Modules\Tenant\Audit\Application\Actions;
 
-use App\Modules\Tenant\Access\Application\Jobs\ExportTenantDataJob;
+use App\Modules\Tenant\Audit\Application\Jobs\ExportTenantDataJob;
 
 final readonly class ExportTenantData
 {

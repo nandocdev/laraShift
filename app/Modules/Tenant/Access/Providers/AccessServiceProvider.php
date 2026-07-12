@@ -6,7 +6,15 @@ namespace App\Modules\Tenant\Access\Providers;
 
 use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Application\Listeners\CreateInitialAdminUser;
+use App\Modules\Tenant\Access\Application\Listeners\TenantIdentityEventSubscriber;
+use App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation;
+use App\Modules\Tenant\Access\Interface\Livewire\Login;
+use App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge;
+use App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys;
+use App\Modules\Tenant\Access\Interface\Livewire\RoleManagement;
+use App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Stancl\Tenancy\Events\TenancyInitialized;
@@ -32,25 +40,25 @@ class AccessServiceProvider extends ServiceProvider
         });
 
         // 3. Register components and routes
-        $this->loadViewsFrom(__DIR__ . '/../Interface/Views', 'identity');
+        $this->loadViewsFrom(__DIR__.'/../Interface/Views', 'identity');
 
-        \Livewire\Livewire::component('tenant-login', \App\Modules\Tenant\Access\Interface\Livewire\Login::class);
-        \Livewire\Livewire::component('tenant-accept-invitation', \App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation::class);
-        \Livewire\Livewire::component('tenant-login-challenge', \App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge::class);
-        \Livewire\Livewire::component('tenant-2fa-enrollment', \App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment::class);
-        Livewire::component('tenant-role-management', \App\Modules\Tenant\Access\Interface\Livewire\RoleManagement::class);
-        Livewire::component('tenant-manage-api-keys', \App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys::class);
-        Livewire::component('tenant-data-export', \App\Modules\Tenant\Access\Interface\Livewire\DataExport::class);
+        Livewire::component('tenant-login', Login::class);
+        Livewire::component('tenant-accept-invitation', AcceptInvitation::class);
+        Livewire::component('tenant-login-challenge', LoginChallenge::class);
+        Livewire::component('tenant-2fa-enrollment', TwoFactorEnrollment::class);
+        Livewire::component('tenant-role-management', RoleManagement::class);
+        Livewire::component('tenant-manage-api-keys', ManageApiKeys::class);
 
         // 4. Register Event Subscriber
-        Event::subscribe(\App\Modules\Tenant\Access\Application\Listeners\TenantIdentityEventSubscriber::class);
+        Event::subscribe(TenantIdentityEventSubscriber::class);
 
         // 5. Map API Scopes to Gates safely (Integration)
-        \Illuminate\Support\Facades\Gate::before(function ($user, string $ability) {
+        Gate::before(function ($user, string $ability) {
             $scopes = request()->attributes->get('api_scopes');
             if (is_array($scopes) && in_array($ability, $scopes)) {
                 return true;
             }
+
             return null; // Continue to other checks
         });
     }

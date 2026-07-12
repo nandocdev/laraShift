@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Access\Application\Services;
+namespace App\Modules\Tenant\Audit\Application\Services;
 
 use App\Modules\Platform\Contracts\Exportable;
 use App\Modules\Tenant\Access\Domain\Models\User;
