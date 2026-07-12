@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Access\Application\Actions;
 
 use App\Modules\Platform\Events\TenantApiKeyCreated;
-use App\Modules\Platform\Security\Hmac\HmacSigner;
+use App\Modules\Platform\Security\ApiKeys\ApiKeyHasher;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
@@ -15,6 +15,10 @@ use Illuminate\Support\Str;
 
 final readonly class GenerateApiKey
 {
+    public function __construct(
+        private ApiKeyHasher $hasher,
+    ) {}
+
     /**
      * Generates a new secure API Key for the tenant.
      *
@@ -25,18 +29,15 @@ final readonly class GenerateApiKey
     public function execute(
         string $name,
         array $scopes,
-        ?User $creator = null
+        ?User $creator = null,
     ): array {
-        // 1. Generate high-entropy key
-        // PRD: tnt_{random_32_bytes_hex}
-        $plainKey = 'tnt_'.bin2hex(random_bytes(32));
+        $plainKey = $this->hasher->generate();
 
-        // 2. Create the model
         $apiKey = ApiKey::create([
             'id' => Str::uuid()->toString(),
             'tenant_id' => tenant('id'),
             'name' => $name,
-            'key_hash' => HmacSigner::hash($plainKey, (string) config('app.key')),
+            'key_hash' => $this->hasher->hash($plainKey),
             'scopes' => $scopes,
             'created_by' => $creator?->id,
         ]);
@@ -47,7 +48,7 @@ final readonly class GenerateApiKey
                 resource: 'api_key',
                 resourceId: $apiKey->id,
                 metadata: ['name' => $name, 'scopes' => $scopes],
-                userId: $creator?->id
+                userId: $creator?->id,
             )
         );
 

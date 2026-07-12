@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
 use App\Modules\Platform\Contracts\TenantContract;
+use App\Modules\Platform\Security\RateLimiting\TenantRateLimiter;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ApplyTenantRateLimits
 {
+    public function __construct(
+        private TenantRateLimiter $rateLimiter,
+    ) {}
+
     /**
      * Handle an incoming request.
      *
@@ -29,13 +34,10 @@ class ApplyTenantRateLimits
         $limitRpm = 60;
 
         if ($tenant instanceof TenantContract) {
-            $limit = $tenant->getQuotaLimit('rate_limit_rpm');
-            if ($limit > 0) {
-                $limitRpm = $limit;
-            }
+            $limitRpm = $this->rateLimiter->resolveLimit($tenant, $limitRpm);
         }
 
-        $key = 'tenant_rate_limit:'.$tenant->id;
+        $key = $this->rateLimiter->key((string) $tenant->id);
 
         try {
             if (RateLimiter::tooManyAttempts($key, $limitRpm)) {
@@ -51,15 +53,13 @@ class ApplyTenantRateLimits
                 ]);
             }
 
-            RateLimiter::hit($key, 60); // 1 minute window
+            RateLimiter::hit($key, 60);
         } catch (\Exception $e) {
-            // Fail open: log warning but allow request if Redis is down
             Log::warning('Rate limiter failed for tenant '.$tenant->id.': '.$e->getMessage());
         }
 
         $response = $next($request);
 
-        // Add headers to response
         if (! $response->isServerError()) {
             $response->headers->set('X-RateLimit-Limit', (string) $limitRpm);
             $response->headers->set('X-RateLimit-Remaining', (string) RateLimiter::remaining($key, $limitRpm));

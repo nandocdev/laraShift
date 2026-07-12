@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Application\Actions;
 
+use App\Modules\Platform\Security\Mfa\MfaService;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Access\Domain\Models\UserMfa;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use PragmaRX\Google2FA\Google2FA;
 
 final readonly class EnrollTenantMfa
 {
     public function __construct(
-        private Google2FA $google2fa
+        private MfaService $mfa,
     ) {}
 
     /**
@@ -21,18 +20,10 @@ final readonly class EnrollTenantMfa
      */
     public function initiate(User $user): array
     {
-        $secret = $this->google2fa->generateSecretKey();
-
-        $qrCodeUrl = $this->google2fa->getQRCodeUrl(
-            config('app.name').' (Tenant)',
+        return $this->mfa->generateSecret(
             $user->email,
-            $secret
+            config('app.name').' (Tenant)',
         );
-
-        return [
-            'secret' => $secret,
-            'qr_code_url' => $qrCodeUrl,
-        ];
     }
 
     /**
@@ -40,7 +31,7 @@ final readonly class EnrollTenantMfa
      */
     public function confirm(User $user, string $secret, string $code): bool
     {
-        if (! $this->google2fa->verifyKey($secret, $code)) {
+        if (! $this->mfa->verify($secret, $code)) {
             return false;
         }
 
@@ -50,7 +41,7 @@ final readonly class EnrollTenantMfa
                 'id' => Str::uuid()->toString(),
                 'method' => 'totp',
                 'secret' => $secret,
-                'recovery_codes' => $this->generateRecoveryCodes(),
+                'recovery_codes' => $this->mfa->generateRecoveryCodes(),
                 'enrolled_at' => now(),
             ]
         );
@@ -62,12 +53,5 @@ final readonly class EnrollTenantMfa
             ->log('tenant_user_2fa_enrolled');
 
         return true;
-    }
-
-    private function generateRecoveryCodes(): array
-    {
-        return Collection::times(8, function () {
-            return Str::random(10).'-'.Str::random(10);
-        })->toArray();
     }
 }
