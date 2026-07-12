@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Experience\Application\Actions;
 
 use App\Modules\Platform\Events\TenantSettingsUpdated;
-use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Tenant\Audit\DTOs\AuditLogData;
-use App\Modules\Tenant\Audit\Enums\AuditAction;
+use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
+use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use App\Modules\Tenant\Experience\Application\DTO\LocalizationData;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Support\Facades\DB;

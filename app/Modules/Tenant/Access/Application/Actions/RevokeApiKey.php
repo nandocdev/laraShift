@@ -6,9 +6,9 @@ namespace App\Modules\Tenant\Access\Application\Actions;
 
 use App\Modules\Platform\Events\TenantApiKeyRevoked;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
-use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Tenant\Audit\DTOs\AuditLogData;
-use App\Modules\Tenant\Audit\Enums\AuditAction;
+use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
+use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 
 final readonly class RevokeApiKey
 {

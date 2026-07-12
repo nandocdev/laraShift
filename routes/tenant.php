@@ -57,7 +57,7 @@ Route::middleware([
         require base_path('app/Modules/Tenant/Integrations/Interface/Routes/web.php');
 
         // Audit Logs
-        require base_path('app/Modules/Tenant/Audit/Interface/Routes/web.php');
+        require base_path('app/Modules/Tenant/Compliance/Interface/Routes/web.php');
 
         // Central Billing SaaS
         require base_path('app/Modules/Central/Billing/Interface/Routes/tenant.php');

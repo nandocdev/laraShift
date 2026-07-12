@@ -14,9 +14,9 @@ use App\Modules\Platform\Events\TenantSmtpConfigured;
 use App\Modules\Platform\Events\TenantUserInvited;
 use App\Modules\Platform\Events\TenantUserJoined;
 use App\Modules\Platform\Events\TenantUserRevoked;
-use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Tenant\Audit\DTOs\AuditLogData;
-use App\Modules\Tenant\Audit\Enums\AuditAction;
+use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
+use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use Illuminate\Events\Dispatcher;
 
 class TenantIdentityEventSubscriber

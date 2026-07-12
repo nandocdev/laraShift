@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Central;
 
-use App\Modules\Central\Marketing\Livewire\RegisterTenant;
+use App\Modules\Central\Growth\Interface\Livewire\RegisterTenant;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;

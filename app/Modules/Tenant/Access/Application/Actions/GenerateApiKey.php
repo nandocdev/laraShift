@@ -8,9 +8,9 @@ use App\Modules\Platform\Events\TenantApiKeyCreated;
 use App\Modules\Platform\Security\ApiKeys\ApiKeyHasher;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use App\Modules\Tenant\Access\Domain\Models\User;
-use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Tenant\Audit\DTOs\AuditLogData;
-use App\Modules\Tenant\Audit\Enums\AuditAction;
+use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
+use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use Illuminate\Support\Str;
 
 final readonly class GenerateApiKey

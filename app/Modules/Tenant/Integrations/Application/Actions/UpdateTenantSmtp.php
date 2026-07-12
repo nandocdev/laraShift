@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Integrations\Application\Actions;
 
 use App\Modules\Platform\Events\TenantSmtpConfigured;
-use App\Modules\Tenant\Audit\Actions\RecordAuditLogAction;
-use App\Modules\Tenant\Audit\DTOs\AuditLogData;
-use App\Modules\Tenant\Audit\Enums\AuditAction;
+use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
+use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
+use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
 use Illuminate\Support\Facades\DB;
