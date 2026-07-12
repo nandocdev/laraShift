@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Modules\Central\Operations\Infrastructure\Support\CentralBranding;
+use App\Modules\Central\Settings\Infrastructure\Services\CentralBranding;
 use Illuminate\Database\Seeder;
 
 class CentralBrandingSeeder extends Seeder

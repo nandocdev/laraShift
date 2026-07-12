@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Operations\Interface\Livewire;
+namespace App\Modules\Central\Settings\Interface\Livewire;
 
-use App\Modules\Central\Operations\Infrastructure\Support\CentralBranding;
+use App\Modules\Central\Settings\Infrastructure\Services\CentralBranding;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;

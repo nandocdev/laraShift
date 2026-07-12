@@ -6,6 +6,7 @@ use App\Modules\Central\Catalog\Providers\CatalogServiceProvider;
 use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
 use App\Modules\Central\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
+use App\Modules\Central\Settings\Providers\SettingsServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
 use App\Modules\Platform\UI\Providers\UiServiceProvider;
 use App\Modules\Tenant\Access\Providers\AccessServiceProvider;
@@ -28,6 +29,7 @@ return [
     BillingServiceProvider::class,
     CatalogServiceProvider::class,
     OperationsServiceProvider::class,
+    SettingsServiceProvider::class,
     SupportServiceProvider::class,
     MarketingServiceProvider::class,
     UiServiceProvider::class,

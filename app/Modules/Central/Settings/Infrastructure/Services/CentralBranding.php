@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Central\Operations\Infrastructure\Support;
+namespace App\Modules\Central\Settings\Infrastructure\Services;
 
-use App\Modules\Central\Operations\Domain\Models\CentralSetting;
+use App\Modules\Central\Settings\Domain\Models\CentralSetting;
 use Illuminate\Support\Facades\Cache;
 
 class CentralBranding

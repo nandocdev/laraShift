@@ -14,8 +14,8 @@
             $logoUrl = tenant_asset($settings->logo_path);
         }
     } else {
-        $brandName = \App\Modules\Central\Operations\Infrastructure\Support\CentralBranding::platformName();
-        $logoUrl = \App\Modules\Central\Operations\Infrastructure\Support\CentralBranding::logoUrl();
+        $brandName = \App\Modules\Central\Settings\Infrastructure\Services\CentralBranding::platformName();
+        $logoUrl = \App\Modules\Central\Settings\Infrastructure\Services\CentralBranding::logoUrl();
     }
 @endphp
 
