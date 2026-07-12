@@ -7,6 +7,7 @@ use App\Modules\Central\Marketing\Providers\MarketingServiceProvider;
 use App\Modules\Central\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
+use App\Modules\Platform\UI\Providers\UiServiceProvider;
 use App\Modules\Tenant\Access\Providers\AccessServiceProvider;
 use App\Modules\Tenant\Audit\Providers\AuditServiceProvider;
 use App\Modules\Tenant\Experience\Providers\ExperienceServiceProvider;
@@ -29,6 +30,7 @@ return [
     OperationsServiceProvider::class,
     SupportServiceProvider::class,
     MarketingServiceProvider::class,
+    UiServiceProvider::class,
     AccessServiceProvider::class,
     WorkspaceServiceProvider::class,
     ExperienceServiceProvider::class,
