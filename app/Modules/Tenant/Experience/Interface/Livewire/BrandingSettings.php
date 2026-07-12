@@ -31,6 +31,8 @@ class BrandingSettings extends Component
 
     public string $theme_preset = 'saas';
 
+    public array $presets = [];
+
     public bool $mfa_required = false;
 
     public function updatedThemePreset($value): void
@@ -81,6 +83,8 @@ class BrandingSettings extends Component
 
     public function mount(): void
     {
+        $this->presets = BrandingPresets::all();
+
         $settings = TenantSetting::firstOrCreate(
             ['tenant_id' => tenant('id')],
             ['name' => tenant('name')]
@@ -141,8 +145,6 @@ class BrandingSettings extends Component
 
     public function render(): View
     {
-        return view('settings-tenant::livewire.branding-settings', [
-            'presets' => BrandingPresets::all(),
-        ]);
+        return view('settings-tenant::livewire.branding-settings');
     }
 }
