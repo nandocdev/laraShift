@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Domain\Models;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Landing extends Model
@@ -32,14 +30,6 @@ class Landing extends Model
         'blocks' => 'array',
         'published_at' => 'datetime',
     ];
-
-    /**
-     * The tenant that owns this landing page.
-     */
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     /**
      * Historical versions/snapshots of this landing.

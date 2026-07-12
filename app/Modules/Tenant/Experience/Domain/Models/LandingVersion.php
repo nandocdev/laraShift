@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Experience\Domain\Models;
 
-use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Platform\Contracts\CentralUserContract;
 use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -42,9 +42,14 @@ class LandingVersion extends Model
 
     /**
      * The central user who published this version.
+     *
+     * Uses CentralUserContract to avoid direct dependency on Central\Auth.
+     * The concrete model is resolved via the container binding.
      */
     public function publisher(): BelongsTo
     {
-        return $this->belongsTo(CentralUser::class, 'published_by');
+        $model = app(CentralUserContract::class);
+
+        return $this->belongsTo(get_class($model), 'published_by');
     }
 }
