@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
+use App\Modules\Platform\Contracts\FeatureResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,33 +23,32 @@ class EnsureTenantIsActive
         // 1. Whitelist critical routes
         if ($request->routeIs([
             'tenant.home',
-            'login', 
-            'login.store', 
+            'login',
+            'login.store',
             'logout',
-            'two-factor.login', 
+            'two-factor.login',
             'two-factor.login.store',
-            'tenant.invitations.accept', 
-            'tenant.support.auth', 
+            'tenant.invitations.accept',
+            'tenant.support.auth',
             'payments.checkout.initiate',
             'tenant.billing.plans',
             'tenant.billing.manage',
             'tenant.billing.checkout.hosted',
             'tenant.billing.success',
             'tenant.billing.cancel',
-            'tenant.billing.update-payment'
+            'tenant.billing.update-payment',
         ]) || $request->is('livewire/*', 'dashboard', 'auth/*', 'billing/*')) {
             return $next($request);
         }
 
         // Prime Features Cache (Redis-first)
         try {
-            $resolverClass = 'App\\Modules\\Central\\Catalog\\Application\\Actions\\ResolveTenantFeatures';
-            if (app()->bound($resolverClass)) {
-                app($resolverClass)->execute(tenant());
+            if (app()->bound(FeatureResolver::class)) {
+                app(FeatureResolver::class)->execute(tenant());
             }
         } catch (\Exception $e) {
             // Log and continue if features can't be resolved
-            \Log::warning("Could not resolve features for tenant: " . tenant('id'));
+            \Log::warning('Could not resolve features for tenant: '.tenant('id'));
         }
 
         // 2. Hard block for archived tenants
