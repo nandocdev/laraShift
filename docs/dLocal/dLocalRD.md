@@ -29,27 +29,27 @@ Esto no viola "Shared nunca contiene reglas de negocio" porque `payment_referenc
 
 ## Casos de uso — Central (Billing: plataforma cobra al tenant)
 
-|#|Caso de uso|Notas|
-|---|---|---|
-|C1|Iniciar cobro de suscripción (alta o renovación)|Genera `payment_references` con `context=central`, `tenant_id=null`|
-|C2|Reintentar cobro fallido (dunning)|Reutiliza Action de C1, no duplica lógica de creación de pago|
-|C3|Cobro por upgrade/downgrade con prorrateo|Monto calculado antes de llegar al gateway — el gateway no sabe de prorrateo|
-|C4|Reembolsar un cobro a nivel plataforma|Requiere Policy de admin (soporte/billing), no cualquier rol|
-|C5|Procesar webhook → actualizar `Subscription`/`Invoice` central|Vive en `Central\Billing\Jobs`, no en Shared|
-|C6|Consultar estado de un pago on-demand|Para soporte: "¿por qué no se activó la suscripción?"|
-|C7|Cancelar autorización no capturada|Solo si usas flujo `AUTHORIZE` + `CAPTURE` para trials con hold|
+| #   | Caso de uso                                                    | Notas                                                                        |
+| --- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| C1  | Iniciar cobro de suscripción (alta o renovación)               | Genera `payment_references` con `context=central`, `tenant_id=null`          |
+| C2  | Reintentar cobro fallido (dunning)                             | Reutiliza Action de C1, no duplica lógica de creación de pago                |
+| C3  | Cobro por upgrade/downgrade con prorrateo                      | Monto calculado antes de llegar al gateway — el gateway no sabe de prorrateo |
+| C4  | Reembolsar un cobro a nivel plataforma                         | Requiere Policy de admin (soporte/billing), no cualquier rol                 |
+| C5  | Procesar webhook → actualizar `Subscription`/`Invoice` central | Vive en `Central\Billing\Jobs`, no en Shared                                 |
+| C6  | Consultar estado de un pago on-demand                          | Para soporte: "¿por qué no se activó la suscripción?"                        |
+| C7  | Cancelar autorización no capturada                             | Solo si usas flujo `AUTHORIZE` + `CAPTURE` para trials con hold              |
 
 ## Casos de uso — Tenant (el tenant cobra a SUS clientes finales)
 
 Asumo que esto aplica a módulos de negocio futuros (Orders, Invoicing, CRM con cobros) que corren **dentro** de un tenant y necesitan procesar pagos de sus propios clientes — no del tenant hacia la plataforma. Si esto no es lo que tenías en mente, dime y ajustamos.
 
-|#|Caso de uso|Notas|
-|---|---|---|
-|T1|Crear cobro para un pedido/factura del cliente final|Debe correr con `TenantContext` ya hidratado (viene de un request normal, no de webhook)|
-|T2|Reembolsar un cobro a un cliente final|Policy: solo dentro del tenant dueño del pago|
-|T3|Procesar webhook → resolver tenant, re-hidratar `TenantContext`, actualizar `Order`/`Invoice` tenant-scoped|El caso crítico — ver flujo abajo|
-|T4|Consultar estado de pago desde el panel Tenant|Solo lectura, scoped por RLS normal|
-|T5|Capturar autorización previamente creada|Ej. reservas con hold de tarjeta|
+| #   | Caso de uso                                                                                                 | Notas                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| T1  | Crear cobro para un pedido/factura del cliente final                                                        | Debe correr con `TenantContext` ya hidratado (viene de un request normal, no de webhook) |
+| T2  | Reembolsar un cobro a un cliente final                                                                      | Policy: solo dentro del tenant dueño del pago                                            |
+| T3  | Procesar webhook → resolver tenant, re-hidratar `TenantContext`, actualizar `Order`/`Invoice` tenant-scoped | El caso crítico — ver flujo abajo                                                        |
+| T4  | Consultar estado de pago desde el panel Tenant                                                              | Solo lectura, scoped por RLS normal                                                      |
+| T5  | Capturar autorización previamente creada                                                                    | Ej. reservas con hold de tarjeta                                                         |
 
 ## Flujo del webhook único (resuelve C5 y T3 sin duplicar código)
 
