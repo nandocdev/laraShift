@@ -1,12 +1,16 @@
 {
-  "mcpServers": {
-    "codegraph": {
-      "type": "stdio",
-      "command": "codegraph",
-      "args": [
-        "serve",
-        "--mcp"
-      ]
+    "mcpServers": {
+        "dlocal-integration-mcp": {
+            "url": "https://mcp.dlocal.com/integration",
+            "transport": "http",
+            "headers": {
+                "x-merchant-id": "TU_MERCHANT_ID_AQUÍ"
+            }
+        },
+        "codegraph": {
+            "type": "stdio",
+            "command": "codegraph",
+            "args": ["serve", "--mcp"]
+        }
     }
-  }
 }

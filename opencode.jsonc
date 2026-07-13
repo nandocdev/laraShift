@@ -31,6 +31,15 @@
                 "artisan",
                 "boost:mcp"
             ]
+        },
+        "dlocal-integration-mcp": {
+            "type": "remote",
+            "url": "https://mcp.dlocal.com/integration",
+            "enabled": true,
+            "transport": "http",
+            "headers": {
+                "x-merchant-id": "1364536"
+            }
         }
     }
 }
