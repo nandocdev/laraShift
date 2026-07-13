@@ -19,7 +19,6 @@ class InternalBillingProvider implements BillingProvider
     public function createCheckoutSession(TenantContract $tenant, string $planId): string
     {
         return route('tenant.billing.checkout.hosted', [
-            'tenant_uuid' => $tenant->getId(),
             'plan_uuid' => $planId,
         ]);
     }

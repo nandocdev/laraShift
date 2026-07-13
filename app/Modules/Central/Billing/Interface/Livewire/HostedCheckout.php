@@ -18,9 +18,9 @@ class HostedCheckout extends Component
 
     public Plan $plan;
 
-    public function mount(string $tenant_uuid, string $plan_uuid): void
+    public function mount(string $plan_uuid): void
     {
-        $this->tenant = Tenant::findOrFail($tenant_uuid);
+        $this->tenant = tenant();
         $this->plan = Plan::findOrFail($plan_uuid);
     }
 
