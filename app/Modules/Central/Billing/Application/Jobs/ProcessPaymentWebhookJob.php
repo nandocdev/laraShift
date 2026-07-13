@@ -49,7 +49,8 @@ final class ProcessPaymentWebhookJob implements ShouldQueue, TenantAware
             app(HandleWebhook::class)->execute(
                 $this->rawPayload,
                 $this->signature,
-                $this->webhookSecret
+                $this->webhookSecret,
+                $this->tenantId,
             );
         } catch (WebhookVerificationException $e) {
             Log::warning('Webhook verification failed', [
