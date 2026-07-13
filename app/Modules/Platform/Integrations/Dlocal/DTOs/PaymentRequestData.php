@@ -15,8 +15,11 @@ final readonly class PaymentRequestData
         public string $country,
         public PayerData $payer,
         public PaymentMethodFlow $flow,
+        public ?string $description = null,
         public ?string $token = null,
         public ?string $notificationUrl = null,
+        public ?string $successUrl = null,
+        public ?string $backUrl = null,
         public array $metadata = [],
     ) {}
 }

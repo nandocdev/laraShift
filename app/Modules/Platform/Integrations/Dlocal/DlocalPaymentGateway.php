@@ -19,16 +19,25 @@ final class DlocalPaymentGateway implements PaymentGatewayContract
 
     public function createPayment(PaymentRequestData $data): PaymentResponseData
     {
-        $response = $this->client->post('/payments', [
+        $payload = array_filter([
             'order_id' => $data->orderId,
             'amount' => $this->toDecimal($data->amountInCents),
             'currency' => $data->currency,
             'country' => $data->country,
             'payment_method_flow' => $data->flow->value,
             'payer' => $data->payer->toArray(),
+            'description' => $data->description,
             'token' => $data->token,
             'notification_url' => $data->notificationUrl,
-        ]);
+            'success_url' => $data->successUrl,
+            'back_url' => $data->backUrl,
+        ], static fn ($v) => $v !== null);
+
+        if ($data->metadata !== []) {
+            $payload['metadata'] = $data->metadata;
+        }
+
+        $response = $this->client->post('/payments', $payload);
 
         return PaymentResponseData::fromApiResponse($response);
     }

@@ -20,6 +20,8 @@ class ResolveDlocalWebhookJob implements ShouldQueue
     public function __construct(
         public readonly string $externalReference,
         public readonly array $rawPayload,
+        public readonly string $signature = '',
+        public readonly string $webhookSecret = '',
     ) {}
 
     public function handle(): void
@@ -53,8 +55,8 @@ class ResolveDlocalWebhookJob implements ShouldQueue
         ProcessPaymentWebhookJob::dispatch(
             $reference->tenant_id ?? 'central',
             json_encode($this->rawPayload),
-            '',
-            '',
+            $this->signature,
+            $this->webhookSecret,
         );
     }
 
@@ -76,8 +78,8 @@ class ResolveDlocalWebhookJob implements ShouldQueue
         ProcessPaymentWebhookJob::dispatch(
             $reference->tenant_id,
             json_encode($this->rawPayload),
-            '',
-            '',
+            $this->signature,
+            $this->webhookSecret,
         );
     }
 }

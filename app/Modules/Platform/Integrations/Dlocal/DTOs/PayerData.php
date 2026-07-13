@@ -9,7 +9,7 @@ final readonly class PayerData
     public function __construct(
         public string $name,
         public string $email,
-        public string $documentId,
+        public ?string $documentId = null,
         public ?string $documentType = null,
         public ?string $phone = null,
         public ?string $userReference = null,

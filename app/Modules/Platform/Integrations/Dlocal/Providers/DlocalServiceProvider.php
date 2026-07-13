@@ -13,16 +13,20 @@ class DlocalServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(PaymentGatewayContract::class, function () {
+        $this->app->singleton(DlocalHttpClient::class, function () {
+            return new DlocalHttpClient(
+                baseUrl: config('dlocal.environment') === 'production'
+                    ? 'https://api.dlocal.com'
+                    : 'https://sandbox.dlocal.com',
+                login: (string) config('dlocal.login'),
+                transKey: (string) config('dlocal.trans_key'),
+                secretKey: (string) config('dlocal.secret_key'),
+            );
+        });
+
+        $this->app->bind(PaymentGatewayContract::class, function ($app) {
             return new DlocalPaymentGateway(
-                new DlocalHttpClient(
-                    baseUrl: config('dlocal.environment') === 'production'
-                        ? 'https://api.dlocal.com'
-                        : 'https://sandbox.dlocal.com',
-                    login: (string) config('dlocal.login'),
-                    transKey: (string) config('dlocal.trans_key'),
-                    secretKey: (string) config('dlocal.secret_key'),
-                ),
+                $app->make(DlocalHttpClient::class),
             );
         });
     }
@@ -30,5 +34,6 @@ class DlocalServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../../../../database/migrations');
+        $this->loadRoutesFrom(__DIR__.'/../Interface/Routes/webhooks.php');
     }
 }

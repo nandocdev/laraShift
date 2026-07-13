@@ -49,7 +49,7 @@ class BillingServiceProvider extends ServiceProvider
             $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
 
             return match ($gateway) {
-                'dlocal' => new DlocalGateway,
+                'dlocal' => $app->make(DlocalGateway::class),
                 default => $app->make(ClaveGateway::class),
             };
         });
