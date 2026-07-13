@@ -453,3 +453,9 @@ Layout de 3 columnas verticales con barra superior:
 - [x] Tests (4): acceso denegado sin rol, acceso concedido con rol, permiso asignado, acceso a otras secciones
 
 ## ✅ FASE 8 COMPLETA — Page Builder
+
+
+- Consolidar: Unificar Central DlocalGateway para que use DlocalPaymentGateway/DlocalHttpClient de Platform
+- Arreglar bugs: Corregir el ProcessPaymentWebhookJob y el flujo de webhooks
+- Extender: Implementar casos de uso que faltan (checkout flow, webhook controller dedicado en Platform, etc.)
+- Otra dirección que tengas en mente
