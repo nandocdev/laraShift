@@ -28,7 +28,7 @@ class CreateTenant extends Component
                 'required',
                 'alpha_dash',
                 'unique:domains,domain',
-                'not_in:'.implode(',', ReservedSlugs::$list),
+                'not_in:'.implode(',', ReservedSlugs::all()),
             ],
             'email' => 'required|email',
         ];

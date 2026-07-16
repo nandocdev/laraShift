@@ -62,7 +62,7 @@ class RegisterTenant extends Component
                 'slug' => [
                     'required', 'string', 'max:63',
                     'regex:/^[a-z0-9-]+$/',
-                    'not_in:'.implode(',', ReservedSlugs::$list),
+                    'not_in:'.implode(',', ReservedSlugs::all()),
                     'unique:tenants,slug',
                 ],
                 'password' => ['required', 'string', Password::defaults()],
