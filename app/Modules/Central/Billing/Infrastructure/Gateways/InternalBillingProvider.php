@@ -18,9 +18,11 @@ class InternalBillingProvider implements BillingProvider
 
     public function createCheckoutSession(TenantContract $tenant, string $planId): string
     {
-        return route('tenant.billing.checkout.hosted', [
-            'plan_uuid' => $planId,
-        ]);
+        return tenant_route(
+            $tenant->getDomain(),
+            'tenant.billing.checkout.hosted',
+            ['plan_uuid' => $planId],
+        );
     }
 
     public function cancelSubscription(TenantContract $tenant, string $subscriptionId, bool $immediately = false): void
