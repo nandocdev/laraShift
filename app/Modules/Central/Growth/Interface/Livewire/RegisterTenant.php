@@ -155,12 +155,6 @@ class RegisterTenant extends Component
             status: $this->isPlanFree() ? 'active' : 'pending_payment',
         ));
 
-        $domain = $this->slug.'.'.config('tenancy.central_domain');
-        $baseUrl = config('app.url');
-        $scheme = parse_url($baseUrl, PHP_URL_SCHEME) ?? 'https';
-        $port = parse_url($baseUrl, PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-
         // If it's a paid plan, redirect to the hosted checkout page within the tenant context
         if (! $this->isPlanFree()) {
             $checkoutUrl = app(BillingManager::class)
@@ -171,7 +165,12 @@ class RegisterTenant extends Component
             return;
         }
 
-        $this->redirect("$scheme://$domain$portSuffix/auth/login", navigate: false);
+        $redirectUrl = tenant_route(
+            $tenant->domains->first()?->domain ?? "{$this->slug}.".config('tenancy.central_domain'),
+            'login',
+        );
+
+        $this->redirect($redirectUrl, navigate: false);
     }
 
     /**
