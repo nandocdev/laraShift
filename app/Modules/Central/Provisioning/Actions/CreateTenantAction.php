@@ -11,6 +11,7 @@ use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Events\TenantProvisioned;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -122,6 +123,11 @@ final readonly class CreateTenantAction
 
                 return $tenant;
             });
+        } catch (UniqueConstraintViolationException $e) {
+            throw new \RuntimeException(
+                __('The slug ":slug" was just taken by another registration. Please try a different one.', ['slug' => $data->slug]),
+                previous: $e,
+            );
         } catch (\Exception $e) {
             if ($tenant) {
                 $this->handleFailure($tenant, $e);
