@@ -57,7 +57,7 @@ class RegisterTenant extends Component
         return match ($step) {
             1 => [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:central_users,email',
+                'email' => 'required|email|max:255',
                 'company' => 'required|string|max:255',
                 'slug' => [
                     'required', 'string', 'max:63',
