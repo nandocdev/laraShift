@@ -53,8 +53,11 @@ class FulfillSubscription
                 ]
             );
 
-            // Update tenant's current plan
-            $tenant->update(['plan_id' => $plan->slug]);
+            // Update tenant's current plan and activate if pending
+            $tenant->update([
+                'plan_id' => $plan->slug,
+                'status' => 'active',
+            ]);
 
             Log::info('Subscription fulfilled via Payments engine', [
                 'tenant' => $tenant->id,

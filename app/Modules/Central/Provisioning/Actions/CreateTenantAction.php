@@ -106,9 +106,9 @@ final readonly class CreateTenantAction
                     }
                 });
 
-                // Finalize: Active
+                // Finalize: set status (active / pending_payment)
                 $tenant->update([
-                    'status' => 'active',
+                    'status' => $data->status,
                     'provisioned_at' => now(),
                 ]);
 

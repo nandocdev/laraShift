@@ -51,7 +51,26 @@ class EnsureTenantIsActive
             \Log::warning('Could not resolve features for tenant: '.tenant('id'));
         }
 
-        // 2. Hard block for archived tenants
+        // 2. Allow pending_payment tenants through billing routes
+        if (tenant('status') === 'pending_payment') {
+            if ($request->routeIs([
+                'tenant.billing.plans',
+                'tenant.billing.manage',
+                'tenant.billing.checkout.hosted',
+                'tenant.billing.success',
+                'tenant.billing.cancel',
+                'tenant.billing.update-payment',
+                'login',
+                'login.store',
+                'logout',
+            ]) || $request->is('livewire/*', 'auth/*', 'billing/*')) {
+                return $next($request);
+            }
+
+            return redirect()->route('tenant.billing.plans');
+        }
+
+        // 3. Hard block for archived tenants
         if (tenant('status') === 'archived') {
             abort(404);
         }

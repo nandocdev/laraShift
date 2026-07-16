@@ -152,6 +152,7 @@ class RegisterTenant extends Component
             plan_id: $this->plan_id,
             password: $this->password,
             payment_token: null,
+            status: $this->isPlanFree() ? 'active' : 'pending_payment',
         ));
 
         $domain = $this->slug.'.'.config('tenancy.central_domain');
