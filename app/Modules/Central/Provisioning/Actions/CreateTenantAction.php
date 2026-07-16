@@ -80,12 +80,7 @@ final readonly class CreateTenantAction
                     $this->provisionInfra->execute($tenant);
                 });
 
-                // Step 4: Initial Admin User
-                $this->logStep($tenant, 'admin_user', function () use ($tenant, $data) {
-                    TenantProvisioned::dispatch($tenant, $data->email, 'Administrator', $data->password);
-                });
-
-                // Step 5: Billing Setup — only for paid plans
+                // Step 4: Billing Setup — only for paid plans
                 $this->logStep($tenant, 'billing_setup', function () use ($tenant, $data) {
                     $plan = null;
                     if (Schema::hasColumn('plans', 'slug')) {
@@ -118,6 +113,12 @@ final readonly class CreateTenantAction
                 activity('provisioning')
                     ->performedOn($tenant)
                     ->log('tenant_provisioned_successfully');
+
+                // Dispatch after commit — evita que un fallo en el listener
+                // (ej. email SMTP timeout) revierta toda la transacción
+                DB::afterCommit(fn () => TenantProvisioned::dispatch(
+                    $tenant, $data->email, 'Administrator', $data->password,
+                ));
 
                 return $tenant;
             });
