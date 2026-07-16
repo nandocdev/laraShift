@@ -26,12 +26,12 @@ final readonly class EnsureTenantRolesExist
             ]
         );
 
-        // Member Role
+        // Member Role (not system — regular user role)
         Role::updateOrCreate(
             ['tenant_id' => $tenantId, 'name' => 'member', 'guard_name' => 'web'],
             [
                 'id' => Str::uuid()->toString(),
-                'is_system' => true,
+                'is_system' => false,
             ]
         );
     }
