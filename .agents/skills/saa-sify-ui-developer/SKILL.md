@@ -45,6 +45,7 @@ Cada componente debe integrarse en el ecosistema LaraShift.
 | **FluxUI**      | Componentes de diseño (botones, modales, formularios) |
 | **TailwindCSS** | Estilizado utilitario                                 |
 | **Alpine.js**   | Interacciones ligeras dentro de Blade                 |
+| **Medialibrary**| `spatie/laravel-medialibrary` para uploads y archivos |
 
 **Prohibido:**
 
@@ -87,12 +88,41 @@ Cada componente debe integrarse en el ecosistema LaraShift.
 ## Estructura de Componentes Livewire
 
 ```
-app/Modules/{Module}/Livewire/
+app/Modules/{Scope}/{Module}/Interface/Livewire/
 ├── {Component}.php
-└── Resources/views/
-    └── livewire/
-        └── {component}.blade.php
+└── Views/
+    ├── pages/{component}.blade.php
+    └── livewire/{component}.blade.php
 ```
+
+### Namespace Correcto
+
+```
+App\Modules\{Scope}\{Module}\Interface\Livewire\{Component}
+```
+
+**Ejemplos reales:**
+- `App\Modules\Central\Billing\Interface\Livewire\PlanList`
+- `App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys`
+- `App\Modules\Tenant\Workspace\Interface\Livewire\TeamManagement`
+
+### Registro en ServiceProvider
+
+Los componentes se registran en el ServiceProvider del módulo:
+
+```php
+// Providers/{Module}ServiceProvider.php
+$this->loadViewsFrom(__DIR__.'/../Interface/Views', 'module-key');
+
+Livewire::component('component-name', Component::class);
+```
+
+Las vistas se referencian como `{module-key}::pages.{view}` o `{module-key}::livewire.{view}`.
+
+**Ejemplos reales:**
+- `view('billing::pages.plan-list')` → `app/Modules/Central/Billing/Interface/Views/pages/plan-list.blade.php`
+- `view('identity::livewire.manage-api-keys')` → `app/Modules/Tenant/Access/Interface/Views/livewire/manage-api-keys.blade.php`
+- `view('workspace::livewire.team-management')` → `app/Modules/Tenant/Workspace/Interface/Views/livewire/team-management.blade.php`
 
 ### Componente PHP
 
@@ -101,14 +131,16 @@ app/Modules/{Module}/Livewire/
 
 declare(strict_types=1);
 
-namespace App\Modules\{Module}\Livewire;
+namespace App\Modules\{Scope}\{Module}\Interface\Livewire;
 
+use App\Modules\{Scope}\{Module}\Application\Actions\{SomeAction};
+use App\Modules\{Scope}\{Module}\Domain\Models\{SomeModel};
+use Illuminate\Contracts\View\View;
+use Livewire\Attributes\{Layout, On, Url, Computed};
 use Livewire\Component;
-use Livewire\Attributes\{On, Url, Computed};
-use App\Modules\{Module}\Actions\{SomeAction};
-use App\Modules\{Module}\DTOs\{SomeData};
 
-final class SomeComponent extends Component
+#[Layout('layouts.{context}')] // central | app | auth
+class SomeComponent extends Component
 {
     // Propiedades públicas = estado de UI
     public string $search = '';
@@ -138,23 +170,20 @@ final class SomeComponent extends Component
         $this->dispatch('$refresh');
     }
 
-    // Acciones de UI
-    public function applyFilters(array $filters): void
+    // Acciones de UI — Action inyectada como parámetro del método
+    public function deleteItem(string $id, DeleteItemAction $action): void
     {
-        $this->filters = $filters;
-        $this->page = 1;
-    }
+        $action->execute($id);
 
-    public function deleteItem(int $id): void
-    {
-        // Llama a una Action, nunca lógica de negocio directa
-        DeleteItemAction::execute(DeleteItemData::from(['id' => $id]));
         $this->dispatch('item-deleted');
+        session()->flash('status', __('Item deleted.'));
     }
 
     public function render(): View
     {
-        return view('livewire.{module}.{component}');
+        return view('{module-key}::pages.{view-name}', [
+            'data' => $this->items,
+        ]);
     }
 }
 ```
@@ -194,7 +223,7 @@ final class SomeComponent extends Component
         </flux:columns>
 
         <flux:rows>
-            @foreach($this->items as $item)
+            @foreach($data as $item)
                 <flux:row>
                     <flux:cell>{{ $item->name }}</flux:cell>
                     <flux:cell>
@@ -239,7 +268,7 @@ final class SomeComponent extends Component
 
     <!-- Paginación -->
     <div class="mt-4">
-        {{ $this->items->links() }}
+        {{ $data->links() }}
     </div>
 
     <!-- Modal de creación/edición -->
@@ -261,7 +290,7 @@ final class SomeComponent extends Component
 ### Estructura del Form
 
 ```
-app/Modules/{Module}/Livewire/Forms/
+app/Modules/{Scope}/{Module}/Interface/Livewire/Forms/
 └── {Name}Form.php
 ```
 
@@ -272,12 +301,12 @@ app/Modules/{Module}/Livewire/Forms/
 
 declare(strict_types=1);
 
-namespace App\Modules\{Module}\Livewire\Forms;
+namespace App\Modules\{Scope}\{Module}\Interface\Livewire\Forms;
 
+use App\Modules\{Scope}\{Module}\Application\Actions\{SomeAction};
+use App\Modules\{Scope}\{Module}\Application\DTO\{SomeData};
 use Livewire\Attributes\Validate;
 use Livewire\Form;
-use App\Modules\{Module}\DTOs\{SomeData};
-use App\Modules\{Module}\Actions\{SomeAction};
 
 final class SomeForm extends Form
 {
@@ -296,7 +325,7 @@ final class SomeForm extends Form
     {
         $this->validate();
 
-        SomeAction::execute(
+        app(SomeAction::class)->execute(
             SomeData::from([
                 'name' => $this->name,
                 'email' => $this->email,
@@ -378,6 +407,17 @@ final class SomeForm extends Form
 
 ---
 
+## Layouts Disponibles
+
+| Layout                    | Uso                                      |
+| ------------------------- | ---------------------------------------- |
+| `#[Layout('layouts.central')]` | Panel de administración (staff)      |
+| `#[Layout('layouts.app')]`     | Panel del tenant (clientes)          |
+| `#[Layout('layouts.auth')]`    | Login, registro, recuperación        |
+| `#[Layout('layouts.marketing')]` | Landing público y marketing        |
+
+---
+
 ## Convenciones de UI
 
 ### Nombrado de Componentes
@@ -407,6 +447,33 @@ final class SomeForm extends Form
 
 ---
 
+## Inyección de Actions en Livewire
+
+Las Actions se inyectan como parámetro del método, **no** como llamada estática:
+
+```php
+// ✅ Correcto
+public function save(UpsertPlan $action): void
+{
+    $data = new PlanData(name: $this->name, ...);
+    $action->execute($data);
+}
+
+// ❌ Incorrecto — no usar llamadas estáticas
+public function save(): void
+{
+    UpsertPlan::execute(...);
+}
+```
+
+**Ejemplos reales del código:**
+- `public function save(UpsertPlan $action): void` → `$action->execute($data, $this->plan)` — `ManagePlan.php`
+- `public function invite(SendInvitation $action): void` → `$action->execute(new InvitationData(...), auth()->user())` — `TeamManagement.php`
+- `public function generate(GenerateApiKey $action): void` → `$action->execute($this->name, $this->selectedScopes, auth()->user())` — `ManageApiKeys.php`
+- `public function delete(string $planId, DeletePlan $action): void` → `$action->execute($plan)` — `PlanList.php`
+
+---
+
 ## Patrones de Interacción
 
 ### Búsqueda con Debounce
@@ -421,7 +488,7 @@ final class SomeForm extends Form
 ### Paginación
 
 ```blade
-{{ $this->items->links(data: ['scrollTo' => 'top']) }}
+{{ $data->links(data: ['scrollTo' => 'top']) }}
 ```
 
 ### Confirmación de Acción
@@ -448,21 +515,14 @@ final class SomeForm extends Form
 </div>
 ```
 
-### Notificaciones
+### Notificaciones (Flash Messages)
 
 ```blade
-@php
-    $notifications = session()->get('notifications', []);
-@endphp
-
-@foreach($notifications as $notification)
-    <flux:toast
-        :variant="$notification['type'] ?? 'success'"
-        :dismissible="true"
-    >
-        {{ $notification['message'] }}
+@if (session('status'))
+    <flux:toast variant="success" dismissible>
+        {{ session('status') }}
     </flux:toast>
-@endforeach
+@endif
 ```
 
 ---
@@ -511,7 +571,7 @@ final class SomeForm extends Form
 ### Permitido
 
 - **Acceso a Queries** para obtener datos
-- **Llamada a Actions** para operaciones
+- **Llamada a Actions** (inyectadas como parámetro)
 - **Validación de formularios** con reglas de Laravel
 - **Uso de FluxUI** componentes oficiales
 - **Interacción con Alpine.js** para mejoras ligeras
@@ -523,8 +583,12 @@ final class SomeForm extends Form
 
 Antes de entregar un componente, verificas:
 
-- [ ] ¿El componente está en el módulo correcto?
+- [ ] ¿El componente está en el módulo correcto (`Interface/Livewire/`)?
+- [ ] ¿El namespace es `App\Modules\{Scope}\{Module}\Interface\Livewire`?
+- [ ] ¿La vista está en `Interface/Views/pages/` o `Interface/Views/livewire/`?
+- [ ] ¿La vista se referencia como `{module-key}::pages.{view}` o `{module-key}::livewire.{view}`?
 - [ ] ¿La lógica de negocio está en Actions, no en Livewire?
+- [ ] ¿Las Actions se inyectan como parámetro del método?
 - [ ] ¿Los datos complejos usan Queries?
 - [ ] ¿El formulario usa DTOs para Actions?
 - [ ] ¿La vista usa componentes FluxUI?
@@ -533,6 +597,7 @@ Antes de entregar un componente, verificas:
 - [ ] ¿Los eventos tienen nombres descriptivos?
 - [ ] ¿La paginación está implementada para listas grandes?
 - [ ] ¿Las acciones destructivas tienen confirmación?
+- [ ] ¿El layout corresponde al contexto (`layouts.central`, `layouts.app`, `layouts.auth`, `layouts.marketing`)?
 
 ---
 
@@ -543,33 +608,31 @@ Antes de entregar un componente, verificas:
 ```markdown
 ## Análisis
 
-Este requerimiento corresponde al módulo **Users** (Tenant), que es scaffolding genérico del framework.
+Este requerimiento corresponde al módulo **Access** (Tenant), que es scaffolding genérico del framework.
 
 ### Decisiones Arquitectónicas Aplicables
 
-- PRD §10: Users es módulo Tenant, no contiene lógica de dominio de negocio
-- ARCHITECTURE_RULES §UI: Livewire + FluxUI, sin lógica de negocio en componentes
-- PROJECT_DECISIONS §4: Todo acceso a datos debe respetar RLS
+- AGENTS.md §Tenant: Access es módulo Tenant, no contiene lógica de dominio de negocio
+- AGENTS.md §UI: Livewire + FluxUI, sin lógica de negocio en componentes
+- AGENTS.md §Multi-Tenancy: Todo acceso a datos debe respetar RLS
 
 ### Componentes Propuestos
 
-1. **Users/List** — Muestra usuarios paginados con búsqueda
-2. **Users/Form** — Creación/edición de usuarios
-3. **Users/InviteModal** — Invitación de nuevos usuarios
+1. **UserList** — Muestra usuarios paginados con búsqueda
+2. **UserForm** — Creación/edición de usuarios
+3. **InviteModal** — Invitación de nuevos usuarios
 
 ### Estructura
-```
 
-app/Modules/Tenant/Users/Livewire/
+```
+app/Modules/Tenant/Access/Interface/Livewire/
 ├── UserList.php
 ├── UserForm.php
 ├── UserInviteForm.php
 └── Views/
-└── livewire/
-├── user-list.blade.php
-├── user-form.blade.php
-└── user-invite-form.blade.php
-
+    ├── pages/user-list.blade.php
+    ├── pages/user-form.blade.php
+    └── livewire/user-invite-form.blade.php
 ```
 
 ### Queries Necesarias
@@ -586,9 +649,6 @@ app/Modules/Tenant/Users/Livewire/
 - `CrossTenantLeakTest` — verifica aislamiento de usuarios entre tenants
 - `UserListTest` — verifica paginación y búsqueda
 - `UserFormTest` — verifica validación y creación
-
-### Vista de Ejemplo
-[Vista Blade usando FluxUI components]
 
 ¿Confirmo la implementación siguiendo este plan?
 ```
@@ -634,19 +694,6 @@ app/Modules/Tenant/Users/Livewire/
 | Componentes sin pruebas                  | Mantenibilidad            |
 
 ---
-
-## Flujo de Trabajo Recomendado
-
-0. **Revisión del Requerimiento**: Inicializar una rama de feature y revisar el PRD y las decisiones de arquitectura.
-1. **Análisis del Requerimiento**: Identificar módulo, contexto y necesidades de UI.
-2. **Diseño de Componentes**: Definir qué componentes Livewire y FluxUI se necesitan.
-3. **Implementación de Queries y Actions**: Crear las Queries y Actions necesarias para separar la lógica de negocio.
-4. **Desarrollo de Componentes Livewire**: Implementar los componentes siguiendo las convenciones y principios de UI.
-5. **Creación de Vistas Blade**: Usar FluxUI para construir las vistas de manera consistente y accesible.
-6. **Pruebas y Validación**: Asegurarse de que los componentes funcionen correctamente, sean accesibles y cumplan con las reglas de UI.
-7. **Revisión y Refinamiento**: Revisar el código, realizar ajustes y optimizaciones según sea necesario.
-8. **Control de Versiones**: Hacer commits atomicos y push de los cambios ala rama develop, abrir un PR para revisión de código.
-9. **Despliegue y Monitoreo**: Implementar los cambios en el entorno de producción y monitorear su desempeño y accesibilidad.
 
 ## Nota Final
 
