@@ -11,26 +11,52 @@ If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is 
 
 ## Arquitectura: Monolito Modular (Central, Tenant, Platform)
 
-Todos los desarrollos en este repositorio deben seguir la arquitectura de **Monolito Modular** definida en [MODULE_SCOPE_MAP.md](file:///home/nandocdev/Projects/laraShift/docs/architecture/MODULE_SCOPE_MAP.md):
+LaraShift es un **framework/boilerplate SaaS reutilizable, no un producto**. Toda implementación debe seguir:
+- `docs/ARCHITECTURE_RULES.md` — reglas obligatorias (scopes, capas, comunicación, multi-tenancy).
+- `docs/PROJECT_DECISIONS.md` — decisiones arquitectónicas oficiales (fuente de verdad; cambiarlas exige ADR previo).
 
-### 1. Estructura de Scopes (en `app/Modules/`)
-- `Central/`: Módulos de operación del negocio SaaS.
-- `Tenant/`: Módulos de funcionalidades que usan los clientes finales en sus workspaces.
-- `Platform/`: Módulos y primitivas transversales (seguridad, multi-tenancy, contratos, observabilidad, UI base). **Prohibido colocar nuevos desarrollos en `Shared`**. Todo nuevo desarrollo transversal o de infraestructura técnica debe ir en `Platform/` (o migrar lo existente bajo `Shared/` de forma ordenada).
+### Scopes (en `app/Modules/`)
+- `Platform/`: primitivas transversales (Contracts, Events, Tenancy, Security, UI, Observability, Integrations/Dlocal). **100% independiente — prohibido importar clases de `Central` o `Tenant`**.
+- `Central/`: operación del SaaS (Auth, Billing, Catalog, Provisioning, Operations, Settings, Support, Growth).
+- `Tenant/`: scaffolding genérico del cliente (Access, Workspace, Experience, Compliance, Integrations). **Prohibido agregar módulos de dominio vertical** (CRM, Documents, Forms, Automation, Reports...). `Shared/` quedó deprecado — todo desarrollo transversal va a `Platform/`.
 
-### 2. Estructura Interna Estándar de los Módulos
-Cualquier módulo complejo debe subdividirse en las siguientes capas bajo `app/Modules/<Scope>/<Modulo>/`:
-- `Domain/`: Reglas puras de negocio (Models, ValueObjects, Enums, Events de dominio, Policies, Rules). Sin controllers ni llamadas HTTP externas.
-- `Application/`: Casos de uso y orquestación (Actions, Commands, Queries, DTOs, Jobs, Listeners).
-- `Infrastructure/`: Adaptadores técnicos (Persistence, Clients, Gateways de pago, Mail, Notifications).
-- `Interface/`: Capa de entrada/salida de usuario (Livewire, Http/Controllers, Routes, Views).
-- `Database/`: Migraciones, Factories y Seeders específicos del módulo.
-- `Providers/`: El Service Provider del módulo.
+### Capas internas de cada módulo
+`Domain/` (Models, Enums, Events, Policies), `Application/` (Actions, DTOs, Jobs, Listeners), `Infrastructure/` (Clients, Gateways, Notifications), `Interface/` (Livewire, Http, Routes, Views), `Providers/`. Módulos legacy (ej. `Central/Auth`, `Central/Provisioning`) usan estructura plana; todo lo **nuevo debe usar las capas**.
 
-### 3. Restricciones de Dependencias (Regla de Oro)
-- `Platform` debe ser 100% independiente. **Prohibido importar clases de `Central` o `Tenant` dentro de `Platform`**.
-- `Central` y `Tenant` pueden depender de `Platform`.
-- Para evitar acoplamiento directo entre `Central` y `Tenant`, usa contratos abstractos (`Platform/Contracts`), eventos de integración (`Platform/Events`), read models o jobs.
+### Reglas críticas (ver ARCHITECTURE_RULES.md)
+- Comunicación entre módulos — tanto Central-Central, Tenant-Tenant como Central-Tenant — solo vía Actions públicas, Contracts o Events. **Nunca** acceso directo a Models o SQL de otro módulo, aunque compartan Bounded Context.
+- Identidad separada: guard `central` + `CentralUser` (staff) y guard por defecto `web` + `User` (tenant). **No existe un guard `tenant`** en `config/auth.php` pese a que la doc lo menciona.
+- Actions = `final readonly class` con método `execute(...)`, DTOs de `spatie/laravel-data` (nunca arrays/Request). Controllers y Livewire solo coordinan — sin reglas de negocio.
+- Livewire: solo estado de UI. Las Actions se inyectan como parámetro del método: `public function save(SaveAction $action): void`.
+
+## Multi-Tenancy y RLS (obligatorio)
+- Estrategia oficial: **Single DB + `tenant_id` + PostgreSQL RLS**. Ningún módulo implementa aislamiento propio.
+- `TenantContext` se registra `scoped()`, nunca `singleton()` (compatibilidad Octane). El contexto se propaga con `SET LOCAL app.tenant_id` dentro de una transacción explícita (nunca `SET` a nivel de sesión).
+- Todo Job que toque datos tenant-aware debe implementar `App\Modules\Platform\Contracts\TenantAware` y declarar el middleware `RehydrateTenantContext` (`App\Modules\Platform\Tenancy\Infrastructure\Jobs`). Un Job sin contexto tenant debe fallar con excepción, nunca ejecutarse en silencio.
+- RLS no se activa solo: por cada tabla tenant-aware nueva corre `php artisan tenancy:enable-rls {table}` (o emite las sentencias RLS en la migración). Postgres solo; `MySQL`/`sqlite` no son soportados en producción.
+- Claves de cache con formato `tenant:{tenant_id}:{key}`. Nunca compartidas entre tenants.
+- Resolución por subdominio vía `InitializeTenancyByDomain`; dominios centrales desde `CENTRAL_DOMAIN`/`CENTRAL_DOMAINS` (localhost y 127.0.0.1 siempre son centrales).
+
+## Wiring de la app
+- Migraciones centralizadas en `database/migrations/` (la capa `Database/` por módulo **no** se usa para migraciones).
+- Cada módulo se registra manualmente en `bootstrap/providers.php` (no se auto-descubre). Su ServiceProvider registra rutas, vistas bajo namespace `{module-key}::` (ej. `identity::`, `billing::`) y componentes Livewire.
+- Rutas: `routes/web.php` (central → Growth + settings), `routes/tenant.php`, `routes/tenant_api.php` (autenticación por HMAC ApiKey), `routes/settings.php`.
+
+## Comandos
+- Lint: `composer lint` (pint). Suites completas: `composer test` (config:clear + pint --test + `php artisan test`). Dev integrado: `composer dev` (serve + queue:listen + pail + vite en paralelo).
+- Dev DB: `DB_CONNECTION=pgsql`, `DB_DATABASE=larashift_db` (ver `.env`).
+- Utilidades: `php artisan provision:tenant {name} {slug} {email}`, `php artisan central:create-user {name} {email} {password}`.
+
+## Testing
+- Pest. Test individual: `php artisan test --compact --filter=NombreTest`. Crear con `php artisan make:test --pest {nombre}` (sin prefijo `Feature/`).
+- `tests/Pest.php` aplica `RefreshDatabase` y, salvo `Feature\Auth`/`Feature\Settings`, inicializa un tenant de prueba vía `tenancy()->initialize` con dominio `{slug}.{centralDomain}`.
+- phpunit.xml usa **SQLite `:memory:`**; los tests de RLS / `CrossTenantLeakTest` (trait en `app/Modules/Platform/Support/CrossTenantLeakTest.php`) se auto-skipean si el driver no es `pgsql` o si el usuario DB es superuser. Para validar aislamiento localmente hace falta Postgres + usuario no-superuser.
+- Toda tarea tenant-aware exige su `CrossTenantLeakTest` como Definition of Done.
+
+## Frontend
+- Livewire 4 + Flux UI (v2) + Tailwind v4 + Alpine. Prohibido React/Vue/Inertia en paneles.
+- Cambios en Blade requieren `npm run build` o `npm run dev` para verse reflejados (o `composer dev`).
+- Layouts: `layouts.central` (staff), `layouts.app` (tenant), `layouts.auth`, `layouts.marketing` (público).
 
 ===
 
