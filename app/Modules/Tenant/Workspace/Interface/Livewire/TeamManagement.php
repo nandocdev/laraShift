@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
-use App\Modules\Platform\Events\TenantUserRevoked;
+use App\Modules\Tenant\Access\Application\Actions\CancelTenantInvitation;
+use App\Modules\Tenant\Access\Application\Actions\RevokeTenantUserAccess;
 use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
+use App\Modules\Tenant\Access\Application\Actions\UpdateTenantUserRole;
 use App\Modules\Tenant\Access\Application\DTO\InvitationData;
 use App\Modules\Tenant\Access\Domain\Models\Invitation;
 use App\Modules\Tenant\Access\Domain\Models\Role;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -24,6 +28,14 @@ class TeamManagement extends Component
     public string $inviteEmail = '';
 
     public string $inviteRole = 'member';
+
+    // Change Role state
+    #[Locked]
+    public ?string $selectedMemberId = null;
+
+    public ?User $selectedMember = null;
+
+    public string $newRole = '';
 
     public function invite(SendInvitation $action): void
     {
@@ -65,79 +77,66 @@ class TeamManagement extends Component
         }
     }
 
-    public function cancelInvitation(string $id): void
+    public function cancelInvitation(string $id, CancelTenantInvitation $action): void
     {
         $invite = Invitation::findOrFail($id);
-        $invite->delete();
-
-        activity('identity')
-            ->withProperties(['email' => $invite->email])
-            ->log('invitation_cancelled');
+        $action->execute($invite, auth()->user());
 
         session()->flash('status', __('Invitation cancelled.'));
     }
 
-    // Change Role state
-    public ?User $selectedMember = null;
-
-    public string $newRole = '';
-
     public function selectMember(string $userId): void
     {
         $this->selectedMember = User::findOrFail($userId);
+        $this->selectedMemberId = $this->selectedMember->id;
         $this->newRole = $this->selectedMember->getRoleNames()->first() ?: 'member';
     }
 
-    public function updateRole(): void
+    public function updateRole(UpdateTenantUserRole $action): void
     {
         $this->validate([
             'newRole' => 'required|exists:roles,name',
         ]);
 
-        if ($this->selectedMember->id === auth()->id()) {
-            $this->addError('newRole', __('You cannot change your own role.'));
-
+        if (! $this->selectedMemberId) {
             return;
         }
 
-        setPermissionsTeamId(tenant('id'));
-        $this->selectedMember->syncRoles([$this->newRole]);
+        $targetUser = User::findOrFail($this->selectedMemberId);
 
-        activity('identity')
-            ->performedOn($this->selectedMember)
-            ->withProperties(['new_role' => $this->newRole])
-            ->log('user_role_changed');
+        try {
+            $action->execute($targetUser, $this->newRole, auth()->user());
 
-        $this->reset(['selectedMember', 'newRole']);
-        session()->flash('status', __('User role updated.'));
+            $this->reset(['selectedMember', 'selectedMemberId', 'newRole']);
+            session()->flash('status', __('User role updated.'));
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $key => $messages) {
+                $this->addError($key, $messages[0]);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
-    public function revokeAccess(string $userId): void
+    public function revokeAccess(string $userId, RevokeTenantUserAccess $action): void
     {
         $user = User::findOrFail($userId);
 
-        // Don't allow revoking self
-        if ($user->id === auth()->id()) {
-            return;
+        try {
+            $action->execute($user, auth()->user());
+            session()->flash('status', __('User access revoked.'));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
         }
-
-        $user->update(['status' => 'inactive']);
-        $user->delete(); // Soft delete as per US-T103
-
-        activity('identity')
-            ->performedOn($user)
-            ->log('user_access_revoked');
-
-        event(new TenantUserRevoked((string) $user->id, (string) $user->tenant_id, (string) auth()->id()));
-
-        session()->flash('status', __('User access revoked.'));
     }
 
     public function render(): View
     {
         return view('workspace::livewire.team-management', [
-            'members' => User::with('roles')->latest()->paginate(10),
-            'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->get(),
+            'members' => User::with('roles')->latest()->paginate(10, ['*'], 'members_page'),
+            'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->paginate(10, ['*'], 'invitations_page'),
             'availableRoles' => Role::all(),
         ]);
     }

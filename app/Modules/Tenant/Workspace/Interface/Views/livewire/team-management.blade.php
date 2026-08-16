@@ -15,6 +15,10 @@
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif
 
+    @if (session('error'))
+        <flux:text color="rose">{{ session('error') }}</flux:text>
+    @endif
+
     <!-- Members Table -->
     <flux:card class="overflow-hidden">
         <flux:table :paginate="$members">
@@ -87,7 +91,7 @@
         <div class="mt-8">
             <flux:heading size="lg" class="mb-4">{{ __('Pending Invitations') }}</flux:heading>
             <flux:card class="overflow-hidden">
-                <flux:table>
+                <flux:table :paginate="$invitations">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Email') }}</flux:table.column>
                         <flux:table.column>{{ __('Role') }}</flux:table.column>
@@ -120,9 +124,11 @@
                                     <div class="flex justify-end gap-2">
                                         <flux:button icon="arrow-path" size="sm" variant="ghost"
                                             wire:click="resendInvitation('{{ $invite->id }}')"
+                                            wire:loading.attr="disabled"
                                             tooltip="{{ __('Resend Invitation') }}" />
                                         <flux:button icon="trash" size="sm" variant="ghost"
                                             wire:click="cancelInvitation('{{ $invite->id }}')"
+                                            wire:loading.attr="disabled"
                                             wire:confirm="{{ __('Are you sure you want to cancel this invitation?') }}"
                                             tooltip="{{ __('Cancel Invitation') }}" />
                                     </div>
@@ -155,7 +161,10 @@
                 <flux:modal.close>
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary">{{ __('Update Role') }}</flux:button>
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="updateRole">
+                    <span wire:loading.remove wire:target="updateRole">{{ __('Update Role') }}</span>
+                    <span wire:loading wire:target="updateRole">{{ __('Updating...') }}</span>
+                </flux:button>
             </div>
         </form>
     </flux:modal>
@@ -182,7 +191,10 @@
                 <flux:modal.close>
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary">{{ __('Send Invitation') }}</flux:button>
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="invite">
+                    <span wire:loading.remove wire:target="invite">{{ __('Send Invitation') }}</span>
+                    <span wire:loading wire:target="invite">{{ __('Sending...') }}</span>
+                </flux:button>
             </div>
         </form>
     </flux:modal>
