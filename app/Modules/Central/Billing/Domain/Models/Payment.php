@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Domain\Models;
 
 use App\Modules\Central\Billing\Database\Factories\PaymentFactory;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
-use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Payment extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, ScopedToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -56,15 +56,6 @@ class Payment extends Model
         'tax_amount' => 'float',
         'discount' => 'float',
     ];
-
-    // -------------------------------------------------------------------------
-    // Tenant scope (complements RLS)
-    // -------------------------------------------------------------------------
-
-    protected static function booted(): void
-    {
-        static::addGlobalScope(new TenantScope);
-    }
 
     // -------------------------------------------------------------------------
     // Relations

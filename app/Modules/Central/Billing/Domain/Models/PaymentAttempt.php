@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Domain\Models;
 
-use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class PaymentAttempt extends Model
 {
-    use HasUuids;
+    use HasUuids, ScopedToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -35,11 +35,6 @@ class PaymentAttempt extends Model
     protected $casts = [
         'payload' => 'array',
     ];
-
-    protected static function booted(): void
-    {
-        static::addGlobalScope(new TenantScope);
-    }
 
     public function payment(): BelongsTo
     {

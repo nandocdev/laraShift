@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Domain\Models;
 
-use App\Modules\Platform\Tenancy\Domain\Concerns\TenantScope;
+use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaymentWebhook extends Model
 {
-    use HasUuids;
+    use HasUuids, ScopedToTenant;
 
     const UPDATED_AT = null;
 
@@ -52,8 +52,6 @@ class PaymentWebhook extends Model
 
     protected static function booted(): void
     {
-        static::addGlobalScope(new TenantScope);
-
         // Hard block: webhooks are immutable
         static::updating(fn () => false);
     }
