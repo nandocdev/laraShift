@@ -22,15 +22,28 @@ class RehydrateTenantContext
     {
         $tenantId = $job->tenantId();
 
-        DB::transaction(function () use ($tenantId, $job, $next) {
-            DB::statement('SET LOCAL app.tenant_id = ?', [$tenantId]);
+        try {
+            DB::transaction(function () use ($tenantId, $job, $next) {
+                // RLS context only applies to PostgreSQL; on other drivers (e.g.
+                // SQLite tests) there is no policy to satisfy.
+                if (DB::getDriverName() === 'pgsql') {
+                    DB::statement('SET LOCAL app.tenant_id = ?', [$tenantId]);
+                }
 
-            if (function_exists('tenancy') && ! tenancy()->initialized) {
-                tenancy()->initialize($tenantId);
+                if (function_exists('tenancy') && ! tenancy()->initialized) {
+                    tenancy()->initialize($tenantId);
+                }
+
+                $next($job);
+            });
+        } finally {
+            // Always tear down the tenant context: under Octane/PgBouncer the
+            // worker process is reused, and a lingering context would leak the
+            // tenant_id of this job into the next unit of work.
+            if (function_exists('tenancy') && tenancy()->initialized) {
+                tenancy()->end();
             }
-
-            $next($job);
-        });
+        }
     }
 
     /**
