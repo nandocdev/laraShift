@@ -16,8 +16,11 @@ final readonly class SetupTenantCoreDataAction
      */
     public function execute(Tenant $tenant): void
     {
-        // 1. Force the DB session to this tenant to bypass RLS restrictions during setup
-        if (DB::getDriverName() === 'pgsql') {
+        // When running under a rehydrated tenant context (ProvisionTenantJob),
+        // RLS is already active via SET LOCAL inside the job's transaction.
+        // Only fall back to a session-level config when no context is present,
+        // avoiding the session-level SET that would leak across units of work.
+        if (DB::getDriverName() === 'pgsql' && (! function_exists('tenancy') || ! tenancy()->initialized)) {
             DB::statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenant->id]);
         }
 
