@@ -38,6 +38,12 @@ final class PaymentData extends Data
 
         /** Unique slug for this checkout session. Auto-generated if empty. */
         public readonly ?string $slug = null,
+
+        /** dLocal Smart Fields token (DIRECT flow, server-side charge). */
+        public readonly ?string $token = null,
+
+        /** Cardholder name collected for the Smart Fields token. */
+        public readonly ?string $payerName = null,
     ) {}
 
     public function resolvedSlug(): string

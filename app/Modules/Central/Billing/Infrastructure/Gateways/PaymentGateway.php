@@ -53,4 +53,18 @@ interface PaymentGateway
      * @throws RecurringBillingNotSupportedException
      */
     public function chargeSubscription(Subscription $subscription, int $amountInCents): PaymentResultData;
+
+    /**
+     * Whether the gateway supports a DIRECT (server-side) payment without a
+     * hosted page or browser redirect (e.g. dLocal Smart Fields).
+     */
+    public function supportsDirectPayment(): bool;
+
+    /**
+     * Process a DIRECT payment (e.g. dLocal Smart Fields token). Returns the
+     * synchronous result; the status is reconciled locally and via the webhook.
+     *
+     * @throws RecurringBillingNotSupportedException
+     */
+    public function processDirectPayment(PaymentData $payment, string $apiKey): PaymentResultData;
 }

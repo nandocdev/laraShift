@@ -6,6 +6,7 @@ namespace App\Modules\Central\Billing\Interface\Livewire;
 
 use App\Modules\Central\Billing\Application\Actions\InitiateCheckout;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
+use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -20,6 +21,10 @@ use Livewire\Component;
  *     :display-id="$invoice->id"
  *     :email="auth()->user()->email"
  *   />
+ *
+ * dLocal uses a DIRECT flow with Smart Fields (the card is tokenized client
+ * side and charged server-side, no hosted page). Other gateways fall back to
+ * the hosted checkout redirect.
  *
  * On success: dispatches browser event 'payment-approved' with payment data.
  * On error:   exposes $error string for the view.
@@ -63,6 +68,12 @@ final class CheckoutComponent extends Component
 
     public bool $completed = false;
 
+    /** dLocal Smart Fields token, set by the frontend before charging. */
+    public ?string $token = null;
+
+    /** Cardholder name collected for the Smart Fields token. */
+    public string $cardHolderName = '';
+
     // -------------------------------------------------------------------------
     // Lifecycle
     // -------------------------------------------------------------------------
@@ -99,10 +110,19 @@ final class CheckoutComponent extends Component
                     discount: $this->discount,
                     lang: $this->lang,
                     customFieldValues: $this->customFieldValues,
+                    token: $this->token,
+                    payerName: $this->cardHolderName,
                 ),
                 tenantId: tenancy()->tenant->id,
                 apiKey: (string) $apiKey,
             );
+
+            // DIRECT flow: payment processed synchronously, no redirect URL
+            if ($session->result !== null) {
+                $this->handleDirectResult($session->result->status);
+
+                return;
+            }
 
             $this->checkoutUrl = $session->checkoutUrl;
             $this->dispatch('checkout-ready', url: $this->checkoutUrl);
@@ -136,8 +156,35 @@ final class CheckoutComponent extends Component
         }
     }
 
+    public function gateway(): string
+    {
+        return (string) (tenant('billing_gateway') ?? config('payments.default', 'clave'));
+    }
+
     public function render(): View
     {
-        return view('payments::livewire.checkout-component');
+        $gateway = $this->gateway();
+
+        return view('payments::livewire.checkout-component', [
+            'gateway' => $gateway,
+            'directEnabled' => $gateway === 'dlocal',
+            'dlocalLogin' => (string) config('dlocal.login'),
+            'dlocalJsUrl' => config('dlocal.environment') === 'production'
+                ? 'https://js.dlocal.com/'
+                : 'https://js-sandbox.dlocal.com/',
+        ]);
+    }
+
+    private function handleDirectResult(PaymentStatus $status): void
+    {
+        if ($status === PaymentStatus::Approved) {
+            $this->completed = true;
+            $this->dispatch('payment-approved', displayId: $this->displayId);
+
+            return;
+        }
+
+        $this->error = __('payments.payment_declined');
+        $this->dispatch('payment-declined', displayId: $this->displayId);
     }
 }

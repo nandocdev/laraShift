@@ -161,6 +161,18 @@ final class ClaveGateway implements PaymentGateway
         );
     }
 
+    public function supportsDirectPayment(): bool
+    {
+        return false;
+    }
+
+    public function processDirectPayment(PaymentData $payment, string $apiKey): PaymentResultData
+    {
+        throw new RecurringBillingNotSupportedException(
+            'Clave only supports the hosted (redirect) checkout.'
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Internal HTTP helpers
     // -------------------------------------------------------------------------

@@ -96,6 +96,73 @@ final class DlocalGateway implements PaymentGateway
         return $response->redirectUrl ?? throw new RuntimeException('No redirect URL returned by dLocal');
     }
 
+    public function supportsDirectPayment(): bool
+    {
+        return true;
+    }
+
+    public function processDirectPayment(PaymentData $payment, string $apiKey): PaymentResultData
+    {
+        if (! $payment->token) {
+            throw new \InvalidArgumentException('A dLocal Smart Fields token is required for direct payments.');
+        }
+
+        $isSubscription = ($payment->customFieldValues['type'] ?? '') === 'subscription';
+
+        $request = new PaymentRequestData(
+            orderId: $payment->resolvedSlug(),
+            amountInCents: (int) round($payment->netAmount() * 100),
+            currency: 'USD',
+            country: (string) ($payment->customFieldValues['country'] ?? 'US'),
+            payer: new PayerData(
+                name: (string) ($payment->payerName ?? $payment->customFieldValues['name'] ?? 'Customer'),
+                email: $payment->email,
+                documentId: $payment->customFieldValues['document_id'] ?? null,
+                userReference: $payment->tenantId,
+            ),
+            flow: PaymentMethodFlow::Direct,
+            token: $payment->token,
+            save: $isSubscription ? true : null,
+            storedCredentialType: $isSubscription ? 'SUBSCRIPTION' : null,
+            storedCredentialUsage: $isSubscription ? 'FIRST' : null,
+            notificationUrl: route('payments.webhooks.dlocal'),
+        );
+
+        $response = $this->gateway->createPayment($request);
+
+        PaymentReference::withoutEvents(function () use ($response, $payment): void {
+            PaymentReference::firstOrCreate(
+                ['external_reference' => $response->id],
+                [
+                    'order_id' => $payment->resolvedSlug(),
+                    'context' => 'central',
+                    'tenant_id' => $payment->tenantId,
+                ],
+            );
+        });
+
+        return new PaymentResultData(
+            gatewayReference: $response->id,
+            displayId: $payment->resolvedSlug(),
+            status: match (true) {
+                $response->status->isSuccessful() => PaymentStatus::Approved,
+                $response->status->isRejected() => PaymentStatus::Declined,
+                default => PaymentStatus::Pending,
+            },
+            amount: $response->amountInCents / 100,
+            gatewayCode: 'DLOCAL',
+            authorizationCode: null,
+            errorCode: $response->status->isRejected() ? $response->statusDetail : null,
+            errorMessage: $response->statusDetail,
+            raw: [
+                'payment_id' => $response->id,
+                'order_id' => $payment->resolvedSlug(),
+                'status' => $response->status->value,
+                'card_id' => $response->cardId,
+            ],
+        );
+    }
+
     public function verifyWebhook(string $payload, string $signature, string $secret): bool
     {
         $expected = hash_hmac('sha256', $payload, $secret);
