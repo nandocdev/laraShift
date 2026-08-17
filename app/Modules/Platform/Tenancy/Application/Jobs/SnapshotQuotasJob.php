@@ -14,6 +14,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * @deprecated Superseded by the Metering module (metering:aggregate /
+ * AggregateUsageJob writing to usage_rollups). Kept for back-compat; the
+ * column mismatch with quota_snapshots was fixed here.
+ */
 class SnapshotQuotasJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -39,8 +44,8 @@ class SnapshotQuotasJob implements ShouldQueue
                         ],
                         [
                             'id' => Str::uuid()->toString(),
-                            'value' => $usage,
-                            'captured_at' => now(),
+                            'usage' => $usage,
+                            'limit' => $quotaManager->getLimit($tenant, $metric),
                             'updated_at' => now(),
                         ]
                     );
