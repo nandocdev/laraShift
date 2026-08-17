@@ -7,6 +7,8 @@ namespace App\Modules\Platform\Integrations\Dlocal\Providers;
 use App\Modules\Platform\Integrations\Dlocal\Client\DlocalHttpClient;
 use App\Modules\Platform\Integrations\Dlocal\Contracts\PaymentGatewayContract;
 use App\Modules\Platform\Integrations\Dlocal\DlocalPaymentGateway;
+use App\Modules\Platform\Integrations\Dlocal\Metering\DlocalMeterBillingProvider;
+use App\Modules\Platform\Metering\Contracts\MeterBillingProvider;
 use Illuminate\Support\ServiceProvider;
 
 class DlocalServiceProvider extends ServiceProvider
@@ -29,6 +31,10 @@ class DlocalServiceProvider extends ServiceProvider
                 $app->make(DlocalHttpClient::class),
             );
         });
+
+        if (config('metering.provider') === 'dlocal') {
+            $this->app->bind(MeterBillingProvider::class, DlocalMeterBillingProvider::class);
+        }
     }
 
     public function boot(): void
