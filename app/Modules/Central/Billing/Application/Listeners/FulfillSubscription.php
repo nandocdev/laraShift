@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Log;
 
 class FulfillSubscription
@@ -39,6 +40,11 @@ class FulfillSubscription
             $tenant = Tenant::findOrFail($tenantId);
             $plan = Plan::findOrFail($planId);
 
+            // Saved card reference (dLocal recurring). Stored so the
+            // engine-managed recurring charges can reuse it each period.
+            $cardId = $result->raw['card_id'] ?? null;
+            $periodEnd = $this->periodEnd($plan);
+
             // Create or update subscription record
             Subscription::updateOrCreate(
                 [
@@ -48,8 +54,11 @@ class FulfillSubscription
                 [
                     'plan_id' => $plan->id,
                     'status' => 'active',
-                    'gateway' => 'paguelofacil',
-                    'current_period_end' => now()->addMonth(), // Assuming monthly for this flow
+                    'gateway' => $payment->gateway,
+                    'current_period_end' => $periodEnd,
+                    'next_payment_at' => $periodEnd,
+                    'pm_card_id' => $cardId,
+                    'failed_attempts' => 0,
                 ]
             );
 
@@ -63,10 +72,19 @@ class FulfillSubscription
                 'tenant' => $tenant->id,
                 'plan' => $plan->slug,
                 'payment_id' => $payment->id,
+                'pm_card_id' => $cardId,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error fulfilling subscription from approved payment: '.$e->getMessage());
         }
+    }
+
+    private function periodEnd(Plan $plan): CarbonInterface
+    {
+        $interval = $plan->interval ?? 'month';
+        $count = max(1, (int) ($plan->interval_count ?? 1));
+
+        return $interval === 'year' ? now()->addYears($count) : now()->addMonths($count);
     }
 }

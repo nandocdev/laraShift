@@ -10,6 +10,7 @@ use App\Modules\Central\Billing\Application\Services\PaymentAmountResolver;
 use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Billing\Domain\Models\SubscriptionItem;
+use App\Modules\Central\Billing\Infrastructure\Console\ProcessRecurringChargesCommand;
 use App\Modules\Central\Billing\Infrastructure\Console\ReconcileSubscriptionsCommand;
 use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveEnvironment;
@@ -81,6 +82,7 @@ class BillingServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ProcessRecurringChargesCommand::class,
                 ReconcileSubscriptionsCommand::class,
             ]);
         }
