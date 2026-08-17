@@ -90,6 +90,7 @@ it('processes a DIRECT payment with the Smart Fields token and saves the card', 
     expect($result->raw['card_id'])->toBe('CARD-NEW-1');
 
     expect($sent['payment_method_flow'])->toBe('DIRECT');
+    expect($sent['payment_method_id'])->toBe('CARD');
     expect($sent['token'])->toBe('CV-TOKEN-1');
     expect($sent['save'])->toBeTrue();
     expect($sent['stored_credential_type'])->toBe('SUBSCRIPTION');
