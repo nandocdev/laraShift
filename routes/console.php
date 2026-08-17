@@ -13,3 +13,4 @@ Schedule::job(new ReconcileResourcesJob)->daily();
 
 Schedule::command('billing:reconcile')->dailyAt('03:00');
 Schedule::command('metering:aggregate')->dailyAt('00:05');
+Schedule::command('provisioning:reconcile')->hourly();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Providers;
 
+use App\Modules\Central\Provisioning\Infrastructure\Console\ProvisioningReconcileCommand;
 use App\Modules\Central\Provisioning\Livewire\CreateTenant;
 use App\Modules\Central\Provisioning\Livewire\ManageTenant;
 use App\Modules\Central\Provisioning\Livewire\TenantList;
@@ -26,6 +27,12 @@ class ProvisioningServiceProvider extends ServiceProvider
     {
         $this->loadViewsFrom(__DIR__.'/../UI', 'provisioning');
         $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ProvisioningReconcileCommand::class,
+            ]);
+        }
 
         Livewire::component('provisioning-tenant-list', TenantList::class);
         Livewire::component('provisioning-create-tenant', CreateTenant::class);
