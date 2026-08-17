@@ -6,7 +6,7 @@ namespace App\Modules\Central\Billing\Application\Jobs;
 
 use App\Modules\Central\Billing\Application\Actions\ChargeSubscriptionAction;
 use App\Modules\Platform\Contracts\TenantAware;
-use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
+use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,7 +19,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class ChargeSubscriptionJob implements ShouldQueue, TenantAware
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RehydratesTenantContext, SerializesModels;
 
     public int $tries = 3;
 
@@ -32,19 +32,6 @@ class ChargeSubscriptionJob implements ShouldQueue, TenantAware
         public string $tenantId,
         public string $subscriptionId,
     ) {}
-
-    public function tenantId(): string
-    {
-        return $this->tenantId;
-    }
-
-    /**
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new RehydrateTenantContext];
-    }
 
     public function handle(ChargeSubscriptionAction $action): void
     {

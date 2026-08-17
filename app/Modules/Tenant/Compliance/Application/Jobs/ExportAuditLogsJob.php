@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Compliance\Application\Jobs;
 
 use App\Modules\Platform\Contracts\TenantAware;
-use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
+use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Compliance\Domain\Models\AuditLog;
 use App\Modules\Tenant\Compliance\Infrastructure\Notifications\AuditLogExportNotification;
@@ -21,7 +21,7 @@ use Illuminate\Support\Str;
 
 class ExportAuditLogsJob implements ShouldQueue, TenantAware
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RehydratesTenantContext, SerializesModels;
 
     public function __construct(
         public string $tenantId,
@@ -29,16 +29,6 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
         public string $dateFrom,
         public string $dateTo
     ) {}
-
-    public function tenantId(): string
-    {
-        return $this->tenantId;
-    }
-
-    public function middleware(): array
-    {
-        return [new RehydrateTenantContext];
-    }
 
     public function handle(): void
     {

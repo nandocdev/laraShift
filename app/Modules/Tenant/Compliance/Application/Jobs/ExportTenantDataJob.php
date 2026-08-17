@@ -6,7 +6,7 @@ namespace App\Modules\Tenant\Compliance\Application\Jobs;
 
 use App\Modules\Central\Billing\Application\Services\BillingExportService;
 use App\Modules\Platform\Contracts\TenantAware;
-use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
+use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Compliance\Application\Services\IdentityExportService;
 use App\Modules\Tenant\Compliance\Infrastructure\Notifications\TenantDataExportNotification;
@@ -21,22 +21,12 @@ use Illuminate\Support\Str;
 
 class ExportTenantDataJob implements ShouldQueue, TenantAware
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RehydratesTenantContext, SerializesModels;
 
     public function __construct(
         public string $tenantId,
         public string $userId
     ) {}
-
-    public function tenantId(): string
-    {
-        return $this->tenantId;
-    }
-
-    public function middleware(): array
-    {
-        return [new RehydrateTenantContext];
-    }
 
     public function handle(): void
     {

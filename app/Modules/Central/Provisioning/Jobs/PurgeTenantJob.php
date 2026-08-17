@@ -6,7 +6,7 @@ namespace App\Modules\Central\Provisioning\Jobs;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\TenantAware;
-use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
+use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,22 +16,12 @@ use Illuminate\Support\Facades\Log;
 
 class PurgeTenantJob implements ShouldQueue, TenantAware
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RehydratesTenantContext, SerializesModels;
 
     public function __construct(
         public string $tenantId,
         public string $tenantSlug
     ) {}
-
-    public function tenantId(): string
-    {
-        return $this->tenantId;
-    }
-
-    public function middleware(): array
-    {
-        return [new RehydrateTenantContext];
-    }
 
     public function handle(): void
     {
