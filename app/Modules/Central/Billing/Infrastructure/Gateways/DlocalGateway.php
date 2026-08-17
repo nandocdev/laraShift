@@ -10,7 +10,6 @@ use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Platform\Contracts\TenantDomainResolverContract;
 use App\Modules\Platform\Integrations\Dlocal\Client\DlocalHttpClient;
 use App\Modules\Platform\Integrations\Dlocal\Contracts\PaymentGatewayContract;
 use App\Modules\Platform\Integrations\Dlocal\DTOs\PayerData;
@@ -58,15 +57,6 @@ final class DlocalGateway implements PaymentGateway
 
     public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
     {
-        $domainResolver = app(TenantDomainResolverContract::class);
-        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId)
-            ?? $payment->tenantId.'.'.config('tenancy.central_domain');
-
-        $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
-        $port = parse_url(config('app.url'), PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-        $baseUrl = "$scheme://$tenantDomain$portSuffix";
-
         $isSubscription = ($payment->customFieldValues['type'] ?? '') === 'subscription';
 
         $requestData = new PaymentRequestData(
@@ -86,8 +76,7 @@ final class DlocalGateway implements PaymentGateway
             storedCredentialType: $isSubscription ? 'SUBSCRIPTION' : null,
             storedCredentialUsage: $isSubscription ? 'FIRST' : null,
             notificationUrl: route('payments.webhooks.dlocal'),
-            successUrl: "$baseUrl/billing/success",
-            backUrl: "$baseUrl/billing/cancel",
+            callbackUrl: route('central.billing.dlocal.callback'),
             metadata: array_merge($payment->customFieldValues, ['tenant_id' => $payment->tenantId]),
         );
 

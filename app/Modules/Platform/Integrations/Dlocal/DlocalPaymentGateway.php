@@ -33,8 +33,7 @@ final class DlocalPaymentGateway implements PaymentGatewayContract
             'stored_credential_type' => $data->storedCredentialType,
             'stored_credential_usage' => $data->storedCredentialUsage,
             'notification_url' => $data->notificationUrl,
-            'success_url' => $data->successUrl,
-            'back_url' => $data->backUrl,
+            'callback_url' => $data->callbackUrl,
         ], static fn ($v) => $v !== null);
 
         if ($data->metadata !== []) {

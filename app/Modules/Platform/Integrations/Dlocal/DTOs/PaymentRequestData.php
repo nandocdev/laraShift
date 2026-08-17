@@ -22,8 +22,7 @@ final readonly class PaymentRequestData
         public ?string $storedCredentialType = null,
         public ?string $storedCredentialUsage = null,
         public ?string $notificationUrl = null,
-        public ?string $successUrl = null,
-        public ?string $backUrl = null,
+        public ?string $callbackUrl = null,
         public array $metadata = [],
     ) {}
 }
