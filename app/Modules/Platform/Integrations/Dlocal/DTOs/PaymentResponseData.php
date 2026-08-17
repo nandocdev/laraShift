@@ -16,6 +16,7 @@ final readonly class PaymentResponseData
         public int $amountInCents,
         public string $currency,
         public ?string $redirectUrl = null,
+        public ?string $cardId = null,
     ) {}
 
     public static function fromApiResponse(array $response): self
@@ -28,6 +29,7 @@ final readonly class PaymentResponseData
             amountInCents: (int) round(((float) $response['amount']) * 100),
             currency: $response['currency'],
             redirectUrl: $response['redirect_url'] ?? null,
+            cardId: $response['card_id'] ?? null,
         );
     }
 }
