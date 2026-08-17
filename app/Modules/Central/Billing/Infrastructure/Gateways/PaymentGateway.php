@@ -7,6 +7,8 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 use App\Modules\Central\Billing\Application\DTO\MerchantData;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
+use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 
 interface PaymentGateway
 {
@@ -42,4 +44,13 @@ interface PaymentGateway
      * List historical transactions from the gateway.
      */
     public function listTransactions(string $apiKey, array $filters = []): array;
+
+    /**
+     * Execute an engine-managed recurring charge against a saved payment method.
+     * Gateways that manage recurrence on their own side should throw
+     * RecurringBillingNotSupportedException (see ClaveGateway).
+     *
+     * @throws RecurringBillingNotSupportedException
+     */
+    public function chargeSubscription(Subscription $subscription, int $amountInCents): PaymentResultData;
 }

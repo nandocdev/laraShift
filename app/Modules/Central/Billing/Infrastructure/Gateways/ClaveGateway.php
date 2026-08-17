@@ -9,7 +9,9 @@ use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 use App\Modules\Central\Billing\Domain\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Billing\Domain\Exceptions\InvalidMerchantException;
+use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
 use App\Modules\Central\Billing\Domain\Exceptions\ServiceNotFoundException;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -148,6 +150,15 @@ final class ClaveGateway implements PaymentGateway
         }
 
         return $response['data'] ?? [];
+    }
+
+    public function chargeSubscription(Subscription $subscription, int $amountInCents): PaymentResultData
+    {
+        // Clave (PagueloFacil) manages recurrence on its own side via its
+        // subscription API; engine-managed recurring charges are not supported.
+        throw new RecurringBillingNotSupportedException(
+            'Clave recurrence is gateway-managed; reconcile via SyncSubscription.'
+        );
     }
 
     // -------------------------------------------------------------------------
