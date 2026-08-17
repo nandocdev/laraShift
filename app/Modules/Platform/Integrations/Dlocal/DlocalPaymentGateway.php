@@ -24,6 +24,7 @@ final class DlocalPaymentGateway implements PaymentGatewayContract
             'amount' => $this->toDecimal($data->amountInCents),
             'currency' => $data->currency,
             'country' => $data->country,
+            'payment_method_id' => $data->paymentMethodId,
             'payment_method_flow' => $data->flow->value,
             'payer' => $data->payer->toArray(),
             'description' => $data->description,

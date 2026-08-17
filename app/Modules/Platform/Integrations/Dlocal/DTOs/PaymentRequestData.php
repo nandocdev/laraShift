@@ -15,6 +15,7 @@ final readonly class PaymentRequestData
         public string $country,
         public PayerData $payer,
         public PaymentMethodFlow $flow,
+        public ?string $paymentMethodId = null,
         public ?string $description = null,
         public ?string $token = null,
         public ?string $cardId = null,

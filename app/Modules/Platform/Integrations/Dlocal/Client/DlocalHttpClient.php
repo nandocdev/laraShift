@@ -28,8 +28,13 @@ final class DlocalHttpClient
 
     private function send(string $method, string $path, array $payload): array
     {
+        // The body is signed, so the exact same bytes must be transmitted.
+        // Guzzle would otherwise re-encode the array with different JSON flags
+        // (e.g. JSON_UNESCAPED_SLASHES) and break the HMAC signature.
         $body = $method === 'post' ? json_encode($payload, JSON_THROW_ON_ERROR) : '';
-        $date = now()->toIso8601String();
+
+        // dLocal expects ISO-8601 UTC with milliseconds (e.g. 2018-07-12T13:46:28.629Z).
+        $date = now()->utc()->format('Y-m-d\TH:i:s.v').'Z';
 
         $request = Http::withHeaders([
             'X-Date' => $date,
@@ -37,11 +42,12 @@ final class DlocalHttpClient
             'X-Trans-Key' => $this->transKey,
             'X-Version' => '2.1',
             'Content-Type' => 'application/json',
+            'User-Agent' => 'LaraShift/1.0',
             'Authorization' => 'V2-HMAC-SHA256, Signature: '.$this->signature($date, $body),
         ]);
 
         $response = $method === 'post'
-            ? $request->post($this->baseUrl.$path, $payload)
+            ? $request->withBody($body, 'application/json')->post($this->baseUrl.$path)
             : $request->get($this->baseUrl.$path);
 
         if ($response->failed()) {
@@ -49,7 +55,7 @@ final class DlocalHttpClient
 
             throw new DlocalApiException(
                 message: $error['message'] ?? 'dLocal API error',
-                dlocalCode: $error['code'] ?? null,
+                dlocalCode: isset($error['code']) ? (string) $error['code'] : null,
                 context: $error,
             );
         }
