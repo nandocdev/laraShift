@@ -29,7 +29,7 @@ class ExperienceServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../Interface/Views/landings', 'landings');
 
         // Provide tenant-owned data to the Platform sidebar without coupling Platform to this module
-        View::composer('ui::layouts.app.sidebar', function ($view): void {
+        View::composer(['ui::layouts.app.sidebar', 'layouts.app.sidebar'], function ($view): void {
             $entry = null;
 
             if (tenancy()->initialized) {
