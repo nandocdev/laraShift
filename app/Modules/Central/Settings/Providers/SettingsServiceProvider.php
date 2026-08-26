@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Settings\Providers;
 
+use App\Modules\Central\Settings\Infrastructure\Services\CentralPlatformBranding;
 use App\Modules\Central\Settings\Interface\Livewire\PlatformBranding;
+use App\Modules\Platform\Contracts\PlatformBrandingContract;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
 class SettingsServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->bind(PlatformBrandingContract::class, CentralPlatformBranding::class);
+    }
+
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../Interface/Views', 'settings');

@@ -10,6 +10,7 @@ use App\Modules\Tenant\Experience\Application\DTO\BrandingData;
 use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Experience\Infrastructure\Support\BrandingPresets;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,6 +37,8 @@ final readonly class UpdateTenantBranding
             }
 
             $settings->update($updateData);
+
+            Cache::forget('tenant:'.tenant('id').':brand_logo_path');
 
             // 1. Cleanup old logo if new one provided
             if ($data->logo && $oldLogoPath && Storage::disk('public')->exists($oldLogoPath)) {
