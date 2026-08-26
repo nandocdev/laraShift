@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Modules\Central\Auth\Actions\LogoutCentralUserAction;
 use App\Modules\Central\Auth\Http\Middleware\ValidateCentralSession;
 use App\Modules\Central\Auth\Livewire\Dashboard;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Modules\Central\Provisioning\Livewire\CreateTenant;
 use App\Modules\Central\Provisioning\Livewire\ManageTenant;
 use App\Modules\Central\Provisioning\Livewire\TenantList;

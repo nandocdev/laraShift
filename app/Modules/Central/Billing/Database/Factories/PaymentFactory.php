@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Central\Billing\Database\Factories;
 
 use App\Modules\Central\Billing\Domain\Models\Payment;
