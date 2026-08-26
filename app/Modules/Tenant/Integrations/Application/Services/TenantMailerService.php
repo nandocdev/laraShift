@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Application\Services;
 
-use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
+use App\Modules\Tenant\Experience\Application\DTO\SmtpConfigData;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Transport;

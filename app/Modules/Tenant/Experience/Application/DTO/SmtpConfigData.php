@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Tenant\Integrations\Application\DTO;
+namespace App\Modules\Tenant\Experience\Application\DTO;
 
 use Spatie\LaravelData\Data;
 

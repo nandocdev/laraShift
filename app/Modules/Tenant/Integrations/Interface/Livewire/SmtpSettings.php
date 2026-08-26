@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Interface\Livewire;
 
-use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
+use App\Modules\Tenant\Experience\Application\Actions\GetTenantSmtpSettings;
+use App\Modules\Tenant\Experience\Application\Actions\MarkTenantSmtpVerified;
+use App\Modules\Tenant\Experience\Application\DTO\SmtpConfigData;
 use App\Modules\Tenant\Integrations\Application\Actions\UpdateTenantSmtp;
-use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
 use App\Modules\Tenant\Integrations\Application\Services\TenantMailerService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -34,24 +34,23 @@ class SmtpSettings extends Component
 
     public ?string $test_error = null;
 
-    public function mount(): void
+    public function mount(GetTenantSmtpSettings $action): void
     {
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
+        $settings = $action->execute();
 
         if ($settings) {
-            $this->smtp_host = $settings->smtp_host ?? '';
-            $this->smtp_port = $settings->smtp_port ?? 587;
-            $this->smtp_user = $settings->smtp_user ?? '';
+            $this->smtp_host = $settings->host;
+            $this->smtp_port = $settings->port;
+            $this->smtp_user = $settings->user;
             // We don't populate password for security, unless empty
-            $this->smtp_from_email = $settings->smtp_from_email ?? '';
-            $this->smtp_from_name = $settings->smtp_from_name ?? '';
+            $this->smtp_from_email = $settings->fromEmail;
+            $this->smtp_from_name = $settings->fromName;
         }
     }
 
     public function save(UpdateTenantSmtp $action): void
     {
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-        Gate::authorize('update', $settings);
+        $this->authorizeManagement();
 
         $this->validate([
             'smtp_host' => 'required|string',
@@ -73,10 +72,9 @@ class SmtpSettings extends Component
         session()->flash('status', __('SMTP settings updated successfully. Connection must be verified.'));
     }
 
-    public function testConnection(TenantMailerService $mailerService): void
+    public function testConnection(TenantMailerService $mailerService, GetTenantSmtpSettings $getSettings, MarkTenantSmtpVerified $markVerified): void
     {
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-        Gate::authorize('update', $settings);
+        $this->authorizeManagement();
 
         $this->validate([
             'test_email' => 'required|email',
@@ -86,8 +84,8 @@ class SmtpSettings extends Component
         $this->test_error = null;
 
         try {
-            $dbPassword = $settings->smtp_password ? decrypt($settings->smtp_password) : '';
-            $password = ! empty($this->smtp_password) ? $this->smtp_password : $dbPassword;
+            $stored = $getSettings->execute();
+            $password = ! empty($this->smtp_password) ? $this->smtp_password : ($stored?->plainPassword ?? '');
 
             $config = new SmtpConfigData(
                 host: $this->smtp_host,
@@ -106,7 +104,7 @@ class SmtpSettings extends Component
                 });
             });
 
-            $settings->update(['smtp_verified' => true]);
+            $markVerified->execute();
             $this->test_status = 'success';
         } catch (\Exception $e) {
             $this->test_status = 'failed';
@@ -114,8 +112,15 @@ class SmtpSettings extends Component
         }
     }
 
-    public function render(): View
+    public function render(GetTenantSmtpSettings $action): View
     {
-        return view('settings-tenant::livewire.smtp-settings');
+        return view('settings-tenant::livewire.smtp-settings', [
+            'smtpVerified' => $action->execute()?->verified ?? false,
+        ]);
+    }
+
+    private function authorizeManagement(): void
+    {
+        app(EnsureUserCanManageTenantSettings::class)->execute();
     }
 }

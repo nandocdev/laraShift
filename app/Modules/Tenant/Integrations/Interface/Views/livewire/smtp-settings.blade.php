@@ -4,7 +4,7 @@
         <flux:subheading>{{ __('Configure your own outgoing mail server for all emails sent from this account.') }}</flux:subheading>
     </div>
 
-    @if (App\Modules\Tenant\Experience\Domain\Models\TenantSetting::where('tenant_id', tenant('id'))->first()?->smtp_verified)
+    @if ($smtpVerified)
         <div class="p-3 bg-emerald-50 border border-emerald-200 rounded flex items-center gap-3">
             <flux:icon icon="check-badge" variant="solid" class="text-emerald-600" />
             <div class="flex-1">
