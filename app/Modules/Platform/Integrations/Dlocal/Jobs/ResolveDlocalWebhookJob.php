@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Integrations\Dlocal\Jobs;
 
-use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
+use App\Modules\Platform\Events\PaymentWebhookReceived;
 use App\Modules\Platform\Integrations\Dlocal\Models\PaymentReference;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,8 +37,8 @@ class ResolveDlocalWebhookJob implements ShouldQueue
         }
 
         match ($reference->context) {
-            'central' => $this->dispatchToCentral($reference),
-            'tenant' => $this->dispatchToTenant($reference),
+            'central' => $this->dispatchResolved($reference, null),
+            'tenant' => $this->dispatchTenant($reference),
             default => Log::error('ResolveDlocalWebhookJob: Unknown context', [
                 'context' => $reference->context,
                 'external_reference' => $this->externalReference,
@@ -46,21 +46,7 @@ class ResolveDlocalWebhookJob implements ShouldQueue
         };
     }
 
-    private function dispatchToCentral(PaymentReference $reference): void
-    {
-        Log::info('ResolveDlocalWebhookJob: Dispatching to Central billing', [
-            'external_reference' => $this->externalReference,
-        ]);
-
-        ProcessPaymentWebhookJob::dispatch(
-            $reference->tenant_id ?? 'central',
-            json_encode($this->rawPayload),
-            $this->signature,
-            $this->webhookSecret,
-        );
-    }
-
-    private function dispatchToTenant(PaymentReference $reference): void
+    private function dispatchTenant(PaymentReference $reference): void
     {
         if (! $reference->tenant_id) {
             Log::error('ResolveDlocalWebhookJob: Tenant context missing tenant_id', [
@@ -75,8 +61,14 @@ class ResolveDlocalWebhookJob implements ShouldQueue
             'external_reference' => $this->externalReference,
         ]);
 
-        ProcessPaymentWebhookJob::dispatch(
-            $reference->tenant_id,
+        $this->dispatchResolved($reference, $reference->tenant_id);
+    }
+
+    private function dispatchResolved(PaymentReference $reference, ?string $tenantId): void
+    {
+        PaymentWebhookReceived::dispatch(
+            $reference->context,
+            $tenantId,
             json_encode($this->rawPayload),
             $this->signature,
             $this->webhookSecret,

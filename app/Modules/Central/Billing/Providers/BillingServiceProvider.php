@@ -6,6 +6,7 @@ namespace App\Modules\Central\Billing\Providers;
 
 use App\Modules\Central\Billing\Application\Listeners\FulfillSubscription;
 use App\Modules\Central\Billing\Application\Listeners\HandlePaymentFailure;
+use App\Modules\Central\Billing\Application\Listeners\ProcessIncomingPaymentWebhook;
 use App\Modules\Central\Billing\Application\Services\PaymentAmountResolver;
 use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
@@ -29,6 +30,7 @@ use App\Modules\Central\Billing\Interface\Livewire\UpdatePaymentMethod;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\PaymentAmountResolverContract;
 use App\Modules\Platform\Events\PaymentFailed;
+use App\Modules\Platform\Events\PaymentWebhookReceived;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -71,6 +73,11 @@ class BillingServiceProvider extends ServiceProvider
         Event::listen(
             PaymentFailed::class,
             HandlePaymentFailure::class
+        );
+
+        Event::listen(
+            PaymentWebhookReceived::class,
+            ProcessIncomingPaymentWebhook::class
         );
     }
 
