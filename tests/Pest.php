@@ -2,10 +2,34 @@
 
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
+
+/*
+|--------------------------------------------------------------------------
+| RLS auto-provisioning under PostgreSQL
+|--------------------------------------------------------------------------
+|
+| RefreshDatabase runs migrate:fresh inside the test process, which wipes
+| any manually applied Row Level Security. When running the suite against
+| PostgreSQL with RLS_ENFORCE_IN_TESTS=true (CI isolation job), every
+| tenant-aware table gets its policy re-applied right after migrations.
+|
+*/
+
+if (env('RLS_ENFORCE_IN_TESTS') === 'true') {
+    Event::listen(MigrationsEnded::class, function (): void {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            Artisan::call('tenancy:enable-rls', ['--all' => true]);
+        }
+    });
+}
 
 /*
 |--------------------------------------------------------------------------

@@ -14,28 +14,87 @@ class EnableRlsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tenancy:enable-rls {table}';
+    protected $signature = 'tenancy:enable-rls {table? : Table to protect} {--all : Protect every table with a tenant_id column}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Enable Row Level Security on a specific table for PostgreSQL';
+    protected $description = 'Enable Row Level Security on a specific table (or all tenant-aware tables) for PostgreSQL';
 
     /**
-     * Execute the console command.
+     * Execute the command.
      */
     public function handle(): int
     {
-        $table = $this->argument('table');
-
-        if (! config('database.default') === 'pgsql') {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
             $this->error('Row Level Security is only supported on PostgreSQL.');
 
             return self::FAILURE;
         }
 
+        $tables = [];
+
+        if ($this->option('all')) {
+            $tables = $this->tenantAwareTables();
+
+            if ($tables === []) {
+                $this->info('No tenant-aware tables found.');
+
+                return self::SUCCESS;
+            }
+        } else {
+            $table = $this->argument('table');
+
+            if (! is_string($table) || $table === '') {
+                $this->error('Provide a table name or use the --all flag.');
+
+                return self::FAILURE;
+            }
+
+            $tables = [$table];
+        }
+
+        $failures = 0;
+
+        foreach ($tables as $table) {
+            if (! $this->enableRlsOn((string) $table)) {
+                $failures++;
+            }
+        }
+
+        if ($failures > 0) {
+            $this->error("Failed to enable RLS on {$failures} table(s).");
+
+            return self::FAILURE;
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function tenantAwareTables(): array
+    {
+        return array_map(
+            'strval',
+            array_column(
+                DB::select(
+                    "SELECT c.relname AS table_name
+                     FROM pg_class c
+                     JOIN pg_namespace n ON n.oid = c.relnamespace
+                     JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id'
+                     WHERE n.nspname = 'public' AND c.relkind = 'r'"
+                ),
+                'table_name'
+            )
+        );
+    }
+
+    private function enableRlsOn(string $table): bool
+    {
         try {
             $this->info("Enabling RLS on table: {$table}");
 
@@ -55,13 +114,12 @@ class EnableRlsCommand extends Command
             ");
 
             $this->info("RLS enabled and policy '{$policyName}' created successfully.");
+        } catch (\Throwable $e) {
+            $this->error("Failed to enable RLS on {$table}: {$e->getMessage()}");
 
-        } catch (\Exception $e) {
-            $this->error("Failed to enable RLS: {$e->getMessage()}");
-
-            return self::FAILURE;
+            return false;
         }
 
-        return self::SUCCESS;
+        return true;
     }
 }
