@@ -11,10 +11,11 @@ class CentralBranding
 {
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::rememberForever("central_setting_{$key}", function () use ($key, $default) {
+        // Central settings are centrally cached; use CentralBranding::set() never direct SQL (S002)
+        return Cache::remember("central_setting_{$key}", 3600, function () use ($key, $default) {
             $setting = CentralSetting::find($key);
 
-            return $setting ? self::castValue($setting->value, $setting->type) : $default;
+            return $setting ? self::castValue($setting->value, $setting->type, $default) : $default;
         });
     }
 
@@ -42,13 +43,24 @@ class CentralBranding
         return self::get('logo_url');
     }
 
-    protected static function castValue(string $value, string $type): mixed
+    protected static function castValue(string $value, string $type, mixed $default = null): mixed
     {
         return match ($type) {
             'bool', 'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'int', 'integer' => (int) $value,
-            'json' => json_decode($value, true),
+            'json' => self::castJsonValue($value, $default),
             default => $value,
         };
+    }
+
+    private static function castJsonValue(string $value, mixed $default): mixed
+    {
+        try {
+            return json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            Log::warning('central_setting_json_invalid', ['value' => $value, 'error' => $e->getMessage()]);
+
+            return $default;
+        }
     }
 }

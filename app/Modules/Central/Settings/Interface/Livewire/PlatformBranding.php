@@ -27,15 +27,29 @@ class PlatformBranding extends Component
 
     public function save(): void
     {
+        Gate::authorize('branding:manage');
+
         $this->validate([
             'platformName' => 'required|string|min:3',
             'primaryColor' => 'required|hex_color',
-            'logoUrl' => 'nullable|url',
+            'logoUrl' => ['nullable', 'url', 'regex:/^https:\/\//'],
         ]);
+
+        // Normalize primaryColor to lowercase 6-hex
+        $normalizedColor = strtolower($this->primaryColor);
+        if (preg_match('/^#[0-9a-f]{3}$/', $normalizedColor)) {
+            $normalizedColor = '#'.$normalizedColor[1].$normalizedColor[1].$normalizedColor[2].$normalizedColor[2].$normalizedColor[3].$normalizedColor[3];
+        }
+        $this->primaryColor = $normalizedColor;
 
         CentralBranding::set('platform_name', $this->platformName);
         CentralBranding::set('primary_color', $this->primaryColor);
         CentralBranding::set('logo_url', $this->logoUrl);
+
+        activity('settings')
+            ->causedBy(auth('central')->user())
+            ->withProperties(['platform_name' => $this->platformName, 'primary_color' => $this->primaryColor, 'logo_url' => $this->logoUrl])
+            ->log('branding_updated');
 
         session()->flash('status', __('Platform branding updated successfully.'));
     }
