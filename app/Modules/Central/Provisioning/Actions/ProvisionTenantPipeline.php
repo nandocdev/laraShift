@@ -66,7 +66,7 @@ final readonly class ProvisionTenantPipeline
 
     private function runStep(Tenant $tenant, string $step, callable $callback): void
     {
-        $log = ProvisioningLog::updateOrCreate(
+        $log = ProvisioningLog::firstOrCreate(
             ['tenant_id' => $tenant->id, 'step' => $step],
             [
                 'id' => Str::uuid()->toString(),
@@ -79,6 +79,8 @@ final readonly class ProvisionTenantPipeline
         if ($log->status === 'completed') {
             return;
         }
+
+        $log->update(['status' => 'pending', 'executed_at' => now(), 'error' => null]);
 
         try {
             $callback();
