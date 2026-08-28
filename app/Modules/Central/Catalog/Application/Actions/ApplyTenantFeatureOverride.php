@@ -7,10 +7,8 @@ namespace App\Modules\Central\Catalog\Application\Actions;
 use App\Modules\Central\Catalog\Domain\Models\Feature;
 use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 
 final readonly class ApplyTenantFeatureOverride
 {
@@ -34,16 +32,32 @@ final readonly class ApplyTenantFeatureOverride
         return DB::transaction(function () use ($tenant, $featureKey, $type, $reason, $expiresAt) {
             $feature = Feature::where('key', $featureKey)->firstOrFail();
 
-            $override = TenantFeatureOverride::updateOrCreate(
-                ['tenant_id' => $tenant->id, 'feature_id' => $feature->id],
-                [
-                    'id' => Str::uuid()->toString(),
-                    'type' => $type,
-                    'reason' => $reason,
-                    'expires_at' => $expiresAt ? Carbon::parse($expiresAt) : null,
-                    'created_by' => auth('central')->id(),
-                ]
-            );
+            $expiresAtCarbon = null;
+            if ($expiresAt !== null) {
+                try {
+                    $expiresAtCarbon = CarbonImmutable::parse($expiresAt, 'UTC');
+                } catch (\Throwable $e) {
+                    throw ValidationException::withMessages(['expiresAt' => __('Invalid expiration date format.')]);
+                }
+            }
+
+            // Use withTrashed to support re-apply after soft-delete (C004) and keep PK stable (C002)
+            $override = TenantFeatureOverride::withTrashed()->firstOrNew([
+                'tenant_id' => $tenant->id,
+                'feature_id' => $feature->id,
+            ]);
+
+            if ($override->exists && $override->trashed()) {
+                $override->restore();
+            }
+
+            $override->fill([
+                'type' => $type,
+                'reason' => $reason,
+                'expires_at' => $expiresAtCarbon,
+                'created_by' => auth('central')->id(),
+            ]);
+            $override->save();
 
             // Invalidate cache to reflect changes immediately
             app(ResolveTenantFeatures::class)->execute($tenant, true);
