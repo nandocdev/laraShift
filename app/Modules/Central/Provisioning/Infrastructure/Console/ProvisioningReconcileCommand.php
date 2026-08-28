@@ -47,35 +47,35 @@ class ProvisioningReconcileCommand extends Command
 
     private function retryFailedProvisioning(): void
     {
-        $failed = Tenant::where('status', 'failed')->whereNull('deleted_at')->get();
-
-        foreach ($failed as $tenant) {
-            $this->retryTenant($tenant);
-        }
+        Tenant::where('status', 'failed')->whereNull('deleted_at')->chunkById(100, function ($tenants) {
+            foreach ($tenants as $tenant) {
+                $this->retryTenant($tenant);
+            }
+        });
     }
 
     private function retryStaleProvisioning(): void
     {
-        $stale = Tenant::where('status', 'provisioning')
+        Tenant::where('status', 'provisioning')
             ->whereNull('deleted_at')
             ->where('created_at', '<', now()->subMinutes((int) config('provisioning.stale_provisioning_minutes')))
-            ->get();
-
-        foreach ($stale as $tenant) {
-            $this->retryTenant($tenant);
-        }
+            ->chunkById(100, function ($tenants) {
+                foreach ($tenants as $tenant) {
+                    $this->retryTenant($tenant);
+                }
+            });
     }
 
     private function expireUnpaidTenants(): void
     {
-        $expired = Tenant::where('status', 'pending_payment')
+        Tenant::where('status', 'pending_payment')
             ->whereNull('deleted_at')
             ->where('created_at', '<', now()->subHours((int) config('provisioning.pending_payment_expiry_hours')))
-            ->get();
-
-        foreach ($expired as $tenant) {
-            $this->expireTenant($tenant);
-        }
+            ->chunkById(100, function ($tenants) {
+                foreach ($tenants as $tenant) {
+                    $this->expireTenant($tenant);
+                }
+            });
     }
 
     private function expireTenant(Tenant $tenant): void

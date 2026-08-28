@@ -44,7 +44,7 @@ class ManageTenant extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'plan_id' => 'required|string',
+            'plan_id' => 'required|string|exists:plans,slug',
             'status' => 'required|in:provisioning,active,suspended,archived,failed',
             'maintenance_mode' => 'boolean',
             'read_only' => 'boolean',
