@@ -14,14 +14,21 @@ class PaymentAmountResolver implements PaymentAmountResolverContract
     {
         // displayId could be an invoice ID or a plan ID.
         // We first try to find an invoice, then a plan.
+        // B011: Re-derive amount server-side; check by slug as well (displayId may be plan slug)
         $invoice = Invoice::find($displayId);
         if ($invoice) {
-            return (float) $invoice->amount;
+            return (float) $invoice->amount->getAmount() / 100;
         }
 
-        $plan = Plan::find($displayId);
+        // Plan lookup by id or slug
+        $plan = Plan::find($displayId) ?? Plan::where('slug', $displayId)->first();
         if ($plan) {
-            return (float) $plan->price;
+            // Prefer Money object if available (price_monthly MoneyCast), fallback to legacy integer
+            if (isset($plan->price_monthly)) {
+                return (float) $plan->price_monthly->getAmount() / 100;
+            }
+
+            return (float) ($plan->price ?? $plan->amount ?? 0) / 100;
         }
 
         throw new \InvalidArgumentException("Invalid payment reference: {$displayId}");

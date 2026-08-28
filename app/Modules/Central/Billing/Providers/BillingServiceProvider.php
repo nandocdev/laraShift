@@ -49,7 +49,10 @@ class BillingServiceProvider extends ServiceProvider
         $this->app->bind(ClaveEnvironment::class, fn () => ClaveEnvironment::fromConfig());
 
         $this->app->bind(PaymentGateway::class, function ($app) {
-            $gateway = tenant('billing_gateway') ?? config('payments.default', 'clave');
+            // Default binding is context-free (used only where tenant is not yet resolved).
+            // Callers that have a Tenant must resolve via BillingManager::forTenant($tenant) instead of app(PaymentGateway::class).
+            // Keeping tenant() helper here is intentionally avoided to prevent silent fallback to 'clave' in queue/CLI/Octane.
+            $gateway = config('payments.default', 'clave');
 
             return match ($gateway) {
                 'dlocal' => $app->make(DlocalGateway::class),

@@ -13,6 +13,7 @@ use App\Modules\Central\Billing\Domain\Exceptions\WebhookVerificationException;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
 use App\Modules\Central\Billing\Domain\Models\PaymentWebhook;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,17 @@ final readonly class PaymentVerifier
     public function __construct(
         private PaymentGateway $gateway,
     ) {}
+
+    private function gatewayForTenant(string $tenantId): PaymentGateway
+    {
+        $tenant = Tenant::find($tenantId);
+
+        if ($tenant && ($tenant->billing_gateway ?? null) === 'dlocal') {
+            return app(DlocalGateway::class);
+        }
+
+        return app(ClaveGateway::class);
+    }
 
     /**
      * Process an inbound webhook.
@@ -35,7 +47,9 @@ final readonly class PaymentVerifier
         string $webhookSecret,
         string $tenantId,
     ): void {
-        if (! $this->gateway->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
+        $gateway = $this->gatewayForTenant($tenantId);
+
+        if (! $gateway->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
             Log::warning('ClaveGateway: webhook signature mismatch', [
                 'tenant_id' => $tenantId,
             ]);
@@ -44,10 +58,10 @@ final readonly class PaymentVerifier
         }
 
         $payload = json_decode($rawPayload, true);
-        $result = $this->gateway->parseWebhookPayload($payload);
+        $result = $gateway->parseWebhookPayload($payload);
 
         $lockKey = "webhook_processing_{$tenantId}_{$result->gatewayReference}";
-        $lock = Cache::lock($lockKey, 10);
+        $lock = Cache::lock($lockKey, 30);
 
         if (! $lock->get()) {
             Log::info('Webhook is already being processed', [

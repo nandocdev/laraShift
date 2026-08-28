@@ -7,7 +7,6 @@ namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
-use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -37,8 +36,6 @@ final class WebhookController extends Controller
         $webhookSecret = config("payments.{$gateway}.webhook_secret");
 
         // Verify signature synchronously to prevent DoS via queue exhaustion
-        $verifier = app(PaymentGateway::class);
-        // We temporarily swap the implementation to the correct gateway for verification
         $gatewayService = match ($gateway) {
             'dlocal' => app(DlocalGateway::class),
             default => app(ClaveGateway::class),
@@ -52,6 +49,23 @@ final class WebhookController extends Controller
         }
 
         $tenantId = $this->resolveTenantId($request);
+
+        // B003: Validate tenantId against payment record before enqueuing to avoid poisoning queue/logs
+        $payloadData = json_decode($rawPayload, true) ?? $request->all();
+        $displayId = $payloadData['display_id'] ?? $payloadData['displayId'] ?? $payloadData['order_id'] ?? $payloadData['PARM_2'] ?? null;
+
+        if ($displayId) {
+            $paymentTenantId = Payment::withoutGlobalScopes()->where('display_id', $displayId)->value('tenant_id');
+
+            if ($paymentTenantId && (string) $paymentTenantId !== (string) $tenantId) {
+                Log::warning("{$gateway} Webhook: tenant mismatch — payload tenant does not own payment", [
+                    'payload_tenant' => $tenantId,
+                    'payment_tenant' => $paymentTenantId,
+                    'display_id' => $displayId,
+                ]);
+                abort(422, 'Tenant mismatch for payment');
+            }
+        }
 
         ProcessPaymentWebhookJob::dispatch(
             tenantId: $tenantId,
