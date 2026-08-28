@@ -100,21 +100,17 @@ class BillingFlowTest extends TestCase
 
         // --- STEP 3: Verify Results ---
 
-        // 1. Verify redirect to tenant success page
+        // 1. Verify redirect to tenant success page (UX-only, no fulfillment)
         $expectedSuccessUrl = 'http://initech.localhost/billing/success';
         $response->assertRedirect($expectedSuccessUrl);
 
-        // 2. Verify subscription record in DB
-        $this->assertDatabaseHas('subscriptions', [
+        // 2. Callback is UX-only — subscription is created via verified webhook, not browser redirect (B001)
+        $this->assertDatabaseMissing('subscriptions', [
             'tenant_id' => $this->tenant->id,
             'plan_id' => $this->plan->id,
-            'status' => 'active',
-            'provider_subscription_id' => 'LK-8SNKWCRNBHK5',
         ]);
-
-        // 3. Verify tenant plan update
         $this->tenant->refresh();
-        $this->assertEquals('pro', $this->tenant->plan_id);
+        $this->assertEquals('free', $this->tenant->plan_id);
     }
 
     public function test_paguelofacil_denied_payment_redirects_to_cancel()

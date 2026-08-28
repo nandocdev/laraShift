@@ -10,7 +10,6 @@ use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveEnvironment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
-use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
@@ -33,20 +32,15 @@ beforeEach(function () {
 });
 
 it('resolves the correct gateway based on tenant settings', function () {
-    // 1. Default (from config)
-    $defaultGateway = config('payments.default', 'clave');
+    // B005: PaymentGateway binding is context-free (config default). Tenant-specific resolution must use CheckoutManager or BillingManager.
+    config(['payments.default' => 'clave']);
     $gateway = app(PaymentGateway::class);
+    expect($gateway)->toBeInstanceOf(ClaveGateway::class);
 
-    if ($defaultGateway === 'dlocal') {
-        expect($gateway)->toBeInstanceOf(DlocalGateway::class);
-    } else {
-        expect($gateway)->toBeInstanceOf(ClaveGateway::class);
-    }
-
-    // 2. Force switch
-    $this->tenant->update(['billing_gateway' => 'clave']);
+    // Tenant-specific check via CheckoutManager gatewayForTenant is tested in DlocalDirectCheckoutTest
+    $this->tenant->update(['billing_gateway' => 'dlocal']);
     tenancy()->initialize($this->tenant);
-
+    // Still clave via default binding — tenant resolution happens inside CheckoutManager, not container binding
     $gateway = app(PaymentGateway::class);
     expect($gateway)->toBeInstanceOf(ClaveGateway::class);
 });
