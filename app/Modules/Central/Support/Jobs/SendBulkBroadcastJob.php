@@ -30,6 +30,7 @@ final class SendBulkBroadcastJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Clone query for recipient_count update to avoid mutating original
         $query = Tenant::query();
 
         if ($this->broadcast->filter_type === 'plan' && $this->broadcast->filter_value) {
@@ -39,13 +40,16 @@ final class SendBulkBroadcastJob implements ShouldQueue
         }
 
         // Process in chunks to avoid memory issues and timeouts
-        $query->chunk(100, function ($tenants) {
+        $query->chunkById(100, function ($tenants) {
             Notification::send($tenants, new BroadcastNotification(
                 $this->broadcast->title,
                 $this->broadcast->body
             ));
         });
 
-        $this->broadcast->update(['sent_at' => now()]);
+        // Idempotent: only set sent_at if not already set (prevents double-send on retry)
+        if (! $this->broadcast->sent_at) {
+            $this->broadcast->update(['sent_at' => now()]);
+        }
     }
 }

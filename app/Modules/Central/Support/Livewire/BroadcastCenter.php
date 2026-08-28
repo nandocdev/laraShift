@@ -35,6 +35,11 @@ class BroadcastCenter extends Component
             'title' => 'required|string|max:255',
             'body' => 'required|string',
             'filterType' => 'required|in:all,plan,status',
+            'filterValue' => match ($this->filterType) {
+                'plan' => 'required|exists:plans,slug',
+                'status' => 'required|in:provisioning,active,suspended,archived,failed,expired',
+                default => 'nullable',
+            },
             'channels' => 'required|array|min:1',
         ]);
 
