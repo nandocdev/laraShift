@@ -35,6 +35,8 @@ class PurgeTenantJob implements ShouldQueue, TenantAware
             return;
         }
 
+        app(PurgeTenantDataAction::class)->execute($this->tenantId);
+
         $tenant->forceDelete();
 
         Log::info("Purge completed for tenant: {$this->tenantSlug}");
