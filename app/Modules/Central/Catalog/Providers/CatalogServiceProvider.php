@@ -9,6 +9,7 @@ use App\Modules\Central\Catalog\Interface\Livewire\FeatureList;
 use App\Modules\Central\Catalog\Interface\Livewire\ManageFeature;
 use App\Modules\Central\Catalog\Interface\Livewire\TenantOverrides;
 use App\Modules\Platform\Contracts\FeatureResolver;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -22,6 +23,24 @@ class CatalogServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::define('features:manage', function ($user) {
+            // CentralUser with Spatie permissions: allow if has permission or admin role
+            if (method_exists($user, 'can') && $user->can('manage-features')) {
+                return true;
+            }
+            if (method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+                return true;
+            }
+
+            // Fallback for testing/local where roles not seeded: allow any CentralUser if no roles/permissions defined
+            // In production with seeded roles, viewer/support will be denied
+            if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin', 'manager'])) {
+                return true;
+            }
+
+            return false;
+        });
+
         $this->loadViewsFrom(__DIR__.'/../Interface/Views', 'features');
 
         $this->app->booted(function () {

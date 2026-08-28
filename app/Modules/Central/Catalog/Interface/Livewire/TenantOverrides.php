@@ -65,6 +65,8 @@ class TenantOverrides extends Component
 
     public function removeOverride(string $id): void
     {
+        Gate::authorize('features:manage');
+
         $tenant = Tenant::findOrFail($this->tenantId);
         $override = TenantFeatureOverride::where('tenant_id', $this->tenantId)->findOrFail($id);
         $override->delete();
