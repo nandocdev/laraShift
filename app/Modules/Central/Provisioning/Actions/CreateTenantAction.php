@@ -28,6 +28,18 @@ final readonly class CreateTenantAction
 
     public function execute(CreateTenantData $data): Tenant
     {
+        // Normalize slug to prevent Admin vs admin bypass (G005)
+        $normalizedSlug = strtolower(Str::slug($data->slug));
+        $data = new CreateTenantData(
+            name: strip_tags($data->name),
+            slug: $normalizedSlug,
+            email: $data->email,
+            plan_id: $data->plan_id,
+            password: $data->password,
+            payment_token: $data->payment_token,
+            status: $data->status,
+        );
+
         /** @var Tenant|null $tenant */
         $tenant = Tenant::where('slug', $data->slug)->first();
 

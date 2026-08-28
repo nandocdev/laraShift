@@ -11,6 +11,7 @@ use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
@@ -41,6 +42,8 @@ class RegisterTenant extends Component
 
     public string $password = '';
 
+    public string $honeypot = '';
+
     // Step 2: Plan
     public string $plan_id = 'free';
 
@@ -57,7 +60,7 @@ class RegisterTenant extends Component
         return match ($step) {
             1 => [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255',
+                'email' => 'required|email|max:255|unique:tenants,email',
                 'company' => 'required|string|max:255',
                 'slug' => [
                     'required', 'string', 'max:63',
@@ -66,6 +69,7 @@ class RegisterTenant extends Component
                     'unique:tenants,slug',
                 ],
                 'password' => ['required', 'string', Password::defaults()],
+                'honeypot' => 'prohibited',
             ],
             2 => [
                 'plan_id' => 'required|exists:plans,slug',
@@ -128,6 +132,11 @@ class RegisterTenant extends Component
      */
     public function selectPlan(string $slug): void
     {
+        if (! Plan::where('slug', $slug)->exists()) {
+            $this->addError('plan_id', __('Invalid plan selected.'));
+
+            return;
+        }
         $this->plan_id = $slug;
     }
 
@@ -136,41 +145,56 @@ class RegisterTenant extends Component
      */
     public function register(CreateTenantAction $action): void
     {
-        // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
-        $allRules = array_merge(
-            $this->rulesForStep(1),
-            $this->rulesForStep(2),
-            $this->rulesForStep(3)
-        );
+        try {
+            // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
+            $allRules = array_merge(
+                $this->rulesForStep(1),
+                $this->rulesForStep(2),
+                $this->rulesForStep(3)
+            );
 
-        $this->validate($allRules);
+            $this->validate($allRules);
 
-        $tenant = $action->execute(new CreateTenantData(
-            name: $this->company,
-            slug: $this->slug,
-            email: $this->email,
-            plan_id: $this->plan_id,
-            password: $this->password,
-            payment_token: null,
-            status: $this->isPlanFree() ? 'active' : 'pending_payment',
-        ));
+            if ($this->honeypot !== '') {
+                $this->addError('honeypot', __('Spam detected.'));
 
-        // If it's a paid plan, redirect to the hosted checkout page within the tenant context
-        if (! $this->isPlanFree()) {
-            $checkoutUrl = app(BillingManager::class)
-                ->createCheckoutSession($tenant, $this->selectedPlan->id);
+                return;
+            }
 
-            $this->redirect($checkoutUrl, navigate: false);
+            $tenant = $action->execute(new CreateTenantData(
+                name: strip_tags($this->company),
+                slug: strtolower(Str::slug($this->slug)),
+                email: $this->email,
+                plan_id: $this->plan_id,
+                password: $this->password,
+                payment_token: null,
+                status: $this->isPlanFree() ? 'active' : 'pending_payment',
+            ));
 
-            return;
+            // If it's a paid plan, redirect to the hosted checkout page within the tenant context
+            if (! $this->isPlanFree()) {
+                $checkoutUrl = app(BillingManager::class)
+                    ->createCheckoutSession($tenant, $this->selectedPlan->id);
+
+                $this->redirect($checkoutUrl, navigate: false);
+
+                return;
+            }
+
+            $redirectUrl = tenant_route(
+                $tenant->domains->first()?->domain ?? "{$this->slug}.".config('tenancy.central_domain'),
+                'login',
+            );
+
+            $this->redirect($redirectUrl, navigate: false);
+        } catch (UniqueConstraintViolationException $e) {
+            $this->addError('slug', __('This organization URL is already taken. Please choose another.'));
+        } catch (\RuntimeException $e) {
+            // CreateTenantAction maps UniqueConstraintViolationException -> RuntimeException "slug just taken"
+            $this->addError('slug', $e->getMessage());
+        } finally {
+            $this->reset('password');
         }
-
-        $redirectUrl = tenant_route(
-            $tenant->domains->first()?->domain ?? "{$this->slug}.".config('tenancy.central_domain'),
-            'login',
-        );
-
-        $this->redirect($redirectUrl, navigate: false);
     }
 
     /**
@@ -178,7 +202,7 @@ class RegisterTenant extends Component
      */
     public function isPlanFree(): bool
     {
-        $plan = Plan::where('slug', $this->plan_id)->first();
+        $plan = $this->selectedPlan;
 
         return ! $plan || ! $plan->price_monthly->isPositive();
     }
@@ -186,6 +210,7 @@ class RegisterTenant extends Component
     /**
      * Obtiene el plan seleccionado actualmente.
      */
+    #[Computed]
     public function getSelectedPlanProperty(): ?Plan
     {
         return Plan::where('slug', $this->plan_id)->first();

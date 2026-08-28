@@ -79,6 +79,10 @@
 
                     <flux:input wire:model="password" type="password" :label="__('Password')" required />
 
+                    <div class="hidden" aria-hidden="true">
+                        <flux:input wire:model="honeypot" name="website" autocomplete="off" tabindex="-1" :label="__('Website')" />
+                    </div>
+
                     <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end">
                         <flux:button wire:click="nextStep" variant="primary" class="px-8">
                             {{ __('Continue') }}
