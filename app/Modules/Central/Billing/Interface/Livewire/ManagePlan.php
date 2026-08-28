@@ -9,7 +9,9 @@ use App\Modules\Central\Billing\Application\Actions\UpsertPlan;
 use App\Modules\Central\Billing\Application\DTO\PlanData;
 use App\Modules\Central\Catalog\Domain\Models\Feature;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -102,6 +104,8 @@ class ManagePlan extends Component
 
             // Sync Feature Catalog
             $plan->catalogFeatures()->sync($this->selectedFeatures);
+
+            Cache::forget('plans:active');
 
             // Invalidate tenant features cache for all tenants on this plan (C001)
             Tenant::where('plan_id', $plan->slug)

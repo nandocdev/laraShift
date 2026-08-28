@@ -6,13 +6,18 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class PlanManager
 {
     public static function all(): Collection
     {
-        return Plan::where('is_active', true)->withoutTrashed()->get();
+        if (app()->runningUnitTests()) {
+            return Plan::where('is_active', true)->withoutTrashed()->get();
+        }
+
+        return Cache::remember('plans:active', 3600, fn () => Plan::where('is_active', true)->withoutTrashed()->get());
     }
 
     public static function find(string $id): ?Plan
