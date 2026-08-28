@@ -52,7 +52,8 @@ class PaymentWebhook extends Model
 
     protected static function booted(): void
     {
-        // Hard block: webhooks are immutable
+        // Hard block: webhooks are immutable (B013)
         static::updating(fn () => false);
+        static::deleting(fn () => false);
     }
 }

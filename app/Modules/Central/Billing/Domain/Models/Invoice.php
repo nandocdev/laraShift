@@ -6,13 +6,14 @@ namespace App\Modules\Central\Billing\Domain\Models;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Data\Casts\MoneyCast;
+use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Invoice extends Model
 {
-    use HasUuids;
+    use HasUuids, ScopedToTenant;
 
     protected $fillable = [
         'id',
