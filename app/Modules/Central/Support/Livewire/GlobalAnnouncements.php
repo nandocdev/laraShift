@@ -21,9 +21,8 @@ class GlobalAnnouncements extends Component
             return;
         }
 
-        $connection = config('tenancy.database.central_connection', 'central');
-
-        DB::connection($connection)->table('broadcast_dismissals')->updateOrInsert(
+        // Use default tenant connection (RLS via SET LOCAL), not central — fixes SU002
+        DB::table('broadcast_dismissals')->updateOrInsert(
             [
                 'broadcast_id' => $broadcastId,
                 'user_id' => auth()->id(),
@@ -45,15 +44,13 @@ class GlobalAnnouncements extends Component
             return view('support::livewire.global-announcements', ['activeBroadcasts' => collect()]);
         }
 
-        $connection = config('tenancy.database.central_connection', 'central');
-
         // Fetch broadcasts that:
         // 1. Have 'banner' in channels
         // 2. Are sent (sent_at is not null)
         // 3. Match tenant filters (all, same plan, or same status)
         // 4. Have NOT been dismissed by this user
 
-        $dismissedIds = DB::connection($connection)->table('broadcast_dismissals')
+        $dismissedIds = DB::table('broadcast_dismissals')
             ->where('user_id', auth()->id())
             ->pluck('broadcast_id');
 
