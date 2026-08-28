@@ -7,6 +7,7 @@ namespace App\Modules\Central\Billing\Infrastructure\Console;
 use App\Modules\Central\Billing\Application\Jobs\ChargeSubscriptionJob;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Finds subscriptions due for renewal and dispatches one ChargeSubscriptionJob
@@ -21,31 +22,43 @@ class ProcessRecurringChargesCommand extends Command
 
     public function handle(): int
     {
-        $query = Subscription::query()
-            ->where('status', 'active')
-            ->where(function ($q) {
-                $q->where('next_payment_at', '<=', now())
-                    ->orWhere(function ($due) {
-                        $due->whereNull('next_payment_at')
-                            ->where('current_period_end', '<=', now());
-                    });
-            });
+        $lock = Cache::lock('billing:process-recurring', 600);
 
-        if ($tenantId = $this->option('tenant')) {
-            $query->where('tenant_id', (string) $tenantId);
+        if (! $lock->get()) {
+            $this->warn('Another billing:process-recurring is already running — skipping.');
+
+            return self::SUCCESS;
         }
 
-        $count = 0;
+        try {
+            $query = Subscription::query()
+                ->where('status', 'active')
+                ->where(function ($q) {
+                    $q->where('next_payment_at', '<=', now())
+                        ->orWhere(function ($due) {
+                            $due->whereNull('next_payment_at')
+                                ->where('current_period_end', '<=', now());
+                        });
+                });
 
-        $query->chunkById(100, function ($subscriptions) use (&$count) {
-            foreach ($subscriptions as $subscription) {
-                ChargeSubscriptionJob::dispatch($subscription->tenant_id, $subscription->id);
-                $count++;
+            if ($tenantId = $this->option('tenant')) {
+                $query->where('tenant_id', (string) $tenantId);
             }
-        });
 
-        $this->info("Dispatched recurring charges for {$count} subscriptions.");
+            $count = 0;
 
-        return self::SUCCESS;
+            $query->chunkById(100, function ($subscriptions) use (&$count) {
+                foreach ($subscriptions as $subscription) {
+                    ChargeSubscriptionJob::dispatch($subscription->tenant_id, $subscription->id);
+                    $count++;
+                }
+            });
+
+            $this->info("Dispatched recurring charges for {$count} subscriptions.");
+
+            return self::SUCCESS;
+        } finally {
+            $lock->release();
+        }
     }
 }

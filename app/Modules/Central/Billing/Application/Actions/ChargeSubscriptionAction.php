@@ -10,11 +10,13 @@ use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Events\TenantSuspendedByDunning;
 use Carbon\CarbonInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -55,8 +57,17 @@ final readonly class ChargeSubscriptionAction
 
         // Idempotency guard: never double-charge a period that already has an
         // approved payment. Declined attempts do NOT block retries.
+        // Use lockForUpdate inside transaction to close race between exists() and Payment::create in handleSuccess.
         $displayId = $this->displayId($subscription, now());
-        if (Payment::where('display_id', $displayId)->where('status', PaymentStatus::Approved->value)->exists()) {
+
+        $alreadyCharged = DB::transaction(function () use ($displayId) {
+            return Payment::where('display_id', $displayId)
+                ->where('status', PaymentStatus::Approved->value)
+                ->lockForUpdate()
+                ->exists();
+        });
+
+        if ($alreadyCharged) {
             return;
         }
 
@@ -68,6 +79,9 @@ final readonly class ChargeSubscriptionAction
             return;
         }
 
+        // Resolve gateway via BillingManager for tenant (not hardcoded helper) — B005 alignment
+        $gateway = app(BillingManager::class)->forTenant($tenant);
+        // For engine-managed dlocal, we still use DlocalGateway directly but via container resolved for tenant
         $result = app(DlocalGateway::class)->chargeSubscription($subscription, $amount);
 
         match ($result->status) {
@@ -81,58 +95,89 @@ final readonly class ChargeSubscriptionAction
     {
         $slug = $this->attemptSlug($result->displayId);
 
-        DB::transaction(function () use ($tenant, $subscription, $plan, $result, $slug) {
-            $payment = Payment::create([
-                'tenant_id' => $tenant->id,
-                'display_id' => $result->displayId,
-                'slug' => $slug,
-                'amount' => $result->amount,
-                'tax_amount' => 0.0,
-                'discount' => 0.0,
-                'description' => __('Recurring charge for :plan', ['plan' => $plan->slug]),
-                'email' => $tenant->email,
-                'currency' => 'USD',
-                'status' => PaymentStatus::Approved->value,
-                'gateway' => 'dlocal',
-                'gateway_reference' => $result->gatewayReference,
-            ]);
+        try {
+            DB::transaction(function () use ($tenant, $subscription, $plan, $result, $slug) {
+                // Re-check idempotency inside transaction with lock to prevent double Invoice/Payment
+                $exists = Payment::where('tenant_id', $tenant->id)
+                    ->where('display_id', $result->displayId)
+                    ->where('status', PaymentStatus::Approved->value)
+                    ->lockForUpdate()
+                    ->exists();
 
-            PaymentAttempt::create([
-                'tenant_id' => $tenant->id,
-                'payment_id' => $payment->id,
-                'slug' => $slug,
-                'status' => PaymentStatus::Approved->value,
-                'payload' => ['type' => 'recurring', 'subscription_id' => $subscription->id, 'plan_id' => $plan->id],
-            ]);
+                if ($exists) {
+                    Log::info('ChargeSubscriptionAction: duplicate approved payment ignored', [
+                        'tenant_id' => $tenant->id,
+                        'display_id' => $result->displayId,
+                    ]);
 
-            Invoice::create([
-                'tenant_id' => $tenant->id,
-                'subscription_id' => $subscription->id,
-                'provider_invoice_id' => $result->gatewayReference,
-                'amount' => $result->amount,
-                'currency' => 'USD',
-                'status' => 'paid',
-                'issued_at' => now(),
-            ]);
+                    return;
+                }
 
-            $this->rollPeriod($subscription, $plan);
-            $subscription->update(['failed_attempts' => 0]);
+                $payment = Payment::create([
+                    'tenant_id' => $tenant->id,
+                    'display_id' => $result->displayId,
+                    'slug' => $slug,
+                    'amount' => $result->amount,
+                    'tax_amount' => 0.0,
+                    'discount' => 0.0,
+                    'description' => __('Recurring charge for :plan', ['plan' => $plan->slug]),
+                    'email' => $tenant->email,
+                    'currency' => 'USD',
+                    'status' => PaymentStatus::Approved->value,
+                    'gateway' => 'dlocal',
+                    'gateway_reference' => $result->gatewayReference,
+                ]);
 
-            activity('billing')
-                ->performedOn($tenant)
-                ->withProperties(['subscription_id' => $subscription->id, 'amount' => $result->amount])
-                ->log('subscription_renewed');
-        });
+                PaymentAttempt::create([
+                    'tenant_id' => $tenant->id,
+                    'payment_id' => $payment->id,
+                    'slug' => $slug,
+                    'status' => PaymentStatus::Approved->value,
+                    'payload' => ['type' => 'recurring', 'subscription_id' => $subscription->id, 'plan_id' => $plan->id],
+                ]);
+
+                Invoice::create([
+                    'tenant_id' => $tenant->id,
+                    'subscription_id' => $subscription->id,
+                    'provider_invoice_id' => $result->gatewayReference,
+                    'amount' => $result->amount,
+                    'currency' => 'USD',
+                    'status' => 'paid',
+                    'issued_at' => now(),
+                ]);
+
+                $this->rollPeriod($subscription, $plan);
+                $subscription->update(['failed_attempts' => 0]);
+
+                activity('billing')
+                    ->performedOn($tenant)
+                    ->withProperties(['subscription_id' => $subscription->id, 'amount' => $result->amount])
+                    ->log('subscription_renewed');
+            });
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), '23505') || str_contains($e->getMessage(), 'UNIQUE') || str_contains($e->getMessage(), 'unique')) {
+                Log::warning('ChargeSubscriptionAction: unique violation on handleSuccess — already processed', [
+                    'tenant_id' => $tenant->id,
+                    'display_id' => $result->displayId,
+                ]);
+
+                return;
+            }
+
+            throw $e;
+        }
     }
 
     private function handleDecline(Tenant $tenant, Subscription $subscription, PaymentResultData $result): void
     {
         $slug = $this->attemptSlug($result->displayId);
+        // Declined attempts must not collide on unique(tenant_id, display_id) — suffix per attempt
+        $declinedDisplayId = $result->displayId.'_retry_'.($subscription->failed_attempts + 1).'_'.Str::lower(Str::random(4));
 
-        DB::transaction(function () use ($tenant, $subscription, $result, $slug) {
+        DB::transaction(function () use ($tenant, $subscription, $result, $slug, $declinedDisplayId) {
             $payment = Payment::create([
                 'tenant_id' => $tenant->id,
-                'display_id' => $result->displayId,
+                'display_id' => $declinedDisplayId,
                 'slug' => $slug,
                 'amount' => $result->amount,
                 'tax_amount' => 0.0,
