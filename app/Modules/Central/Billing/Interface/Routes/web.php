@@ -17,8 +17,10 @@ use Illuminate\Support\Facades\Route;
 // Webhooks (Public with internal validation)
 Route::post('/central/webhooks/stripe', [StripeWebhookController::class, 'handleWebhook'])->name('central.billing.webhook.stripe');
 
-// PagueloFacil Public Callback (Browser Redirect)
-Route::get('/central/billing/paguelofacil/callback', [PaguelofacilCallbackController::class, 'handleReturn'])->name('central.billing.paguelofacil.callback');
+// PagueloFacil Public Callback (Browser Redirect) — UX only, throttle to prevent abuse
+Route::get('/central/billing/paguelofacil/callback', [PaguelofacilCallbackController::class, 'handleReturn'])
+    ->middleware('throttle:30,1')
+    ->name('central.billing.paguelofacil.callback');
 
 Route::middleware(['web', 'auth:central'])->group(function () {
     // API Endpoints
