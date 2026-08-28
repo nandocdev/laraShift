@@ -103,6 +103,15 @@ class ManagePlan extends Component
             // Sync Feature Catalog
             $plan->catalogFeatures()->sync($this->selectedFeatures);
 
+            // Invalidate tenant features cache for all tenants on this plan (C001)
+            Tenant::where('plan_id', $plan->slug)
+                ->orWhere('plan_id', $plan->id)
+                ->chunkById(200, function ($tenants) {
+                    foreach ($tenants as $tenant) {
+                        Cache::forget("tenant:{$tenant->id}:features");
+                    }
+                });
+
             session()->flash('status', $this->isEditing ? __('Plan updated.') : __('Plan created.'));
             $this->redirect(route('central.billing.plans'), navigate: true);
         } catch (\Exception $e) {

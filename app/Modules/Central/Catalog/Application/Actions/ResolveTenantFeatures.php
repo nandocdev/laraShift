@@ -37,7 +37,7 @@ final readonly class ResolveTenantFeatures implements FeatureResolver
             Cache::forget($cacheKey);
         }
 
-        return Cache::rememberForever($cacheKey, function () use ($tenantModel) {
+        return Cache::remember($cacheKey, 3600, function () use ($tenantModel) {
             // 1. Get Plan Features
             $planFeatures = Feature::whereHas('plans', function ($query) use ($tenantModel) {
                 $query->withTrashed(); // Support retired plans for existing tenants
