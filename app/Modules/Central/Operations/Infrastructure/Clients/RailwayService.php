@@ -39,11 +39,8 @@ class RailwayService
         }
 
         try {
-            // Railway uses a GraphQL API
-            // This is a placeholder for the actual domain addition mutation
-            Log::info("Provisioning Railway domain for tenant {$tenant->slug}: {$domain}");
+            Log::info('infra.provisioning', ['tenant_id' => $tenant->id, 'slug' => $tenant->slug, 'domain' => $domain, 'provider' => 'railway']);
 
-            /*
             $query = <<<'GQL'
             mutation customDomainCreate($input: CustomDomainCreateInput!) {
               customDomainCreate(input: $input) {
@@ -53,7 +50,9 @@ class RailwayService
             }
             GQL;
 
-            $response = Http::withHeaders(['Authorization' => 'Bearer ' . $this->apiToken])
+            $response = Http::withHeaders(['Authorization' => 'Bearer '.$this->apiToken])
+                ->timeout(5)
+                ->retry(3, 200, throw: false)
                 ->post('https://backboard.railway.app/graphql/v2', [
                     'query' => $query,
                     'variables' => [
@@ -61,14 +60,28 @@ class RailwayService
                             'projectId' => $this->projectId,
                             'serviceId' => $this->serviceId,
                             'domain' => $domain,
-                        ]
-                    ]
+                        ],
+                    ],
                 ]);
-            */
+
+            if ($response->failed()) {
+                Log::warning('infra.provisioning.failed', ['tenant_id' => $tenant->id, 'domain' => $domain, 'status' => $response->status(), 'body' => $response->body()]);
+
+                return false;
+            }
+
+            $payload = $response->json();
+            if (isset($payload['errors'])) {
+                Log::warning('infra.provisioning.failed', ['tenant_id' => $tenant->id, 'domain' => $domain, 'errors' => $payload['errors']]);
+
+                return false;
+            }
+
+            Log::info('infra.provisioned', ['tenant_id' => $tenant->id, 'domain' => $domain]);
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Railway domain provisioning failed: '.$e->getMessage());
+            Log::error('infra.provisioning.failed', ['tenant_id' => $tenant->id, 'domain' => $domain, 'error' => $e->getMessage()]);
 
             return false;
         }

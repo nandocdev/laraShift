@@ -107,7 +107,7 @@ it('records a failed step and blocks finalization, then resumes on retry', funct
 
     // Retry: infrastructure now succeeds, the rest of the pipeline resumes
     $railway = Mockery::mock(RailwayService::class);
-    $railway->shouldReceive('provisionDomain')->once();
+    $railway->shouldReceive('provisionDomain')->once()->andReturn(true);
     app()->instance(RailwayService::class, $railway);
 
     $pipeline = app(ProvisionTenantPipeline::class);

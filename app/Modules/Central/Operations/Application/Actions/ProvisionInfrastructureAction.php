@@ -20,12 +20,16 @@ final readonly class ProvisionInfrastructureAction
      */
     public function execute(Tenant $tenant): void
     {
-        Log::info("Starting infrastructure provisioning for tenant: {$tenant->slug}");
+        Log::info('infra.provisioning', ['tenant_id' => $tenant->id, 'slug' => $tenant->slug]);
 
         $primaryDomain = $tenant->domains()->first()?->domain;
 
         if ($primaryDomain) {
-            $this->railway->provisionDomain($tenant, $primaryDomain);
+            $ok = $this->railway->provisionDomain($tenant, $primaryDomain);
+
+            if ($ok === false) {
+                throw new \RuntimeException("Railway provisioning failed for domain {$primaryDomain}");
+            }
         }
 
         // Add other infrastructure steps here (e.g. Cloudflare, AWS, etc.)
