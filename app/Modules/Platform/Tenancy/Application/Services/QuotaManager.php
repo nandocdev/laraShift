@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 
 class QuotaManager
 {
+    // C005: namespace cache per tenant per PROJECT_DECISIONS.md §6 -> tenant:{id}:quota:{metric}:{period}
     private const KEY_PREFIX = 'quota';
 
     /**
@@ -70,7 +71,8 @@ class QuotaManager
         $period = now()->format('Y-m');
         $prefix = self::KEY_PREFIX;
 
-        return "{$prefix}:{$tenant->getId()}:{$metric}:{$period}";
+        // PROJECT_DECISIONS.md §6: tenant:{tenant_id}:{key}
+        return "tenant:{$tenant->getId()}:{$prefix}:{$metric}:{$period}";
     }
 
     private function checkThresholds(TenantContract $tenant, string $metric, int $current, int $limit): void
@@ -85,7 +87,7 @@ class QuotaManager
 
         foreach ([80, 100] as $threshold) {
             if ($percentage >= $threshold) {
-                $lockKey = "{$prefix}:alert:{$tenant->getId()}:{$metric}:{$threshold}:{$period}";
+                $lockKey = "tenant:{$tenant->getId()}:{$prefix}:alert:{$metric}:{$threshold}:{$period}";
 
                 if (Cache::add($lockKey, '1', now()->addDays(30))) {
                     $tenant->notify(new QuotaThresholdReachedNotification($metric, $current, $limit, $threshold));
