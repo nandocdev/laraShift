@@ -22,8 +22,24 @@
 
             <flux:field>
                 <flux:label>{{ __('Logo URL') }}</flux:label>
-                <flux:input wire:model="logoUrl" type="url" placeholder="https://example.com/logo.png" />
+                <flux:input wire:model="logoUrl" type="text" placeholder="https://example.com/logo.png" />
                 <flux:error name="logoUrl" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Upload Logo (Optional)') }}</flux:label>
+                <flux:input type="file" wire:model="logoImage" accept="image/*" />
+                <flux:error name="logoImage" />
+                
+                @if ($logoImage)
+                    <div class="mt-2">
+                        <img src="{{ $logoImage->temporaryUrl() }}" class="h-12 object-contain rounded">
+                    </div>
+                @elseif ($logoUrl)
+                    <div class="mt-2">
+                        <img src="{{ $logoUrl }}" class="h-12 object-contain rounded">
+                    </div>
+                @endif
             </flux:field>
 
             <div class="flex justify-end">

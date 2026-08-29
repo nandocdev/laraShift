@@ -6,17 +6,24 @@ namespace App\Modules\Central\Settings\Interface\Livewire;
 
 use App\Modules\Central\Settings\Infrastructure\Services\CentralBranding;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.central')]
 class PlatformBranding extends Component
 {
+    use WithFileUploads;
+
     public string $platformName;
 
     public string $primaryColor;
 
     public string $logoUrl;
+
+    public $logoImage;
 
     public function mount(): void
     {
@@ -32,8 +39,15 @@ class PlatformBranding extends Component
         $this->validate([
             'platformName' => 'required|string|min:3',
             'primaryColor' => 'required|hex_color',
-            'logoUrl' => ['nullable', 'url', 'regex:/^https:\/\//'],
+            'logoUrl'      => ['nullable', 'string'],
+            'logoImage'    => ['nullable', 'image', 'max:2048'],
         ]);
+
+        if ($this->logoImage) {
+            $path = $this->logoImage->store('branding', 'public');
+            $this->logoUrl = Storage::disk('public')->url($path);
+            $this->logoImage = null; // reset input
+        }
 
         // Normalize primaryColor to lowercase 6-hex
         $normalizedColor = strtolower($this->primaryColor);
