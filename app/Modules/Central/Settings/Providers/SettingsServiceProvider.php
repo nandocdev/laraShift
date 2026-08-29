@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Settings\Providers;
 
-use App\Modules\Central\Auth\Domain\Models\CentralUser;
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Settings\Infrastructure\Services\CentralPlatformBranding;
 use App\Modules\Central\Settings\Interface\Livewire\PlatformBranding;
 use App\Modules\Platform\Contracts\PlatformBrandingContract;
