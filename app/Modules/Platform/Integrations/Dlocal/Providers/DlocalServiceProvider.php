@@ -23,6 +23,8 @@ class DlocalServiceProvider extends ServiceProvider
                 login: (string) config('dlocal.login'),
                 transKey: (string) config('dlocal.trans_key'),
                 secretKey: (string) config('dlocal.secret_key'),
+                retryTimes: (int) config('dlocal.retry.times', 3),
+                retrySleepMs: (int) config('dlocal.retry.sleep_ms', 100),
             );
         });
 

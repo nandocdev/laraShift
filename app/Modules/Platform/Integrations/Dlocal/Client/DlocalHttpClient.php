@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Platform\Integrations\Dlocal\Client;
 
 use App\Modules\Platform\Integrations\Dlocal\Exceptions\DlocalApiException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 final class DlocalHttpClient
 {
@@ -14,6 +17,8 @@ final class DlocalHttpClient
         private readonly string $login,
         private readonly string $transKey,
         private readonly string $secretKey,
+        private readonly int $retryTimes = 3,
+        private readonly int $retrySleepMs = 100,
     ) {}
 
     public function post(string $path, array $payload): array
@@ -36,7 +41,7 @@ final class DlocalHttpClient
         // dLocal expects ISO-8601 UTC with milliseconds (e.g. 2018-07-12T13:46:28.629Z).
         $date = now()->utc()->format('Y-m-d\TH:i:s.v').'Z';
 
-        $request = Http::withHeaders([
+        $pendingRequest = Http::withHeaders([
             'X-Date' => $date,
             'X-Login' => $this->login,
             'X-Trans-Key' => $this->transKey,
@@ -46,9 +51,25 @@ final class DlocalHttpClient
             'Authorization' => 'V2-HMAC-SHA256, Signature: '.$this->signature($date, $body),
         ]);
 
+        if ($this->retryTimes > 1) {
+            $pendingRequest->retry(
+                times: $this->retryTimes,
+                sleepMilliseconds: $this->retrySleepMs,
+                when: static function (Throwable $exception): bool {
+                    if ($exception instanceof ConnectionException) {
+                        return true;
+                    }
+
+                    return $exception instanceof RequestException
+                        && $exception->response?->serverError();
+                },
+                throw: false,
+            );
+        }
+
         $response = $method === 'post'
-            ? $request->withBody($body, 'application/json')->post($this->baseUrl.$path)
-            : $request->get($this->baseUrl.$path);
+            ? $pendingRequest->withBody($body, 'application/json')->post($this->baseUrl.$path)
+            : $pendingRequest->get($this->baseUrl.$path);
 
         if ($response->failed()) {
             $error = $response->json() ?? [];

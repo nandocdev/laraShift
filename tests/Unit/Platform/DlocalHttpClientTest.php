@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Platform\Integrations\Dlocal\Client\DlocalHttpClient;
+use App\Modules\Platform\Integrations\Dlocal\Exceptions\DlocalApiException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -75,4 +76,63 @@ it('sends the dLocal authentication headers', function () {
     expect($headers['Authorization'][0] ?? null)->toContain('V2-HMAC-SHA256, Signature:');
     // dLocal requires ISO-8601 UTC with milliseconds + Z.
     expect($headers['X-Date'][0] ?? null)->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/');
+});
+
+it('retries on 500 server error and succeeds when subsequent attempt succeeds', function () {
+    $attempts = 0;
+
+    Http::fake([
+        'sandbox.dlocal.com/*' => function () use (&$attempts) {
+            $attempts++;
+            if ($attempts === 1) {
+                return Http::response(['message' => 'Internal server error', 'code' => 500], 500);
+            }
+
+            return Http::response([
+                'id' => 'P-RETRY',
+                'order_id' => 'order-retry',
+                'status' => 'PAID',
+            ], 200);
+        },
+    ]);
+
+    $client = new DlocalHttpClient(
+        baseUrl: 'https://sandbox.dlocal.com',
+        login: 'x-login',
+        transKey: 'x-trans-key',
+        secretKey: 'secret',
+        retryTimes: 3,
+        retrySleepMs: 10,
+    );
+
+    $response = $client->post('/payments', ['order_id' => 'order-retry']);
+
+    expect($attempts)->toBe(2);
+    expect($response['id'])->toBe('P-RETRY');
+});
+
+it('does not retry on 400 client error', function () {
+    $attempts = 0;
+
+    Http::fake([
+        'sandbox.dlocal.com/*' => function () use (&$attempts) {
+            $attempts++;
+
+            return Http::response(['message' => 'Invalid currency', 'code' => 400], 400);
+        },
+    ]);
+
+    $client = new DlocalHttpClient(
+        baseUrl: 'https://sandbox.dlocal.com',
+        login: 'x-login',
+        transKey: 'x-trans-key',
+        secretKey: 'secret',
+        retryTimes: 3,
+        retrySleepMs: 10,
+    );
+
+    expect(fn () => $client->post('/payments', ['order_id' => 'order-400']))
+        ->toThrow(DlocalApiException::class);
+
+    expect($attempts)->toBe(1);
 });
