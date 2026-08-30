@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class ResolveDlocalWebhookJob implements ShouldQueue
@@ -26,6 +27,18 @@ class ResolveDlocalWebhookJob implements ShouldQueue
 
     public function handle(): void
     {
+        $status = (string) ($this->rawPayload['status'] ?? 'NOTIFICATION');
+        $dedupKey = "dlocal:webhook_dedup:{$this->externalReference}:{$status}";
+
+        if (! Cache::add($dedupKey, true, now()->addMinutes(10))) {
+            Log::info('ResolveDlocalWebhookJob: duplicate webhook payload already dispatched', [
+                'external_reference' => $this->externalReference,
+                'status' => $status,
+            ]);
+
+            return;
+        }
+
         $reference = PaymentReference::where('external_reference', $this->externalReference)->first();
 
         if (! $reference) {

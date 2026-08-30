@@ -10,18 +10,30 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\IpUtils;
 
 final class DlocalWebhookController extends Controller
 {
     public function handle(Request $request): Response
     {
+        $allowedIps = (array) config('dlocal.webhook_allowed_ips', []);
+        $clientIp = (string) $request->ip();
+
+        if (! empty($allowedIps) && ! IpUtils::checkIp($clientIp, $allowedIps)) {
+            Log::warning('dLocal Webhook: forbidden IP address', [
+                'ip' => $clientIp,
+            ]);
+
+            abort(403, 'Forbidden IP address');
+        }
+
         $rawPayload = $request->getContent();
         $signature = $request->header('X-Signature', '');
         $webhookSecret = (string) config('dlocal.webhook_secret', '');
 
         if (! $this->verifySignature($rawPayload, $signature, $webhookSecret)) {
             Log::warning('dLocal Webhook: signature mismatch', [
-                'ip' => $request->ip(),
+                'ip' => $clientIp,
             ]);
 
             abort(401, 'Invalid webhook signature');

@@ -8,6 +8,7 @@ use App\Modules\Platform\Events\PaymentWebhookReceived;
 use App\Modules\Platform\Integrations\Dlocal\Jobs\ResolveDlocalWebhookJob;
 use App\Modules\Platform\Integrations\Dlocal\Models\PaymentReference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -91,4 +92,74 @@ it('ignores webhooks with unknown references', function () {
     (new ResolveDlocalWebhookJob(externalReference: 'UNKNOWN', rawPayload: []))->handle();
 
     Event::assertNotDispatched(PaymentWebhookReceived::class);
+});
+
+it('rejects webhooks originating from non-allowed IPs', function () {
+    config()->set('dlocal.webhook_allowed_ips', ['198.51.100.1', '203.0.113.0/24']);
+    config()->set('dlocal.webhook_secret', 'secret');
+
+    $payload = json_encode(['id' => 'P-FORBIDDEN']);
+    $signature = hash_hmac('sha256', $payload, 'secret');
+
+    $response = $this->withHeaders([
+        'X-Signature' => $signature,
+        'REMOTE_ADDR' => '192.0.2.1',
+    ])->postJson('/webhooks/dlocal', ['id' => 'P-FORBIDDEN']);
+
+    $response->assertStatus(403);
+});
+
+it('accepts webhooks originating from allowed IPs and valid signature', function () {
+    config()->set('dlocal.webhook_allowed_ips', ['198.51.100.1', '203.0.113.0/24']);
+    config()->set('dlocal.webhook_secret', 'secret');
+
+    PaymentReference::create([
+        'external_reference' => 'P-ALLOWED',
+        'order_id' => 'order-allowed',
+        'context' => 'central',
+    ]);
+
+    Queue::fake();
+
+    $payload = json_encode(['id' => 'P-ALLOWED']);
+    $signature = hash_hmac('sha256', $payload, 'secret');
+
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.45'])
+        ->call('POST', '/webhooks/dlocal', [], [], [], [
+            'HTTP_X_SIGNATURE' => $signature,
+            'CONTENT_TYPE' => 'application/json',
+        ], $payload);
+
+    $response->assertStatus(204);
+    Queue::assertPushed(ResolveDlocalWebhookJob::class);
+});
+
+it('idempotently deduplicates consecutive identical webhook resolutions', function () {
+    Event::fake([PaymentWebhookReceived::class]);
+    Cache::flush();
+
+    PaymentReference::create([
+        'external_reference' => 'P-DEDUP',
+        'order_id' => 'order-dedup',
+        'context' => 'central',
+    ]);
+
+    $job1 = new ResolveDlocalWebhookJob(
+        externalReference: 'P-DEDUP',
+        rawPayload: ['id' => 'P-DEDUP', 'status' => 'PAID'],
+        signature: 'sig',
+        webhookSecret: 'secret',
+    );
+    $job1->handle();
+
+    $job2 = new ResolveDlocalWebhookJob(
+        externalReference: 'P-DEDUP',
+        rawPayload: ['id' => 'P-DEDUP', 'status' => 'PAID'],
+        signature: 'sig',
+        webhookSecret: 'secret',
+    );
+    $job2->handle();
+
+    // Event should only have been dispatched once due to Cache deduplication
+    Event::assertDispatchedTimes(PaymentWebhookReceived::class, 1);
 });
