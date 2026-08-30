@@ -6,7 +6,7 @@ namespace App\Modules\Tenant\Compliance\Application\Jobs;
 
 use App\Modules\Platform\Contracts\TenantAware;
 use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
-use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Compliance\Application\Queries\GetAuditLogsForExport;
 use App\Modules\Tenant\Compliance\Domain\Models\AuditLog;
 use App\Modules\Tenant\Compliance\Infrastructure\Notifications\AuditLogExportNotification;
 use Carbon\Carbon;
@@ -33,7 +33,8 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
 
     public function handle(): void
     {
-        $user = User::find($this->userId);
+        // Resolver usuario via contrato para evitar acoplamiento directo con Access module
+        $user = app('compliance.user-resolver')->resolve($this->userId);
 
         if (! $user) {
             return;
@@ -49,10 +50,12 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
             return;
         }
 
-        $query = AuditLog::with('user')
-            ->whereDate('created_at', '>=', $this->dateFrom)
-            ->whereDate('created_at', '<=', $this->dateTo)
-            ->oldest();
+        // Usar Query object en lugar de consulta inline
+        $query = app(GetAuditLogsForExport::class)->execute(
+            tenantId: $this->tenantId,
+            dateFrom: $this->dateFrom,
+            dateTo: $this->dateTo
+        );
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'audit_export');
         $handle = fopen($tmpPath, 'w');
