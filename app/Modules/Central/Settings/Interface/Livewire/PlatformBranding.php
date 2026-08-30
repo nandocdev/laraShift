@@ -39,8 +39,8 @@ class PlatformBranding extends Component
         $this->validate([
             'platformName' => 'required|string|min:3',
             'primaryColor' => 'required|hex_color',
-            'logoUrl'      => ['nullable', 'string'],
-            'logoImage'    => ['nullable', 'image', 'max:2048'],
+            'logoUrl' => ['nullable', 'string'],
+            'logoImage' => ['nullable', 'image', 'max:2048'],
         ]);
 
         if ($this->logoImage) {
