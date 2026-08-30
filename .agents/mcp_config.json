@@ -10,7 +10,19 @@
         "codegraph": {
             "type": "stdio",
             "command": "codegraph",
-            "args": ["serve", "--mcp"]
-        }
+            "args": [
+                "serve",
+                "--mcp"
+            ]
+        },
+        "laravel-boost": {
+            "type": "local",
+            "enabled": true,
+            "command": [
+                "php",
+                "artisan",
+                "boost:mcp"
+            ]
+        },
     }
 }
