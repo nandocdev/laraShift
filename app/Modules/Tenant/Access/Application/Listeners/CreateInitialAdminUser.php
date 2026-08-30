@@ -36,7 +36,9 @@ class CreateInitialAdminUser
 
             // 3. Assign admin role (idempotent)
             setPermissionsTeamId($event->tenant->id);
-            $user->assignRole('admin');
+            if (! $user->hasRole('admin')) {
+                $user->assignRole('admin');
+            }
 
             // 4. Notify user as per PRD US-101
             $user->notify(new WelcomeTenantNotification(
