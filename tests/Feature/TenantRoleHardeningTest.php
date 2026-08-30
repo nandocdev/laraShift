@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
+use App\Modules\Tenant\Access\Domain\Models\Permission;
 use App\Modules\Tenant\Access\Domain\Models\Role;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Access\Interface\Livewire\RoleManagement;
@@ -71,6 +72,7 @@ it('returns 409 conflict when deleting a role with active users', function () {
     ]);
 
     setPermissionsTeamId($tenant->id);
+    $role->givePermissionTo(Permission::firstOrCreate(['name' => 'roles:manage', 'guard_name' => 'web']));
     $user->assignRole('editor');
 
     $this->actingAs($user);

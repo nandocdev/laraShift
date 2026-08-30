@@ -9,12 +9,15 @@ use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
 use App\Modules\Tenant\Access\Application\Actions\RevokeApiKey;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class ManageApiKeys extends Component
 {
+    use AuthorizesRequests;
+
     // Form state
     public string $name = '';
 
@@ -35,6 +38,8 @@ class ManageApiKeys extends Component
 
     public function generate(GenerateApiKey $action): void
     {
+        $this->authorize('settings:manage');
+
         $this->validate([
             'name' => 'required|string|max:100',
             'selectedScopes' => 'required|array|min:1',
@@ -59,6 +64,8 @@ class ManageApiKeys extends Component
 
     public function revoke(string $id, RevokeApiKey $action): void
     {
+        $this->authorize('settings:manage');
+
         $apiKey = ApiKey::findOrFail($id);
         $action->execute($apiKey);
 
