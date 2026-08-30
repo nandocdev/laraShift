@@ -7,11 +7,14 @@ namespace App\Modules\Tenant\Experience\Interface\Livewire;
 use App\Modules\Tenant\Experience\Application\Actions\InitializeTenantLanding;
 use App\Modules\Tenant\Experience\Application\Actions\UpdateTenantBranding;
 use App\Modules\Tenant\Experience\Application\DTO\BrandingData;
+use App\Modules\Tenant\Experience\Domain\Models\Landing;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use App\Modules\Tenant\Experience\Infrastructure\Support\BrandingPresets;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -23,7 +26,7 @@ class BrandingSettings extends Component
 
     public string $name = '';
 
-    public $logo;
+    public $logo = null;
 
     public string $logo_path = '';
 
@@ -31,34 +34,60 @@ class BrandingSettings extends Component
 
     public string $theme_preset = 'saas';
 
-    public array $presets = [];
-
     public bool $mfa_required = false;
 
-    public function updatedThemePreset($value): void
+    public function mount(): void
     {
-        $presets = BrandingPresets::all();
-        if ($value !== 'custom' && isset($presets[$value])) {
-            $this->primary_color = $presets[$value]['primary'];
+        $settings = TenantSetting::firstOrCreate(
+            ['tenant_id' => tenant('id')],
+            ['name' => tenant('name')]
+        );
+
+        $this->name = $settings->name;
+        $this->logo_path = $settings->logo_path ?? '';
+        $this->primary_color = $settings->primary_color ?? '#4f46e5';
+        $this->mfa_required = (bool) ($settings->mfa_required ?? false);
+
+        $this->theme_preset = 'custom';
+        foreach (BrandingPresets::all() as $key => $preset) {
+            if ($preset['primary'] === $this->primary_color) {
+                $this->theme_preset = $key;
+                break;
+            }
         }
     }
 
-    public function initializeLanding(InitializeTenantLanding $action): void
+    /**
+     * @return array<string, array{name: string, primary: ?string, secondary: string, font_heading: string, font_body: string}>
+     */
+    #[Computed]
+    public function presets(): array
     {
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-        Gate::authorize('update', $settings);
+        return BrandingPresets::all();
+    }
 
-        $action->execute($this->theme_preset, $this->primary_color);
+    #[Computed]
+    public function landing(): ?Landing
+    {
+        return Landing::query()
+            ->where('tenant_id', tenant('id'))
+            ->where('slug', 'saas-landing')
+            ->first();
+    }
 
-        session()->flash('status', __('Landing page initialized!'));
-        $this->dispatch('toast', heading: __('Landing Page'), text: __('Landing page initialized!'), variant: 'success');
+    public function updatedThemePreset(string $value): void
+    {
+        $presets = $this->presets();
+        if ($value !== 'custom' && isset($presets[$value]) && $presets[$value]['primary'] !== null) {
+            $this->primary_color = $presets[$value]['primary'];
+        }
     }
 
     public function updatedLogo(): void
     {
         try {
             $this->validate([
-                'logo' => 'image|max:2048',
+                'logo' => ['image', 'max:2048'],
             ]);
         } catch (ValidationException $e) {
             throw $e;
@@ -81,30 +110,6 @@ class BrandingSettings extends Component
         }
     }
 
-    public function mount(): void
-    {
-        $this->presets = BrandingPresets::all();
-
-        $settings = TenantSetting::firstOrCreate(
-            ['tenant_id' => tenant('id')],
-            ['name' => tenant('name')]
-        );
-
-        $this->name = $settings->name;
-        $this->logo_path = $settings->logo_path ?? '';
-        $this->primary_color = $settings->primary_color ?? '#4f46e5';
-        $this->mfa_required = (bool) ($settings->mfa_required ?? false);
-
-        // Detect preset based on primary color
-        $this->theme_preset = 'custom';
-        foreach (BrandingPresets::all() as $key => $preset) {
-            if ($preset['primary'] === $this->primary_color) {
-                $this->theme_preset = $key;
-                break;
-            }
-        }
-    }
-
     public function save(UpdateTenantBranding $action): void
     {
         $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
@@ -112,11 +117,11 @@ class BrandingSettings extends Component
 
         try {
             $this->validate([
-                'name' => 'required|string|max:255',
-                'logo' => 'nullable|image|max:2048',
-                'primary_color' => 'required|hex_color',
-                'theme_preset' => 'required|string',
-                'mfa_required' => 'boolean',
+                'name' => ['required', 'string', 'max:255'],
+                'logo' => ['nullable', 'image', 'max:2048'],
+                'primary_color' => ['required', 'hex_color'],
+                'theme_preset' => ['required', 'string', Rule::in(array_keys($this->presets()))],
+                'mfa_required' => ['boolean'],
             ]);
         } catch (ValidationException $e) {
             throw $e;
@@ -135,12 +140,23 @@ class BrandingSettings extends Component
             logo: $this->logo,
         ));
 
-        // Refresh local state
         $this->logo_path = $settings->fresh()->logo_path ?? '';
         $this->reset('logo');
 
         session()->flash('status', __('Branding updated successfully.'));
         $this->dispatch('toast', heading: __('Settings Updated'), text: __('Branding updated successfully.'), variant: 'success');
+    }
+
+    public function initializeLanding(InitializeTenantLanding $action): void
+    {
+        $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
+        Gate::authorize('update', $settings);
+
+        $action->execute($this->theme_preset, $this->primary_color);
+        unset($this->landing);
+
+        session()->flash('status', __('Landing page initialized!'));
+        $this->dispatch('toast', heading: __('Landing Page'), text: __('Landing page initialized!'), variant: 'success');
     }
 
     public function render(): View

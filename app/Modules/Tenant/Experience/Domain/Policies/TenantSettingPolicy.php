@@ -18,13 +18,16 @@ class TenantSettingPolicy
      */
     public function update(User $user, TenantSetting $settings): bool
     {
-        // For now, allow any user with 'admin' role or 'manage settings' permission
-        if ($user->hasRole('admin')) {
+        if ((string) $user->tenant_id !== (string) $settings->tenant_id) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['admin', 'Administrator', 'owner', 'Owner'])) {
             return true;
         }
 
         try {
-            return $user->hasPermissionTo('manage settings');
+            return $user->hasAnyPermission(['settings:manage', 'manage settings']);
         } catch (PermissionDoesNotExist) {
             return false;
         }
