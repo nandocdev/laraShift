@@ -10,11 +10,28 @@ use App\Modules\Platform\Contracts\Exportable;
 
 class BillingExportService implements Exportable
 {
-    public function getExportData(): array
+    public function exportToStream($handle): void
     {
-        return [
-            'invoices' => Invoice::where('tenant_id', tenant('id'))->get()->toArray(),
-            'subscriptions' => Subscription::where('tenant_id', tenant('id'))->get()->toArray(),
-        ];
+        fwrite($handle, '"invoices":[');
+        $first = true;
+        foreach (Invoice::where('tenant_id', tenant('id'))->cursor() as $invoice) {
+            if (! $first) {
+                fwrite($handle, ',');
+            }
+            fwrite($handle, json_encode($invoice));
+            $first = false;
+        }
+        fwrite($handle, '],');
+
+        fwrite($handle, '"subscriptions":[');
+        $first = true;
+        foreach (Subscription::where('tenant_id', tenant('id'))->cursor() as $sub) {
+            if (! $first) {
+                fwrite($handle, ',');
+            }
+            fwrite($handle, json_encode($sub));
+            $first = false;
+        }
+        fwrite($handle, ']');
     }
 }

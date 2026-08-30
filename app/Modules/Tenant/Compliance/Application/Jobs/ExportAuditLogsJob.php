@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -48,18 +49,17 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
             return;
         }
 
-        $logs = AuditLog::with('user')
+        $query = AuditLog::with('user')
             ->whereDate('created_at', '>=', $this->dateFrom)
             ->whereDate('created_at', '<=', $this->dateTo)
-            ->oldest()
-            ->get();
+            ->oldest();
 
-        $fileName = "exports/audit/audit_log_{$this->tenantId}_".Str::random(8).'.csv';
-        $handle = fopen('php://temp', 'r+');
+        $tmpPath = tempnam(sys_get_temp_dir(), 'audit_export');
+        $handle = fopen($tmpPath, 'w');
 
         fputcsv($handle, ['ID', 'Date', 'Action', 'Member', 'Resource', 'Resource ID', 'IP', 'Metadata']);
 
-        foreach ($logs as $log) {
+        foreach ($query->cursor() as $log) {
             fputcsv($handle, [
                 $log->id,
                 $log->created_at->toDateTimeString(),
@@ -71,12 +71,11 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
                 json_encode($log->metadata),
             ]);
         }
-
-        rewind($handle);
-        $content = stream_get_contents($handle);
         fclose($handle);
 
-        Storage::disk('private')->put($fileName, $content);
+        $fileName = "exports/audit/audit_log_{$this->tenantId}_".Str::random(8).'.csv';
+        Storage::disk('private')->putFileAs('', new File($tmpPath), $fileName);
+        unlink($tmpPath);
 
         $user->notify(new AuditLogExportNotification($fileName));
     }

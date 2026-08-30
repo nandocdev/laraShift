@@ -14,6 +14,7 @@ use App\Modules\Tenant\Experience\Application\Services\SettingsExportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
@@ -42,13 +43,23 @@ class ExportTenantDataJob implements ShouldQueue, TenantAware
             new BillingExportService,
         ];
 
-        $data = [];
+        $tmpPath = tempnam(sys_get_temp_dir(), 'tenant_export');
+        $handle = fopen($tmpPath, 'w');
+        fwrite($handle, '{');
+        $first = true;
         foreach ($exportables as $exportable) {
-            $data = array_merge($data, $exportable->getExportData());
+            if (! $first) {
+                fwrite($handle, ',');
+            }
+            $exportable->exportToStream($handle);
+            $first = false;
         }
+        fwrite($handle, '}');
+        fclose($handle);
 
         $fileName = 'exports/tenant_data_'.$this->tenantId.'_'.Str::random(8).'.json';
-        Storage::disk('private')->put($fileName, json_encode($data));
+        Storage::disk('private')->putFileAs('', new File($tmpPath), $fileName);
+        unlink($tmpPath);
 
         $user->notify(new TenantDataExportNotification($fileName));
     }
