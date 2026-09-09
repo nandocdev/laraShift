@@ -37,6 +37,6 @@ class TenantDataExportNotification extends Notification implements ShouldQueue
             ->line(__('The data export you requested has been generated successfully.'))
             ->line(__('You can download it using the button below. Note: This link will expire in 24 hours.'))
             ->action(__('Download Data', []), $url)
-            ->line(__('Thank you for using LaraShift!'));
+            ->line(__('Thank you for using openSaaS!'));
     }
 }

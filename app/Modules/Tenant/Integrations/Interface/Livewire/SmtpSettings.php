@@ -99,10 +99,10 @@ class SmtpSettings extends Component
             );
 
             $mailerService->withConfig($config, function ($mailer) {
-                $mailer->raw(__('This is a test email from LaraShift to verify your SMTP configuration.'), function ($message) {
+                $mailer->raw(__('This is a test email from openSaaS to verify your SMTP configuration.'), function ($message) {
                     $message->to($this->test_email)
                         ->from($this->smtp_from_email, $this->smtp_from_name)
-                        ->subject(__('LaraShift SMTP Test'));
+                        ->subject(__('openSaaS SMTP Test'));
                 });
             });
 
