@@ -70,9 +70,9 @@ class EnsureTenantIsActive
             return redirect()->route('tenant.billing.plans');
         }
 
-        // 3. Hard block for archived/expired tenants
-        if (in_array(tenant('status'), ['archived', 'expired'], true)) {
-            abort(404);
+        // 3. Hard block for archived/expired/quarantined tenants
+        if (in_array(tenant('status'), ['archived', 'expired', 'quarantine'], true)) {
+            abort(tenant('status') === 'quarantine' ? 403 : 404);
         }
 
         // 3. Block for maintenance

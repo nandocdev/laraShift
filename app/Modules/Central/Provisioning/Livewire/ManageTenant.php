@@ -45,7 +45,7 @@ class ManageTenant extends Component
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'plan_id' => 'required|string',
-            'status' => 'required|in:provisioning,active,suspended,archived,failed',
+            'status' => 'required|in:provisioning,active,suspended,archived,failed,quarantine',
             'maintenance_mode' => 'boolean',
             'read_only' => 'boolean',
         ]);
