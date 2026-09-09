@@ -36,10 +36,9 @@ class TenantImpersonationController extends Controller
         // Mitigate session fixation
         $request->session()->migrate(true);
 
-        // 1. Authenticate the operator in the tenant guard
-        // Note: central_users.id in tenant guard creates a shadow session; audit via Session::put impersonated_by
-        // For true tenant user mapping, a dedicated SupportUser would be needed (future).
-        auth()->loginUsingId($session->operator_id);
+        // 1. Authenticate the operator in the central guard
+        // The central guard allows them to be recognized as central_users without polluting the tenant's web guard.
+        auth('central')->loginUsingId($session->operator_id);
 
         // 2. Mark session as used/active
         Session::put('impersonation_session_id', $session->id);

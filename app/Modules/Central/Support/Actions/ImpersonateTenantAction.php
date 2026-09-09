@@ -6,6 +6,7 @@ namespace App\Modules\Central\Support\Actions;
 
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Models\SupportSession;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 final readonly class ImpersonateTenantAction

@@ -15,6 +15,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -111,7 +112,14 @@ class RegisterTenant extends Component
         $rules = $this->rulesForStep($this->step);
 
         if (! empty($rules)) {
-            $this->validate($rules);
+            try {
+                $this->validate($rules);
+            } catch (ValidationException $e) {
+                if ($this->step === 1) {
+                    $this->reset('password');
+                }
+                throw $e;
+            }
         }
 
         if ($this->step < 3) {
@@ -155,7 +163,12 @@ class RegisterTenant extends Component
                 $this->rulesForStep(3)
             );
 
-            $this->validate($allRules);
+            try {
+                $this->validate($allRules);
+            } catch (ValidationException $e) {
+                $this->reset('password');
+                throw $e;
+            }
 
             if ($this->honeypot !== '') {
                 $this->addError('honeypot', __('Spam detected.'));

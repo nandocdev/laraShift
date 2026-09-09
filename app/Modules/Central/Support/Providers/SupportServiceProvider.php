@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Providers;
 
-use App\Modules\Central\Auth\Domain\Models\CentralUser;
 use App\Modules\Central\Support\Livewire\BroadcastCenter;
 use App\Modules\Central\Support\Livewire\GlobalAnnouncements;
 use App\Modules\Central\Support\Livewire\TenantSupportBitacora;
@@ -21,11 +20,11 @@ class SupportServiceProvider extends ServiceProvider
             if (method_exists($user, 'can') && $user->can('support-impersonate')) {
                 return true;
             }
-            if (method_exists($user, 'hasRole') && $user->hasRole('admin')) {
+            if (method_exists($user, 'hasRole') && ($user->hasRole('admin') || $user->hasRole('support'))) {
                 return true;
             }
 
-            return $user instanceof CentralUser;
+            return false;
         });
 
         $this->loadViewsFrom(__DIR__.'/../UI', 'support');
