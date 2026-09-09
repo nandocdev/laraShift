@@ -13,7 +13,7 @@ final readonly class ReserveTenantDomainAction
      */
     public function execute(Tenant $tenant, string $slug): void
     {
-        $domain = $slug.'.'.config('tenancy.central_domain', 'larashift.test');
+        $domain = $slug.'.'.config('tenancy.central_domain', 'openSaaS.test');
 
         $tenant->domains()->updateOrCreate([
             'domain' => $domain,
