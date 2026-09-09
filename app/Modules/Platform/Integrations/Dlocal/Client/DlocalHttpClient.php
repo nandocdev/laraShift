@@ -8,6 +8,7 @@ use App\Modules\Platform\Integrations\Dlocal\Exceptions\DlocalApiException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final class DlocalHttpClient
@@ -73,6 +74,13 @@ final class DlocalHttpClient
 
         if ($response->failed()) {
             $error = $response->json() ?? [];
+
+            // TEMP-DEBUG dLocal DIRECT: capturar cuerpo exacto del rechazo.
+            Log::debug('dLocal API failure', [
+                'path' => $path,
+                'http_status' => $response->status(),
+                'raw_body' => $response->body(),
+            ]);
 
             throw new DlocalApiException(
                 message: $error['message'] ?? 'dLocal API error',

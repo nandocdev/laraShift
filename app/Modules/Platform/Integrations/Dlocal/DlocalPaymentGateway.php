@@ -28,14 +28,22 @@ final class DlocalPaymentGateway implements PaymentGatewayContract
             'payment_method_flow' => $data->flow->value,
             'payer' => $data->payer->toArray(),
             'description' => $data->description,
+            'notification_url' => $data->notificationUrl,
+            'callback_url' => $data->callbackUrl,
+        ], static fn ($v) => $v !== null);
+
+        $cardData = array_filter([
+            'holder_name' => $data->payer->name !== '' ? $data->payer->name : null,
             'token' => $data->token,
             'card_id' => $data->cardId,
             'save' => $data->save,
             'stored_credential_type' => $data->storedCredentialType,
             'stored_credential_usage' => $data->storedCredentialUsage,
-            'notification_url' => $data->notificationUrl,
-            'callback_url' => $data->callbackUrl,
         ], static fn ($v) => $v !== null);
+
+        if ($cardData !== []) {
+            $payload['card'] = $cardData;
+        }
 
         if ($data->metadata !== []) {
             $payload['metadata'] = $data->metadata;
