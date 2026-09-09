@@ -63,6 +63,7 @@ class PaguelofacilCallbackController extends Controller
 
         // Approved on the browser query string is NOT trusted for fulfillment.
         // Webhook (PaymentVerifier) is the only path that creates Subscription / updates plan.
+        // There is no need to query the database here, since this is purely UX.
         Log::info('PagueloFacil Callback approved (ux-only, awaiting webhook)', [
             'tenant_id' => $tenantId,
             'gateway_reference' => $result->gatewayReference,
