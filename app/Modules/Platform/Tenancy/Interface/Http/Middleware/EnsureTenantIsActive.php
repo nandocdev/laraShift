@@ -20,7 +20,31 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
-        // 1. Whitelist critical routes
+        // 1. Strict interception for suspended tenants
+        if (tenant('status') === 'suspended') {
+            if ($request->routeIs([
+                'tenant.billing.plans',
+                'tenant.billing.manage',
+                'tenant.billing.checkout.hosted',
+                'tenant.billing.success',
+                'tenant.billing.cancel',
+                'tenant.billing.update-payment',
+                'login',
+                'login.store',
+                'logout',
+                'two-factor.login',
+                'two-factor.login.store',
+            ]) || $request->is('livewire/*', 'auth/*', 'billing/*')) {
+                // Allow these routes to enable login and payment recovery
+            } else {
+                if (auth()->check()) {
+                    return redirect()->route('tenant.billing.plans');
+                }
+                abort(402, 'This account has been suspended due to overdue payment.');
+            }
+        }
+
+        // 2. Whitelist critical routes for active/pending_payment tenants
         if ($request->routeIs([
             'tenant.home',
             'login',
@@ -70,26 +94,29 @@ class EnsureTenantIsActive
             return redirect()->route('tenant.billing.plans');
         }
 
-        // 3. Hard block for archived/expired/quarantined tenants
+        // 5. Hard block for archived/expired/quarantined tenants
         if (in_array(tenant('status'), ['archived', 'expired', 'quarantine'], true)) {
             abort(tenant('status') === 'quarantine' ? 403 : 404);
         }
 
-        // 3. Block for maintenance
+        // 6. Block for maintenance
         if (tenant('maintenance_mode')) {
             abort(503);
         }
 
-        // 4. Enforce subscription/payment rules for AUTHENTICATED users
+        // 7. Enforce subscription/payment rules for AUTHENTICATED users
         if (auth()->check()) {
-            $isSuspended = tenant('status') === 'suspended';
             $isPaidPlan = tenant('plan_id') !== 'free';
 
-            if ($isSuspended || $isPaidPlan) {
+            if ($isPaidPlan) {
                 $subscription = tenant()->subscription('default');
-                $hasActiveSubscription = $subscription && ($subscription->active() || $subscription->onGracePeriod());
+                $hasActiveSubscription = $subscription && (
+                    $subscription->active() ||
+                    $subscription->onGracePeriod() ||
+                    tenant('status') === 'past_due'
+                );
 
-                if ($isSuspended || ! $hasActiveSubscription) {
+                if (! $hasActiveSubscription) {
                     // Redirect to plans page instead of blocking
                     return redirect()->route('tenant.billing.plans');
                 }
