@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Jobs;
 
+use App\Modules\Central\Growth\Domain\ValueObjects\FraudSignals;
 use App\Modules\Central\Provisioning\Actions\ProvisionTenantPipeline;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\TenantAware;
@@ -36,16 +37,30 @@ class ProvisionTenantJob implements ShouldQueue, TenantAware
         public ?string $password = null,
         public string $adminName = 'Administrator',
         public string $finalStatus = 'active',
+        /** @var array<string, mixed>|null Serialized FraudSignals payload — arrays survive queue serialization cleanly. */
+        public ?array $fraudSignalsPayload = null,
     ) {}
 
     public function handle(ProvisionTenantPipeline $pipeline): void
     {
+        $fraudSignals = null;
+
+        if ($this->fraudSignalsPayload !== null) {
+            $fraudSignals = new FraudSignals(
+                score: (int) ($this->fraudSignalsPayload['score'] ?? 0),
+                signals: (array) ($this->fraudSignalsPayload['signals'] ?? []),
+                ip: (string) ($this->fraudSignalsPayload['ip'] ?? ''),
+                email: (string) ($this->fraudSignalsPayload['email'] ?? ''),
+            );
+        }
+
         $pipeline->execute(
             tenantId: $this->tenantId,
             adminEmail: $this->adminEmail,
             password: $this->password,
             adminName: $this->adminName,
             finalStatus: $this->finalStatus,
+            fraudSignals: $fraudSignals,
         );
     }
 
