@@ -1,6 +1,6 @@
 # Scope Platform
 
-Este directorio contiene los módulos, clases y primitivas transversales de la plataforma técnica de LaraShift. 
+Este directorio contiene los módulos, clases y primitivas transversales de la plataforma técnica de openSaaS.
 
 ## Reglas del Scope
 

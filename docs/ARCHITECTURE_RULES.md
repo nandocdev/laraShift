@@ -1,12 +1,12 @@
 > **Objetivo**
 >
-> Este documento define las reglas obligatorias para implementar nuevas funcionalidades en LaraShift. Su propósito es mantener una arquitectura consistente, simple y mantenible, evitando deriva arquitectónica (Architecture Drift).
+> Este documento define las reglas obligatorias para implementar nuevas funcionalidades en openSaaS. Su propósito es mantener una arquitectura consistente, simple y mantenible, evitando deriva arquitectónica (Architecture Drift).
 
 ---
 
 # Filosofía
 
-LaraShift es un **framework/boilerplate reutilizable**, no un producto SaaS. La prioridad es:
+openSaaS es un **framework/boilerplate reutilizable**, no un producto SaaS. La prioridad es:
 
 1. Simplicidad
 2. Consistencia
@@ -83,7 +83,7 @@ Módulos:
 
 ### Tenant
 
-Representa el punto de extensión sobre el cual cada producto construye su propio dominio de negocio. **El core de LaraShift solo provee scaffolding genérico aquí, nunca módulos de dominio específico.**
+Representa el punto de extensión sobre el cual cada producto construye su propio dominio de negocio. **El core de openSaaS solo provee scaffolding genérico aquí, nunca módulos de dominio específico.**
 
 Módulos que pertenecen al core:
 
