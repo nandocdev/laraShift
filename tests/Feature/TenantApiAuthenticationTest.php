@@ -20,7 +20,7 @@ it('authenticates a request via bearer token and api key', function () {
         'email' => 'api-auth@test.com',
         'plan_id' => 'free',
     ]);
-    $tenant->domains()->create(['domain' => 'api-auth.larashift.test']);
+    $tenant->domains()->create(['domain' => 'api-auth.openSaaS.test']);
 
     $action = app(GenerateApiKey::class);
 
@@ -31,12 +31,12 @@ it('authenticates a request via bearer token and api key', function () {
     tenancy()->end();
 
     // 1. Unauthorized request (no token)
-    $this->getJson('http://api-auth.larashift.test/api/me')
+    $this->getJson('http://api-auth.openSaaS.test/api/me')
         ->assertStatus(401);
 
     // 2. Authorized request
     $this->withToken($plainKey)
-        ->getJson('http://api-auth.larashift.test/api/me')
+        ->getJson('http://api-auth.openSaaS.test/api/me')
         ->assertStatus(200)
         ->assertJson([
             'tenant' => 'API Auth Test',
@@ -55,7 +55,7 @@ it('denies access if scope is missing', function () {
         'name' => 'Scope Test',
         'email' => 'scope@test.com',
     ]);
-    $tenant->domains()->create(['domain' => 'scope.larashift.test']);
+    $tenant->domains()->create(['domain' => 'scope.openSaaS.test']);
 
     tenancy()->initialize($tenant);
     $result = app(GenerateApiKey::class)->execute('Limited Key', ['identity:read']);
@@ -69,7 +69,7 @@ it('denies access if scope is missing', function () {
         });
 
     $this->withToken($plainKey)
-        ->getJson('http://scope.larashift.test/api/protected')
+        ->getJson('http://scope.openSaaS.test/api/protected')
         ->assertStatus(403);
 });
 

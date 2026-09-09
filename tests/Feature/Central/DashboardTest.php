@@ -24,12 +24,12 @@ test('authenticated central user can access dashboard and app logo renders corre
 
     $user = CentralUser::factory()->create();
 
-    CentralBranding::set('platform_name', 'LaraShift Test Suite');
+    CentralBranding::set('platform_name', 'openSaaS Test Suite');
 
     $this->actingAs($user, 'central')
         ->get(route('central.dashboard'))
         ->assertOk()
-        ->assertSee('LaraShift Test Suite');
+        ->assertSee('openSaaS Test Suite');
 });
 
 test('central dashboard renders all sections from the wireframe specification', function () {
