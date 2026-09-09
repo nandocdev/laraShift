@@ -70,15 +70,63 @@
         </flux:sidebar.nav>
         <flux:spacer />
 
-        <flux:sidebar.nav>
-            <flux:sidebar.item icon="folder-git-2" href="https://github.com/nandocdev/openSaaS" target="_blank">
-                {{ __('Project') }}
-            </flux:sidebar.item>
-
-            <flux:sidebar.item icon="book-open-text" href="{{ url('/docs') }}" target="_blank">
-                {{ __('Documentation') }}
-            </flux:sidebar.item>
-        </flux:sidebar.nav>
+        <div
+            x-data="{
+                status: 'loading',
+                checks: { database: { status: 'loading' }, redis: { status: 'loading' }, queue: { status: 'loading', size: null, failed_jobs: null } },
+                dot(status) {
+                    return {
+                        pass: 'bg-emerald-500',
+                        warn: 'bg-amber-500',
+                        fail: 'bg-rose-500',
+                    }[status] ?? 'bg-zinc-400 animate-pulse';
+                },
+                label() {
+                    return { healthy: '{{ __('System healthy') }}', degraded: '{{ __('System degraded') }}' }[this.status] ?? '{{ __('Checking status…') }}';
+                },
+                async load() {
+                    try {
+                        const res = await fetch('{{ route('central.health') }}', {
+                            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        });
+                        if (!res.ok) throw new Error(res.status);
+                        const data = await res.json();
+                        this.status = data.status ?? 'degraded';
+                        this.checks = data.checks ?? this.checks;
+                    } catch (e) {
+                        this.status = 'degraded';
+                    }
+                }
+            }"
+            x-init="load(); setInterval(() => load(), 60000)"
+            class="border-t border-zinc-200 px-3 py-3 dark:border-zinc-700/60"
+        >
+            <a href="{{ route('central.health') }}" target="_blank" class="flex items-center gap-2 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                <span class="size-2 shrink-0 rounded-full" :class="dot(status)"></span>
+                <span x-text="label()">{{ __('Checking status…') }}</span>
+            </a>
+            <div class="mt-2 space-y-1 text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-1.5">
+                        <span class="size-1.5 rounded-full" :class="dot(checks.database?.status)"></span>
+                        {{ __('Database') }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-1.5">
+                        <span class="size-1.5 rounded-full" :class="dot(checks.redis?.status)"></span>
+                        {{ __('Redis') }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-1.5">
+                        <span class="size-1.5 rounded-full" :class="dot(checks.queue?.status)"></span>
+                        {{ __('Queue') }}
+                    </span>
+                    <span x-show="checks.queue?.size !== undefined && checks.queue?.size !== null" x-text="checks.queue.size + ' / ' + (checks.queue.failed_jobs ?? 0)" class="tabular-nums"></span>
+                </div>
+            </div>
+        </div>
 
         @auth('central')
         <x-central-user-menu class="hidden lg:block" />

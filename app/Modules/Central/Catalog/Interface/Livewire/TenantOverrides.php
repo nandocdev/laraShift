@@ -6,19 +6,17 @@ namespace App\Modules\Central\Catalog\Interface\Livewire;
 
 use App\Modules\Central\Catalog\Application\Actions\ApplyTenantFeatureOverride;
 use App\Modules\Central\Catalog\Application\Actions\ResolveTenantFeatures;
-use App\Modules\Central\Catalog\Application\DTO\TenantSummaryData;
 use App\Modules\Central\Catalog\Domain\Models\Feature;
 use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.central')]
 class TenantOverrides extends Component
 {
-    public TenantSummaryData $tenantData;
-
     public string $tenantId;
 
     // Form state for new override
@@ -33,7 +31,6 @@ class TenantOverrides extends Component
     public function mount(Tenant $tenant): void
     {
         $this->tenantId = $tenant->id;
-        $this->tenantData = TenantSummaryData::from($tenant);
     }
 
     public function applyOverride(ApplyTenantFeatureOverride $action): void
@@ -91,6 +88,7 @@ class TenantOverrides extends Component
             ->get();
 
         return view('features::pages.tenant-overrides', [
+            'tenant' => $tenant,
             'overrides' => $overrides,
             'availableFeatures' => $availableFeatures,
             'effectiveFeatures' => app(ResolveTenantFeatures::class)->execute($tenant),

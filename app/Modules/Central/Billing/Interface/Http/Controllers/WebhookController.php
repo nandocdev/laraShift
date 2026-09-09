@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
 use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
+use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use Illuminate\Http\Request;

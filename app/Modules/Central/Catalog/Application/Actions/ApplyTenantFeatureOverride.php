@@ -7,8 +7,10 @@ namespace App\Modules\Central\Catalog\Application\Actions;
 use App\Modules\Central\Catalog\Domain\Models\Feature;
 use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 final readonly class ApplyTenantFeatureOverride
 {
