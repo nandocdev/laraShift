@@ -1,29 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Domain\Models\Payment;
+use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
+use App\Modules\Central\Billing\Infrastructure\Gateways\CheckoutManager;
+use App\Modules\Central\Provisioning\Models\Domain;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
-it('does not double-charge on concurrent same display_id', function () {
+it('reuses the same payment on concurrent initiate with the same display_id', function () {
     $tenant = Tenant::create([
-        'id' => Str::uuid(),
-        'slug' => 'test-dup-'.Str::random(5),
-        'name' => 'Test Tenant',
-        'email' => 'dup@example.com',
+        'id' => (string) Str::uuid(),
+        'slug' => 'dup-'.Str::random(6),
+        'name' => 'Dup Tenant',
+        'email' => 'dup-'.Str::random(6).'@test.com',
         'plan_id' => 'free',
         'status' => 'active',
     ]);
-    $data = [
+
+    Domain::create([
+        'domain' => $tenant->slug.'.localhost',
         'tenant_id' => $tenant->id,
-        'display_id' => 'sub_X_2026-09',
-        'amount' => 1000,
-    ];
+    ]);
 
-    // primer insert
-    Payment::factory()->create([...$data, 'slug' => Str::uuid(), 'status' => 'approved']);
+    Http::fake([
+        '*/LinkDeamon.cfm' => Http::response([
+            'success' => true,
+            'data' => ['url' => 'https://sandbox.paguelofacil.com/checkout/LK-123'],
+        ], 200),
+    ]);
 
-    // segundo insert debe violar unique(tenant_id,display_id)
-    expect(fn () => Payment::factory()->create([...$data, 'slug' => Str::uuid(), 'status' => 'approved']))
-        ->toThrow(QueryException::class);
+    $data = new PaymentData(
+        amount: 29.99,
+        description: 'Subscription to Pro',
+        displayId: 'INV-DUP-'.Str::upper(Str::random(6)),
+        email: $tenant->email,
+        tenantId: (string) $tenant->id,
+    );
+
+    $manager = app(CheckoutManager::class);
+
+    $manager->initiate($data, (string) $tenant->id, 'test-key');
+    $manager->initiate($data, (string) $tenant->id, 'test-key');
+
+    expect(Payment::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('display_id', $data->displayId)->count())->toBe(1)
+        ->and(PaymentAttempt::withoutGlobalScopes()->where('tenant_id', $tenant->id)->count())->toBe(2);
 });

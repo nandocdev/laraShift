@@ -32,10 +32,33 @@ class PlanManager
 
     public static function getStripeId(string $id): ?string
     {
-        // For now, stripe_id is expected to be part of features or a dedicated mapping
-        // In this architecture, we could add a gateway_mappings table or just put it in features
+        return self::getProviderRef($id, 'stripe');
+    }
+
+    /**
+     * Provider reference for a plan (price/product id on the gateway side).
+     * Convention: features.gateway_ids = {stripe: price_*, dlocal: PLAN-*, clave: service_id},
+     * with fallback to the legacy features.stripe_id (stripe) and provider_plan_id column.
+     * No prices table until a plan needs 2+ real prices per gateway.
+     */
+    public static function getProviderRef(string $id, string $gateway): ?string
+    {
         $plan = self::find($id);
 
-        return $plan?->features['stripe_id'] ?? null;
+        if (! $plan) {
+            return null;
+        }
+
+        $features = $plan->features ?? [];
+
+        if (is_array($features['gateway_ids'] ?? null) && isset($features['gateway_ids'][$gateway])) {
+            return (string) $features['gateway_ids'][$gateway];
+        }
+
+        if ($gateway === 'stripe' && isset($features['stripe_id'])) {
+            return (string) $features['stripe_id'];
+        }
+
+        return $plan->provider_plan_id;
     }
 }
