@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Jobs;
 
+use App\Modules\Central\Provisioning\Actions\PurgeTenantDataAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\TenantAware;
+use App\Modules\Platform\Security\RateLimiting\TenantRateLimiter;
 use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,6 +15,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 
 class PurgeTenantJob implements ShouldQueue, TenantAware
 {
@@ -23,7 +27,7 @@ class PurgeTenantJob implements ShouldQueue, TenantAware
         public string $tenantSlug
     ) {}
 
-    public function handle(): void
+    public function handle(TenantRateLimiter $rateLimiter): void
     {
         Log::info("Starting background purge for tenant: {$this->tenantSlug} ({$this->tenantId})");
 
@@ -35,8 +39,17 @@ class PurgeTenantJob implements ShouldQueue, TenantAware
             return;
         }
 
+        // 1. Clear Rate Limit Metrics
+        RateLimiter::clear($rateLimiter->key($this->tenantId));
+
+        // 2. Physical Data Cascade
         app(PurgeTenantDataAction::class)->execute($this->tenantId);
 
+        // 3. Storage Object Deletion (Local/S3 tenant-prefixed directories)
+        Storage::disk('local')->deleteDirectory("tenant{$this->tenantId}");
+        Storage::disk('public')->deleteDirectory("tenant{$this->tenantId}");
+
+        // 4. Force Delete Tenant Record
         $tenant->forceDelete();
 
         Log::info("Purge completed for tenant: {$this->tenantSlug}");
