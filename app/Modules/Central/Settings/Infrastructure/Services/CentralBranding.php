@@ -29,7 +29,7 @@ class CentralBranding
 
     public static function platformName(): string
     {
-        return self::get('platform_name', config('app.name', 'LaraShift'));
+        return self::get('platform_name', config('app.name', 'openSaaS'));
     }
 
     public static function primaryColor(): string

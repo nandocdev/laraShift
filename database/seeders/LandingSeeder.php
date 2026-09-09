@@ -71,7 +71,7 @@ class LandingSeeder extends Seeder
                         'variant' => 'simple',
                         'order' => 2,
                         'config' => [
-                            'copyright_text' => '© 2026 LaraShift Inc.',
+                            'copyright_text' => '© 2026 openSaaS Inc.',
                             'legal_links' => [
                                 ['label' => 'Privacy', 'url' => '/privacy'],
                                 ['label' => 'Terms', 'url' => '/terms'],

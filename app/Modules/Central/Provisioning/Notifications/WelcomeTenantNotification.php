@@ -26,7 +26,7 @@ class WelcomeTenantNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Welcome to LaraShift! Your account is ready.'))
+            ->subject(__('Welcome to openSaaS! Your account is ready.'))
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('Great news! Your SaaS instance for **:tenant** has been successfully provisioned.', ['tenant' => $this->tenantName]))
             ->line(__('You can access your dashboard at:'))
