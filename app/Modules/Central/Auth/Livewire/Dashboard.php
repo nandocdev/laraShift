@@ -201,7 +201,7 @@ class Dashboard extends Component
             [
                 'id' => 'acme-corp',
                 'name' => 'Acme Corp',
-                'domain' => 'acme.larashift.com',
+                'domain' => 'acme.openSaaS.com',
                 'plan' => 'Pro',
                 'users_count' => 42,
                 'status' => 'active',
@@ -210,7 +210,7 @@ class Dashboard extends Component
             [
                 'id' => 'empresa-xyz',
                 'name' => 'Empresa XYZ',
-                'domain' => 'xyz.larashift.com',
+                'domain' => 'xyz.openSaaS.com',
                 'plan' => 'Business',
                 'users_count' => 87,
                 'status' => 'active',
@@ -219,7 +219,7 @@ class Dashboard extends Component
             [
                 'id' => 'startup-labs',
                 'name' => 'Startup Labs',
-                'domain' => 'startuplabs.larashift.com',
+                'domain' => 'startuplabs.openSaaS.com',
                 'plan' => 'Starter',
                 'users_count' => 8,
                 'status' => 'active',
@@ -228,7 +228,7 @@ class Dashboard extends Component
             [
                 'id' => 'global-services',
                 'name' => 'Global Services',
-                'domain' => 'globalservices.larashift.com',
+                'domain' => 'globalservices.openSaaS.com',
                 'plan' => 'Pro',
                 'users_count' => 61,
                 'status' => 'review',
