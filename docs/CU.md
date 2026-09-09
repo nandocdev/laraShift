@@ -62,6 +62,28 @@ app/Modules/{Module}/
 
 ### Casos de Uso: Plano Central (Host / Plataforma)
 
+#### 0. Gobernanza y Configuración de la Plataforma (HOST)
+
+* **UC-C-00: IAM y Control de Acceso Administrativo (Host)**
+* **Estado: ✅ IMPLEMENTADO**
+* **Actor:** Super Admin / Billing Ops / SRE.
+* **Precondición:** El usuario pertenece al personal interno de la plataforma.
+* **Flujo Principal:**
+  1. El personal accede a los portales de administración central autenticándose mediante credenciales fuertes.
+  2. El sistema aplica validaciones de Doble Factor de Autenticación (2FA) o enrolamiento de Passkeys (WebAuthn) para prevenir acceso no autorizado.
+  3. Los intentos fallidos y bloqueos son auditados.
+* **Postcondición:** Sesión generada bajo el guard `central` con segregación absoluta de los tenants.
+
+* **UC-C-17: Configuración Global y Branding de Plataforma**
+* **Estado: ✅ IMPLEMENTADO**
+* **Actor:** Super Admin.
+* **Precondición:** El usuario tiene permiso `branding:manage` (Gate).
+* **Flujo Principal:**
+  1. El administrador ingresa a `PlatformBranding` y actualiza el nombre de la plataforma, color primario y URL del logo (con subida de archivo a Storage `public`).
+  2. El componente normaliza los códigos hexadecimales y delega a `CentralBranding::set()`.
+  3. Spatie ActivityLog registra el evento `branding_updated` detallando las propiedades alteradas.
+* **Postcondición:** Todo el sistema centraliza la nueva identidad visual y el cambio queda sellado forensemente en el historial.
+
 #### 1. Gestión del Ciclo de Vida y Provisioning (LIFECYCLE)
 
 * **UC-C-01: Onboarding y Aprovisionamiento Transaccional Asíncrono**
