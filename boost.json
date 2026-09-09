@@ -23,7 +23,6 @@
         "pest-testing",
         "tailwindcss-development",
         "medialibrary-development",
-        "laravel-permission-development",
-        "deploying-laravel-cloud"
+        "laravel-permission-development"
     ]
 }
