@@ -96,7 +96,10 @@ class RoleManagement extends Component
         $this->authorize('roles:manage');
 
         $this->validate([
-            'editName' => 'required|string|min:3|max:100',
+            'editName' => [
+                'required', 'string', 'min:3', 'max:100',
+                Rule::unique('roles', 'name')->where('tenant_id', tenant('id'))->ignore($this->editingRole->id),
+            ],
             'editPermissions' => 'array',
         ]);
 
