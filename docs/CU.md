@@ -65,31 +65,64 @@ app/Modules/{Module}/
 #### 1. Gestión del Ciclo de Vida y Provisioning (LIFECYCLE)
 
 * **UC-C-01: Onboarding y Aprovisionamiento Transaccional Asíncrono**
-* **Actor:** Motor de Signup / Pipeline Interno.
-* **Precondición:** Formulario de onboarding validado y pago inicial/trial registrado con tarjeta válida.
+* **Actor:** Motor de Signup (`CreateTenantAction`) / `ProvisionTenantJob` (pipeline asíncrono reanudable).
+* **Precondición:** `CreateTenantData` validado (name, slug, email, plan_id). Para planes de pago, el checkout ocurre después; para planes trial/gratuitos, el aprovisionamiento se activa directamente.
 * **Flujo Principal:**
-1. El worker genera el registro maestro en la tabla `tenants` con un `UUIDv4` inmutable y slug único.
-2. Inserta el workspace por defecto (`workspaces`) asignando el `tenant_id`.
-3. Registra al usuario propietario en el guard de autenticación y le asigna el rol base `Owner`.
-4. Crea los registros iniciales de cuotas (storage, asientos, rate limits) en Redis y PostgreSQL.
-5. Dispara el webhook de bienvenida y activa el subdominio `{slug}.mi-dominio.com` en el router de caché.
+  1. `CreateTenantAction` abre una transacción DB y crea el registro maestro en `tenants` con `UUIDv4` + slug único + `status = 'provisioning'`. Si el slug ya existe en estado `failed`, lo reutiliza (retry idempotente). Race condition de slug concurrente atrapado con `UniqueConstraintViolationException`.
+  2. Dentro de la misma transacción, `ReserveTenantDomainAction` registra el subdominio `{slug}.{central_domain}` en la tabla `domains` de stancl/tenancy.
+  3. Al hacer commit (`DB::afterCommit`), se despacha `ProvisionTenantJob` — la falla del job nunca hace rollback del registro del tenant.
+  4. `ProvisionTenantJob` implementa `TenantAware` + `RehydratesTenantContext`, con 3 reintentos y backoff [10s, 60s]. El job ejecuta `ProvisionTenantPipeline`, que procesa pasos reanudables registrados en `provisioning_logs (tenant_id, step, status)`:
+     - **Paso `db_schema`:** `SetupTenantCoreDataAction` ejecuta `TenantDataSeeder` bajo el contexto RLS del tenant — crea el registro inicial en `tenant_settings` (colores, timezone, locale, currency, mfa_required).
+     - **Paso `infrastructure`:** `ProvisionInfrastructureAction` llama a `RailwayService::provisionDomain()` para DNS/CDN/Load Balancer del dominio primario.
+     - **Paso `admin_user`:** Despacha el evento `TenantProvisioned` con email, nombre y password del admin. El listener `CreateInitialAdminUser` (Tenant/Access) corre dentro de `$tenant->run()`, crea los roles sistema (`admin`, `member`) mediante `EnsureTenantRolesExist`, crea el `User` con `firstOrCreate` (idempotente ante retries), le asigna el rol `admin` con `setPermissionsTeamId`, y envía `WelcomeTenantNotification` vía mail (queued).
+  5. Al completar todos los pasos, el pipeline actualiza `status → active` + `provisioned_at = now()` e invalida la caché de colas de Horizon (`horizon_tenant_queues`). Registra en `activity_log` con log name `provisioning`.
+  6. Si `failed()` del job se dispara (agotados los 3 reintentos), actualiza `status → failed` y registra en `activity_log`. `ProvisioningReconcileCommand` (`provisioning:reconcile`) re-despacha el job para tenants en estado `failed` o `provisioning` estancados (configurados por `provisioning.stale_provisioning_minutes`).
+  7. Para planes de pago: `finalStatus = 'pending_payment'`. El tenant queda en ese estado hasta que `FulfillSubscription` (listener de `PaymentApproved`) lo activa, asignando `status → active` y creando el registro en `subscriptions`.
+  8. Tenants en `pending_payment` que no pagaron dentro de la ventana configurada (`provisioning.pending_payment_expiry_hours`) son expirados por `ProvisioningReconcileCommand` → `status = 'expired'` + `OnboardingExpiredNotification`.
 
-
-* **Postcondición:** El tenant queda en estado `active` y disponible para tráfico en menos de 2 segundos.
-* **Excepción:** Si falla cualquier inserción relacional, se ejecuta un rollback atómico (`DB::transaction`) y se purgan claves residuales en Redis.
+* **Postcondición:** El tenant queda en `status = active` (trial/free) o `pending_payment` (pago requerido), con subdominio reservado, roles base creados, usuario admin notificado y actividad auditada en `activity_log`.
+* **Excepción:** Cualquier paso fallido registra el error en `provisioning_logs[status=failed]` y relanza la excepción. El pipeline es reanudable: en retry, los pasos con `status = completed` se saltan. La transacción de creación del tenant se revierte solo si falla antes del commit (no existe estado inconsistente post-commit sin job).
+* **Componentes involucrados:**
+  - `Central/Provisioning`: `CreateTenantAction`, `ProvisionTenantPipeline`, `SetupTenantCoreDataAction`, `ReserveTenantDomainAction`, `ProvisionTenantJob`, `ProvisioningReconcileCommand`
+  - `Central/Operations`: `ProvisionInfrastructureAction`, `RailwayService`
+  - `Central/Billing`: `FulfillSubscription` (listener de `PaymentApproved`)
+  - `Platform/Events`: `TenantProvisioned`
+  - `Tenant/Access`: `CreateInitialAdminUser` (listener), `EnsureTenantRolesExist`
 
 
 * **UC-C-02: Scoring Antifraude y Aislamiento en Cuarentena**
-* **Actor:** Worker de Detección de Riesgo / SRE.
-* **Precondición:** Registro entrante con señales sospechosas (email desechable, uso de proxy/VPN detectada, mismatch país de IP vs. país de tarjeta).
+* **Estado: ✅ IMPLEMENTADO**
+* **Actor:** `RegisterTenant` (Livewire) → `FraudScoringAction` → `ProvisionTenantPipeline` → `QuarantineTenantAction`.
+* **Precondición:** Formulario de registro validado en todos los pasos del wizard.
 * **Flujo Principal:**
-1. El motor intercepta el evento de registro y asigna un `fraud_score` > 80.
-2. Cambia el estado del tenant a `quarantine` en vez de `active`.
-3. Bloquea el envío de webhooks externos y la ejecución de workers asíncronos pesados.
-4. Envía notificación interna al canal de SecOps con el reporte de señales.
-
-
-* **Postcondición:** Tenant aprovisionado en modo lectura estricto, sin consumo de recursos críticos hasta aprobación manual.
+  1. En `RegisterTenant::register()`, antes de llamar a `CreateTenantAction`, se invoca `FraudScoringAction::evaluate(request(), email)` de forma **síncrona**. Evalúa señales sobre el email y la IP del request:
+     - Email en dominio desechable conocido → +60 pts
+     - Gmail+ alias trick (`user+tag@gmail.com`) → +30 pts
+     - TLD sospechosa (`.xyz`, `.top`, `.click`, etc.) → +20 pts
+     - Parte local del email < 3 caracteres → +15 pts
+     - IP en lista de prefijos bloqueados (`config('fraud.blocked_ip_prefixes')`) → +50 pts
+  2. Si `score ≥ 80` (configurable por `FRAUD_QUARANTINE_THRESHOLD`), `finalStatus = 'quarantine'`. El payload de señales se serializa en `CreateTenantData::fraud_signals_payload` como array plano (safe para queue serialization).
+  3. `CreateTenantAction` crea el tenant con `status = 'provisioning'` y despacha `ProvisionTenantJob` con `fraudSignalsPayload` adjunto.
+  4. El job reconstruye el `FraudSignals` VO y lo pasa a `ProvisionTenantPipeline::execute()`. El pipeline termina con `tenant->update(['status' => 'quarantine'])`.
+  5. Un paso adicional `quarantine_notify` en el pipeline invoca `QuarantineTenantAction`: activa `read_only = true`, registra en `activity_log`, y despacha `SecOpsAlertNotification` (queued mail) al email configurado en `FRAUD_SECOPS_EMAIL`.
+  6. El middleware `EnsureTenantIsActive` bloquea con `HTTP 403` cualquier request al subdominio del tenant en cuarentena. Los workers de ese tenant corren en cola `low` priority via `TenantQueueManager`.
+  7. En `RegisterTenant`, si el tenant fue puesto en cuarentena, se muestra un mensaje neutro ("bajo revisión") y se redirige al home central — sin revelar el motivo al atacante.
+  8. El Agente Central puede revisar y cambiar el estado en `ManageTenant` (`quarantine` es ahora un status válido en el enum).
+* **Postcondición:** Tenant en `status = quarantine` + `read_only = true`. Acceso al workspace bloqueado (HTTP 403). Workers degradados a cola `low`. SecOps notificado con score y señales detalladas.
+* **Excepción:** Si `FraudScoringAction` lanza excepción (improbable — es stateless/in-memory), el registro falla antes de crear el tenant. No hay efecto parcial.
+* **Componentes involucrados:**
+  - `Central/Growth/Domain/ValueObjects/FraudSignals` — VO con score + signals + ip + email
+  - `Central/Growth/Application/Actions/FraudScoringAction` — evaluación síncrona, sin dependencias externas
+  - `Central/Growth/Application/Actions/QuarantineTenantAction` — aplica `read_only` + activity log + notificación
+  - `Central/Growth/Infrastructure/Notifications/SecOpsAlertNotification` — mail queued al equipo SecOps
+  - `Central/Growth/Interface/Livewire/RegisterTenant` — punto de inyección del scoring
+  - `Central/Provisioning/DTOs/CreateTenantData` — campo `fraud_signals_payload` para transportar al job
+  - `Central/Provisioning/Jobs/ProvisionTenantJob` — transporta `fraudSignalsPayload` como array
+  - `Central/Provisioning/Actions/ProvisionTenantPipeline` — paso `quarantine_notify` reanudable
+  - `Platform/Tenancy/Interface/Http/Middleware/EnsureTenantIsActive` — bloqueo HTTP 403 para `quarantine`
+  - `Central/Operations/Application/Services/TenantQueueManager` — cola `low` para `quarantine`
+  - `Central/Provisioning/Livewire/ManageTenant` — permite cambiar `quarantine` → otro status
+  - `config/fraud.php` — umbrales, email SecOps, listas de dominios/IPs extendibles via `.env`
 
 
 * **UC-C-03: Suspensión Preventiva por Infracción de Términos o Impago**
