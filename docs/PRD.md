@@ -1,4 +1,4 @@
-# LaraShift
+# openSaaS
 
 **Versión:** 2.0 **Estado:** En desarrollo **Tipo:** Framework / Boilerplate SaaS Multitenant reutilizable **Stack:** Laravel · Livewire · FluxUI · PostgreSQL · Redis
 
@@ -6,11 +6,11 @@
 
 # 1. Visión
 
-LaraShift es un **framework/boilerplate reutilizable** para desarrollar aplicaciones SaaS multitenant modernas utilizando Laravel y una arquitectura de Monolito Modular con tres scopes: Platform, Central y Tenant.
+openSaaS es un **framework/boilerplate reutilizable** para desarrollar aplicaciones SaaS multitenant modernas utilizando Laravel y una arquitectura de Monolito Modular con tres scopes: Platform, Central y Tenant.
 
 Su objetivo es eliminar el trabajo repetitivo asociado a la construcción de la **infraestructura de plataforma** de un SaaS, proporcionando una base sólida, escalable y lista para producción sobre la cual se construyen productos de negocio vendibles.
 
-LaraShift **no es un producto SaaS en sí mismo**. No contiene ni debe contener lógica de dominio de negocio (CRM, gestión documental, formularios, automatizaciones, o cualquier vertical específico). Esos módulos pertenecen exclusivamente a los productos que se construyen sobre el framework.
+openSaaS **no es un producto SaaS en sí mismo**. No contiene ni debe contener lógica de dominio de negocio (CRM, gestión documental, formularios, automatizaciones, o cualquier vertical específico). Esos módulos pertenecen exclusivamente a los productos que se construyen sobre el framework.
 
 ---
 
@@ -41,7 +41,7 @@ Reducir el tiempo necesario para construir aplicaciones SaaS proporcionando un f
 
 # 4. Público objetivo
 
-LaraShift está dirigido a:
+openSaaS está dirigido a:
 
 - Freelancers
 - Startups
@@ -86,7 +86,7 @@ No está diseñado para:
 
 # 7. Alcance
 
-LaraShift proporciona toda la infraestructura de plataforma de un SaaS.
+openSaaS proporciona toda la infraestructura de plataforma de un SaaS.
 
 Incluye:
 
@@ -222,7 +222,7 @@ Scaffolding genérico del producto del cliente. **No contiene módulos de domini
 
 ### 10.1 Nota de alcance — módulos de dominio excluidos
 
-Módulos como CRM, Documents, Forms, Automation o Reports **no forman parte del repositorio core de LaraShift**, bajo ninguna circunstancia, ni siquiera como scaffolding de referencia o ejemplo. Pertenecen exclusivamente al producto que se construye sobre el framework.
+Módulos como CRM, Documents, Forms, Automation o Reports **no forman parte del repositorio core de openSaaS**, bajo ninguna circunstancia, ni siquiera como scaffolding de referencia o ejemplo. Pertenecen exclusivamente al producto que se construye sobre el framework.
 
 Razón: si lógica de dominio vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto. Deben poder evolucionar de forma independiente.
 
@@ -351,4 +351,4 @@ No se aceptan implementaciones que comprometan la arquitectura por acelerar una 
 
 # 18. Definición de éxito
 
-LaraShift será exitoso cuando permita desarrollar un nuevo SaaS con autenticación, multitenancy, billing y panel administrativo en una fracción del tiempo requerido para construirlo desde cero, manteniendo una arquitectura consistente, escalable y preparada para producción — sin que el framework mismo contenga ni una línea de lógica de negocio vertical.
+openSaaS será exitoso cuando permita desarrollar un nuevo SaaS con autenticación, multitenancy, billing y panel administrativo en una fracción del tiempo requerido para construirlo desde cero, manteniendo una arquitectura consistente, escalable y preparada para producción — sin que el framework mismo contenga ni una línea de lógica de negocio vertical.

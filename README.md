@@ -1,4 +1,4 @@
-# 🧱 LaraShift
+# 🧱 openSaaS
 
 > Enterprise SaaS Modular Monolith for Laravel.
 >
@@ -11,7 +11,7 @@
 
 ---
 
-## Why LaraShift?
+## Why openSaaS?
 
 Most Laravel SaaS starters stop at:
 
@@ -28,7 +28,7 @@ Real SaaS platforms require much more:
 - Audit trails & Secure API Access (HMAC)
 - Operational tooling
 
-LaraShift provides those capabilities as a **Modular Monolith**, avoiding the complexity and operational cost of microservices while maintaining strong domain boundaries.
+openSaaS provides those capabilities as a **Modular Monolith**, avoiding the complexity and operational cost of microservices while maintaining strong domain boundaries.
 
 ---
 
@@ -117,7 +117,7 @@ Capabilities:
 
 # Roadmap & Status
 
-LaraShift has reached a high level of **SaaS Readiness**, completing its core architectural foundation.
+openSaaS has reached a high level of **SaaS Readiness**, completing its core architectural foundation.
 
 ## Phase 1 — SaaS Foundation [COMPLETED]
 - [x] Identity & Roles
@@ -164,7 +164,7 @@ LaraShift has reached a high level of **SaaS Readiness**, completing its core ar
 
 # Design Goals
 
-LaraShift is designed for teams building:
+openSaaS is designed for teams building:
 - B2B SaaS products
 - Internal business platforms
 - White-label applications

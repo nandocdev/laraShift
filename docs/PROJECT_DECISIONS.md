@@ -1,6 +1,6 @@
 # PROJECT DECISIONS
 
-> Este documento contiene las decisiones arquitectónicas oficiales de LaraShift.
+> Este documento contiene las decisiones arquitectónicas oficiales de openSaaS.
 >
 > Son obligatorias para cualquier implementación. Ningún agente o desarrollador debe asumir una alternativa distinta sin actualizar previamente este documento.
 
@@ -10,7 +10,7 @@
 
 Nombre oficial:
 
-**LaraShift**
+**openSaaS**
 
 Este nombre debe utilizarse en:
 
@@ -115,7 +115,7 @@ Métodos soportados:
 Ejemplos:
 
 ```
-empresa.LaraShift.app
+empresa.openSaaS.app
 
 app.cliente.com
 ```
@@ -244,9 +244,9 @@ Scaffolding genérico del producto del cliente. **No contiene módulos de domini
 
 ### Nota de alcance — módulos excluidos del core
 
-**CRM, Documents, Forms, Automation, Reports** y cualquier otro módulo de dominio vertical **no forman parte del repositorio core de LaraShift**, bajo ninguna circunstancia — ni como módulos a construir, ni como scaffolding de referencia o ejemplo dentro del repo.
+**CRM, Documents, Forms, Automation, Reports** y cualquier otro módulo de dominio vertical **no forman parte del repositorio core de openSaaS**, bajo ninguna circunstancia — ni como módulos a construir, ni como scaffolding de referencia o ejemplo dentro del repo.
 
-Razón: LaraShift es un framework reutilizable, no un producto SaaS. Cada producto que se construye sobre el framework implementa su propio dominio de negocio en su propio repositorio o capa de extensión. Si lógica vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto de forma permanente.
+Razón: openSaaS es un framework reutilizable, no un producto SaaS. Cada producto que se construye sobre el framework implementa su propio dominio de negocio en su propio repositorio o capa de extensión. Si lógica vertical viviera en el core, cada actualización del framework arrastraría cambios de un negocio ajeno al producto real, acoplando los ciclos de release de framework y producto de forma permanente.
 
 ---
 
