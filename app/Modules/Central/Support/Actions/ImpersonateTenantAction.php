@@ -35,7 +35,7 @@ final readonly class ImpersonateTenantAction
             'reason' => $reason,
             'token' => hash('sha256', $plainToken),
             'started_at' => now(),
-            'expires_at' => now()->addHours(2),
+            'expires_at' => now()->addMinutes(30),
         ]);
 
         activity('support')

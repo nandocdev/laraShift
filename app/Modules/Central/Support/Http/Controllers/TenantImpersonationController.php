@@ -66,7 +66,8 @@ class TenantImpersonationController extends Controller
                 // Notify tenant as per PRD security requirement
                 $session->tenant->notify(new ImpersonationEndedNotification(
                     $session->reason,
-                    $session->started_at->format('Y-m-d H:i')
+                    $session->started_at->format('Y-m-d H:i'),
+                    $session->id
                 ));
             }
         }

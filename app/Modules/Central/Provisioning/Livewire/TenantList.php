@@ -19,6 +19,8 @@ class TenantList extends Component
 
     public ?string $selectedTenantId = null;
 
+    public string $impersonationTicketId = '';
+
     public string $impersonationReason = '';
 
     public string $confirmSlug = '';
@@ -83,14 +85,16 @@ class TenantList extends Component
         }
 
         $this->validate([
+            'impersonationTicketId' => 'required|string|min:3|max:50',
             'impersonationReason' => 'required|string|min:20',
         ]);
 
         try {
-            $url = $action->execute($tenant, $this->impersonationReason);
+            $reason = "[Ticket: {$this->impersonationTicketId}] {$this->impersonationReason}";
+            $url = $action->execute($tenant, $reason);
 
-            $this->reset(['impersonationReason', 'selectedTenantId']);
-            $this->redirect($url, navigate: false); // External redirect to tenant domain
+            $this->reset(['impersonationReason', 'impersonationTicketId', 'selectedTenantId']);
+            $this->js("window.open('{$url}', '_blank');"); // Open in isolated tab
         } catch (\Exception $e) {
             $this->addError('impersonationReason', $e->getMessage());
         }

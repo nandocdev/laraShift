@@ -83,6 +83,13 @@
                 <flux:subheading>{{ __('You are about to access the account of :name.', ['name' => $selectedTenant?->name]) }}</flux:subheading>
             </div>
 
+            <flux:input 
+                wire:model="impersonationTicketId" 
+                :label="__('Ticket ID')" 
+                placeholder="{{ __('e.g. TICK-1234') }}" 
+                required 
+            />
+
             <flux:textarea 
                 wire:model="impersonationReason" 
                 :label="__('Reason for Access')" 
