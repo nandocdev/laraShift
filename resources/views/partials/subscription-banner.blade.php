@@ -34,4 +34,14 @@
             {{ __('Renew Subscription') }}
         </a>
     </div>
+@elseif(tenant('status') === 'past_due')
+    <div class="w-full bg-orange-600 text-white px-4 py-2 flex items-center justify-between text-sm font-bold shadow-lg">
+        <div class="flex items-center gap-2">
+            <flux:icon icon="exclamation-triangle" variant="solid" />
+            <span>{{ __('Your last payment failed. Your workspace is in a grace period and will be suspended if the payment is not updated.') }}</span>
+        </div>
+        <a href="{{ route('tenant.billing.update-payment') }}" class="underline hover:text-zinc-200 transition-colors uppercase tracking-widest">
+            {{ __('Update Payment Method') }}
+        </a>
+    </div>
 @endif

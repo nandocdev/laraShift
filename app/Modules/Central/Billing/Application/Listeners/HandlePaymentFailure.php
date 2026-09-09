@@ -33,7 +33,11 @@ class HandlePaymentFailure
 
         if ($attemptCount < 3) {
             Log::info("Dunning: Payment attempt {$attemptCount} failed for tenant {$tenant->slug}");
-            // Notification logic...
+
+            if ($tenant->status !== 'past_due') {
+                $tenant->update(['status' => 'past_due']);
+            }
+            // A notification can be sent here in the future
         } else {
             Log::alert("Dunning: Maximum attempts reached. Suspending tenant {$tenant->slug}");
 

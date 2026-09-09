@@ -31,6 +31,8 @@ class ManagePlan extends Component
 
     public float $price_yearly = 0.0;
 
+    public float $metered_price = 0.0;
+
     public bool $is_active = true;
 
     public string $stripe_id = '';
@@ -59,6 +61,7 @@ class ManagePlan extends Component
             $this->is_active = $plan->is_active;
 
             $features = $plan->features ?? [];
+            $this->metered_price = (float) ($features['metered_price'] ?? 0.0);
             $this->stripe_id = $features['stripe_id'] ?? '';
             $this->quota_branches = $features['quotas']['branches'] ?? 1;
             $this->quota_staff = $features['quotas']['staff'] ?? 3;
@@ -76,12 +79,14 @@ class ManagePlan extends Component
             'slug' => ['required', 'alpha_dash', 'max:100', Rule::unique('plans', 'slug')->ignore($this->plan?->id)],
             'price_monthly' => 'required|numeric|min:0',
             'price_yearly' => 'required|numeric|min:0',
+            'metered_price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'selectedFeatures' => 'array',
         ]);
 
         $features = [
             'stripe_id' => $this->stripe_id ?: null,
+            'metered_price' => (float) $this->metered_price,
             'display_features' => array_map('trim', explode(',', $this->display_features)),
             'quotas' => [
                 'branches' => (int) $this->quota_branches,

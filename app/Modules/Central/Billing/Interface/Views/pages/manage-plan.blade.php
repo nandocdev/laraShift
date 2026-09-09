@@ -22,6 +22,8 @@
                         <flux:input wire:model="price_yearly" type="number" step="0.01" :label="__('Yearly Price (USD)')" required />
                     </div>
 
+                    <flux:input wire:model="metered_price" type="number" step="0.0001" :label="__('Metered Usage Price (USD per unit)')" description="Precio marginal por unidad/token extra consumido." />
+
                     <flux:checkbox wire:model="is_active" :label="__('Plan is active and visible for new subscriptions')" />
                 </flux:card>
 
