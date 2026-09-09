@@ -23,3 +23,16 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/laravel
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# AI / agent tooling (local only, never tracked)
+.agents/
+.gemini/
+.opencode/
+.claude/
+AGENTS.md
+GEMINI.md
+opencode.json
