@@ -195,16 +195,17 @@ app/Modules/{Module}/
 
 * **UC-C-06: Ingesta de Consumo Agregado y Facturación Medida (Metered Billing)**
 * **Estado: ✅ IMPLEMENTADO**
-* **Actor:** Aplicación (Tiempo Real) / Worker Cron (`AggregateUsageCommand`).
+* **Ubicación Real:** `app/Modules/Platform/Metering/` (Transversal a la Plataforma. Originalmente descrito en Central/Billing, lo cual fue un error de trazabilidad ya que el consumo se emite desde el Tenant).
+* **Actor:** Aplicación (Tiempo Real) / Worker Cron (`AggregateUsageJob`).
 * **Precondición:** Módulos de aplicación llamando a la acción `RecordUsage` con la métrica y cantidad consumida.
 * **Flujo Principal:**
-  1. El sistema inserta un registro atómico y síncrono en `usage_events` en PostgreSQL por cada evento (con clave de idempotencia).
-  2. Incrementa de forma asíncrona/rápida una llave en Redis (`Cache::increment`) para evaluación inmediata de cuotas (`QuotaExceededException`).
-  3. Al cierre de ciclo, el comando `metering:aggregate` agrupa los eventos de `usage_events` del periodo.
-  4. Los consolida en la tabla `usage_rollups` por `tenant_id`.
+  1. El sistema inserta un registro atómico y síncrono en `UsageEvent` en PostgreSQL por cada evento.
+  2. Incrementa de forma asíncrona/rápida una llave en Redis para evaluación inmediata de cuotas.
+  3. Al cierre de ciclo, el job `AggregateUsageJob` (ejecutado bajo contexto `TenantAware`) agrupa los eventos del periodo.
+  4. Los consolida en el modelo `UsageRollup`.
   5. Si el medidor es facturable, reporta el valor al proveedor de cobros mediante la interfaz `MeterBillingProvider` y marca el rollup como `billed_at`.
 * **Postcondición:** PostgreSQL preserva el histórico inmutable evento por evento para auditoría.
-* **Ubicación del Código:** `app/Modules/Platform/Metering/` (Se implementa como servicio transversal en Platform, no en Central/Billing, ya que el consumo se registra desde el interior del tenant).
+* **Componentes Involucrados:** `Application/Actions/RecordUsage.php`, `Application/Jobs/AggregateUsageJob.php`, `Contracts/MeterBillingProvider.php`, Models (`UsageEvent`, `UsageRollup`).
 * **[PO/SCOPE Veto]:** Se descarta el "buffer temporal en Redis con MULTI/EXEC para volcado diferido" documentado originalmente. Escribir asíncronamente a BD conlleva riesgo de pérdida de datos de facturación ante un reinicio del worker de Redis. La inserción directa a Postgres está perfectamente capacitada para el volumen actual del MVP y garantiza durabilidad (Ledger approach).
 
 * **UC-C-07: Orquestación del Motor de Dunning y Periodos de Gracia**
