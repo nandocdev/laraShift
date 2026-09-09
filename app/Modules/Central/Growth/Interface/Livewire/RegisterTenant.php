@@ -7,6 +7,7 @@ namespace App\Modules\Central\Growth\Interface\Livewire;
 use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Growth\Application\Actions\FraudScoringAction;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
@@ -143,7 +144,7 @@ class RegisterTenant extends Component
     /**
      * Ejecuta el registro completo: provisioning + billing (via redirect).
      */
-    public function register(CreateTenantAction $action): void
+    public function register(CreateTenantAction $action, FraudScoringAction $fraudScoring): void
     {
         try {
             // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
@@ -157,6 +158,38 @@ class RegisterTenant extends Component
 
             if ($this->honeypot !== '') {
                 $this->addError('honeypot', __('Spam detected.'));
+
+                return;
+            }
+
+            // Evaluate fraud signals synchronously from the current request.
+            // Runs before tenant creation so quarantine status can be embedded in
+            // CreateTenantData and carried through to ProvisionTenantJob.
+            $fraudSignals = $fraudScoring->evaluate(request(), $this->email);
+            $isQuarantined = $fraudSignals->exceedsThreshold();
+
+            $finalStatus = match (true) {
+                $isQuarantined => 'quarantine',
+                $this->isPlanFree() => 'active',
+                default => 'pending_payment',
+            };
+
+            $tenant = $action->execute(new CreateTenantData(
+                name: strip_tags($this->company),
+                slug: strtolower(Str::slug($this->slug)),
+                email: $this->email,
+                plan_id: $this->plan_id,
+                password: $this->password,
+                payment_token: null,
+                status: $finalStatus,
+                fraud_signals_payload: $isQuarantined ? $fraudSignals->toArray() : null,
+            ));
+
+            // Quarantined tenants: do not proceed to checkout or workspace.
+            // The pipeline will notify SecOps; we show a neutral holding message.
+            if ($isQuarantined) {
+                session()->flash('status', __('Your registration is under review. You will be notified by email.'));
+                $this->redirect(route('central.home'), navigate: false);
 
                 return;
             }

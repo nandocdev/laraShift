@@ -15,8 +15,8 @@ class TenantQueueManager
      */
     public static function resolve(Tenant $tenant, string $priority = 'default'): string
     {
-        // Low priority for suspended/past_due tenants
-        if ($tenant->status === 'suspended' || $tenant->status === 'past_due') {
+        // Low priority for suspended/past_due/quarantined tenants
+        if (in_array($tenant->status, ['suspended', 'past_due', 'quarantine'], true)) {
             $priority = 'low';
         }
 

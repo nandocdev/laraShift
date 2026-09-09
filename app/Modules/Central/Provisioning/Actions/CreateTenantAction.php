@@ -100,6 +100,7 @@ final readonly class CreateTenantAction
                         password: $data->password,
                         adminName: 'Administrator',
                         finalStatus: $data->status,
+                        fraudSignalsPayload: $data->fraud_signals_payload,
                     ));
 
                     activity('provisioning')
