@@ -134,7 +134,10 @@ final class CheckoutComponent extends Component
             logger()->error('Checkout initiation failed', [
                 'tenant_id' => tenancy()->tenant->id,
                 'display_id' => $this->displayId,
+                'exception' => get_class($e),
                 'error' => $e->getMessage(),
+                'dlocal_code' => $e instanceof DlocalApiException ? $e->dlocalCode : null,
+                'dlocal_context' => $e instanceof DlocalApiException ? $e->context : null,
             ]);
         } finally {
             $this->loading = false;
