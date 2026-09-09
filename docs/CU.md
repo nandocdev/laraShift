@@ -204,6 +204,7 @@ app/Modules/{Module}/
   4. Los consolida en la tabla `usage_rollups` por `tenant_id`.
   5. Si el medidor es facturable, reporta el valor al proveedor de cobros mediante la interfaz `MeterBillingProvider` y marca el rollup como `billed_at`.
 * **Postcondición:** PostgreSQL preserva el histórico inmutable evento por evento para auditoría.
+* **Ubicación del Código:** `app/Modules/Platform/Metering/` (Se implementa como servicio transversal en Platform, no en Central/Billing, ya que el consumo se registra desde el interior del tenant).
 * **[PO/SCOPE Veto]:** Se descarta el "buffer temporal en Redis con MULTI/EXEC para volcado diferido" documentado originalmente. Escribir asíncronamente a BD conlleva riesgo de pérdida de datos de facturación ante un reinicio del worker de Redis. La inserción directa a Postgres está perfectamente capacitada para el volumen actual del MVP y garantiza durabilidad (Ledger approach).
 
 * **UC-C-07: Orquestación del Motor de Dunning y Periodos de Gracia**

@@ -194,16 +194,6 @@ class RegisterTenant extends Component
                 return;
             }
 
-            $tenant = $action->execute(new CreateTenantData(
-                name: strip_tags($this->company),
-                slug: strtolower(Str::slug($this->slug)),
-                email: $this->email,
-                plan_id: $this->plan_id,
-                password: $this->password,
-                payment_token: null,
-                status: $this->isPlanFree() ? 'active' : 'pending_payment',
-            ));
-
             // If it's a paid plan, redirect to the hosted checkout page within the tenant context
             if (! $this->isPlanFree()) {
                 $checkoutUrl = app(BillingManager::class)

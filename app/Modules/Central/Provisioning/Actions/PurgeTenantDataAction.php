@@ -47,35 +47,15 @@ final readonly class PurgeTenantDataAction
                 }
 
                 // Check if table has tenant_id column to avoid errors on central-only tables
-                try {
-                    $hasColumn = false;
-                    if (DB::getDriverName() === 'pgsql') {
-                        $hasColumn = (bool) DB::selectOne(
-                            "SELECT 1 FROM information_schema.columns WHERE table_name = ? AND column_name = 'tenant_id'",
-                            [$table]
-                        );
-                    } else {
-                        // For sqlite/mysql, try to query and catch
-                        $hasColumn = true;
-                    }
-
-                    if ($hasColumn) {
-                        DB::table($table)->where('tenant_id', $tenantId)->delete();
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('PurgeTenantDataAction: failed to purge table', ['table' => $table, 'error' => $e->getMessage()]);
+                if (Schema::hasColumn($table, 'tenant_id')) {
+                    DB::table($table)->where('tenant_id', $tenantId)->delete();
                 }
             }
 
             // Purge users (tenant-scoped users table may be named users with tenant_id)
             foreach (['users', 'tenant_users'] as $userTable) {
-                if (! Schema::hasTable($userTable)) {
-                    continue;
-                }
-                try {
+                if (Schema::hasTable($userTable) && Schema::hasColumn($userTable, 'tenant_id')) {
                     DB::table($userTable)->where('tenant_id', $tenantId)->delete();
-                } catch (\Throwable $e) {
-                    // users may not have tenant_id in central context
                 }
             }
         });

@@ -14,7 +14,8 @@ class SetTenantLogContext
      */
     public function handle(TenancyInitialized $event): void
     {
-        Context::add('tenant_id', (string) $event->tenant->getTenantKey());
-        Context::add('tenant_slug', $event->tenant->slug ?? 'unknown');
+        $tenant = $event->tenancy->tenant;
+        Context::add('tenant_id', (string) $tenant->getTenantKey());
+        Context::add('tenant_slug', $tenant->slug ?? 'unknown');
     }
 }
