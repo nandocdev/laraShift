@@ -6,6 +6,7 @@ use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Cashier\Billable;
 
 uses(RefreshDatabase::class);
@@ -18,6 +19,17 @@ it('has a plan matrix in database', function () {
     $plans = PlanManager::all();
 
     expect($plans)->not->toBeEmpty();
+    expect($plans->pluck('slug'))->toContain('free', 'pro');
+});
+
+it('never serves plans from cache', function () {
+    // Regression: with `cache.serializable_classes=false`, a cached Eloquent
+    // collection unserializes to __PHP_Incomplete_Class and every cache hit
+    // 500s. all() must always query fresh and ignore stale entries.
+    Cache::put('plans:active', collect());
+
+    $plans = PlanManager::all();
+
     expect($plans->pluck('slug'))->toContain('free', 'pro');
 });
 

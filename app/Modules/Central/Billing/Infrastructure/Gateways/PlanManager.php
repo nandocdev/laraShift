@@ -6,18 +6,19 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class PlanManager
 {
     public static function all(): Collection
     {
-        if (app()->runningUnitTests()) {
-            return Plan::where('is_active', true)->withoutTrashed()->get();
-        }
-
-        return Cache::remember('plans:active', 3600, fn () => Plan::where('is_active', true)->withoutTrashed()->get());
+        // Never cache hydrated Eloquent models here. With the secure
+        // `cache.serializable_classes=false` default, unserializing models
+        // from cache yields __PHP_Incomplete_Class, so every cache hit
+        // 500s with a TypeError (and unit tests never catch it because
+        // they bypass the cache). The plans table holds a handful of
+        // rows; a direct query is cheap and always fresh.
+        return Plan::where('is_active', true)->withoutTrashed()->get();
     }
 
     public static function find(string $id): ?Plan
