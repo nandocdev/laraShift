@@ -24,6 +24,7 @@ function dlocalDirectPayload(string $tenantId, array $overrides = []): DirectPay
         method: PaymentMethodType::Card,
         paymentToken: array_key_exists('paymentToken', $overrides) ? $overrides['paymentToken'] : 'tok_test_smartfields',
         subscriptionId: $overrides['subscriptionId'] ?? null,
+        payerDocument: array_key_exists('payerDocument', $overrides) ? $overrides['payerDocument'] : '12345678',
     );
 }
 
@@ -63,6 +64,10 @@ it('charges directly with a Smart Fields token and stores the saved card', funct
         'gateway_reference' => 'D-DIRECT-001',
     ]);
     expect($subscription->fresh()->pm_card_id)->toBe('CARD-TEST-1');
+
+    Http::assertSent(fn ($request) => str_contains((string) $request->url(), '/payments')
+        && ($request['card']['token'] ?? null) === 'tok_test_smartfields'
+        && ($request['payer']['document'] ?? null) === '12345678');
 });
 
 it('rejects direct charges without a token', function () {

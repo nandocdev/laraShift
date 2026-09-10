@@ -92,6 +92,12 @@ final readonly class DlocalGateway implements BillingProvider, CheckoutProvider,
 
         $isSubscription = $payment->subscriptionId !== null;
 
+        $payer = ['user_reference' => $payment->tenantId];
+
+        if (is_string($payment->payerDocument) && trim($payment->payerDocument) !== '') {
+            $payer['document'] = trim($payment->payerDocument);
+        }
+
         $body = [
             'order_id' => $payment->orderId,
             'amount' => $payment->amountCents / 100,
@@ -99,8 +105,8 @@ final readonly class DlocalGateway implements BillingProvider, CheckoutProvider,
             'country' => config('dlocal.country_default', 'PA'),
             'payment_method_id' => 'CARD',
             'payment_method_flow' => 'DIRECT',
-            'token' => $payment->paymentToken,
-            'payer' => ['user_reference' => $payment->tenantId],
+            'card' => ['token' => $payment->paymentToken],
+            'payer' => $payer,
             'description' => $isSubscription ? 'Subscription first charge' : 'Direct charge',
             'notification_url' => route('payments.webhooks.dlocal'),
             'metadata' => array_merge($payment->metadata, [

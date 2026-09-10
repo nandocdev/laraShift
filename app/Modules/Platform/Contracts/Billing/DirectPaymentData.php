@@ -18,6 +18,8 @@ final class DirectPaymentData extends Data
         public ?string $paymentToken = null,
         public ?string $providerCustomerId = null,
         public ?string $subscriptionId = null,
+        /** Payer national ID (DNI/CPF/RUC). Required by dLocal for LatAm card payments. */
+        public ?string $payerDocument = null,
         /** @var array<string, mixed> */
         public array $metadata = [],
     ) {}
