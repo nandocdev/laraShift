@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Central\Auth\Providers\CentralAuthServiceProvider;
+use App\Modules\Central\Billing\Providers\BillingServiceProvider;
 use App\Modules\Central\Growth\Providers\GrowthServiceProvider;
 use App\Modules\Central\Operations\Providers\OperationsServiceProvider;
 use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
@@ -23,6 +24,7 @@ return [
     HorizonServiceProvider::class,
     TenancyServiceProvider::class,
     CentralAuthServiceProvider::class,
+    BillingServiceProvider::class,
     ProvisioningServiceProvider::class,
     OperationsServiceProvider::class,
     SettingsServiceProvider::class,

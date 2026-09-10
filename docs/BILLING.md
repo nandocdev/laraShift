@@ -340,13 +340,17 @@ Dado un payload de webhook, el orden de resolución es:
 
 1. Si el payload trae `display_id` u `order_id` → lookup en `payments` por
    `(display_id, gateway)`. El `tenant_id` sale de esa fila. Si no existe la fila, no
-   se crea nada: se registra en `payment_gateway_events` sin procesar (ver punto 4).
+   se crea nada: se continúa al paso 2 (el checkout puede no existir aún si el pago
+   se originó fuera de `initiate`).
 2. Si el payload trae `provider_customer_id` → lookup en `payment_references` por
    `(external_reference, context = 'customer')` → `tenant_id`.
-3. Fallback: `payment_references` por `external_reference` sin filtrar `context`
+3. `PARM_1` (campo eco nuestro: enviamos el tenant id al construir el checkout) →
+   se acepta **solo si existe una fila en `tenants` con ese id**. Nunca se confía
+   a ciegas: un `PARM_1` inexistente se ignora y se continúa.
+4. Fallback: `payment_references` por `external_reference` sin filtrar `context`
    (último registro). Solo como red de seguridad; se loguea `warning` con
    `billing.resolution_fallback` porque indica datos inconsistentes.
-4. Sin match en ningún paso → se persiste el evento crudo en `payment_gateway_events`
+5. Sin match en ningún paso → se persiste el evento crudo en `payment_gateway_events`
    con `processed_at = null`, se responde ack 200 al gateway y se emite alerta para
    revisión manual. Nunca 500, nunca se escribe en tablas tenant-scoped sin tenant.
 

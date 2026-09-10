@@ -48,6 +48,16 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
+        // 2b. Billing dunning lane: pending_payment tenants may only
+        // checkout or log in; everything else is blocked here.
+        if (tenant('status') === 'pending_payment') {
+            if ($request->routeIs(['payments.checkout.initiate', 'payments.clave.callback', 'tenant.billing.*'])) {
+                return $next($request);
+            }
+
+            abort(402, 'Payment required to activate this workspace.');
+        }
+
         // 3. Hard block for archived/expired/quarantined tenants
         if (in_array(tenant('status'), ['archived', 'expired', 'quarantine'], true)) {
             abort(tenant('status') === 'quarantine' ? 403 : 404);

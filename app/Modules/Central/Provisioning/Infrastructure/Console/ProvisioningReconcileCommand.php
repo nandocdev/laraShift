@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 /**
  * Reconciles the tenant lifecycle:
  *  - re-dispatches provisioning for failed or stale 'provisioning' tenants
- *  - expires tenants stuck in non-terminal states is handled via status flow
+ *  - expires 'pending_payment' tenants older than 24h (billing, §19)
  */
 class ProvisioningReconcileCommand extends Command
 {
@@ -37,6 +37,7 @@ class ProvisioningReconcileCommand extends Command
 
         $this->retryFailedProvisioning();
         $this->retryStaleProvisioning();
+        $this->expireUnpaidTenants();
 
         return self::SUCCESS;
     }
@@ -78,5 +79,21 @@ class ProvisioningReconcileCommand extends Command
             ->performedOn($tenant)
             ->withProperties(['final_status' => 'active'])
             ->log('tenant_provisioning_requeued');
+    }
+
+    private function expireUnpaidTenants(): void
+    {
+        Tenant::where('status', 'pending_payment')
+            ->whereNull('deleted_at')
+            ->where('created_at', '<', now()->subHours(24))
+            ->chunkById(100, function ($tenants) {
+                foreach ($tenants as $tenant) {
+                    $tenant->update(['status' => 'expired']);
+
+                    activity('billing')
+                        ->performedOn($tenant)
+                        ->log('tenant_pending_payment_expired');
+                }
+            });
     }
 }

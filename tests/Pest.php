@@ -1,13 +1,16 @@
 <?php
 
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -94,4 +97,47 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function claveTestTenant(string $slug): Tenant
+{
+    return Tenant::create([
+        'id' => (string) Str::uuid(),
+        'slug' => $slug,
+        'name' => 'Clave Test',
+        'email' => $slug.'@test.com',
+        'status' => 'active',
+        'billing_gateway' => 'clave',
+    ]);
+}
+
+function clavePlanRef(): PlanRef
+{
+    return new PlanRef(slug: 'pro', amountCents: 2900, currency: 'USD', gatewayIds: []);
+}
+
+function fakeClaveLink(): void
+{
+    Http::fake([
+        '*/LinkDeamon.cfm' => Http::response(['success' => true, 'data' => ['url' => 'https://sandbox.paguelofacil.com/pay/TEST123']]),
+    ]);
+}
+
+function claveRawPayload(string $tenantId, string $displayId): string
+{
+    $payload = json_decode(
+        file_get_contents(__DIR__.'/Fixtures/Billing/clave_webhook_approved.json') ?: '{}',
+        true
+    );
+    $payload['PARM_1'] = $tenantId;
+    $payload['PARM_2'] = $displayId;
+
+    return (string) json_encode($payload);
+}
+
+function claveSign(string $raw): string
+{
+    config()->set('clave.webhook_secret', 'test-secret');
+
+    return hash_hmac('sha256', $raw, 'test-secret');
 }
