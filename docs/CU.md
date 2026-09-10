@@ -164,10 +164,44 @@ app/Modules/{Module}/
 - **Flujo Principal:**
     1. `DeleteTenantAction` despacha `PurgeTenantJob` a la cola por defecto.
     2. El job limpia los registros de Rate Limiting del tenant en Redis invocando `RateLimiter::clear()`.
-    3. Ejecuta `PurgeTenantDataAction` para hacer un delete en cascada físico de todas las tablas relacionales vinculadas al tenant (logs, usuarios) y finalmente borra el registro de `tenants`.
+    3. Ejecuta `PurgeTenantDataAction` para hacer un delete en cascada físico de todas las tablas relacionales vinculadas al tenant (logs, usuarios, pagos, suscripciones, invoices, referencias) y finalmente borra el registro de `tenants`.
     4. Borra físicamente todos los directorios de Storage (`local` y `public`) correspondientes a `tenant{id}`.
     5. Se registra la acción final `tenant_purged_from_infrastructure` en el Log central.
 - **Postcondición:** El tenant se marca como purgado, sus archivos de S3/Local desaparecen, la BD central se limpia de sus FKs, y es completamente irrecuperable de acuerdo al derecho al olvido. No se genera evento hacia "Sistemas BI/DW" (rechazado por [PO/SCOPE]: sobreingeniería prematura sin sistema real).
+
+#### 2. Facturación y Cobros (BILLING)
+
+- **UC-C-05: Checkout Clave y Activación por Webhook**
+- **Estado: ✅ IMPLEMENTADO**
+- **Actor:** Tenant en `pending_payment` / Gateway Clave (PagueloFacil).
+- **Precondición:** Tenant con `billing_gateway = clave` y plan pago seleccionado.
+- **Flujo Principal:**
+    1. `CreateCheckoutSessionAction` crea el `payments` row (`pending`, `display_id` idempotente con `lockForUpdate` + recuperación `23505`) y genera el Enlace de Pago vía `LinkDeamon.cfm`.
+    2. El callback de retorno (`handleReturn`) es UX-only: nunca muta estado.
+    3. El webhook server-side verifica HMAC sync (401 sin tocar DB), resuelve el tenant (`display_id` → `customer ref` → `PARM_1` verificado) y despacha `ProcessPaymentWebhookJob` idempotente (`UNIQUE(gateway, gateway_event_id)`).
+    4. `PaymentApproved` → `FulfillSubscription` crea el `Subscription` y activa el tenant (`status = active`, `plan_id`) vía `MarkTenantBillingActive`. Sin pago en 24h, `provisioning:reconcile` expira a `expired`.
+- **Postcondición:** Suscripción activa y tenant operativo; doble submit y webhooks duplicados colapsan a un solo registro.
+
+- **UC-C-06: Cobro Directo y MIT con dLocal**
+- **Estado: ✅ IMPLEMENTADO**
+- **Actor:** Tenant con `billing_gateway = dlocal` / API dLocal.
+- **Precondición:** Token Smart Fields (el PAN nunca toca el backend) o tarjeta guardada (`pm_card_id`).
+- **Flujo Principal:**
+    1. `ChargeDirectAction` cobra con el token server-side (`save` + credencial `SUBSCRIPTION/FIRST` si hay intención de suscripción) y guarda `pm_card_id` al aprobar.
+    2. `SubscribeTenantAction` crea el `Subscription` local y activa el tenant.
+    3. `billing:process-recurring` cobra MIT (`stored_credential_usage = USED`); fallo → `failed_attempts++` → `past_due`; 3er fallo → `suspended` + `activity('billing')`.
+    4. `billing:reconcile` marca `past_due` por timeout cuando no hay pago aprobado en el período (red de seguridad para métodos sin eventos).
+- **Postcondición:** Recurrencia silenciosa en tarjeta; efectivo/voucher nunca promete auto-renovación (`supports(Subscriptions, Cash) = false` consultado por la UI).
+
+- **UC-C-07: Dunning Separado y Renovación Clave por Link**
+- **Estado: ✅ IMPLEMENTADO**
+- **Actor:** `BillingScheduler` (comandos `billing:process-recurring` 04:00 y `billing:reconcile` 03:00).
+- **Precondición:** Suscripciones `active`/`past_due` con período vencido.
+- **Flujo Principal:**
+    1. Track MIT (dLocal tarjeta): reintento diario silencioso, 3 intentos → `suspended`. El silencio del gateway también cuenta vía `HandlePaymentFailure` ante declines async.
+    2. Track link (Clave): a T-7 días `GenerateRenewalCheckoutAction` genera checkout nuevo + `RenewalCheckoutLinkNotification`; sin pago a `current_period_end + 3 días` → `past_due`; +4 días → `suspended`. `failed_attempts` nunca se incrementa por silencio del cliente.
+    3. `suspended`/`past_due` degradan workers a cola `low` (`TenantQueueManager`); pago regularizado → `active` sin importar el gateway.
+- **Postcondición:** Ningún cliente Clave es suspendido por no abrir un correo con los mismos umbrales que un fallo de tarjeta; los números de cada track son deliberadamente distintos.
 
 #### 3. Soporte e Impersonación Cero-Confianza (GOVERNANCE & SUPPORT)
 
@@ -323,6 +357,27 @@ app/Modules/{Module}/
 4. El sistema registra el status HTTP recibido y programa hasta 5 reintentos con retroceso exponencial si la respuesta es distinta de 2xx.
 
 - **Postcondición:** El cliente recibe telemetría asíncrona verificable de sus eventos internos.
+
+#### 3. Facturación del Workspace (TENANT BILLING)
+
+- **UC-T-07: Selección de Plan y Checkout**
+- **Actor:** Miembro del tenant.
+- **Precondición:** Tenant autenticado en cualquier estado con acceso a billing (`pending_payment` incluido).
+- **Flujo Principal:**
+    1. `SelectPlan` lista planes activos y consulta `supports()` antes de ofrecer: Clave muestra pago único con aviso de renovación por link/email; dLocal ofrece tarjeta (hosted) o checkout único.
+    2. Clave: `checkout` genera el pago y redirige al Enlace de Pago (`redirect()->away`, un `display_id` por intento).
+    3. dLocal tarjeta: `HostedCheckout` tokeniza con Smart Fields en browser y cobra server-side; aprobado → suscripción activa + tenant `active`.
+- **Postcondición:** Ningún componente Livewire crea modelos ni promete recurrencia inexistente; todo pasa por Actions.
+
+- **UC-T-08: Gestión de Facturación y Regularización en Dunning**
+- **Actor:** Miembro del tenant en `past_due`/`suspended`.
+- **Precondición:** Suscripción con fallos de cobro o link de renovación vencido.
+- **Flujo Principal:**
+    1. `ManageBilling` muestra suscripción, últimos pagos e invoices; permite cancelar a fin de período o reanudar.
+    2. `UpdatePaymentMethod` reintenta el saldo pendiente con tarjeta nueva; aprobado → `FulfillSubscription` reactiva (`active`, `failed_attempts = 0`, `pm_card_id` actualizado).
+    3. `TenantInvoiceList` lista el historial; `/billing/success` y `/billing/cancel` son vistas estáticas post-retorno del gateway.
+    4. `EnsureTenantIsActive` permite `tenant.billing.*` en `pending_payment` y `suspended` (regularización), bloquea el resto.
+- **Postcondición:** El tenant moroso puede regularizar sin intervención de soporte; el resto del workspace sigue bloqueado hasta el pago.
 
 #### 4. Operaciones de Datos, Soberanía y Offboarding (DATA LIFECYCLE)
 

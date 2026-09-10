@@ -27,8 +27,9 @@ class EnsureTenantIsActive
                 'logout',
                 'two-factor.login',
                 'two-factor.login.store',
+                'tenant.billing.*',
             ]) || $request->is('livewire/*', 'auth/*')) {
-                // Allow these routes to enable login
+                // Login + billing (regularize payment in dunning).
             } else {
                 abort(403, 'This account has been suspended.');
             }
@@ -49,7 +50,7 @@ class EnsureTenantIsActive
         }
 
         // 2b. Billing dunning lane: pending_payment tenants may only
-        // checkout or log in; everything else is blocked here.
+        // checkout, browse billing or log in; everything else is blocked here.
         if (tenant('status') === 'pending_payment') {
             if ($request->routeIs(['payments.checkout.initiate', 'payments.clave.callback', 'tenant.billing.*'])) {
                 return $next($request);

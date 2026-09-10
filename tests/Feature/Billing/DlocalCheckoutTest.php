@@ -4,24 +4,10 @@ declare(strict_types=1);
 
 use App\Modules\Central\Billing\Application\Actions\CreateCheckoutSessionAction;
 use App\Modules\Central\Billing\Domain\Models\Payment;
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Contracts\Billing\PlanRef;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 use function Pest\Laravel\assertDatabaseHas;
-
-function dlocalTestTenant(string $slug): Tenant
-{
-    return Tenant::create([
-        'id' => (string) Str::uuid(),
-        'slug' => $slug,
-        'name' => 'dLocal Test',
-        'email' => $slug.'@test.com',
-        'status' => 'active',
-        'billing_gateway' => 'dlocal',
-    ]);
-}
 
 function fakeDlocalCreate(array $overrides = []): void
 {

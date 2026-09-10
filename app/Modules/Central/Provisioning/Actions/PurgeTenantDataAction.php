@@ -20,6 +20,12 @@ final readonly class PurgeTenantDataAction
         'provisioning_logs',
         'activity_log',
         'domains',
+        'subscriptions',
+        'payments',
+        'payment_attempts',
+        'payment_webhooks',
+        'payment_references',
+        'invoices',
     ];
 
     public function execute(string $tenantId): void

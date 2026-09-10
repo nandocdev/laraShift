@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Catalog\Application\Services;
 
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 final readonly class PlanManager
@@ -29,6 +30,14 @@ final readonly class PlanManager
         }
 
         return $plan;
+    }
+
+    /**
+     * @return Collection<int, Plan>
+     */
+    public function active(): Collection
+    {
+        return Plan::where('is_active', true)->orderBy('price_monthly')->get();
     }
 
     /**
