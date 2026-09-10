@@ -19,29 +19,30 @@
 
     @if ($directEnabled)
         {{-- ── dLocal DIRECT flow: Smart Fields (tokenize + server-side charge) ── --}}
-        <div x-show="!checkoutUrl && !completed" x-data="dlocalCard()">
+        <div x-show="!checkoutUrl && !completed" x-data="dlocalCard()" class="px-6 py-6 sm:px-8">
             <form id="payment-form" @submit.prevent="submit" novalidate>
-                <div class="space-y-4">
-                    <div>
-                        <label for="card-field" class="block text-sm font-medium text-zinc-700">
-                            {{ __('Credit or Debit Card') }}
-                        </label>
-                        <div id="card-field" class="mt-1 rounded-md border border-zinc-300 px-3 py-2.5"></div>
-                    </div>
+                <div class="space-y-5">
+                    <flux:field>
+                        <flux:label>{{ __('Credit or Debit Card') }}</flux:label>
+                        <div id="card-field-wrap"
+                            class="mt-1 rounded-lg border border-zinc-300 bg-white px-3 py-3 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
+                            <div id="card-field"></div>
+                        </div>
+                        <flux:description>{{ __('Visa, Mastercard and Amex test cards accepted in sandbox.') }}</flux:description>
+                    </flux:field>
 
-                    <div>
-                        <label for="card-holder" class="block text-sm font-medium text-zinc-700">
-                            {{ __('Cardholder Name') }}
-                        </label>
+                    <flux:field>
+                        <flux:label for="card-holder">{{ __('Cardholder Name') }}</flux:label>
                         <input id="card-holder" type="text" x-model="cardHolder" placeholder="John Doe" required
-                            class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm" />
-                    </div>
+                            autocomplete="cc-name"
+                            class="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-xs transition placeholder:text-zinc-400 focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100" />
+                    </flux:field>
 
-                    <div id="card-errors" class="text-sm text-red-600" role="alert"></div>
+                    <div id="card-errors" class="min-h-5 text-sm text-red-600 dark:text-red-400" role="alert"></div>
 
                     <div>
                         <button type="submit" :disabled="processing || loading"
-                            class="inline-flex w-full justify-center rounded-md bg-primary px-8 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-60">
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus:ring-2 focus:ring-primary/40 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60">
                             <span x-show="!processing && !loading">{{ __('Pay Now') }}</span>
                             <span x-show="processing || loading">{{ __('Processing...') }}</span>
                         </button>
@@ -49,7 +50,7 @@
                 </div>
             </form>
 
-            <div class="mt-6 flex items-center gap-2 text-zinc-400">
+            <div class="mt-6 flex items-center justify-center gap-2 text-zinc-400">
                 <flux:icon.lock-closed size="xs" />
                 <span class="text-[10px] uppercase tracking-widest font-bold">{{ __('Secured by dLocal') }}</span>
             </div>
@@ -67,15 +68,24 @@
                         const script = document.createElement('script');
                         script.src = '{{ $dlocalJsUrl }}';
                         script.onload = () => {
-                            this.dlocal = window.dlocal('{{ $dlocalLogin }}');
-                            this.fields = this.dlocal.fields({ locale: 'es', country: 'US' });
+                            this.dlocal = window.dlocal('{{ $dlocalJsKey }}');
+                            this.fields = this.dlocal.fields({ locale: 'es', country: '{{ $dlocalCountry }}' });
                             this.card = this.fields.create('card', {
-                                style: { base: { fontSize: '16px', color: '#32325d' } },
+                                style: {
+                                    base: {
+                                        fontSize: '16px',
+                                        color: '#27272a',
+                                        fontFamily: 'inherit',
+                                        '::placeholder': { color: '#a1a1aa' },
+                                    },
+                                    invalid: { color: '#dc2626' },
+                                },
                             });
                             this.card.mount(document.getElementById('card-field'));
                             this.card.addEventListener('change', (event) => {
                                 const errors = document.getElementById('card-errors');
                                 errors.textContent = event.error ? event.error.message : '';
+                                document.getElementById('card-field-wrap')?.classList.toggle('border-red-500', !!event.error);
                             });
                         };
                         document.head.appendChild(script);
@@ -96,7 +106,8 @@
                             }
                         } catch (error) {
                             const errors = document.getElementById('card-errors');
-                            errors.textContent = error?.error?.message ?? '{{ __('Unable to tokenize the card') }}';
+                            errors.textContent = "Error: " + (error?.error?.message || JSON.stringify(error));
+                            console.error("Tokenization Error:", error);
                             this.processing = false;
                         }
                     },

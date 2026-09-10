@@ -57,8 +57,8 @@ Rechazar con justificación:
 
 ```
 Application (Actions delgadas, una responsabilidad)
-  CreateCheckoutSession / InitiateCheckout (ya existen)
-  SubscribeTenant / ChangePlan / CancelSubscription (nuevas, delegan en Billing facade)
+  CreateCheckoutSession / InitiateCheckout / CancelSubscription (ya existen)
+  SubscribeTenant / ChangePlan (ausentes a propósito hasta el 2º SubscriptionProvider)
   ChargeSubscriptionAction / ReconcileSubscription / SyncInvoices (ya existen)
           │
           ▼
@@ -77,7 +77,7 @@ Reglas:
 
 - `Platform` nunca importa `Central/*`. Contratos en `Platform/Contracts`, implementaciones en `Central/Billing`.
 - Ninguna Action toca Models de otro módulo: `Plan` se resuelve vía `PlanManager::find()` (Catalog expuesto como servicio, no importando lógica), `Tenant` solo vía `TenantContract`.
-- Cashier solo en `Infrastructure/Gateways/Stripe/*`. `grep -R "Cashier" Application/ Domain/` debe dar vacío (test de arquitectura).
+- Cashier solo en `Infrastructure/Gateways/Stripe/*` como objetivo. Excepciones conocidas hoy (migrar en Fase 3): `SyncInvoices` (`instanceof Cashier\Invoice`) y `RegisterPaymentMethod` (crea suscripción vía Cashier). `grep -R "Cashier" Application/ Domain/` debe dar vacío salvo esas dos.
 - Toda escritura tenant-aware con `tenant_id` + RLS + `ScopedToTenant`. Jobs con `TenantAware + RehydrateTenantContext` (`SET LOCAL` en txn, nunca `SET` sesión).
 
 ## 3. Contratos objetivo (reemplazan `PaymentGateway` monolito)
@@ -129,15 +129,16 @@ DTOs en `Platform` (spatie/laravel-data, sin Eloquent): `PlanRef{planId, slug}`,
 
 `BillingManager::forTenant()` se mantiene como único resolver. Se elimina `gatewayForTenant()` duplicado en `CheckoutManager` y `PaymentVerifier` (usan `BillingManager::forTenant` + capability check; cierra B005).
 
-Matriz real (verificada dLocal enrollments):
+Matriz real (capabilities cableadas hoy via `supports()`):
 
-```
-Stripe: Checkout ✓ Direct ✗ Subscriptions ✓ Recurring ✓(gateway-managed) Refunds ✓ Portal ✓
-dLocal: Checkout ✓(redirect) Direct ✓(Smart Fields token) Subscriptions ✓(enrollments ON_DEMAND/MERCHANT_SUBSCRIPTION) Recurring ✓(engine-managed chargeSubscription) Refunds ✓ Portal ✗
-Clave/PagueloFácil: Checkout ✓(redirect) Direct ✗ Subscriptions ✗ Recurring ✗(gateway-managed, reconcile) Refunds ? Portal ✗
+```text
+Stripe: Checkout ✓ Direct ✗ Subscriptions ✓ Recurring ✓(gateway-managed) Refunds ✗ Portal ✗
+dLocal: Checkout ✓(redirect) Direct ✓(Smart Fields token) Subscriptions ✗(enrollments aún sin adapter) Recurring ✓(engine-managed chargeSubscription) Refunds ✗ Portal ✗
+Clave/PagueloFácil: Checkout ✓(redirect) Direct ✗ Subscriptions ✗ Recurring ✗(gateway-managed, reconcile) Refunds ✗ Portal ✗
 ```
 
-La app nunca hace `if ($provider === 'stripe')`; hace `$provider->supports(BillingCapability::Subscriptions)`.
+Refunds/Portal/enrollments devuelven `false` hasta tener adapter real — la matriz crece
+con código, no con deseos. La app nunca hace `if ($provider === 'stripe')`; hace `$provider->supports(BillingCapability::Subscriptions)`.
 
 ## 4. Webhook pipeline (sin reescribir, solo endurecer)
 
@@ -184,26 +185,29 @@ Pendiente DB (backlog, no bloquea): `UNIQUE(tenant_id, display_id)` parcial para
 
 ## 8. Plan de migración por fases
 
-Fase 0 — cerrar P0s abiertos (antes de tocar kernel):
+Fase 0 — cerrar P0s abiertos ✅ HECHO (2026-09-09):
 
-- B004: lock distribuido en `ProcessRecurringChargesCommand` + `ShouldBeUnique` en `ChargeSubscriptionJob`.
-- B003 resto: `resolveTenantId` vía DB primero (ver §4.1).
-- Tests: `CallbackForgeryTest` (callback aprobado falso no crea nada), `DuplicateDisplayIdTest` (doble initiate concurrente → un Payment), `Billing/CrossTenantLeakTest` (A no lee payments/invoices/subscriptions de B + conexión reutilizada).
+- B004: lock distribuido en `ProcessRecurringChargesCommand` + `ShouldBeUnique` en `ChargeSubscriptionJob` (ya existía, verificado).
+- B003 resto: `resolveTenantId` vía DB primero (`Payment.display_id → tenant`, luego `payment_references.external_reference`, fallback `PARM_1/metadata`).
+- Tests: `CallbackForgeryTest` (existía), `DuplicateDisplayIdTest` (nuevo), `BillingCrossTenantLeakTest` (RLS pgsql) + `BillingTenantScopeTest` (scope sqlite).
 
-Fase 1 — partir monolito (sin cambiar comportamiento):
+Fase 1 — partir monolito ✅ HECHO (2026-09-09, sin cambiar comportamiento):
 
-- Extraer interfaces §3 en `Platform/Contracts/Billing/`.
-- `ClaveGateway, DlocalGateway` implementan `CheckoutProvider+PaymentProvider+WebhookProvider` según matriz; `StripeBillingProvider` implementa `CheckoutProvider+SubscriptionProvider`.
-- `CheckoutManager/PaymentVerifier/ChargeSubscriptionAction` resuelven vía `BillingManager::forTenant()`; borrar `gatewayForTenant()` locales. `StripeBillingProvider` deja de exigir `instanceof Tenant` (usa `TenantContract::getId()/...`).
+- Interfaces en `Platform/Contracts/Billing/`: `BillingCapability, BillingEventType (+PaymentPending), PlanRef, CheckoutSessionData, BillingEventData, ProviderSubscriptionRef, ProviderPaymentRef, HasBillingCapabilities, CheckoutProvider, SubscriptionProvider, PaymentProvider, WebhookProvider`.
+- `ClaveGateway, DlocalGateway, StripeBillingProvider` implementan `WebhookProvider` (`verify` + `normalize`) y `supports()` según matriz. Los métodos `CheckoutProvider/SubscriptionProvider/PaymentProvider` quedan como contratos objetivo para Fase 2 (necesitan request DTOs; implementarlos hoy duplicaría `CheckoutManager` y su idempotencia).
+- `CheckoutManager`/`PaymentVerifier` resuelven vía `BillingManager::paymentGatewayForTenantId()`; `gatewayForTenant()` locales eliminados. `StripeBillingProvider` ya no exige `instanceof Tenant` (resuelve el modelo por `getId()`).
+- `PlanManager::getProviderRef($plan, $gateway)` generaliza `getStripeId()` (lee `features.gateway_ids`, fallback `features.stripe_id`/`provider_plan_id`).
+- Nota stancl: `billing_gateway` vive en la columna `data` JSON (no es custom column) — leerlo siempre vía modelo, nunca con `value('billing_gateway')`.
 
-Fase 2 — eventos y facade:
+Fase 2 — eventos y facade ✅ PARCIAL (2026-09-09):
 
-- `normalize(): BillingEventData` por gateway; listeners consumen `BillingEventType`.
-- Facade `Billing::for(TenantContract)` (`checkout/subscribe/changePlan/cancel/active`) delegando en capabilities. Livewire (`CheckoutComponent, HostedCheckout, ManageBilling`) llama facade, nunca gateways.
+- `normalize(): BillingEventData` implementado por gateway (dominio consume `BillingEventType`).
+- Facade `Billing::for(TenantContract)` (`Application/Services/Billing.php` + `BillingTenantScope`): `supports/checkoutUrl/cancel/sync/active` delegando en `BillingManager` + capabilities. `subscribe/changePlan` ausentes a propósito: solo Stripe tiene adapter de suscripciones y dLocal enrollments no está cableado — llegan con el 2º `SubscriptionProvider`.
+- Livewire sigue llamando paths existentes; migrar `CheckoutComponent, HostedCheckout, ManageBilling` al facade es follow-up sin riesgo.
 
 Fase 3 — solo con 2+ casos reales:
 
-- `prices` / `billing_accounts` / portal / cupones. Hasta entonces, YAGNI.
+- `prices` / `billing_accounts` / portal / cupones / enrollments dLocal. Hasta entonces, YAGNI.
 
 ## 9. Tests DoD por fase
 

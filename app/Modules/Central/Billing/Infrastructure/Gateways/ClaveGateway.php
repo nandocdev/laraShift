@@ -7,16 +7,21 @@ namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 use App\Modules\Central\Billing\Application\DTO\MerchantData;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
+use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Exceptions\ClaveGatewayException;
 use App\Modules\Central\Billing\Domain\Exceptions\InvalidMerchantException;
 use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
 use App\Modules\Central\Billing\Domain\Exceptions\ServiceNotFoundException;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Platform\Contracts\Billing\BillingCapability;
+use App\Modules\Platform\Contracts\Billing\BillingEventData;
+use App\Modules\Platform\Contracts\Billing\BillingEventType;
+use App\Modules\Platform\Contracts\Billing\WebhookProvider;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-final class ClaveGateway implements PaymentGateway
+final class ClaveGateway implements PaymentGateway, WebhookProvider
 {
     /**
      * Gateway codes accepted as Clave services.
@@ -133,6 +138,37 @@ final class ClaveGateway implements PaymentGateway
     public function parseWebhookPayload(array $payload): PaymentResultData
     {
         return PaymentResultData::fromClavePayload($payload);
+    }
+
+    public function supports(BillingCapability $capability): bool
+    {
+        // Clave/PagueloFácil is redirect-checkout only. Recurrence is
+        // gateway-managed (reconciled, never engine-charged).
+        return $capability === BillingCapability::Checkout;
+    }
+
+    public function verify(string $rawPayload, string $signature, string $secret): bool
+    {
+        return $this->verifyWebhook($rawPayload, $signature, $secret);
+    }
+
+    public function normalize(array $payload): BillingEventData
+    {
+        $result = $this->parseWebhookPayload($payload);
+
+        $type = match ($result->status) {
+            PaymentStatus::Approved => BillingEventType::PaymentSucceeded,
+            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Cancelled => BillingEventType::PaymentFailed,
+            PaymentStatus::Refunded => BillingEventType::RefundCreated,
+            default => BillingEventType::PaymentPending,
+        };
+
+        return new BillingEventData(
+            type: $type,
+            providerReference: $result->gatewayReference,
+            displayId: $result->displayId,
+            amountCents: (int) round($result->amount * 100),
+        );
     }
 
     public function identifier(): string

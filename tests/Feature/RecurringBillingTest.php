@@ -85,9 +85,9 @@ it('charges a due subscription via dLocal and rolls the period forward', functio
 
     app(ChargeSubscriptionAction::class)->execute($subscription->id);
 
-    expect($sent['card_id'])->toBe('CARD-SAVED-1');
-    expect($sent['stored_credential_type'])->toBe('SUBSCRIPTION');
-    expect($sent['stored_credential_usage'])->toBe('USED');
+    expect($sent['card']['card_id'])->toBe('CARD-SAVED-1');
+    expect($sent['card']['stored_credential_type'])->toBe('SUBSCRIPTION');
+    expect($sent['card']['stored_credential_usage'])->toBe('USED');
     expect($sent['payment_method_flow'])->toBe('DIRECT');
 
     $subscription->refresh();

@@ -8,6 +8,7 @@ use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
+use App\Modules\Platform\Integrations\Dlocal\Models\PaymentReference;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -92,15 +93,41 @@ final class WebhookController extends Controller
     }
 
     /**
-     * Tenant can be encoded in the webhook URL as a query param
-     * or derived from the payload. Adjust to match the gateway's behavior.
+     * DB-first tenant resolution: the payload only proposes, the DB disposes.
+     * display_id → payments.tenant_id wins over any PARM_1/metadata hint,
+     * then gateway reference → payment_references/payments, and only as a
+     * last resort the explicit tenant hint from the payload.
      */
     private function resolveTenantId(Request $request): string
     {
         $payload = json_decode($request->getContent(), true) ?? $request->all();
 
-        // Security: Prioritize payload data over untrusted query params.
-        // PagueloFacil often uses PARM_1 for tenant_id if configured in the redirect/webhook setup.
+        $displayId = $payload['display_id']
+            ?? $payload['displayId']
+            ?? $payload['order_id']
+            ?? $payload['PARM_2']
+            ?? ($payload['metadata']['displayId'] ?? null);
+
+        if (is_string($displayId) && $displayId !== '') {
+            $owner = Payment::withoutGlobalScopes()->where('display_id', $displayId)->value('tenant_id');
+
+            if ($owner) {
+                return (string) $owner;
+            }
+        }
+
+        $gatewayReference = $payload['payment_id'] ?? $payload['id'] ?? $payload['gateway_reference'] ?? null;
+
+        if (is_string($gatewayReference) && $gatewayReference !== '') {
+            $refTenant = PaymentReference::where('external_reference', $gatewayReference)->value('tenant_id')
+                ?? Payment::withoutGlobalScopes()->where('gateway_reference', $gatewayReference)->value('tenant_id');
+
+            if ($refTenant) {
+                return (string) $refTenant;
+            }
+        }
+
+        // Fallback: explicit tenant hint (PagueloFacil PARM_1 / metadata).
         $tenantId = $payload['tenant_id']
             ?? $payload['tenantId']
             ?? $payload['merchantId']

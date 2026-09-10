@@ -10,6 +10,10 @@ use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Platform\Contracts\Billing\BillingCapability;
+use App\Modules\Platform\Contracts\Billing\BillingEventData;
+use App\Modules\Platform\Contracts\Billing\BillingEventType;
+use App\Modules\Platform\Contracts\Billing\WebhookProvider;
 use App\Modules\Platform\Integrations\Dlocal\Client\DlocalHttpClient;
 use App\Modules\Platform\Integrations\Dlocal\Contracts\PaymentGatewayContract;
 use App\Modules\Platform\Integrations\Dlocal\DTOs\PayerData;
@@ -19,7 +23,7 @@ use App\Modules\Platform\Integrations\Dlocal\Models\PaymentReference;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
-final class DlocalGateway implements PaymentGateway
+final class DlocalGateway implements PaymentGateway, WebhookProvider
 {
     public function __construct(
         private readonly PaymentGatewayContract $gateway,
@@ -71,11 +75,11 @@ final class DlocalGateway implements PaymentGateway
                 userReference: $payment->tenantId,
             ),
             flow: PaymentMethodFlow::Redirect,
-            paymentMethodId: 'CARD',
+            paymentMethodId: $payment->customFieldValues['payment_method_id'] ?? null,
             description: $payment->description,
-            save: $isSubscription ? true : null,
-            storedCredentialType: $isSubscription ? 'SUBSCRIPTION' : null,
-            storedCredentialUsage: $isSubscription ? 'FIRST' : null,
+            save: null,
+            storedCredentialType: null,
+            storedCredentialUsage: null,
             notificationUrl: route('payments.webhooks.dlocal'),
             callbackUrl: route('central.billing.dlocal.callback'),
             metadata: array_merge($payment->customFieldValues, ['tenant_id' => $payment->tenantId]),
@@ -170,6 +174,42 @@ final class DlocalGateway implements PaymentGateway
         $expected = hash_hmac('sha256', $payload, $secret);
 
         return hash_equals($expected, $signature);
+    }
+
+    public function supports(BillingCapability $capability): bool
+    {
+        // dLocal: redirect + Smart Fields direct + engine-managed recurring
+        // via saved card. Enrollments (gateway subscriptions), refunds and
+        // customer portal have no adapter yet → false until implemented.
+        return in_array($capability, [
+            BillingCapability::Checkout,
+            BillingCapability::DirectPayment,
+            BillingCapability::RecurringCharge,
+        ], true);
+    }
+
+    public function verify(string $rawPayload, string $signature, string $secret): bool
+    {
+        return $this->verifyWebhook($rawPayload, $signature, $secret);
+    }
+
+    public function normalize(array $payload): BillingEventData
+    {
+        $result = $this->parseWebhookPayload($payload);
+
+        $type = match ($result->status) {
+            PaymentStatus::Approved => BillingEventType::PaymentSucceeded,
+            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Cancelled => BillingEventType::PaymentFailed,
+            PaymentStatus::Refunded => BillingEventType::RefundCreated,
+            default => BillingEventType::PaymentPending,
+        };
+
+        return new BillingEventData(
+            type: $type,
+            providerReference: $result->gatewayReference,
+            displayId: $result->displayId,
+            amountCents: (int) round($result->amount * 100),
+        );
     }
 
     public function parseWebhookPayload(array $payload): PaymentResultData

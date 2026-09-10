@@ -13,7 +13,6 @@ use App\Modules\Central\Billing\Domain\Exceptions\WebhookVerificationException;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
 use App\Modules\Central\Billing\Domain\Models\PaymentWebhook;
-use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,17 +21,12 @@ final readonly class PaymentVerifier
 {
     public function __construct(
         private PaymentGateway $gateway,
+        private BillingManager $billingManager,
     ) {}
 
     private function gatewayForTenant(string $tenantId): PaymentGateway
     {
-        $tenant = Tenant::find($tenantId);
-
-        if ($tenant && ($tenant->billing_gateway ?? null) === 'dlocal') {
-            return app(DlocalGateway::class);
-        }
-
-        return app(ClaveGateway::class);
+        return $this->billingManager->paymentGatewayForTenantId($tenantId);
     }
 
     /**

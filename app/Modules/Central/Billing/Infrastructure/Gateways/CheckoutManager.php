@@ -11,7 +11,6 @@ use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Events\PaymentDeclined;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentAttempt;
-use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,18 +19,12 @@ final readonly class CheckoutManager
 {
     public function __construct(
         private PaymentGateway $gateway,
-        private ?BillingManager $billingManager = null,
+        private BillingManager $billingManager,
     ) {}
 
     private function gatewayForTenant(string $tenantId): PaymentGateway
     {
-        $tenant = Tenant::find($tenantId);
-
-        if ($tenant && ($tenant->billing_gateway ?? null) === 'dlocal') {
-            return app(DlocalGateway::class);
-        }
-
-        return $this->gateway;
+        return $this->billingManager->paymentGatewayForTenantId($tenantId);
     }
 
     /**
