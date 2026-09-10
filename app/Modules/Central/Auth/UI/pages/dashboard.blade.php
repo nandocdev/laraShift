@@ -296,9 +296,6 @@
                                         <flux:menu.item icon="pencil" :href="route('central.provisioning.edit', $org['id'])" wire:navigate>
                                             {{ __('Editar') }}
                                         </flux:menu.item>
-                                        <flux:menu.item icon="command-line" :href="route('central.tenants.features.overrides', $org['id'])" wire:navigate>
-                                            {{ __('Características') }}
-                                        </flux:menu.item>
                                     @else
                                         <flux:menu.item icon="eye" :href="route('central.provisioning.index')" wire:navigate>
                                             {{ __('Ver detalles') }}
