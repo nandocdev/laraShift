@@ -29,6 +29,20 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Billing')" class="grid">
+                <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
+                    :current="request()->routeIs('central.billing.*')" wire:navigate>
+                    {{ __('Subscriptions') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Catalog')" class="grid">
+                <flux:sidebar.item icon="squares-2x2" :href="route('central.catalog.plans')"
+                    :current="request()->routeIs('central.catalog.*')" wire:navigate>
+                    {{ __('Plans') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('Support')" class="grid">
                 <flux:sidebar.item icon="megaphone" :href="route('central.support.broadcasts')"
                     :current="request()->routeIs('central.support.broadcasts')" wire:navigate>

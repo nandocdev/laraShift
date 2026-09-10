@@ -36,6 +36,21 @@
                 @endif
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Billing')" class="grid">
+                <flux:sidebar.item icon="credit-card" :href="route('tenant.billing.manage')"
+                    :current="request()->routeIs('tenant.billing.manage')" wire:navigate>
+                    {{ __('Billing') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="squares-2x2" :href="route('tenant.billing.plans')"
+                    :current="request()->routeIs('tenant.billing.plans')" wire:navigate>
+                    {{ __('Plans') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="receipt-percent" :href="route('tenant.billing.invoices')"
+                    :current="request()->routeIs('tenant.billing.invoices')" wire:navigate>
+                    {{ __('Invoices') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('Settings')" class="grid">
                 <flux:sidebar.item icon="paint-brush" :href="route('tenant.settings.branding')"
                     :current="request()->routeIs('tenant.settings.branding')" wire:navigate>
