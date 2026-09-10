@@ -11,6 +11,7 @@ final class DirectPaymentData extends Data
     public function __construct(
         public string $tenantId,
         public string $gateway,
+        public string $orderId,
         public int $amountCents,
         public string $currency,
         public PaymentMethodType $method,

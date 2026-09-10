@@ -21,7 +21,7 @@ final readonly class ResolveWebhookTenant
      */
     public function execute(array $payload): string
     {
-        $displayId = $payload['PARM_2'] ?? $payload['PARM_1'] ?? $payload['displayId'] ?? $payload['display_id'] ?? null;
+        $displayId = $payload['PARM_2'] ?? $payload['PARM_1'] ?? $payload['displayId'] ?? $payload['display_id'] ?? $payload['order_id'] ?? null;
 
         if (is_string($displayId) && $displayId !== '') {
             $owner = Payment::withoutGlobalScopes()->where('display_id', $displayId)->value('tenant_id');

@@ -1,0 +1,8 @@
+{
+    "id": "D-TEST-000456",
+    "order_id": "DISPLAY_ID_PLACEHOLDER",
+    "status": "PAID",
+    "status_detail": "The payment was paid.",
+    "amount": 29.0,
+    "currency": "USD"
+}

@@ -11,7 +11,9 @@ use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\PaymentGatewayEvent;
 use App\Modules\Central\Billing\Domain\Models\PaymentWebhook;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use App\Modules\Platform\Contracts\Billing\BillingEventData;
+use App\Modules\Platform\Contracts\Billing\WebhookProvider;
 use App\Modules\Platform\Contracts\TenantAware;
 use App\Modules\Platform\Events\PaymentWebhookReceived;
 use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
@@ -39,9 +41,15 @@ class ProcessPaymentWebhookJob implements ShouldQueue, TenantAware
         return $this->tenantId;
     }
 
-    public function handle(ClaveGateway $clave): void
+    public function handle(ClaveGateway $clave, DlocalGateway $dlocal): void
     {
-        if ($this->gateway !== 'clave') {
+        $gateway = match ($this->gateway) {
+            'clave' => $clave,
+            'dlocal' => $dlocal,
+            default => null,
+        };
+
+        if (! $gateway instanceof WebhookProvider) {
             Log::warning('billing.webhook_unknown_gateway', ['gateway' => $this->gateway]);
 
             return;
@@ -56,10 +64,10 @@ class ProcessPaymentWebhookJob implements ShouldQueue, TenantAware
         }
 
         try {
-            $clave->verifyOrFail($this->rawPayload, $this->signature);
+            $gateway->verifyOrFail($this->rawPayload, $this->signature);
 
             $payload = json_decode($this->rawPayload, true) ?? [];
-            $event = $clave->normalize($payload);
+            $event = $gateway->normalize($payload);
 
             $gatewayEvent = PaymentGatewayEvent::firstOrCreate(
                 ['gateway' => $this->gateway, 'gateway_event_id' => $event->gatewayEventId ?: sha1($this->rawPayload)],

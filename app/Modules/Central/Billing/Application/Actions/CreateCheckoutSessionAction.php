@@ -35,7 +35,7 @@ final readonly class CreateCheckoutSessionAction
 
         $tenantId = (string) $tenant->getId();
 
-        $payment = DB::transaction(function () use ($tenantId, $plan, $displayId) {
+        $payment = DB::transaction(function () use ($tenantId, $plan, $displayId, $gateway) {
             $existing = Payment::where('tenant_id', $tenantId)
                 ->where('display_id', $displayId)
                 ->lockForUpdate()
@@ -53,7 +53,7 @@ final readonly class CreateCheckoutSessionAction
                     'amount_cents' => $plan->amountCents,
                     'currency' => $plan->currency,
                     'status' => PaymentStatus::Pending,
-                    'gateway' => 'clave',
+                    'gateway' => $gateway->identifier(),
                     'provider_metadata' => ['plan_slug' => $plan->slug],
                 ]);
             } catch (QueryException $e) {
@@ -88,7 +88,7 @@ final readonly class CreateCheckoutSessionAction
             'payload' => ['display_id' => $displayId, 'plan_slug' => $plan->slug],
         ]);
 
-        return new CheckoutSessionData(id: $displayId, url: $checkoutUrl, provider: 'clave');
+        return new CheckoutSessionData(id: $displayId, url: $checkoutUrl, provider: $gateway->identifier());
     }
 
     private function isUniqueViolation(QueryException $e): bool

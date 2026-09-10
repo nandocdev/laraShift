@@ -20,6 +20,17 @@ final readonly class PlanManager
         return $plan;
     }
 
+    public function findById(string $id): Plan
+    {
+        $plan = Plan::where('id', $id)->first();
+
+        if (! $plan) {
+            throw (new ModelNotFoundException)->setModel(Plan::class, $id);
+        }
+
+        return $plan;
+    }
+
     /**
      * Resolve the gateway-specific plan reference. Reads
      * features.gateway_ids[$gateway] with fallback to provider_plan_id.

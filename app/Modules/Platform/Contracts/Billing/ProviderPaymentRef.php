@@ -13,5 +13,6 @@ final class ProviderPaymentRef extends Data
         public string $gateway,
         public string $status,
         public ?int $amountCents = null,
+        public ?string $cardId = null,
     ) {}
 }

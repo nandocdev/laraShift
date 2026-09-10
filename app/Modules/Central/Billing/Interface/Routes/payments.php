@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Billing\Interface\Http\Controllers\CheckoutController;
+use App\Modules\Central\Billing\Interface\Http\Controllers\DlocalWebhookController;
 use App\Modules\Central\Billing\Interface\Http\Controllers\PaguelofacilCallbackController;
 use App\Modules\Central\Billing\Interface\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,11 @@ use Illuminate\Support\Facades\Route;
 // Gateway → us: raw webhook (verify sync, 401 without touching DB).
 Route::post('/webhooks/clave', [WebhookController::class, 'handle'])
     ->name('payments.webhooks.clave')
+    ->middleware('throttle:30,1')
+    ->withoutMiddleware(['web', 'auth', 'tenant']);
+
+Route::post('/webhooks/dlocal', [DlocalWebhookController::class, 'handle'])
+    ->name('payments.webhooks.dlocal')
     ->middleware('throttle:30,1')
     ->withoutMiddleware(['web', 'auth', 'tenant']);
 

@@ -11,12 +11,16 @@ use App\Modules\Platform\Contracts\TenantContract;
 
 final readonly class DefaultBillingManager implements BillingManager
 {
-    public function __construct(private ClaveGateway $clave) {}
+    public function __construct(
+        private ClaveGateway $clave,
+        private DlocalGateway $dlocal,
+    ) {}
 
     public function providerFor(TenantContract $tenant): BillingProvider
     {
         return match ($tenant->getBillingGateway()) {
             'clave' => $this->clave,
+            'dlocal' => $this->dlocal,
             default => throw new UnsupportedBillingGateway(
                 "Unsupported billing gateway: {$tenant->getBillingGateway()}"
             ),

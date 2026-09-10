@@ -52,3 +52,19 @@ it('keeps provider conditionals out of Domain and Application', function () {
         expect($contents)->not->toMatch('/\$\w*(gateway|provider)\s*===/', "Provider conditional in: {$file}");
     }
 });
+
+it('keeps gateway names out of Domain', function () {
+    $domainDir = dirname(__DIR__, 2).'/app/Modules/Central/Billing/Domain';
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($domainDir, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+        if ($file->isFile() && $file->getExtension() === 'php') {
+            $contents = file_get_contents($file->getPathname());
+            expect($contents)->not->toContain('Dlocal', "Gateway name in Domain: {$file->getPathname()}")
+                ->and($contents)->not->toContain('Clave', "Gateway name in Domain: {$file->getPathname()}")
+                ->and($contents)->not->toContain('Stripe', "Gateway name in Domain: {$file->getPathname()}");
+        }
+    }
+});

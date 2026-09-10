@@ -45,8 +45,8 @@ class FulfillSubscription
         $periodEnd = $plan->interval === 'year' ? now()->addYear() : now()->addMonth();
 
         Subscription::updateOrCreate(
-            // Clave has no provider-side subscription: one row per tenant+gateway.
-            // (MIT gateways match on provider_subscription_id instead — Fase 3.)
+            // Clave/dLocal redirect have no provider-side subscription: one row
+            // per tenant+gateway. (MIT gateways match on provider_subscription_id — Fase 3.)
             ['tenant_id' => $payment->tenant_id, 'gateway' => $payment->gateway],
             [
                 'plan_id' => $plan->id,
@@ -57,6 +57,15 @@ class FulfillSubscription
                 'failed_attempts' => 0,
             ]
         );
+
+        // Saved card from a direct/MIT charge (dLocal): enables chargeRecurring.
+        $cardId = $event->event->raw['card_id'] ?? null;
+
+        if (is_string($cardId) && $cardId !== '') {
+            Subscription::where('tenant_id', $payment->tenant_id)
+                ->where('gateway', $payment->gateway)
+                ->update(['pm_card_id' => $cardId]);
+        }
 
         $this->activate->execute((string) $payment->tenant_id, $plan->slug);
 

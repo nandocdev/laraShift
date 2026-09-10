@@ -6,6 +6,7 @@ use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
+use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 
 use function Pest\Laravel\assertDatabaseCount;
 use function Pest\Laravel\assertDatabaseHas;
@@ -68,7 +69,7 @@ it('refuses to process a payment owned by another tenant', function () {
         signature: claveSign($raw),
     );
 
-    expect(fn () => $job->handle(app(ClaveGateway::class)))
+    expect(fn () => $job->handle(app(ClaveGateway::class), app(DlocalGateway::class)))
         ->toThrow(RuntimeException::class, 'does not own the payment');
 
     expect($payment->fresh()->status)->toBe(PaymentStatus::Pending);

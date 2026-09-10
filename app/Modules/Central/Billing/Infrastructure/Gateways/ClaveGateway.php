@@ -32,6 +32,11 @@ final readonly class ClaveGateway implements BillingProvider, CheckoutProvider, 
         return $capability === BillingCapability::Checkout;
     }
 
+    public function identifier(): string
+    {
+        return 'clave';
+    }
+
     public function createCheckout(TenantContract $tenant, PlanRef $plan, string $displayId): CheckoutSessionData
     {
         return new CheckoutSessionData(
