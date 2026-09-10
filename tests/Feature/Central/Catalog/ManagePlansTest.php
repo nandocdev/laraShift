@@ -49,6 +49,24 @@ it('auto-fills the slug from the name until edited manually', function () {
         ->assertSet('slug', 'custom');
 });
 
+it('accepts product-defined features from config without core changes', function () {
+    $this->actingAs(centralStaff(), 'central');
+
+    // A future product registers its capability purely through config.
+    config()->set('catalog.features.crm_pipeline', ['label' => 'CRM pipeline']);
+
+    Livewire::test(ManagePlans::class)
+        ->set('name', 'CRM Plan')
+        ->set('priceMonthly', '99.00')
+        ->set('priceYearly', '990.00')
+        ->set('displayFeatures', ['crm_pipeline'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(Plan::where('slug', 'crm-plan')->value('features')['display_features'])
+        ->toBe(['crm_pipeline']);
+});
+
 it('validates plan input', function () {
     $this->actingAs(centralStaff(), 'central');
 

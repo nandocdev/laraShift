@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Catalog\Interface\Livewire;
 
+use App\Modules\Central\Catalog\Application\Services\CatalogFeatureRegistry;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -16,19 +17,6 @@ use Livewire\WithPagination;
 class ManagePlans extends Component
 {
     use WithPagination;
-
-    public const KNOWN_FEATURES = [
-        'basic_dashboard',
-        'community_support',
-        'priority_support',
-        'api_access',
-    ];
-
-    public const KNOWN_QUOTAS = [
-        'bookings',
-        'invitations',
-        'api_keys',
-    ];
 
     public ?string $editingId = null;
 
@@ -58,6 +46,11 @@ class ManagePlans extends Component
 
     public string $gatewayDlocal = '';
 
+    private function registry(): CatalogFeatureRegistry
+    {
+        return app(CatalogFeatureRegistry::class);
+    }
+
     public function updatedName(): void
     {
         if ($this->editingId === null && $this->slugLocked) {
@@ -85,11 +78,11 @@ class ManagePlans extends Component
         $this->interval = $plan->interval;
         $this->isActive = (bool) $plan->is_active;
         $this->displayFeatures = array_values(array_intersect(
-            self::KNOWN_FEATURES,
+            $this->registry()->featureKeys(),
             is_array($plan->features['display_features'] ?? null) ? $plan->features['display_features'] : []
         ));
         $this->quotas = [];
-        foreach (self::KNOWN_QUOTAS as $metric) {
+        foreach ($this->registry()->quotaMetrics() as $metric) {
             $value = $plan->features['quotas'][$metric] ?? null;
             $this->quotas[$metric] = is_numeric($value) ? (string) (int) $value : '';
         }
@@ -118,7 +111,7 @@ class ManagePlans extends Component
             'interval' => ['required', 'in:month,year'],
             'isActive' => ['boolean'],
             'displayFeatures' => ['array'],
-            'displayFeatures.*' => ['in:'.implode(',', self::KNOWN_FEATURES)],
+            'displayFeatures.*' => ['in:'.implode(',', $this->registry()->featureKeys())],
             'quotas' => ['array'],
             'quotas.*' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'gatewayClave' => ['nullable', 'string', 'max:100'],
@@ -180,6 +173,8 @@ class ManagePlans extends Component
     {
         return view('catalog::livewire.manage-plans', [
             'plans' => Plan::latest()->paginate(15),
+            'featureLabels' => $this->registry()->featureLabels(),
+            'quotaLabels' => $this->registry()->quotaLabels(),
         ]);
     }
 }

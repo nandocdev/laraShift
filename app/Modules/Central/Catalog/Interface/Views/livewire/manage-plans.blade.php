@@ -88,8 +88,8 @@
             <flux:field>
                 <flux:label>{{ __('Features') }}</flux:label>
                 <div class="flex flex-wrap gap-4">
-                    @foreach (\App\Modules\Central\Catalog\Interface\Livewire\ManagePlans::KNOWN_FEATURES as $feature)
-                        <flux:checkbox wire:model="displayFeatures" value="{{ $feature }}" :label="$feature" />
+                    @foreach ($featureLabels as $feature => $label)
+                        <flux:checkbox wire:model="displayFeatures" value="{{ $feature }}" :label="__($label)" />
                     @endforeach
                 </div>
                 <flux:error name="displayFeatures" />
@@ -98,9 +98,9 @@
             <flux:field>
                 <flux:label>{{ __('Quotas (blank = unlimited)') }}</flux:label>
                 <div class="grid grid-cols-3 gap-4">
-                    @foreach (\App\Modules\Central\Catalog\Interface\Livewire\ManagePlans::KNOWN_QUOTAS as $metric)
+                    @foreach ($quotaLabels as $metric => $label)
                         <flux:field>
-                            <flux:label>{{ $metric }}</flux:label>
+                            <flux:label>{{ __($label) }}</flux:label>
                             <flux:input wire:model="quotas.{{ $metric }}" type="number" min="0" placeholder="{{ __('Unlimited') }}" />
                             <flux:error name="quotas.{{ $metric }}" />
                         </flux:field>
