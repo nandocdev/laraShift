@@ -105,6 +105,7 @@ it('subscribes with a card token through hosted checkout', function () {
 
     try {
         Livewire::test(HostedCheckout::class, ['plan' => 'pro'])
+            ->set('payerDocument', '12345678')
             ->call('charge', 'tok_ui_test_token')
             ->assertRedirect(route('tenant.billing.success'));
 
@@ -114,6 +115,21 @@ it('subscribes with a card token through hosted checkout', function () {
             'status' => 'active',
             'pm_card_id' => 'CARD-UI-1',
         ]);
+    } finally {
+        tenancy()->end();
+    }
+});
+
+it('requires an ID document before charging through hosted checkout', function () {
+    billingUiPlans();
+    $tenant = dlocalTestTenant('ui-hosted-nodoc');
+    tenancy()->initialize($tenant);
+
+    try {
+        Livewire::test(HostedCheckout::class, ['plan' => 'pro'])
+            ->call('charge', 'tok_ui_test_token')
+            ->assertHasErrors(['payerDocument'])
+            ->assertNoRedirect();
     } finally {
         tenancy()->end();
     }

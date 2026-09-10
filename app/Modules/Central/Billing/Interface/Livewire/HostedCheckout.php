@@ -23,6 +23,8 @@ class HostedCheckout extends Component
 
     public string $displayId = '';
 
+    public string $payerDocument = '';
+
     public ?string $error = null;
 
     public bool $processing = false;
@@ -45,6 +47,13 @@ class HostedCheckout extends Component
 
     public function charge(string $token, ChargeDirectAction $direct, SubscribeTenantAction $subscribe, PlanManager $plans): void
     {
+        if (trim($this->payerDocument) === '') {
+            $this->error = __('An ID document number is required for card payments.');
+            $this->addError('payerDocument', __('An ID document number is required.'));
+
+            return;
+        }
+
         if (strlen($token) < 8) {
             $this->error = __('Invalid card token. Please retry.');
             $this->addError('token', __('Invalid card token.'));
@@ -67,6 +76,7 @@ class HostedCheckout extends Component
                 currency: $plan->currency,
                 method: PaymentMethodType::Card,
                 paymentToken: $token,
+                payerDocument: trim($this->payerDocument),
             ));
 
             if ($ref->status !== 'approved') {
@@ -91,6 +101,13 @@ class HostedCheckout extends Component
         return view('billing::livewire.hosted-checkout', [
             'plan' => Plan::where('slug', $this->planSlug)->first(),
             'jsApiKey' => config('dlocal.js_api_key'),
+            'country' => config('dlocal.country_default', 'PA'),
+            // Per dLocal setup guide: production loads js.dlocal.com,
+            // testing loads js-sandbox.dlocal.com. A sandbox key against
+            // the production host is rejected with 403 on init-session.
+            'jsUrl' => config('dlocal.environment') === 'production'
+                ? 'https://js.dlocal.com/'
+                : 'https://js-sandbox.dlocal.com/',
         ]);
     }
 }
