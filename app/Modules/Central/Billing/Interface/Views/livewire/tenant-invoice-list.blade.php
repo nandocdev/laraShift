@@ -20,7 +20,7 @@
                         <flux:table.cell>{{ number_format($invoice->amount_cents / 100, 2) }} {{ $invoice->currency }}</flux:table.cell>
                         <flux:table.cell><flux:badge size="sm" variant="outline">{{ $invoice->status }}</flux:badge></flux:table.cell>
                         <flux:table.cell>{{ $invoice->paid_at?->toDateString() ?? '—' }}</flux:table.cell>
-                        <flux:table.cell><a href="{{ route('tenant.billing.invoices.pdf', $invoice) }}">{{ __('Download') }}</a></flux:table.cell>
+                        <flux:table.cell><a href="{{ route('tenant.billing.invoices.pdf', $invoice) }}" title="{{ __('Download receipt') }}" aria-label="{{ __('Download receipt') }}"><flux:icon.arrow-down-tray class="size-5" /></a></flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
