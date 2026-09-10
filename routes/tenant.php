@@ -58,8 +58,5 @@ Route::middleware([
 
         // Audit Logs
         require base_path('app/Modules/Tenant/Compliance/Interface/Routes/web.php');
-
-        // Central Billing SaaS
-        require base_path('app/Modules/Central/Billing/Interface/Routes/tenant.php');
     });
 });

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Growth\Interface\Livewire;
 
-use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
-use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Growth\Application\Actions\FraudScoringAction;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
@@ -16,16 +13,14 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
- * Wizard de registro multi-step con integración de pago.
+ * Wizard de registro en 2 pasos (sin planes: el billing se reconstruye desde cero).
  *
  * Step 1: Datos de organización (nombre, email, compañía, slug, password)
- * Step 2: Selección visual de plan (cards con features y precios)
- * Step 3: Resumen y Pago
+ * Step 2: Confirmación y creación
  *
  * [RIESGOS]
  * - Race condition en slug: validación `unique:tenants,slug` puede fallar si dos
@@ -46,9 +41,6 @@ class RegisterTenant extends Component
     public string $password = '';
 
     public string $honeypot = '';
-
-    // Step 2: Plan
-    public string $plan_id = 'free';
 
     // Wizard state
     public int $step = 1;
@@ -74,21 +66,9 @@ class RegisterTenant extends Component
                 'password' => ['required', 'string', Password::defaults()],
                 'honeypot' => 'prohibited',
             ],
-            2 => [
-                'plan_id' => 'required|exists:plans,slug',
-            ],
-            3 => [],
+            2 => [],
             default => [],
         };
-    }
-
-    public function mount(): void
-    {
-        $planFromQuery = request()->query('plan', '');
-
-        if ($planFromQuery && Plan::where('slug', $planFromQuery)->exists()) {
-            $this->plan_id = $planFromQuery;
-        }
     }
 
     public function updatedCompany(): void
@@ -122,7 +102,7 @@ class RegisterTenant extends Component
             }
         }
 
-        if ($this->step < 3) {
+        if ($this->step < 2) {
             $this->step++;
         }
     }
@@ -138,20 +118,7 @@ class RegisterTenant extends Component
     }
 
     /**
-     * Selecciona un plan desde las cards de step 2.
-     */
-    public function selectPlan(string $slug): void
-    {
-        if (! Plan::where('slug', $slug)->exists()) {
-            $this->addError('plan_id', __('Invalid plan selected.'));
-
-            return;
-        }
-        $this->plan_id = $slug;
-    }
-
-    /**
-     * Ejecuta el registro completo: provisioning + billing (via redirect).
+     * Ejecuta el registro completo: validación + provisioning.
      */
     public function register(CreateTenantAction $action, FraudScoringAction $fraudScoring): void
     {
@@ -159,8 +126,7 @@ class RegisterTenant extends Component
             // Validamos todos los pasos anteriores para asegurar integridad antes de crear el tenant
             $allRules = array_merge(
                 $this->rulesForStep(1),
-                $this->rulesForStep(2),
-                $this->rulesForStep(3)
+                $this->rulesForStep(2)
             );
 
             try {
@@ -182,38 +148,20 @@ class RegisterTenant extends Component
             $fraudSignals = $fraudScoring->evaluate(request(), $this->email);
             $isQuarantined = $fraudSignals->exceedsThreshold();
 
-            $finalStatus = match (true) {
-                $isQuarantined => 'quarantine',
-                $this->isPlanFree() => 'active',
-                default => 'pending_payment',
-            };
-
             $tenant = $action->execute(new CreateTenantData(
                 name: strip_tags($this->company),
                 slug: strtolower(Str::slug($this->slug)),
                 email: $this->email,
-                plan_id: $this->plan_id,
                 password: $this->password,
-                payment_token: null,
-                status: $finalStatus,
+                status: $isQuarantined ? 'quarantine' : 'active',
                 fraud_signals_payload: $isQuarantined ? $fraudSignals->toArray() : null,
             ));
 
-            // Quarantined tenants: do not proceed to checkout or workspace.
+            // Quarantined tenants: do not proceed to the workspace.
             // The pipeline will notify SecOps; we show a neutral holding message.
             if ($isQuarantined) {
                 session()->flash('status', __('Your registration is under review. You will be notified by email.'));
                 $this->redirect(route('central.home'), navigate: false);
-
-                return;
-            }
-
-            // If it's a paid plan, redirect to the hosted checkout page within the tenant context
-            if (! $this->isPlanFree()) {
-                $checkoutUrl = app(BillingManager::class)
-                    ->createCheckoutSession($tenant, $this->selectedPlan->id);
-
-                $this->redirect($checkoutUrl, navigate: false);
 
                 return;
             }
@@ -234,31 +182,8 @@ class RegisterTenant extends Component
         }
     }
 
-    /**
-     * Determina si el plan seleccionado es gratuito.
-     */
-    public function isPlanFree(): bool
-    {
-        $plan = $this->selectedPlan;
-
-        return ! $plan || ! $plan->price_monthly->isPositive();
-    }
-
-    /**
-     * Obtiene el plan seleccionado actualmente.
-     */
-    #[Computed]
-    public function getSelectedPlanProperty(): ?Plan
-    {
-        return Plan::where('slug', $this->plan_id)->first();
-    }
-
     public function render(): View
     {
-        return view('marketing::pages.register-tenant', [
-            'plans' => PlanManager::all(),
-            'selectedPlan' => $this->selectedPlan,
-            'isPlanFree' => $this->isPlanFree(),
-        ]);
+        return view('marketing::pages.register-tenant');
     }
 }

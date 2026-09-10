@@ -1,7 +1,5 @@
 <?php
 
-use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureHasFeature;
-use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureWithinQuota;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,11 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn (Request $request) => (function_exists('tenant') && tenant()) ? route('login') : route('central.login'));
         $middleware->appendToGroup('universal', []);
-
-        $middleware->alias([
-            'feature' => EnsureHasFeature::class,
-            'quota' => EnsureWithinQuota::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

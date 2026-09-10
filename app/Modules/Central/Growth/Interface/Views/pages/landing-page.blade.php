@@ -13,7 +13,6 @@
 
                 <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-zinc-600 dark:text-zinc-400">
                     <a href="#features" class="hover:text-zinc-900 dark:hover:text-white transition-colors">{{ __('Features') }}</a>
-                    <a href="#pricing" class="hover:text-zinc-900 dark:hover:text-white transition-colors">{{ __('Pricing') }}</a>
                     <a href="#" class="hover:text-zinc-900 dark:hover:text-white transition-colors">{{ __('Documentation') }}</a>
                 </div>
 
@@ -68,8 +67,8 @@
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg" style="background-color: {{ $primaryColor }}">
                         <flux:icon icon="credit-card" variant="solid" />
                     </div>
-                    <flux:heading size="lg">{{ __('Multi-gateway Billing') }}</flux:heading>
-                    <flux:text class="text-zinc-500">{{ __('Native support for Stripe (Global) and dLocal (LATAM) with dynamic plan matrix management.') }}</flux:text>
+                    <flux:heading size="lg">{{ __('Team Management') }}</flux:heading>
+                    <flux:text class="text-zinc-500">{{ __('Roles, invitations and multi-tenant team workspaces out of the box.') }}</flux:text>
                 </div>
 
                 <div class="space-y-4">
@@ -83,64 +82,14 @@
         </div>
     </section>
 
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-24">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <flux:heading size="xl" class="mb-4">{{ __('Simple, Transparent Pricing') }}</flux:heading>
-                <flux:subheading>{{ __('Choose the tier that fits your business stage. No hidden fees.') }}</flux:subheading>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                @foreach($plans as $plan)
-                <flux:card class="relative flex flex-col p-8 {{ $plan->slug === 'pro' ? 'ring-2' : '' }}" style="{{ $plan->slug === 'pro' ? 'border-color: ' . $primaryColor : '' }}">
-                    @if($plan->slug === 'pro')
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-widest shadow-sm" style="background-color: {{ $primaryColor }}">
-                        {{ __('Most Popular') }}
-                    </div>
-                    @endif
-
-                    <div class="mb-8">
-                        <flux:heading size="lg" class="text-2xl mb-1">{{ $plan->name }}</flux:heading>
-                        <div class="flex items-baseline gap-1 mt-4">
-                            <span class="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">{{ \App\Modules\Platform\Data\Services\PriceFormatter::format($plan->price_monthly) }}</span>
-                            <span class="text-zinc-500 text-sm">/{{ __('month') }}</span>
-                        </div>
-                    </div>
-
-                    <ul class="flex-1 space-y-4 mb-8">
-                        @foreach($plan->features['display_features'] ?? [] as $feature)
-                        <li class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            <flux:icon icon="check" class="text-emerald-500 shrink-0" size="sm" />
-                            <span>{{ $feature }}</span>
-                        </li>
-                        @endforeach
-
-                        @if(isset($plan->features['quotas']))
-                        <li class="pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                            <div class="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">{{ __('Technical Quotas') }}</div>
-                            <div class="flex justify-between text-xs">
-                                <span>{{ __('Branches') }}</span>
-                                <span class="font-bold">{{ $plan->features['quotas']['branches'] < 0 ? 'Unlimited' : $plan->features['quotas']['branches'] }}</span>
-                            </div>
-                            <div class="flex justify-between text-xs">
-                                <span>{{ __('Staff Members') }}</span>
-                                <span class="font-bold">{{ $plan->features['quotas']['staff'] < 0 ? 'Unlimited' : $plan->features['quotas']['staff'] }}</span>
-                            </div>
-                        </li>
-                        @endif
-                    </ul>
-
-                    <flux:button
-                        href="/register?plan={{ $plan->slug }}"
-                        variant="{{ $plan->slug === 'pro' ? 'primary' : 'ghost' }}"
-                        class="w-full py-3"
-                        style="{{ $plan->slug === 'pro' ? 'background-color: ' . $primaryColor : '' }}">
-                        {{ $plan->price_monthly->isPositive() ? __('Get Started') : __('Start for Free') }}
-                    </flux:button>
-                </flux:card>
-                @endforeach
-            </div>
+    <!-- CTA Section -->
+    <section class="py-24">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <flux:heading size="xl" class="mb-4">{{ __('Launch your workspace in minutes') }}</flux:heading>
+            <flux:subheading class="mb-8">{{ __('Create your organization and invite your team. No credit card required.') }}</flux:subheading>
+            <flux:button href="/register" variant="primary" class="px-8 py-3 text-lg font-bold">
+                {{ __('Get Started') }}
+            </flux:button>
         </div>
     </section>
 
