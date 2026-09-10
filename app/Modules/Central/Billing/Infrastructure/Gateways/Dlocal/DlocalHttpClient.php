@@ -27,7 +27,7 @@ final class DlocalHttpClient
         return new self(
             baseUrl: config('dlocal.environment') === 'production'
                 ? 'https://api.dlocal.com'
-                : 'https://api-sbx.dlocal.com',
+                : 'https://sandbox.dlocal.com',
             login: (string) config('dlocal.login'),
             transKey: (string) config('dlocal.trans_key'),
             secretKey: (string) config('dlocal.secret_key'),
