@@ -229,14 +229,14 @@ ella corriendo en CI, no solo escrita.**
 
 ## Fase 6 — UI Livewire + Flux
 
-- [ ] `SelectPlan`: consulta `supports(Subscriptions, forMethod)` antes de mostrar toggle
+- [x] `SelectPlan`: consulta `supports(Subscriptions, forMethod)` antes de mostrar toggle
       de auto-renovación; si es `false`, muestra flujo de checkout único + explica que la
       renovación futura llegará por link/email.
-- [ ] `ManageBilling`, `HostedCheckout`, `UpdatePaymentMethod`, `SubscriptionList`,
+- [x] `ManageBilling`, `HostedCheckout`, `UpdatePaymentMethod`, `SubscriptionList`,
       `TenantInvoiceList` — componentes de solo estado de UI, sin queries complejas
       (delegadas a `Application/Queries/`).
-- [ ] Vistas `/billing/success` y `/billing/cancel` — estáticas, sin lógica de mutación.
-- [ ] `EnsureTenantIsActive` allowlist verificada para `pending_payment` y `suspended`
+- [x] Vistas `/billing/success` y `/billing/cancel` — estáticas, sin lógica de mutación.
+- [x] `EnsureTenantIsActive` allowlist verificada para `pending_payment` y `suspended`
       (permite login + rutas de billing en dunning, bloquea el resto).
 
 **Exit criteria:**
