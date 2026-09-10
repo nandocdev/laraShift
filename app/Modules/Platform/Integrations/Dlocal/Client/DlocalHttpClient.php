@@ -9,6 +9,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 final class DlocalHttpClient
@@ -22,9 +23,11 @@ final class DlocalHttpClient
         private readonly int $retrySleepMs = 100,
     ) {}
 
-    public function post(string $path, array $payload): array
+    public function post(string $path, array $payload, ?string $idempotencyKey = null): array
     {
-        return $this->send('post', $path, $payload);
+        $idempotencyKey ??= (string) Str::uuid();
+
+        return $this->send('post', $path, $payload, $idempotencyKey);
     }
 
     public function get(string $path): array
@@ -32,7 +35,7 @@ final class DlocalHttpClient
         return $this->send('get', $path, []);
     }
 
-    private function send(string $method, string $path, array $payload): array
+    private function send(string $method, string $path, array $payload, ?string $idempotencyKey = null): array
     {
         // The body is signed, so the exact same bytes must be transmitted.
         // Guzzle would otherwise re-encode the array with different JSON flags
@@ -42,7 +45,7 @@ final class DlocalHttpClient
         // dLocal expects ISO-8601 UTC with milliseconds (e.g. 2018-07-12T13:46:28.629Z).
         $date = now()->utc()->format('Y-m-d\TH:i:s.v').'Z';
 
-        $pendingRequest = Http::withHeaders([
+        $headers = [
             'X-Date' => $date,
             'X-Login' => $this->login,
             'X-Trans-Key' => $this->transKey,
@@ -50,7 +53,13 @@ final class DlocalHttpClient
             'Content-Type' => 'application/json',
             'User-Agent' => 'LaraShift/1.0',
             'Authorization' => 'V2-HMAC-SHA256, Signature: '.$this->signature($date, $body),
-        ]);
+        ];
+
+        if ($idempotencyKey !== null) {
+            $headers['X-Idempotency-Key'] = $idempotencyKey;
+        }
+
+        $pendingRequest = Http::withHeaders($headers);
 
         if ($this->retryTimes > 1) {
             $pendingRequest->retry(
