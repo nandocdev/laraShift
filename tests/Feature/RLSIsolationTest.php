@@ -37,7 +37,6 @@ test('database prevents access to other tenant data at rls layer', function () {
         'slug' => 'tenant-a-'.Str::random(5),
         'name' => 'Tenant A',
         'email' => Str::random(10).'@test.com',
-        'plan_id' => 'free',
     ]);
 
     $tenantB = Tenant::create([
@@ -45,7 +44,6 @@ test('database prevents access to other tenant data at rls layer', function () {
         'slug' => 'tenant-b-'.Str::random(5),
         'name' => 'Tenant B',
         'email' => Str::random(10).'@test.com',
-        'plan_id' => 'free',
     ]);
 
     // 2. Set session to Tenant A for insertion
@@ -97,7 +95,6 @@ test('empty tenant id returns no results when rls is forced', function () {
         'slug' => 'tenant-a-'.Str::random(5),
         'name' => 'Tenant A',
         'email' => Str::random(10).'@test.com',
-        'plan_id' => 'free',
     ]);
 
     DB::statement("SELECT set_config('app.tenant_id', ?, false)", [$tenantA->id]);

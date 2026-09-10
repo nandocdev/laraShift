@@ -26,7 +26,6 @@ it('resolves user via container contract and exports logs correctly', function (
         'slug' => 'export-test',
         'name' => 'Export Test',
         'email' => 'export@test.com',
-        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);
@@ -67,7 +66,6 @@ it('aborts export if date range exceeds 90 days', function () {
         'slug' => 'export-test-2',
         'name' => 'Export Test 2',
         'email' => 'export2@test.com',
-        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);
@@ -98,7 +96,6 @@ it('aborts export if dateFrom is after dateTo', function () {
         'slug' => 'export-test-3',
         'name' => 'Export Test 3',
         'email' => 'export3@test.com',
-        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);

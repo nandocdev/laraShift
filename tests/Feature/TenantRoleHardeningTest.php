@@ -50,7 +50,6 @@ it('returns 409 conflict when deleting a role with active users', function () {
         'slug' => 'conflict-test',
         'name' => 'Conflict Test',
         'email' => 'conflict@test.com',
-        'plan_id' => 'free',
     ]);
     $domain = 'conflict.'.config('tenancy.central_domain');
     $tenant->domains()->create(['domain' => $domain]);

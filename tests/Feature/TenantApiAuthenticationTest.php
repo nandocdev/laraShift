@@ -18,7 +18,6 @@ it('authenticates a request via bearer token and api key', function () {
         'slug' => 'api-auth',
         'name' => 'API Auth Test',
         'email' => 'api-auth@test.com',
-        'plan_id' => 'free',
     ]);
     $tenant->domains()->create(['domain' => 'api-auth.openSaaS.test']);
 

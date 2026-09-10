@@ -14,7 +14,6 @@ beforeEach(function () {
         'slug' => 'foo-saml',
         'name' => 'Foo',
         'email' => 'foo@example.com',
-        'plan_id' => 'free',
     ]);
 
     $domain = 'foo-saml.localhost';

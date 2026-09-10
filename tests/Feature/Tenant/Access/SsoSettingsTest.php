@@ -12,7 +12,6 @@ beforeEach(function () {
         'slug' => 'foo-sso',
         'name' => 'Foo',
         'email' => 'foo@example.com',
-        'plan_id' => 'free',
     ]);
     $this->tenant->run(function () {
         $this->user = User::factory()->create(['status' => 'active']);

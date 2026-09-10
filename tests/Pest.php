@@ -1,6 +1,5 @@
 <?php
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -48,23 +47,11 @@ uses(TestCase::class, RefreshDatabase::class)
 
         $class = get_class($this);
         if ((str_contains($class, 'Feature\\Auth') || str_contains($class, 'Feature\\Settings')) && ! str_contains($class, 'AuthenticationTest')) {
-            $plan = Plan::firstOrCreate(['slug' => 'free'], [
-                'name' => 'Free Plan',
-                'price_monthly' => 0,
-                'price_yearly' => 0,
-                'amount' => 0,
-                'currency' => 'USD',
-                'is_active' => true,
-                'features' => [],
-            ]);
-
             $tenant = Tenant::firstOrCreate(['id' => '00000000-0000-0000-0000-000000000001'], [
                 'slug' => 'test-tenant',
                 'name' => 'Test Tenant',
                 'email' => 'test@tenant.com',
-                'plan_id' => 'free',
                 'status' => 'active',
-                'billing_gateway' => 'paguelofacil',
             ]);
 
             $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';

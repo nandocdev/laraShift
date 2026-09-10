@@ -19,7 +19,6 @@ it('sends a welcome email to the initial admin user', function () {
         name: 'Welcome Corp',
         slug: 'welcome',
         email: 'admin@welcome.com',
-        plan_id: 'free',
     );
 
     $tenant = $action->execute($data);

@@ -67,7 +67,7 @@ test('central dashboard renders all sections from the wireframe specification', 
         ->assertSee('Ver todas')
         // Organizations Table
         ->assertSee('Empresa')
-        ->assertSee('Plan')
+        ->assertSee('Usuarios')
         ->assertSee('Estado')
         ->assertSee('Acción')
         ->assertSee('Ver organizaciones');

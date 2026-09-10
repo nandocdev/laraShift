@@ -20,7 +20,6 @@ beforeEach(function () {
         name: 'Acme Corp',
         slug: 'acme',
         email: 'admin@acme.com',
-        plan_id: 'free',
     );
 });
 
