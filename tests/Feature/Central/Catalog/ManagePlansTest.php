@@ -38,12 +38,23 @@ it('creates a plan with features, quotas and gateway refs', function () {
         ->and($plan->features['gateway_ids'])->toBe(['dlocal' => 'PLAN-123']);
 });
 
+it('auto-fills the slug from the name until edited manually', function () {
+    $this->actingAs(centralStaff(), 'central');
+
+    Livewire::test(ManagePlans::class)
+        ->set('name', 'Business Pro')
+        ->assertSet('slug', 'business-pro')
+        ->set('slug', 'custom')
+        ->set('name', 'Business Plus')
+        ->assertSet('slug', 'custom');
+});
+
 it('validates plan input', function () {
     $this->actingAs(centralStaff(), 'central');
 
     Livewire::test(ManagePlans::class)
         ->set('name', '')
-        ->set('slug', 'Bad Slug!')
+        ->set('slug', '!!!')
         ->set('priceMonthly', '-5')
         ->call('save')
         ->assertHasErrors(['name', 'slug', 'priceMonthly']);

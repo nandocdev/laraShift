@@ -6,6 +6,7 @@ namespace App\Modules\Central\Catalog\Interface\Livewire;
 
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -35,6 +36,8 @@ class ManagePlans extends Component
 
     public string $slug = '';
 
+    public bool $slugLocked = true;
+
     public string $priceMonthly = '0.00';
 
     public string $priceYearly = '0.00';
@@ -55,6 +58,19 @@ class ManagePlans extends Component
 
     public string $gatewayDlocal = '';
 
+    public function updatedName(): void
+    {
+        if ($this->editingId === null && $this->slugLocked) {
+            $this->slug = (string) Str::slug($this->name);
+        }
+    }
+
+    public function updatedSlug(): void
+    {
+        $this->slugLocked = false;
+        $this->slug = (string) Str::slug($this->slug);
+    }
+
     public function edit(string $id): void
     {
         $plan = Plan::findOrFail($id);
@@ -62,6 +78,7 @@ class ManagePlans extends Component
         $this->editingId = $plan->id;
         $this->name = $plan->name;
         $this->slug = $plan->slug;
+        $this->slugLocked = false;
         $this->priceMonthly = number_format($plan->price_monthly / 100, 2, '.', '');
         $this->priceYearly = number_format($plan->price_yearly / 100, 2, '.', '');
         $this->currency = $plan->currency;
@@ -83,7 +100,7 @@ class ManagePlans extends Component
     public function cancelEdit(): void
     {
         $this->reset([
-            'editingId', 'name', 'slug', 'priceMonthly', 'priceYearly',
+            'editingId', 'name', 'slug', 'slugLocked', 'priceMonthly', 'priceYearly',
             'currency', 'interval', 'isActive', 'displayFeatures',
             'quotas', 'gatewayClave', 'gatewayDlocal',
         ]);
