@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@import "tailwindcss";
+@import "../../vendor/livewire/flux/dist/flux.css";
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -27,6 +27,10 @@
     --color-accent: var(--color-indigo-500);
     --color-accent-content: var(--color-indigo-600);
     --color-accent-foreground: var(--color-white);
+
+    /* Alias de marca usado en toda la app (bg-primary, text-primary, ring-primary, ...).
+       Sin esta clave Tailwind v4 no genera esas utilidades y los botones quedan transparentes. */
+    --color-primary: var(--color-indigo-600);
 }
 
 @layer theme {
@@ -38,7 +42,6 @@
 }
 
 @layer base {
-
     *,
     ::after,
     ::before,
