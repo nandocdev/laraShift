@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Application\Services;
 
+use App\Modules\Platform\Contracts\PlanQuotaResolver;
 use App\Modules\Platform\Contracts\TenantContract;
 use App\Modules\Platform\Tenancy\Infrastructure\Notifications\QuotaThresholdReachedNotification;
 use Illuminate\Support\Facades\Cache;
@@ -12,6 +13,8 @@ class QuotaManager
 {
     // C005: namespace cache per tenant per PROJECT_DECISIONS.md §6 -> tenant:{id}:quota:{metric}:{period}
     private const KEY_PREFIX = 'quota';
+
+    public function __construct(private PlanQuotaResolver $planQuotas) {}
 
     /**
      * Increments a metric and checks if it exceeds the plan limit.
@@ -47,7 +50,7 @@ class QuotaManager
 
     public function getLimit(TenantContract $tenant, string $metric): int
     {
-        return $tenant->getQuotaLimit($metric);
+        return $this->planQuotas->limitFor($tenant, $metric) ?? $tenant->getQuotaLimit($metric);
     }
 
     public function forceIncrement(TenantContract $tenant, string $metric, int $amount = 1): void

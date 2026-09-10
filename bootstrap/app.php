@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantFeature;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->alias([
+            'feature' => EnsureTenantFeature::class,
+        ]);
         $middleware->redirectGuestsTo(fn (Request $request) => (function_exists('tenant') && tenant()) ? route('login') : route('central.login'));
         $middleware->appendToGroup('universal', []);
     })

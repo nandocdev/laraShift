@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Interface\Livewire;
 
+use App\Modules\Platform\Contracts\TenantFeatureResolver;
 use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
 use App\Modules\Tenant\Access\Application\Actions\RevokeApiKey;
@@ -36,8 +37,14 @@ class ManageApiKeys extends Component
         'audit:read' => 'View audit logs',
     ];
 
+    public function mount(): void
+    {
+        $this->ensureApiAccess();
+    }
+
     public function generate(GenerateApiKey $action): void
     {
+        $this->ensureApiAccess();
         $this->authorize('settings:manage');
 
         $this->validate([
@@ -64,6 +71,7 @@ class ManageApiKeys extends Component
 
     public function revoke(string $id, RevokeApiKey $action): void
     {
+        $this->ensureApiAccess();
         $this->authorize('settings:manage');
 
         $apiKey = ApiKey::findOrFail($id);
@@ -76,6 +84,15 @@ class ManageApiKeys extends Component
     {
         $this->plainKey = '';
         $this->showingKey = false;
+    }
+
+    private function ensureApiAccess(): void
+    {
+        abort_unless(
+            app(TenantFeatureResolver::class)->hasFeature(tenant(), 'api_access'),
+            403,
+            __('API access is not available on your current plan.')
+        );
     }
 
     public function render(): View

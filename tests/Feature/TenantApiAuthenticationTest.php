@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
 use App\Modules\Tenant\Access\Domain\Models\User;
@@ -18,8 +19,16 @@ it('authenticates a request via bearer token and api key', function () {
         'slug' => 'api-auth',
         'name' => 'API Auth Test',
         'email' => 'api-auth@test.com',
+        'plan_id' => 'api-auth-plan',
     ]);
     $tenant->domains()->create(['domain' => 'api-auth.openSaaS.test']);
+
+    Plan::create([
+        'name' => 'API Auth', 'slug' => 'api-auth-plan', 'price_monthly' => 1000, 'price_yearly' => 10000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => ['api_access'], 'gateway_ids' => [], 'quotas' => []],
+        'is_active' => true,
+    ]);
 
     $action = app(GenerateApiKey::class);
 
