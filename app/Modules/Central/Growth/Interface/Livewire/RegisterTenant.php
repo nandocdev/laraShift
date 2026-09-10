@@ -17,7 +17,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
- * Wizard de registro en 2 pasos (sin planes: el billing se reconstruye desde cero).
+ * Wizard de registro en 2 pasos (sin planes).
  *
  * Step 1: Datos de organización (nombre, email, compañía, slug, password)
  * Step 2: Confirmación y creación
