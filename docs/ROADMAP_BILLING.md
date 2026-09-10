@@ -205,16 +205,16 @@ para Clave), se conectan al reloj.
 Esta fase se puede paralelizar con 3/4, pero **no se puede dar el proyecto por cerrado sin
 ella corriendo en CI, no solo escrita.**
 
-- [ ] Confirmar (no asumir) que el tag `RLSEnforce` corre en un stage del pipeline contra
+- [x] Confirmar (no asumir) que el tag `RLSEnforce` corre en un stage del pipeline contra
       Postgres real — mostrar el archivo de configuración de CI que lo invoca. Si no
       existe ese stage, crearlo antes de continuar.
-- [ ] `CrossTenantLeakTest` para cada tabla nueva: tenant A no lee/ejecuta nada de tenant B,
+- [x] `CrossTenantLeakTest` para cada tabla nueva: tenant A no lee/ejecuta nada de tenant B,
       incluyendo jobs despachados y queries con `withoutGlobalScopes`.
-- [ ] Verificar `SET LOCAL app.tenant_id` dentro de transacción explícita en cada punto de
+- [x] Verificar `SET LOCAL app.tenant_id` dentro de transacción explícita en cada punto de
       entrada (HTTP, Job, Console command) — un test que abra dos "sesiones" de tenant
       distintas en el mismo proceso (simulando reuso de worker Octane) y confirme que no
       hay fuga de contexto.
-- [ ] `TenantAware` + `RehydrateTenantContext` en `ProcessPaymentWebhookJob` y
+- [x] `TenantAware` + `RehydrateTenantContext` en `ProcessPaymentWebhookJob` y
       `ChargeSubscriptionJob`: test de que un job sin contexto de tenant lanza excepción
       explícita, nunca se ejecuta en silencio.
 
