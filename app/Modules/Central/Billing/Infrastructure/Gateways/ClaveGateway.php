@@ -52,10 +52,16 @@ final readonly class ClaveGateway implements BillingProvider, CheckoutProvider, 
      */
     public function buildCheckoutUrl(TenantContract $tenant, PlanRef $plan, string $displayId): string
     {
+        $merchantId = (string) config('clave.merchant_id');
+
+        if ($merchantId === '') {
+            throw new RuntimeException('Clave merchant not configured: set CLAVE_MERCHANT_ID in .env.');
+        }
+
         $url = rtrim($this->environment->apiBaseUrl(), '/').'/LinkDeamon.cfm';
 
         $payload = [
-            'CCLW' => config('clave.merchant_id'),
+            'CCLW' => $merchantId,
             'CMTN' => number_format($plan->amountCents / 100, 2, '.', ''),
             'CDSC' => substr("Plan {$plan->slug} — {$tenant->getName()}", 0, 150),
             'RETURN_URL' => bin2hex(route('payments.clave.callback')),
@@ -84,7 +90,12 @@ final readonly class ClaveGateway implements BillingProvider, CheckoutProvider, 
         $data = $response->json();
 
         if (! ($data['success'] ?? false)) {
-            throw new RuntimeException($data['message'] ?? 'Failed to generate PagueloFacil payment link.');
+            Log::warning('billing.clave_link_rejected', [
+                'http_status' => $response->status(),
+                'body' => substr($response->body(), 0, 500),
+            ]);
+
+            throw new RuntimeException($data['message'] ?? 'PagueloFacil rejected the payment link request.');
         }
 
         return $data['data']['url'] ?? throw new RuntimeException('No URL returned by PagueloFacil.');

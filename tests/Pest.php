@@ -118,6 +118,8 @@ function clavePlanRef(): PlanRef
 
 function fakeClaveLink(): void
 {
+    config()->set('clave.merchant_id', 'TEST-MERCHANT');
+
     Http::fake([
         '*/LinkDeamon.cfm' => Http::response(['success' => true, 'data' => ['url' => 'https://sandbox.paguelofacil.com/pay/TEST123']]),
     ]);

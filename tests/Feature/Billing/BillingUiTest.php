@@ -39,6 +39,21 @@ it('selects a Clave plan and redirects to the hosted checkout', function () {
     }
 });
 
+it('shows a friendly error when the Clave merchant is not configured', function () {
+    billingUiPlans();
+    config()->set('clave.merchant_id', '');
+    $tenant = claveTestTenant('ui-select-noconfig');
+    tenancy()->initialize($tenant);
+
+    try {
+        Livewire::test(SelectPlan::class)
+            ->call('checkout', 'pro')
+            ->assertSee('Could not start the checkout');
+    } finally {
+        tenancy()->end();
+    }
+});
+
 it('shows the hosted card flow for dLocal instead of redirect', function () {
     billingUiPlans();
     $tenant = dlocalTestTenant('ui-select-dlocal');

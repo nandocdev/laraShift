@@ -22,6 +22,8 @@ class SelectPlan extends Component
 
     public string $displayId = '';
 
+    public ?string $error = null;
+
     public function mount(): void
     {
         $this->displayId = 'web_'.substr((string) tenant()->getId(), 0, 8).'_'.now()->format('YmdHis');
@@ -29,14 +31,23 @@ class SelectPlan extends Component
 
     public function checkout(string $planSlug, CreateCheckoutSessionAction $checkouts, PlanManager $plans): void
     {
-        $plan = $plans->find($planSlug);
+        $this->error = null;
 
-        $session = $checkouts->execute(tenant(), new PlanRef(
-            slug: $plan->slug,
-            amountCents: $plan->price_monthly,
-            currency: $plan->currency,
-            gatewayIds: $plan->gatewayIds(),
-        ), $this->displayId);
+        try {
+            $plan = $plans->find($planSlug);
+
+            $session = $checkouts->execute(tenant(), new PlanRef(
+                slug: $plan->slug,
+                amountCents: $plan->price_monthly,
+                currency: $plan->currency,
+                gatewayIds: $plan->gatewayIds(),
+            ), $this->displayId);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->error = __('Could not start the checkout with the payment gateway. Please try again.');
+
+            return;
+        }
 
         $this->redirect($session->url, navigate: false);
     }

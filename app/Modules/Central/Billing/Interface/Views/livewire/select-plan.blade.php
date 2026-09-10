@@ -14,6 +14,10 @@
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif
 
+    @if ($error)
+        <flux:text color="red">{{ $error }}</flux:text>
+    @endif
+
     <div class="grid gap-6 md:grid-cols-2">
         @foreach ($plans as $plan)
             <flux:card :key="$plan->id" class="flex flex-col gap-4">
