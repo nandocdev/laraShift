@@ -41,7 +41,7 @@
     <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
         <flux:text size="sm" color="amber" class="flex items-center gap-2">
             <flux:icon icon="information-circle" size="sm" />
-            {{ __('Note: Changing the currency here will affect future transactions. Active subscriptions in Stripe will remain in their original currency.') }}
+            {{ __('Note: Changing the currency here affects how monetary values are displayed across your workspace.') }}
         </flux:text>
     </div>
 </div>
