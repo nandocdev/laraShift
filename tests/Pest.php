@@ -141,3 +141,15 @@ function claveSign(string $raw): string
 
     return hash_hmac('sha256', $raw, 'test-secret');
 }
+
+function dlocalTestTenant(string $slug): Tenant
+{
+    return Tenant::create([
+        'id' => (string) Str::uuid(),
+        'slug' => $slug,
+        'name' => 'dLocal Test',
+        'email' => $slug.'@test.com',
+        'status' => 'active',
+        'billing_gateway' => 'dlocal',
+    ]);
+}

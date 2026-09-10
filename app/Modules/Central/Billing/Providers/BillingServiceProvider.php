@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Providers;
 
 use App\Modules\Central\Billing\Application\Listeners\FulfillSubscription;
+use App\Modules\Central\Billing\Application\Listeners\HandlePaymentFailure;
 use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
+use App\Modules\Central\Billing\Domain\Events\PaymentDeclined;
+use App\Modules\Central\Billing\Infrastructure\Console\ProcessRecurringChargesCommand;
+use App\Modules\Central\Billing\Infrastructure\Console\ReconcileSubscriptionsCommand;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveEnvironment;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DefaultBillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\Dlocal\DlocalHttpClient;
@@ -22,10 +26,18 @@ class BillingServiceProvider extends ServiceProvider
         $this->app->bind(BillingManager::class, DefaultBillingManager::class);
 
         Event::listen(PaymentApproved::class, FulfillSubscription::class);
+        Event::listen(PaymentDeclined::class, HandlePaymentFailure::class);
     }
 
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../Interface/Routes/payments.php');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ProcessRecurringChargesCommand::class,
+                ReconcileSubscriptionsCommand::class,
+            ]);
+        }
     }
 }
