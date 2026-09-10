@@ -13,7 +13,7 @@ Este directorio contiene los módulos, clases y primitivas transversales de la p
 A medida que se extraigan o implementen componentes, los módulos se ubicarán en esta estructura:
 
 - `Platform/Foundation`: Núcleo técnico básico y adaptadores del framework (Laravel overrides, helpers generales).
-- `Platform/Contracts`: Interfaces para desacoplar las implementaciones de los módulos (ej. `BillingProvider`, `TenancyResolver`).
+- `Platform/Contracts`: Interfaces para desacoplar las implementaciones de los módulos (ej. `TenantContract`, `TenancyResolver`).
 - `Platform/Events`: Bus de eventos común, payloads e integration events.
 - `Platform/Tenancy`: Lógica de aislamiento multi-tenant, bootstrappers de PostgreSQL RLS y Eloquent scopes.
 - `Platform/Security`: Cifrado, hashing de API keys, MFA y políticas generales de acceso.

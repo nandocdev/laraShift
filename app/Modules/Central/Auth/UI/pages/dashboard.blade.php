@@ -260,7 +260,6 @@
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>{{ __('Empresa') }}</flux:table.column>
-                <flux:table.column>{{ __('Plan') }}</flux:table.column>
                 <flux:table.column>{{ __('Usuarios') }}</flux:table.column>
                 <flux:table.column>{{ __('Estado') }}</flux:table.column>
                 <flux:table.column class="text-right">{{ __('Acción') }}</flux:table.column>
@@ -272,9 +271,6 @@
                         <flux:table.cell class="font-medium">
                             <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $org['name'] }}</div>
                             <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $org['domain'] }}</div>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:badge size="sm" variant="outline" class="font-medium">{{ $org['plan'] }}</flux:badge>
                         </flux:table.cell>
                         <flux:table.cell class="font-mono text-sm text-zinc-700 dark:text-zinc-300">
                             {{ $org['users_count'] }}

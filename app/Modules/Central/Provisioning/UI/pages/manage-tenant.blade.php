@@ -3,7 +3,7 @@
         <flux:button icon="arrow-left" variant="ghost" :href="route('central.provisioning.index')" wire:navigate />
         <div>
             <flux:heading size="xl">{{ __('Edit Tenant') }}: {{ $tenant->name }}</flux:heading>
-            <flux:subheading>{{ __('Manage account details, subscription plan and operational status.') }}</flux:subheading>
+            <flux:subheading>{{ __('Manage account details and operational status.') }}</flux:subheading>
         </div>
     </div>
 
@@ -23,12 +23,6 @@
             />
 
             <div class="grid grid-cols-2 gap-6">
-                <flux:select wire:model="plan_id" :label="__('Subscription Plan')">
-                    @foreach($plans as $plan)
-                        <option value="{{ $plan->id }}">{{ $plan->name }}</option>
-                    @endforeach
-                </flux:select>
-
                 <flux:select wire:model="status" :label="__('Operational Status')">
                     <option value="provisioning">{{ __('Provisioning') }}</option>
                     <option value="active">{{ __('Active') }}</option>

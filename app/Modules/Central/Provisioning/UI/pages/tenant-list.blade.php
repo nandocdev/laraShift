@@ -19,7 +19,6 @@
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Domain') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
-                <flux:table.column>{{ __('Plan') }}</flux:table.column>
                 <flux:table.column>{{ __('Created At') }}</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
@@ -47,16 +46,12 @@
                             </div>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" variant="outline">{{ strtoupper($tenant->plan_id) }}</flux:badge>
-                        </flux:table.cell>
-                        <flux:table.cell>
                             {{ $tenant->created_at->format('Y-m-d H:i') }}
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown>
                                 <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
                                 <flux:menu>
-                                    <flux:menu.item icon="command-line" :href="route('central.tenants.features.overrides', $tenant->id)" wire:navigate>{{ __('Manage Features') }}</flux:menu.item>
                                     <flux:menu.item icon="pencil" :href="route('central.provisioning.edit', $tenant->id)" wire:navigate>{{ __('Edit') }}</flux:menu.item>
                                     
                                     <flux:modal.trigger name="impersonate-tenant">

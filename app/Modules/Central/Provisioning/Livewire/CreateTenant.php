@@ -37,8 +37,6 @@ class CreateTenant extends Component
     #[Validate('required|email')]
     public string $email = '';
 
-    public string $plan_id = 'free';
-
     public function save(CreateTenantAction $action): void
     {
         $this->validate();
@@ -47,7 +45,6 @@ class CreateTenant extends Component
             name: $this->name,
             slug: $this->slug,
             email: $this->email,
-            plan_id: $this->plan_id,
         );
 
         try {

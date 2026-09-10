@@ -26,19 +26,16 @@ class TenantSeeder extends Seeder
                 'name' => 'Acme Corporation',
                 'slug' => 'acme',
                 'email' => 'alone-setup-crock@duck.com',
-                'plan_id' => 'enterprise',
             ],
             [
                 'name' => 'Globex Corp',
                 'slug' => 'globex',
                 'email' => 'ample-smell-unripe@duck.com',
-                'plan_id' => 'pro',
             ],
             [
                 'name' => 'Initech',
                 'slug' => 'initech',
                 'email' => 'gusto-spied-disk@duck.com',
-                'plan_id' => 'free',
             ],
         ];
 
@@ -50,7 +47,6 @@ class TenantSeeder extends Seeder
                     name: $data['name'],
                     slug: $data['slug'],
                     email: $data['email'],
-                    plan_id: $data['plan_id'],
                     password: 'password',
                     status: 'active',
                 ));

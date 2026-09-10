@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Models;
 
-use App\Modules\Central\Catalog\Domain\Concerns\HasFeatures;
-use App\Modules\Central\Catalog\Domain\Concerns\HasQuotas;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Cashier\Billable;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
@@ -20,7 +15,7 @@ use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
 {
-    use Billable, HasDatabase, HasDomains, HasFeatures, HasQuotas, HasUuids, Notifiable, SoftDeletes;
+    use HasDatabase, HasDomains, HasUuids, Notifiable, SoftDeletes;
 
     public $incrementing = false;
 
@@ -32,11 +27,6 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
         'archived_at' => 'datetime',
         'suspended_at' => 'datetime',
     ];
-
-    public function plan(): BelongsTo
-    {
-        return $this->belongsTo(Plan::class, 'plan_id', 'slug');
-    }
 
     public function getId(): string|int
     {
@@ -55,12 +45,8 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
 
     public function getQuotaLimit(string $metric): int
     {
-        $plan = $this->plan;
-        if (! $plan) {
-            return -1;
-        }
-
-        return (int) ($plan->features['quotas'][$metric] ?? -1);
+        // No plans: no limits enforced. QuotaManager counters still track usage.
+        return -1;
     }
 
     public static function getCustomColumns(): array
@@ -70,7 +56,6 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
             'slug',
             'name',
             'email', // Tenant owner email
-            'plan_id',
             'status',
             'suspended_at',
             'maintenance_mode',

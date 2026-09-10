@@ -19,8 +19,7 @@ use Illuminate\Support\Str;
  * 'provisioning') and dispatches the async resumable provisioning pipeline.
  *
  * The heavy work (core data, infrastructure, admin user) runs in
- * ProvisionTenantJob. Charging for paid plans happens afterwards via the hosted
- * checkout flow; FulfillSubscription activates the tenant on payment approval.
+ * ProvisionTenantJob.
  */
 final readonly class CreateTenantAction
 {
@@ -40,9 +39,7 @@ final readonly class CreateTenantAction
             name: strip_tags($data->name),
             slug: $normalizedSlug,
             email: $data->email,
-            plan_id: $data->plan_id,
             password: $data->password,
-            payment_token: $data->payment_token,
             status: $data->status,
         );
 
@@ -71,7 +68,6 @@ final readonly class CreateTenantAction
                         $tenant->update([
                             'name' => $data->name,
                             'email' => $data->email,
-                            'plan_id' => $data->plan_id,
                             'status' => 'provisioning',
                         ]);
 
@@ -83,13 +79,12 @@ final readonly class CreateTenantAction
                             'slug' => $data->slug,
                             'name' => $data->name,
                             'email' => $data->email,
-                            'plan_id' => $data->plan_id,
                             'status' => 'provisioning',
                         ]);
                     }
 
                     // Step 1: Subdomain / Domain Reservation (synchronous, required
-                    // for the hosted checkout URLs and tenant routes)
+                    // for tenant routes)
                     $this->reserveDomain->execute($tenant, $data->slug);
 
                     // Dispatch the async pipeline after commit — a queue failure

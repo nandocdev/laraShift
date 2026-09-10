@@ -15,19 +15,9 @@ final readonly class PurgeTenantDataAction
      * Order matters: leaves first, then roots.
      */
     private const TENANT_TABLES = [
-        'quota_snapshots',
-        'usage_events',
-        'usage_rollups',
         'tenant_api_keys',
         'tenant_settings',
         'provisioning_logs',
-        'payment_webhooks',
-        'payment_attempts',
-        'payment_references',
-        'payments',
-        'invoices',
-        'subscriptions',
-        'subscription_items',
         'activity_log',
         'domains',
     ];

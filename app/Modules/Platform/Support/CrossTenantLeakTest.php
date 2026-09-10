@@ -60,7 +60,6 @@ trait CrossTenantLeakTest
             'slug' => 'test-tenant-a-'.Str::random(5),
             'name' => 'Test Tenant A',
             'email' => Str::random(8).'@a.test',
-            'plan_id' => 'free',
         ]);
 
         $this->tenantB = Tenant::create([
@@ -68,7 +67,6 @@ trait CrossTenantLeakTest
             'slug' => 'test-tenant-b-'.Str::random(5),
             'name' => 'Test Tenant B',
             'email' => Str::random(8).'@b.test',
-            'plan_id' => 'free',
         ]);
     }
 
