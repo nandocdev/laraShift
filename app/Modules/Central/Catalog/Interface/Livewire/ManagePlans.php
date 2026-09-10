@@ -20,6 +20,8 @@ class ManagePlans extends Component
 
     public ?string $editingId = null;
 
+    public bool $showForm = false;
+
     public string $name = '';
 
     public string $slug = '';
@@ -64,6 +66,12 @@ class ManagePlans extends Component
         $this->slug = (string) Str::slug($this->slug);
     }
 
+    public function create(): void
+    {
+        $this->cancelEdit();
+        $this->showForm = true;
+    }
+
     public function edit(string $id): void
     {
         $plan = Plan::findOrFail($id);
@@ -88,10 +96,12 @@ class ManagePlans extends Component
         }
         $this->gatewayClave = (string) ($plan->features['gateway_ids']['clave'] ?? '');
         $this->gatewayDlocal = (string) ($plan->features['gateway_ids']['dlocal'] ?? '');
+        $this->showForm = true;
     }
 
     public function cancelEdit(): void
     {
+        $this->showForm = false;
         $this->reset([
             'editingId', 'name', 'slug', 'slugLocked', 'priceMonthly', 'priceYearly',
             'currency', 'interval', 'isActive', 'displayFeatures',
@@ -152,6 +162,7 @@ class ManagePlans extends Component
         }
 
         $this->cancelEdit();
+        $this->dispatch('plan-modal-close');
     }
 
     public function toggleActive(string $id): void
@@ -167,6 +178,7 @@ class ManagePlans extends Component
             $this->cancelEdit();
         }
         session()->flash('status', __('Plan archived.'));
+        $this->dispatch('plan-modal-close');
     }
 
     public function render(): View

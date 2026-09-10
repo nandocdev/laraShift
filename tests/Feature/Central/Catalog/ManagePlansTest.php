@@ -67,6 +67,24 @@ it('accepts product-defined features from config without core changes', function
         ->toBe(['crm_pipeline']);
 });
 
+it('opens and closes the plan form modal', function () {
+    $this->actingAs(centralStaff(), 'central');
+
+    Livewire::test(ManagePlans::class)
+        ->assertSet('showForm', false)
+        ->call('create')
+        ->assertSet('showForm', true)
+        ->set('name', 'Modal Plan')
+        ->set('priceMonthly', '10.00')
+        ->set('priceYearly', '100.00')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('showForm', false)
+        ->assertDispatched('plan-modal-close');
+
+    expect(Plan::where('slug', 'modal-plan')->exists())->toBeTrue();
+});
+
 it('validates plan input', function () {
     $this->actingAs(centralStaff(), 'central');
 
