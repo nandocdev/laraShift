@@ -9,6 +9,7 @@ use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Events\PaymentDeclined;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Billing\Infrastructure\Gateways\BillingManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\CheckoutManager;
 use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
@@ -147,7 +148,7 @@ it('creates a payment, charges directly and dispatches PaymentApproved', functio
         ]),
     ]);
 
-    $session = (new CheckoutManager(app(DlocalGateway::class)))->initiate(
+    $session = (new CheckoutManager(app(DlocalGateway::class), app(BillingManager::class)))->initiate(
         dlocalPaymentData($this->tenant, $this->plan, 'CV-TOKEN-3'),
         $this->tenant->id,
         '',
@@ -177,7 +178,7 @@ it('fulfills the subscription and captures the card reference on approval', func
         ]),
     ]);
 
-    (new CheckoutManager(app(DlocalGateway::class)))->initiate(
+    (new CheckoutManager(app(DlocalGateway::class), app(BillingManager::class)))->initiate(
         dlocalPaymentData($this->tenant, $this->plan, 'CV-TOKEN-4'),
         $this->tenant->id,
         '',
@@ -206,7 +207,7 @@ it('dispatches PaymentDeclined when the direct charge is rejected', function () 
         ]),
     ]);
 
-    $session = (new CheckoutManager(app(DlocalGateway::class)))->initiate(
+    $session = (new CheckoutManager(app(DlocalGateway::class), app(BillingManager::class)))->initiate(
         dlocalPaymentData($this->tenant, $this->plan, 'CV-TOKEN-5'),
         $this->tenant->id,
         '',

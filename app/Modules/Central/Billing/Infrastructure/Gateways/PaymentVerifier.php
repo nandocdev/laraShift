@@ -21,16 +21,12 @@ final readonly class PaymentVerifier
 {
     public function __construct(
         private PaymentGateway $gateway,
-        private ?BillingManager $billingManager = null,
+        private BillingManager $billingManager,
     ) {}
 
     private function gatewayForTenant(string $tenantId): PaymentGateway
     {
-        if ($this->billingManager) {
-            return $this->billingManager->paymentGatewayForTenantId($tenantId);
-        }
-
-        return $this->gateway;
+        return $this->billingManager->paymentGatewayForTenantId($tenantId);
     }
 
     /**

@@ -19,6 +19,7 @@ it('reuses the same payment on concurrent initiate with the same display_id', fu
         'email' => 'dup-'.Str::random(6).'@test.com',
         'plan_id' => 'free',
         'status' => 'active',
+        'billing_gateway' => 'clave',
     ]);
 
     Domain::create([
