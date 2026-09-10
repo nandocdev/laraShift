@@ -11,6 +11,7 @@
                 <flux:table.column>{{ __('Amount') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
                 <flux:table.column>{{ __('Paid at') }}</flux:table.column>
+                <flux:table.column>{{ __('Receipt') }}</flux:table.column>
             </flux:table.columns>
             <flux:table.rows>
                 @forelse($invoices as $invoice)
@@ -19,10 +20,11 @@
                         <flux:table.cell>{{ number_format($invoice->amount_cents / 100, 2) }} {{ $invoice->currency }}</flux:table.cell>
                         <flux:table.cell><flux:badge size="sm" variant="outline">{{ $invoice->status }}</flux:badge></flux:table.cell>
                         <flux:table.cell>{{ $invoice->paid_at?->toDateString() ?? '—' }}</flux:table.cell>
+                        <flux:table.cell><a href="{{ route('tenant.billing.invoices.pdf', $invoice) }}">{{ __('Download') }}</a></flux:table.cell>
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4">{{ __('No invoices yet.') }}</flux:table.cell>
+                        <flux:table.cell colspan="5">{{ __('No invoices yet.') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
