@@ -176,18 +176,18 @@ con tráfico real hoy; cualquier regresión acá es visible de inmediato.
 Ahora que existen los dos caminos de renovación (MIT silencioso para dLocal, checkout-link
 para Clave), se conectan al reloj.
 
-- [ ] `billing:process-recurring` (04:00 diario): para cada `Subscription` vencida,
+- [x] `billing:process-recurring` (04:00 diario): para cada `Subscription` vencida,
       rama por gateway — `chargeRecurring()` si `supports(Subscriptions, method)`,
       `GenerateRenewalCheckoutAction` si no.
-- [ ] `billing:reconcile` (03:00 diario): timeout-based `PastDue` — "Fuente 2" del
+- [x] `billing:reconcile` (03:00 diario): timeout-based `PastDue` — "Fuente 2" del
       dual-trigger, para suscripciones sin pago registrado en el período vigente
       independientemente de si hubo evento de fallo.
-- [ ] Dunning con umbrales **separados** por tipo de renovación (definidos en Fase 0):
+- [x] Dunning con umbrales **separados** por tipo de renovación (definidos en Fase 0):
       intentos/plazos de MIT ≠ intentos/plazos de link-based.
-- [ ] 3er intento fallido (o vencimiento de plazo de link) → `tenant.status = suspended` +
+- [x] 3er intento fallido (o vencimiento de plazo de link) → `tenant.status = suspended` +
       `activity('billing')` — reutilizando `EnsureTenantIsActive`, sin máquina de estados
       paralela.
-- [ ] `TenantQueueManager`: verificar que `suspended/past_due` efectivamente degrada a cola
+- [x] `TenantQueueManager`: verificar que `suspended/past_due` efectivamente degrada a cola
       `low` (test de integración, no solo revisión de código).
 
 **Exit criteria:**
