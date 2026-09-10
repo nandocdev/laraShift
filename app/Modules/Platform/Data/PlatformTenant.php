@@ -34,6 +34,16 @@ class PlatformTenant implements TenantContract
         return -1;
     }
 
+    public function getPlanSlug(): string
+    {
+        return 'free';
+    }
+
+    public function getBillingGateway(): string
+    {
+        return config('billing.gateway_default', 'clave');
+    }
+
     public function notify(mixed $notification): void
     {
         // No-op for platform/generic tenant

@@ -49,6 +49,16 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
         return -1;
     }
 
+    public function getPlanSlug(): string
+    {
+        return (string) ($this->plan_id ?? 'free');
+    }
+
+    public function getBillingGateway(): string
+    {
+        return (string) ($this->billing_gateway ?? config('billing.gateway_default', 'clave'));
+    }
+
     public static function getCustomColumns(): array
     {
         return [
@@ -57,6 +67,8 @@ class Tenant extends BaseTenant implements TenantContract, TenantWithDatabase
             'name',
             'email', // Tenant owner email
             'status',
+            'billing_gateway',
+            'plan_id',
             'suspended_at',
             'maintenance_mode',
             'read_only',
