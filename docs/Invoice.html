@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #AB2324-01</title>
+    <style>
+        :root {
+            --brand-color: #D96A27;
+            --text-main: #1a1a1a;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --bg-main: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .invoice-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header Flex Layout */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 3rem;
+        }
+
+        .sender-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--brand-color);
+            line-height: 0.8;
+        }
+
+        .sender-info h1 {
+            font-size: 1.25rem;
+            color: var(--brand-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        /* Metadata Grid */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .meta-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta-section p {
+            font-size: 0.875rem;
+        }
+
+        .meta-section strong {
+            font-weight: 600;
+            display: block;
+        }
+
+        .amount-highlight {
+            font-size: 2rem;
+            color: var(--brand-color);
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .items-table th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .items-table th.num,
+        .items-table td.num {
+            text-align: right;
+        }
+
+        .items-table td {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        .item-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .item-desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Totals Section */
+        .totals-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 4rem;
+        }
+
+        .totals-grid {
+            display: grid;
+            grid-template-columns: auto 120px;
+            gap: 1rem 2rem;
+            font-size: 0.875rem;
+        }
+
+        .total-row.final {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            font-size: 0.875rem;
+        }
+
+        .footer h4 {
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .footer .terms {
+            color: var(--text-muted);
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .invoice-wrapper {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="invoice-wrapper">
+        <header>
+            <div class="sender-group">
+                <div class="logo">A</div>
+                <div class="sender-info text-sm">
+                    <h1>Alvish Baldha</h1>
+                    <p>www.website.com</p>
+                    <p>hello@email.com</p>
+                    <p>+91 00000 00000</p>
+                </div>
+            </div>
+            <div class="business-info text-right text-sm">
+                <p>Business address</p>
+                <p>City, State, IN - 000 000</p>
+                <p>TAX ID 00XXXXX1234X0XX</p>
+            </div>
+        </header>
+
+        <div class="meta-grid">
+            <div class="meta-section">
+                <h3>Billed to</h3>
+                <strong>Company Name</strong>
+                <p class="text-sm">Company address<br>City, Country - 00000<br>+0 (000) 123-4567</p>
+            </div>
+            <div class="meta-section">
+                <h3>Invoice number</h3>
+                <strong>#AB2324-01</strong>
+                <br>
+                <h3>Reference</h3>
+                <strong>INV-057</strong>
+            </div>
+            <div class="meta-section text-right">
+                <h3>Invoice of (USD)</h3>
+                <div class="amount-highlight">$4,950.00</div>
+            </div>
+        </div>
+
+        <div class="meta-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 3rem;">
+            <div class="meta-section">
+                <h3>Subject</h3>
+                <strong>Design System</strong>
+            </div>
+            <div class="meta-section">
+                <h3>Invoice date</h3>
+                <strong>01 Aug, 2023</strong>
+            </div>
+            <div class="meta-section text-right">
+                <h3>Due date</h3>
+                <strong>15 Aug, 2023</strong>
+            </div>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item Detail</th>
+                    <th class="num">Qty</th>
+                    <th class="num">Rate</th>
+                    <th class="num">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="item-title">Item Name</div>
+                        <div class="item-desc">Item description</div>
+                    </td>
+                    <td class="num">1</td>
+                    <td class="num">$3,000.00</td>
+                    <td class="num">$3,000.00</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="item-title">Item Name</div>
+                        <div class="item-desc">Item description</div>
+                    </td>
+                    <td class="num">1</td>
+                    <td class="num">$1,500.00</td>
+                    <td class="num">$1,500.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals-container">
+            <div class="totals-grid">
+                <div>Subtotal</div>
+                <div class="text-right">$4,500.00</div>
+
+                <div>Tax (10%)</div>
+                <div class="text-right">$450.00</div>
+
+                <div class="total-row final">Total</div>
+                <div class="total-row final text-right">$4,950.00</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h4>Thanks for the business.</h4>
+            <div class="terms text-sm">
+                <p>Terms & Conditions</p>
+                <p>Please pay within 15 days of receiving this invoice.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
