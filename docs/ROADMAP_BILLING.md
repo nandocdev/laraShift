@@ -46,18 +46,18 @@ como texto normativo, no como nota de revisión. Sin esto, Fase 1 no arranca.
 Objetivo: que el dominio compile y las tablas existan, sin ningún adapter conectado a un
 gateway real todavía.
 
-- [ ] Migraciones: `subscriptions`, `payments`, `payment_attempts`, `payment_webhooks`,
-      `payment_gateway_events`, `payment_references`, `invoices` — con RLS
+- [x] Migraciones: `subscriptions`, `payments`, `payment_attempts`, `payment_webhooks`,
+      `payment_gateway_events`, `payment_references`, `invoices` (+ `plans` adelantada de 1b por el FK) — con RLS
       `ENABLE + FORCE` y políticas `tenant_id = app.current_tenant_id()` desde el primer
       commit, no como paso posterior.
-- [ ] Enums: `SubscriptionStatus`, `PaymentStatus`, `BillingEventType`, `BillingCapability`,
+- [x] Enums: `SubscriptionStatus`, `PaymentStatus`, `BillingEventType`, `BillingCapability`,
       `PaymentMethodType`.
-- [ ] Contratos en `Platform/Contracts/Billing/`: `BillingManager`, `CheckoutProvider`,
+- [x] Contratos en `Platform/Contracts/Billing/`: `BillingManager`, `CheckoutProvider`,
       `SubscriptionProvider` (con `chargeRecurring`), `PaymentProvider`, `WebhookProvider`.
       Todos firmando con `TenantContract` y `PlanRef`, nunca con modelos concretos.
-- [ ] DTOs `spatie/laravel-data`: `CheckoutSessionData`, `PlanRef`, `BillingEventData`,
+- [x] DTOs `spatie/laravel-data`: `CheckoutSessionData`, `PlanRef`, `BillingEventData`,
       `DirectPaymentData`, `ProviderSubscriptionRef`, `ProviderPaymentRef`.
-- [ ] Excepciones de dominio: `RecurringBillingNotSupported`, `WebhookVerificationFailed`.
+- [x] Excepciones de dominio: `RecurringBillingNotSupported`, `WebhookVerificationFailed`.
 
 **Exit criteria:**
 
@@ -75,19 +75,19 @@ gateway real todavía.
 `BILLING.md` §13 asume `Catalog/Plan` reconstruido (`gateway_ids`, `PlanManager::find()`),
 pero ninguna fase lo construía. Esta fase cierra ese hueco.
 
-- [ ] Migración `plans`: `id uuid PK`, `slug UNIQUE`, `name`, `price_monthly/yearly int`
+- [x] Migración `plans`: `id uuid PK`, `slug UNIQUE`, `name`, `price_monthly/yearly int`
       (centavos), `currency char(3)`, `interval`, `features jsonb`
       (`display_features`, `gateway_ids`, `quotas`), `is_active bool`, timestamps +
       `SoftDeletes`. RLS `ENABLE + FORCE` desde el primer commit.
-- [ ] `PlanManager::find(slug): Plan` y `PlanManager::getProviderRef($plan, $gateway)`:
+- [x] `PlanManager::find(slug): Plan` y `PlanManager::getProviderRef($plan, $gateway)`:
       lee `features.gateway_ids[$gateway]` con fallback a `provider_plan_id`. Sin caché
       de modelos hidratados (rompe con `cache.serializable_classes=false`).
-- [ ] `ResolveTenantFeatures` mínimo: `hasFeature($tenant, $key)` + caché
+- [x] `ResolveTenantFeatures` mínimo: `hasFeature($tenant, $key)` + caché
       `tenant:{id}:features`. Sin overrides por tenant en esta fase (YAGNI hasta el
       segundo caso real).
-- [ ] `tenants.billing_gateway` (`clave|dlocal|stripe`, default `clave`) y estados
+- [x] `tenants.billing_gateway` (`clave|dlocal|stripe`, default `clave`) y estados
       `pending_payment`/`past_due` reintroducidos en `tenants.status` (migración).
-- [ ] Variables `.env.example`: `BILLING_GATEWAY_DEFAULT=clave` (las credenciales
+- [x] Variables `.env.example`: `BILLING_GATEWAY_DEFAULT=clave` (las credenciales
       `CLAVE_*`/`DLOCAL_*` llegan con su fase).
 
 **Exit criteria:**
@@ -109,24 +109,24 @@ con tráfico real hoy; cualquier regresión acá es visible de inmediato.
 > arrancar con dLocal sandbox en su lugar. El orden Clave-primero solo vale si Clave
 > es observable.
 
-- [ ] `ClaveGateway` implementando `CheckoutProvider` (`buildCheckoutUrl` server-side).
-- [ ] `ClaveGateway->supports()`: `Checkout=true`, `DirectPayment=false`,
+- [x] `ClaveGateway` implementando `CheckoutProvider` (`buildCheckoutUrl` server-side).
+- [x] `ClaveGateway->supports()`: `Checkout=true`, `DirectPayment=false`,
       `Subscriptions=false` — explícito, no inferido.
-- [ ] Ruta de callback de retorno (`handleReturn`): **UX-only**, no muta estado. Verificar
+- [x] Ruta de callback de retorno (`handleReturn`): **UX-only**, no muta estado. Verificar
       con test que un callback repetido o manipulado no cambia ningún registro.
-- [ ] `WebhookController` / `PaguelofacilCallbackController`: `verify()` síncrono (HMAC),
+- [x] `WebhookController` / `PaguelofacilCallbackController`: `verify()` síncrono (HMAC),
       401 sin tocar DB ante firma inválida.
-- [ ] Resolución de tenant en el webhook usando la decisión de Fase 0 (columna definida).
-- [ ] Idempotencia: `payment_gateway_events UNIQUE(gateway, gateway_event_id)` +
+- [x] Resolución de tenant en el webhook usando la decisión de Fase 0 (columna definida).
+- [x] Idempotencia: `payment_gateway_events UNIQUE(gateway, gateway_event_id)` +
       `payment_webhooks.gateway_reference UNIQUE`.
-- [ ] `lockForUpdate` + recuperación de `23505` en creación de `payments` (doble submit).
-- [ ] `PaymentApproved` → `FulfillSubscription` Action: crea `Subscription` + activa tenant.
+- [x] `lockForUpdate` + recuperación de `23505` en creación de `payments` (doble submit).
+- [x] `PaymentApproved` → `FulfillSubscription` Action: crea `Subscription` + activa tenant.
       **Este es el único punto donde se crea un `Subscription` para un tenant Clave** —
       nunca vía `subscribe()` (ver Fase 0, punto de `supports(Subscriptions)`).
-- [ ] `GenerateRenewalCheckoutAction` (definida en Fase 0): genera nuevo checkout al
+- [x] `GenerateRenewalCheckoutAction` (definida en Fase 0): genera nuevo checkout al
       acercarse `current_period_end` para suscripciones Clave. Se implementa acá aunque se
       dispare desde el scheduler en Fase 4 — el código debe existir y tener tests propios.
-- [ ] Variables `.env.example`: `CLAVE_*` (merchant, secret, webhook secret, entorno).
+- [x] Variables `.env.example`: `CLAVE_*` (merchant, secret, webhook secret, entorno).
       Sin credenciales reales en el repo ni en CI — solo fixtures sanitizados.
 
 **Exit criteria:**
