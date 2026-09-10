@@ -26,6 +26,7 @@ final readonly class ChargeDirectAction
     public function __construct(
         private BillingManager $billing,
         private PlanManager $plans,
+        private IssueInvoiceAction $invoices,
     ) {}
 
     /**
@@ -78,6 +79,10 @@ final readonly class ChargeDirectAction
             'status' => $ref->status === 'approved' ? PaymentStatus::Approved : PaymentStatus::Declined,
             'gateway_reference' => $ref->providerPaymentId,
         ]);
+
+        if ($ref->status === 'approved') {
+            $this->invoices->execute($record->fresh(), $payment->subscriptionId);
+        }
 
         PaymentAttempt::create([
             'tenant_id' => $tenantId,
