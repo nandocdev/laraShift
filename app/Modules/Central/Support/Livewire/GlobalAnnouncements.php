@@ -47,7 +47,7 @@ class GlobalAnnouncements extends Component
         // Fetch broadcasts that:
         // 1. Have 'banner' in channels
         // 2. Are sent (sent_at is not null)
-        // 3. Match tenant filters (all, same plan, or same status)
+        // 3. Match tenant filters (all or same status)
         // 4. Have NOT been dismissed by this user
 
         $dismissedIds = DB::table('broadcast_dismissals')
@@ -58,9 +58,6 @@ class GlobalAnnouncements extends Component
             ->whereJsonContains('channels', 'banner')
             ->where(function ($query) use ($tenant) {
                 $query->where('filter_type', 'all')
-                    ->orWhere(function ($q) use ($tenant) {
-                        $q->where('filter_type', 'plan')->where('filter_value', $tenant->plan_id);
-                    })
                     ->orWhere(function ($q) use ($tenant) {
                         $q->where('filter_type', 'status')->where('filter_value', $tenant->status);
                     });

@@ -21,18 +21,10 @@
                     <div class="grid grid-cols-2 gap-4">
                         <flux:select wire:model.live="filterType" :label="__('Target Audience')">
                             <option value="all">{{ __('All Tenants') }}</option>
-                            <option value="plan">{{ __('By Plan') }}</option>
                             <option value="status">{{ __('By Status') }}</option>
                         </flux:select>
 
-                        @if ($filterType === 'plan')
-                            <flux:select wire:model="filterValue" :label="__('Select Plan')">
-                                <option value="">{{ __('Any') }}</option>
-                                @foreach ($plans as $plan)
-                                    <option value="{{ $plan->id }}">{{ $plan->name }}</option>
-                                @endforeach
-                            </flux:select>
-                        @elseif($filterType === 'status')
+                        @if($filterType === 'status')
                             <flux:select wire:model="filterValue" :label="__('Select Status')">
                                 <option value="active">{{ __('Active') }}</option>
                                 <option value="suspended">{{ __('Suspended') }}</option>

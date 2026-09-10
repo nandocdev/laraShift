@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Livewire;
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Support\Actions\SendBroadcastAction;
 use App\Modules\Central\Support\DTOs\BroadcastData;
 use App\Modules\Central\Support\Models\Broadcast;
@@ -34,9 +33,8 @@ class BroadcastCenter extends Component
         $this->validate([
             'title' => 'required|string|max:255',
             'body' => 'required|string',
-            'filterType' => 'required|in:all,plan,status',
+            'filterType' => 'required|in:all,status',
             'filterValue' => match ($this->filterType) {
-                'plan' => 'required|exists:plans,slug',
                 'status' => 'required|in:provisioning,active,suspended,archived,failed,expired',
                 default => 'nullable',
             },
@@ -63,7 +61,6 @@ class BroadcastCenter extends Component
     {
         return view('support::pages.broadcast-center', [
             'broadcasts' => Broadcast::with('creator')->latest()->paginate(10),
-            'plans' => Plan::where('is_active', true)->get(),
         ]);
     }
 }

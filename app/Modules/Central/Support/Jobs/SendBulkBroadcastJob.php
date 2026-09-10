@@ -33,9 +33,7 @@ final class SendBulkBroadcastJob implements ShouldQueue
         // Clone query for recipient_count update to avoid mutating original
         $query = Tenant::query();
 
-        if ($this->broadcast->filter_type === 'plan' && $this->broadcast->filter_value) {
-            $query->where('plan_id', $this->broadcast->filter_value);
-        } elseif ($this->broadcast->filter_type === 'status' && $this->broadcast->filter_value) {
+        if ($this->broadcast->filter_type === 'status' && $this->broadcast->filter_value) {
             $query->where('status', $this->broadcast->filter_value);
         }
 
