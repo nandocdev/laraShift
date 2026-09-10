@@ -41,7 +41,9 @@ final class DlocalPaymentGateway implements PaymentGatewayContract
             'stored_credential_usage' => $data->storedCredentialUsage,
         ], static fn ($v) => $v !== null);
 
-        if ($cardData !== []) {
+        // Only send the card object if we actually have a card token, ID, or encrypted data.
+        // Otherwise, setting holder_name alone causes an "Invalid parameter: card" rejection.
+        if (isset($cardData['token']) || isset($cardData['card_id']) || isset($cardData['encrypted_data'])) {
             $payload['card'] = $cardData;
         }
 
