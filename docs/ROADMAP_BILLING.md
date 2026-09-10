@@ -146,20 +146,20 @@ con tráfico real hoy; cualquier regresión acá es visible de inmediato.
 
 ## Fase 3 — dLocal (Smart Fields + MIT)
 
-- [ ] `DlocalGateway` implementando `CheckoutProvider` (redirect) y `PaymentProvider`
+- [x] `DlocalGateway` implementando `CheckoutProvider` (redirect) y `PaymentProvider`
       (`chargeDirect` server-side con token de Smart Fields — el PAN nunca toca el
       backend).
-- [ ] Credencial separada de browser (`DLOCAL_JS_API_KEY`) vs. API server-side
+- [x] Credencial separada de browser (`DLOCAL_JS_API_KEY`) vs. API server-side
       (`DLOCAL_LOGIN`) — no reusar una para la otra.
-- [ ] `DlocalGateway->supports()`: `Checkout=true`, `DirectPayment(Card)=true`,
+- [x] `DlocalGateway->supports()`: `Checkout=true`, `DirectPayment(Card)=true`,
       `Subscriptions(Card)=true`, `Subscriptions(Cash)=false`.
-- [ ] `chargeRecurring()` real contra la API de MIT de dLocal.
-- [ ] `DlocalWebhookController`: mismo pipeline de verify → resolver tenant → idempotencia
+- [x] `chargeRecurring()` real contra la API de MIT de dLocal.
+- [x] `DlocalWebhookController`: mismo pipeline de verify → resolver tenant → idempotencia
       → dispatch job que ya se construyó en Fase 2, reutilizado sin duplicar lógica.
-- [ ] Test explícito: `DlocalProvider->supports(Subscriptions, forMethod: Cash)` es
+- [x] Test explícito: `DlocalProvider->supports(Subscriptions, forMethod: Cash)` es
       consultado por la UI antes de ofrecer auto-renovación — si no se consulta, es un bug
       de UI, no de gateway.
-- [ ] Variables `.env.example`: `DLOCAL_*` (login, trans key, secret, webhook secret,
+- [x] Variables `.env.example`: `DLOCAL_*` (login, trans key, secret, webhook secret,
       `DLOCAL_JS_API_KEY` separada para browser). Sin credenciales reales en CI.
 
 **Exit criteria:**
