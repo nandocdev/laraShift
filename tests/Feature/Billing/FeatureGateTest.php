@@ -47,6 +47,22 @@ it('allows the api keys page for plans with api_access', function () {
     $this->actingAs($user)->get('http://'.$domain.'/settings/api-keys')->assertOk();
 });
 
+it('hides gated sidebar entries without the feature', function () {
+    [, $domain, $user] = featureGateContext('gate-nav-free', ['basic_dashboard']);
+
+    $this->actingAs($user)->get('http://'.$domain.'/dashboard')
+        ->assertOk()
+        ->assertDontSee('/settings/api-keys', false);
+});
+
+it('shows gated sidebar entries with the feature', function () {
+    [, $domain, $user] = featureGateContext('gate-nav-pro', ['basic_dashboard', 'api_access']);
+
+    $this->actingAs($user)->get('http://'.$domain.'/dashboard')
+        ->assertOk()
+        ->assertSee('/settings/api-keys', false);
+});
+
 it('blocks api key generation over Livewire without api_access', function () {
     [$tenant, $domain, $user] = featureGateContext('gate-live', ['basic_dashboard', 'api_access']);
     tenancy()->initialize($tenant);
