@@ -7,6 +7,7 @@ namespace App\Modules\Central\Billing\Interface\Livewire;
 use App\Modules\Central\Billing\Application\Actions\InitiateCheckout;
 use App\Modules\Central\Billing\Application\DTO\PaymentData;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
+use App\Modules\Platform\Integrations\Dlocal\Exceptions\DlocalApiException;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -171,7 +172,8 @@ final class CheckoutComponent extends Component
         return view('payments::livewire.checkout-component', [
             'gateway' => $gateway,
             'directEnabled' => $gateway === 'dlocal',
-            'dlocalLogin' => (string) config('dlocal.login'),
+            'dlocalJsKey' => (string) (config('dlocal.js_api_key') ?: config('dlocal.login')),
+            'dlocalCountry' => $this->customFieldValues['country'] ?? 'UY',
             'dlocalJsUrl' => config('dlocal.environment') === 'production'
                 ? 'https://js.dlocal.com/'
                 : 'https://js-sandbox.dlocal.com/',
