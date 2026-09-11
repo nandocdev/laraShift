@@ -28,6 +28,12 @@ class CentralBranding
         Cache::forget("central_setting_{$key}");
     }
 
+    public static function forget(string $key): void
+    {
+        CentralSetting::where('key', $key)->delete();
+        Cache::forget("central_setting_{$key}");
+    }
+
     public static function platformName(): string
     {
         return self::get('platform_name', config('app.name', 'openSaaS'));
@@ -41,6 +47,11 @@ class CentralBranding
     public static function logoUrl(): ?string
     {
         return self::get('logo_url');
+    }
+
+    public static function faviconUrl(): ?string
+    {
+        return self::get('favicon_url');
     }
 
     protected static function castValue(string $value, string $type, mixed $default = null): mixed
