@@ -42,22 +42,37 @@ class ExportTenantDataJob implements ShouldQueue, TenantAware
         ];
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'tenant_export');
-        $handle = fopen($tmpPath, 'w');
-        fwrite($handle, '{');
-        $first = true;
-        foreach ($exportables as $exportable) {
-            if (! $first) {
-                fwrite($handle, ',');
-            }
-            $exportable->exportToStream($handle);
-            $first = false;
-        }
-        fwrite($handle, '}');
-        fclose($handle);
 
-        $fileName = 'exports/tenant_data_'.$this->tenantId.'_'.Str::random(8).'.json';
-        Storage::disk('private')->putFileAs('', new File($tmpPath), $fileName);
-        unlink($tmpPath);
+        if ($tmpPath === false) {
+            throw new \RuntimeException('Could not create a temporary export file.');
+        }
+
+        try {
+            $handle = fopen($tmpPath, 'w');
+
+            if ($handle === false) {
+                throw new \RuntimeException('Could not open the temporary export file.');
+            }
+
+            fwrite($handle, '{');
+            $first = true;
+            foreach ($exportables as $exportable) {
+                if (! $first) {
+                    fwrite($handle, ',');
+                }
+                $exportable->exportToStream($handle);
+                $first = false;
+            }
+            fwrite($handle, '}');
+            fclose($handle);
+
+            $fileName = 'exports/tenant_data_'.$this->tenantId.'_'.Str::random(8).'.json';
+            Storage::disk('private')->putFileAs('', new File($tmpPath), $fileName);
+        } finally {
+            if (is_file($tmpPath)) {
+                unlink($tmpPath);
+            }
+        }
 
         $user->notify(new TenantDataExportNotification($fileName));
     }
