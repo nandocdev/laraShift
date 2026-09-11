@@ -13,6 +13,7 @@ use App\Modules\Tenant\Access\Domain\Models\Invitation;
 use App\Modules\Tenant\Access\Domain\Models\Role;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -22,7 +23,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class TeamManagement extends Component
 {
-    use WithPagination;
+    use AuthorizesRequests, WithPagination;
 
     // Invitation form state
     public string $inviteEmail = '';
@@ -39,9 +40,11 @@ class TeamManagement extends Component
 
     public function invite(SendInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $this->validate([
             'inviteEmail' => 'required|email|max:255',
-            'inviteRole' => 'required|exists:roles,name',
+            'inviteRole' => ['required', Rule::exists('roles', 'name')->where('tenant_id', tenant('id'))],
         ]);
 
         try {
@@ -59,6 +62,8 @@ class TeamManagement extends Component
 
     public function resendInvitation(string $id, SendInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $oldInvite = Invitation::findOrFail($id);
 
         try {
@@ -79,6 +84,8 @@ class TeamManagement extends Component
 
     public function cancelInvitation(string $id, CancelTenantInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $invite = Invitation::findOrFail($id);
         $action->execute($invite, auth()->user());
 
@@ -94,8 +101,10 @@ class TeamManagement extends Component
 
     public function updateRole(UpdateTenantUserRole $action): void
     {
+        $this->authorize('team:manage');
+
         $this->validate([
-            'newRole' => 'required|exists:roles,name',
+            'newRole' => ['required', Rule::exists('roles', 'name')->where('tenant_id', tenant('id'))],
         ]);
 
         if (! $this->selectedMemberId) {
@@ -120,6 +129,8 @@ class TeamManagement extends Component
 
     public function revokeAccess(string $userId, RevokeTenantUserAccess $action): void
     {
+        $this->authorize('team:manage');
+
         $user = User::findOrFail($userId);
 
         try {
