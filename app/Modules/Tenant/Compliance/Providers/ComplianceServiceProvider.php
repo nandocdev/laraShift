@@ -6,6 +6,7 @@ namespace App\Modules\Tenant\Compliance\Providers;
 
 use App\Modules\Tenant\Compliance\Application\Contracts\UserResolverContract;
 use App\Modules\Tenant\Compliance\Application\Listeners\TenantAuthAuditSubscriber;
+use App\Modules\Tenant\Compliance\Infrastructure\Console\PruneExportsCommand;
 use App\Modules\Tenant\Compliance\Infrastructure\Resolvers\ConfiguredUserResolver;
 use App\Modules\Tenant\Compliance\Interface\Livewire\AuditLogViewer;
 use App\Modules\Tenant\Compliance\Interface\Livewire\DataExport;
@@ -22,6 +23,12 @@ class ComplianceServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PruneExportsCommand::class,
+            ]);
+        }
+
         $this->loadViewsFrom(__DIR__.'/../Interface/Views', 'compliance');
 
         Livewire::component('tenant-audit-viewer', AuditLogViewer::class);
