@@ -65,7 +65,7 @@
                     {{ __('SMTP Settings') }}
                 </flux:sidebar.item>
                 {{-- Products gate their entries the same way: show only when the tenant plan carries the feature. --}}
-                @if (app(App\Modules\Platform\Contracts\TenantFeatureResolver::class)->hasFeature(tenant(), 'api_access'))
+                @if (function_exists('tenant') && tenant() && app(App\Modules\Platform\Contracts\TenantFeatureResolver::class)->hasFeature(tenant(), 'api_access'))
                 <flux:sidebar.item icon="key" :href="route('tenant.api-keys.index')"
                     :current="request()->routeIs('tenant.api-keys.*')" wire:navigate>
                     {{ __('API Keys') }}
