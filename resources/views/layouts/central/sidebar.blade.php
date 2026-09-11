@@ -55,6 +55,15 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            @if(auth('central')->user()?->is_global_admin)
+                <flux:sidebar.group :heading="__('Security')" class="grid">
+                    <flux:sidebar.item icon="users" :href="route('central.auth.users')"
+                        :current="request()->routeIs('central.auth.users')" wire:navigate>
+                        {{ __('Admin Users') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+            @endif
+
             <flux:sidebar.group :heading="__('Settings')" class="grid">
                 <flux:sidebar.item icon="paint-brush" :href="route('central.settings.branding')"
                     :current="request()->routeIs('central.settings.*')" wire:navigate>

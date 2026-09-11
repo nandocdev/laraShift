@@ -8,6 +8,7 @@ use App\Modules\Central\Auth\Livewire\Dashboard;
 use App\Modules\Central\Auth\Livewire\ForgotPassword;
 use App\Modules\Central\Auth\Livewire\Login;
 use App\Modules\Central\Auth\Livewire\LoginChallenge;
+use App\Modules\Central\Auth\Livewire\ManageCentralUsers;
 use App\Modules\Central\Auth\Livewire\ResetPassword;
 use App\Modules\Central\Auth\Livewire\TwoFactorEnrollment;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,7 @@ Route::middleware('web')->group(function () {
     Route::middleware(['auth:central', ValidateCentralSession::class])->group(function () {
         Route::get('/central/dashboard', Dashboard::class)->name('central.dashboard');
         Route::get('/central/settings/2fa', TwoFactorEnrollment::class)->name('central.auth.2fa');
+        Route::get('/central/admin-users', ManageCentralUsers::class)->name('central.auth.users');
 
         Route::post('/central/logout', function (LogoutCentralUserAction $action) {
             $action->execute();
