@@ -63,6 +63,7 @@ test('updates a member role successfully via dedicated action', function () {
     $member = User::factory()->create(['tenant_id' => tenant('id')]);
 
     setPermissionsTeamId(tenant('id'));
+    $admin->assignRole('admin');
     $member->assignRole('member');
 
     $this->actingAs($admin);
@@ -101,6 +102,9 @@ test('revokes member access via dedicated action', function () {
         'status' => 'active',
     ]);
 
+    setPermissionsTeamId(tenant('id'));
+    $admin->assignRole('admin');
+
     $this->actingAs($admin);
 
     Livewire::test(TeamManagement::class)
@@ -113,6 +117,10 @@ test('revokes member access via dedicated action', function () {
 
 test('cancels pending invitation via dedicated action', function () {
     $admin = User::factory()->create(['tenant_id' => tenant('id')]);
+
+    setPermissionsTeamId(tenant('id'));
+    $admin->assignRole('admin');
+
     $role = Role::where('name', 'member')->first();
 
     $invitation = Invitation::create([
