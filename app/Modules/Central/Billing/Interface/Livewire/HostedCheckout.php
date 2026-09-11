@@ -7,20 +7,23 @@ namespace App\Modules\Central\Billing\Interface\Livewire;
 use App\Modules\Central\Billing\Application\Actions\ChargeDirectAction;
 use App\Modules\Central\Billing\Application\Actions\SubscribeTenantAction;
 use App\Modules\Central\Catalog\Application\Services\PlanManager;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Platform\Contracts\Billing\BillingCapability;
 use App\Modules\Platform\Contracts\Billing\BillingManager;
 use App\Modules\Platform\Contracts\Billing\DirectPaymentData;
 use App\Modules\Platform\Contracts\Billing\PaymentMethodType;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class HostedCheckout extends Component
 {
+    #[Locked]
     public string $planSlug = '';
 
+    #[Locked]
     public string $displayId = '';
 
     public string $payerDocument = '';
@@ -98,8 +101,14 @@ class HostedCheckout extends Component
 
     public function render(PlanManager $plans): View
     {
+        try {
+            $plan = $plans->find($this->planSlug);
+        } catch (ModelNotFoundException) {
+            $plan = null;
+        }
+
         return view('billing::livewire.hosted-checkout', [
-            'plan' => Plan::where('slug', $this->planSlug)->first(),
+            'plan' => $plan,
             'jsApiKey' => config('dlocal.js_api_key'),
             'country' => config('dlocal.country_default', 'PA'),
             // Per dLocal setup guide: production loads js.dlocal.com,

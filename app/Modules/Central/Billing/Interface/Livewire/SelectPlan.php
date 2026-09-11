@@ -20,14 +20,7 @@ class SelectPlan extends Component
 {
     use AuthorizesRequests;
 
-    public string $displayId = '';
-
     public ?string $error = null;
-
-    public function mount(): void
-    {
-        $this->displayId = 'web_'.substr((string) tenant()->getId(), 0, 8).'_'.now()->format('YmdHis');
-    }
 
     public function checkout(string $planSlug, CreateCheckoutSessionAction $checkouts, PlanManager $plans): void
     {
@@ -36,12 +29,18 @@ class SelectPlan extends Component
         try {
             $plan = $plans->find($planSlug);
 
+            // One display_id per attempt: reusing a mount-time id across
+            // plans would bind the new plan to the old payment row (amount
+            // mismatch). Same plan + same second still collapses to one row
+            // via the action idempotency, covering double-clicks.
+            $displayId = 'web_'.substr((string) tenant()->getId(), 0, 8).'_'.$plan->slug.'_'.now()->format('YmdHis');
+
             $session = $checkouts->execute(tenant(), new PlanRef(
                 slug: $plan->slug,
                 amountCents: $plan->price_monthly,
                 currency: $plan->currency,
                 gatewayIds: $plan->gatewayIds(),
-            ), $this->displayId);
+            ), $displayId);
         } catch (\Throwable $e) {
             report($e);
             $this->error = __('Could not start the checkout with the payment gateway. Please try again.');
