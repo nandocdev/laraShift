@@ -53,13 +53,25 @@ class AccessServiceProvider extends ServiceProvider
         Event::subscribe(TenantIdentityEventSubscriber::class);
 
         // 5. Map API Scopes to Gates safely (Integration)
+        // 6. System admin bypass: the `admin` role is granted every
+        //    tenant ability so new `authorize()` calls never lock out owners.
         Gate::before(function ($user, string $ability) {
             $scopes = request()->attributes->get('api_scopes');
             if (is_array($scopes) && in_array($ability, $scopes)) {
                 return true;
             }
 
-            return null; // Continue to other checks
+            if (method_exists($user, 'hasRole')) {
+                try {
+                    if ($user->hasRole('admin')) {
+                        return true;
+                    }
+                } catch (\Throwable) {
+                    // Spatie throws when the permission/role does not exist yet.
+                }
+            }
+
+            return null; // Continue to other checks (Spatie permissions)
         });
     }
 }
