@@ -17,6 +17,7 @@ class WorkspaceServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../Interface/Views', 'workspace');
 
         Livewire::component('tenant-team-management', TeamManagement::class);
+        Livewire::component('tenant-close-workspace', CloseWorkspace::class);
         Livewire::component('tenant-notification-center', NotificationCenter::class);
         Livewire::component('tenant-usage-overview', UsageOverview::class);
     }
