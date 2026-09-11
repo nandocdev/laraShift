@@ -7,11 +7,13 @@ namespace App\Modules\Tenant\Access\Providers;
 use App\Modules\Platform\Events\TenantProvisioned;
 use App\Modules\Tenant\Access\Application\Listeners\CreateInitialAdminUser;
 use App\Modules\Tenant\Access\Application\Listeners\TenantIdentityEventSubscriber;
+use App\Modules\Tenant\Access\Application\Listeners\TrackTenantSession;
 use App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation;
 use App\Modules\Tenant\Access\Interface\Livewire\Login;
 use App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge;
 use App\Modules\Tenant\Access\Interface\Livewire\ManageApiKeys;
 use App\Modules\Tenant\Access\Interface\Livewire\RoleManagement;
+use App\Modules\Tenant\Access\Interface\Livewire\TenantSessions;
 use App\Modules\Tenant\Access\Interface\Livewire\TwoFactorEnrollment;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -48,9 +50,15 @@ class AccessServiceProvider extends ServiceProvider
         Livewire::component('tenant-2fa-enrollment', TwoFactorEnrollment::class);
         Livewire::component('tenant-role-management', RoleManagement::class);
         Livewire::component('tenant-manage-api-keys', ManageApiKeys::class);
+        Livewire::component('tenant-sessions', TenantSessions::class);
 
         // 4. Register Event Subscriber
         Event::subscribe(TenantIdentityEventSubscriber::class);
+
+        Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            TrackTenantSession::class
+        );
 
         // 5. Map API Scopes to Gates safely (Integration)
         // 6. System admin bypass: the `admin` role is granted every

@@ -31,6 +31,8 @@ class SsoSettings extends Component
     #[Locked]
     public bool $is_tested = false;
 
+    public bool $hasSetting = false;
+
     public function mount(): void
     {
         $this->authorize('settings:manage');
@@ -38,6 +40,7 @@ class SsoSettings extends Component
         $this->setting = SsoSetting::first();
 
         if ($this->setting) {
+            $this->hasSetting = true;
             $this->idp_entity_id = $this->setting->idp_entity_id ?? '';
             $this->idp_sso_url = $this->setting->idp_sso_url ?? '';
             $this->idp_x509_cert = $this->setting->idp_x509_cert ?? '';
