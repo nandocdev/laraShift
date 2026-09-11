@@ -9,9 +9,10 @@ use Spatie\LaravelData\Data;
 final class ProviderPaymentRef extends Data
 {
     public function __construct(
-        public readonly string $providerPaymentId,
-        public readonly string $displayId,
-        public readonly int $amountCents,
-        public readonly string $provider,
+        public string $providerPaymentId,
+        public string $gateway,
+        public string $status,
+        public ?int $amountCents = null,
+        public ?string $cardId = null,
     ) {}
 }

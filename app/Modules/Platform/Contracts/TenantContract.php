@@ -14,5 +14,9 @@ interface TenantContract
 
     public function getQuotaLimit(string $metric): int;
 
+    public function getPlanSlug(): string;
+
+    public function getBillingGateway(): string;
+
     public function notify($instance);
 }

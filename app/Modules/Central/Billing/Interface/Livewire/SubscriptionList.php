@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Livewire;
 
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -17,8 +18,14 @@ class SubscriptionList extends Component
 
     public function render(): View
     {
-        return view('billing::pages.subscription-list', [
-            'tenants' => Tenant::has('subscriptions')->with('subscriptions')->latest()->paginate(10),
+        $subscriptions = Subscription::latest()->paginate(15);
+        $tenants = Tenant::whereIn('id', $subscriptions->pluck('tenant_id')->unique())
+            ->get()
+            ->keyBy('id');
+
+        return view('billing::livewire.subscription-list', [
+            'subscriptions' => $subscriptions,
+            'tenants' => $tenants,
         ]);
     }
 }

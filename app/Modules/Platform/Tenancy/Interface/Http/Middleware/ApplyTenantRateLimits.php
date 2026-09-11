@@ -45,7 +45,7 @@ class ApplyTenantRateLimits
 
                 return response()->json([
                     'error' => 'Too Many Requests',
-                    'message' => __('Rate limit exceeded for your plan. Please try again in :seconds seconds.', ['seconds' => $seconds]),
+                    'message' => __('Rate limit exceeded. Please try again in :seconds seconds.', ['seconds' => $seconds]),
                 ], 429, [
                     'Retry-After' => $seconds,
                     'X-RateLimit-Limit' => $limitRpm,

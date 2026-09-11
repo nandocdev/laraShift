@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Growth\Interface\Livewire;
 
-use App\Modules\Central\Billing\Infrastructure\Gateways\PlanManager;
 use App\Modules\Central\Settings\Infrastructure\Services\CentralBranding;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -16,7 +15,6 @@ class LandingPage extends Component
     public function render(): View
     {
         return view('marketing::pages.landing-page', [
-            'plans' => PlanManager::all(),
             'platformName' => CentralBranding::platformName(),
             'primaryColor' => CentralBranding::primaryColor(),
             'logoUrl' => CentralBranding::logoUrl(),

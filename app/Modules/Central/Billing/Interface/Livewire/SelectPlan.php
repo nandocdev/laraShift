@@ -4,51 +4,63 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Livewire;
 
-use App\Modules\Central\Billing\Application\Actions\CreateCheckoutSession;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Billing\Application\Actions\CreateCheckoutSessionAction;
+use App\Modules\Central\Catalog\Application\Services\PlanManager;
+use App\Modules\Platform\Contracts\Billing\BillingCapability;
+use App\Modules\Platform\Contracts\Billing\BillingManager;
+use App\Modules\Platform\Contracts\Billing\PaymentMethodType;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class SelectPlan extends Component
 {
-    public function selectPlan(string $planId): void
+    use AuthorizesRequests;
+
+    public string $displayId = '';
+
+    public ?string $error = null;
+
+    public function mount(): void
     {
-        try {
-            $tenant = tenant();
-            $action = app(CreateCheckoutSession::class);
-
-            // If they already have this plan and it's active, don't do anything
-            if ($tenant->plan_id === $planId) {
-                $subscription = $tenant->subscription('default');
-                if ($subscription && ($subscription->active() || $subscription->onGracePeriod())) {
-                    $this->dispatch('toast', variant: 'warning', heading: __('Plan Selection'), text: __('You are already on this plan.'));
-
-                    return;
-                }
-            }
-
-            $this->dispatch('toast', text: __('Preparing secure checkout...'));
-            $checkoutUrl = $action->execute($tenant, $planId);
-
-            $this->redirect($checkoutUrl, navigate: false);
-        } catch (\Exception $e) {
-            \Log::error('SelectPlan Error: '.$e->getMessage());
-            $this->addError('plan', $e->getMessage());
-        }
+        $this->displayId = 'web_'.substr((string) tenant()->getId(), 0, 8).'_'.now()->format('YmdHis');
     }
 
-    public function render(): View
+    public function checkout(string $planSlug, CreateCheckoutSessionAction $checkouts, PlanManager $plans): void
     {
-        $tenant = tenant();
-        $subscription = $tenant->subscription('default');
-        $isCurrentPlanActive = $subscription && ($subscription->active() || $subscription->onGracePeriod());
+        $this->error = null;
 
-        return view('billing::pages.select-plan', [
-            'plans' => Plan::where('is_active', true)->withoutTrashed()->orderBy('price_monthly', 'asc')->get(),
-            'currentPlanId' => $tenant->plan_id,
-            'isCurrentPlanActive' => $isCurrentPlanActive,
+        try {
+            $plan = $plans->find($planSlug);
+
+            $session = $checkouts->execute(tenant(), new PlanRef(
+                slug: $plan->slug,
+                amountCents: $plan->price_monthly,
+                currency: $plan->currency,
+                gatewayIds: $plan->gatewayIds(),
+            ), $this->displayId);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->error = __('Could not start the checkout with the payment gateway. Please try again.');
+
+            return;
+        }
+
+        $this->redirect($session->url, navigate: false);
+    }
+
+    public function render(PlanManager $plans, BillingManager $billing): View
+    {
+        $gateway = $billing->providerFor(tenant());
+
+        return view('billing::livewire.select-plan', [
+            'plans' => $plans->active(),
+            'gatewayName' => $gateway->identifier(),
+            'autoRenew' => $gateway->supports(BillingCapability::Subscriptions, PaymentMethodType::Card),
+            'directCard' => $gateway->supports(BillingCapability::DirectPayment, PaymentMethodType::Card),
         ]);
     }
 }

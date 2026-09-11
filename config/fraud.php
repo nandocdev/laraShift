@@ -9,7 +9,7 @@ return [
      |--------------------------------------------------------------------------
      |
      | Tenants whose fraud score equals or exceeds this value during registration
-     | are placed in 'quarantine' status instead of 'active'/'pending_payment'.
+     | are placed in 'quarantine' status instead of 'active'.
      |
      */
     'quarantine_threshold' => (int) env('FRAUD_QUARANTINE_THRESHOLD', 80),

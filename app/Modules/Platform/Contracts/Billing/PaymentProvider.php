@@ -6,9 +6,9 @@ namespace App\Modules\Platform\Contracts\Billing;
 
 use App\Modules\Platform\Contracts\TenantContract;
 
-interface PaymentProvider extends HasBillingCapabilities
+interface PaymentProvider
 {
-    public function chargeRecurring(TenantContract $tenant, string $providerSubscriptionId, int $amountCents): ProviderPaymentRef;
+    public function chargeDirect(DirectPaymentData $payment): ProviderPaymentRef;
 
     public function refund(TenantContract $tenant, string $providerPaymentId, ?int $amountCents = null): void;
 }

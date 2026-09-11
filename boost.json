@@ -1,8 +1,5 @@
 {
-    "agents": [
-        "opencode",
-        "antigravity"
-    ],
+    "agents": ["opencode", "antigravity"],
     "cloud": true,
     "guidelines": true,
     "mcp": true,
@@ -14,7 +11,6 @@
     ],
     "sail": false,
     "skills": [
-        "cashier-stripe-development",
         "fortify-development",
         "laravel-best-practices",
         "configuring-horizon",

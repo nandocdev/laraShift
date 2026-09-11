@@ -30,9 +30,7 @@ final readonly class SendBroadcastAction
 
         $query = Tenant::query();
 
-        if ($data->filterType === 'plan' && $data->filterValue) {
-            $query->where('plan_id', $data->filterValue);
-        } elseif ($data->filterType === 'status' && $data->filterValue) {
+        if ($data->filterType === 'status' && $data->filterValue) {
             $query->where('status', $data->filterValue);
         }
 

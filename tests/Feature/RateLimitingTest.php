@@ -2,54 +2,44 @@
 
 declare(strict_types=1);
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Platform\Security\RateLimiting\TenantRateLimiter;
 use App\Modules\Platform\Tenancy\Interface\Http\Middleware\ApplyTenantRateLimits;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-it('enforces rate limits based on the plan', function () {
+it('applies the default rate limit when the tenant has no plan quota', function () {
     $tenantId = '00000000-0000-0000-0000-000000000012';
     $key = 'tenant_rate_limit:'.$tenantId;
     RateLimiter::clear($key);
-
-    $plan = Plan::create([
-        'id' => Str::uuid()->toString(),
-        'name' => 'Limited Plan',
-        'slug' => 'limited',
-        'price_monthly' => 1000,
-        'price_yearly' => 10000,
-        'features' => [
-            'quotas' => [
-                'rate_limit_rpm' => 2, // Only 2 requests per minute
-            ],
-        ],
-    ]);
 
     $tenant = Tenant::create([
         'id' => $tenantId,
         'slug' => 'rate-limit',
         'name' => 'Rate Limited Tenant',
         'email' => 'rate@tenant.com',
-        'plan_id' => 'limited',
     ]);
 
     tenancy()->initialize($tenant);
 
     Route::get('/test-rate-limit', fn () => 'ok')->middleware(ApplyTenantRateLimits::class);
 
-    // Request 1: OK
-    $this->get('/test-rate-limit')->assertStatus(200)->assertHeader('X-RateLimit-Limit', 2);
+    // Default limit (no plan quotas): 60 rpm
+    $this->get('/test-rate-limit')
+        ->assertStatus(200)
+        ->assertHeader('X-RateLimit-Limit', 60);
+});
 
-    // Request 2: OK
-    $this->get('/test-rate-limit')->assertStatus(200);
+it('resolves the configured default when quota is unlimited', function () {
+    $tenant = Tenant::create([
+        'id' => '00000000-0000-0000-0000-000000000013',
+        'slug' => 'rate-limit-default',
+        'name' => 'Default Tenant',
+        'email' => 'default@tenant.com',
+    ]);
 
-    // Request 3: 429
-    $response = $this->get('/test-rate-limit');
-    $response->assertStatus(429);
-    $response->assertJsonStructure(['error', 'message']);
+    expect(app(TenantRateLimiter::class)->resolveLimit($tenant, 60))->toBe(60);
 });

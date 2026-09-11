@@ -21,7 +21,6 @@ it('kicks out an inactive user immediately via middleware', function () {
         'slug' => 'revocation-test',
         'name' => 'Revocation Test',
         'email' => 'revocation@test.com',
-        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);

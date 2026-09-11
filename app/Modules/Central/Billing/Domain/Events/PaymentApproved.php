@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Domain\Events;
 
-use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
 use App\Modules\Central\Billing\Domain\Models\Payment;
+use App\Modules\Platform\Contracts\Billing\BillingEventData;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
-final class PaymentApproved
+class PaymentApproved
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
 
     public function __construct(
-        public readonly Payment $payment,
-        public readonly PaymentResultData $result,
+        public Payment $payment,
+        public BillingEventData $event,
     ) {}
 }

@@ -9,7 +9,6 @@ enum BillingCapability: string
     case Checkout = 'checkout';
     case DirectPayment = 'direct_payment';
     case Subscriptions = 'subscriptions';
-    case RecurringCharge = 'recurring_charge';
     case Refunds = 'refunds';
-    case CustomerPortal = 'customer_portal';
+    case Trials = 'trials';
 }

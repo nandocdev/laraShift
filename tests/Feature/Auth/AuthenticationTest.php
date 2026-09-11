@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Tenant\Access\Domain\Models\User;
-use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
@@ -14,13 +13,11 @@ use Laravel\Fortify\Features;
 uses(RefreshDatabase::class);
 
 test('login screen can be rendered', function () {
-    $this->seed(PlanSeeder::class);
     $create = app(CreateTenantAction::class);
     $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-test',
         email: 'admin@acme.test',
-        plan_id: 'free',
     );
 
     $tenant = $create->execute($data);
@@ -35,13 +32,11 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $this->seed(PlanSeeder::class);
     $create = app(CreateTenantAction::class);
     $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-auth',
         email: 'admin@acme.test',
-        plan_id: 'free',
     );
 
     $tenant = $create->execute($data);
@@ -68,13 +63,11 @@ test('users can authenticate using the login screen', function () {
 });
 
 test('users can not authenticate with invalid password', function () {
-    $this->seed(PlanSeeder::class);
     $create = app(CreateTenantAction::class);
     $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-auth-fail',
         email: 'admin@acme.test',
-        plan_id: 'free',
     );
 
     $tenant = $create->execute($data);
@@ -99,7 +92,6 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
-    $this->seed(PlanSeeder::class);
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 
     Features::twoFactorAuthentication([
@@ -112,7 +104,6 @@ test('users with two factor enabled are redirected to two factor challenge', fun
         name: 'Acme Test',
         slug: 'acme-2fa',
         email: 'admin@acme.test',
-        plan_id: 'free',
     );
 
     $tenant = $create->execute($data);
@@ -139,13 +130,11 @@ test('users with two factor enabled are redirected to two factor challenge', fun
 });
 
 test('users can logout', function () {
-    $this->seed(PlanSeeder::class);
     $create = app(CreateTenantAction::class);
     $data = new CreateTenantData(
         name: 'Acme Test',
         slug: 'acme-logout',
         email: 'admin@acme.test',
-        plan_id: 'free',
     );
 
     $tenant = $create->execute($data);

@@ -10,7 +10,7 @@ final class CheckoutSessionData extends Data
 {
     public function __construct(
         public readonly string $id,
-        public readonly ?string $url,
+        public readonly string $url,
         public readonly string $provider,
     ) {}
 }

@@ -6,23 +6,12 @@ namespace App\Modules\Central\Billing\Domain\Models;
 
 use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Tracks individual checkout attempts for a payment.
- * A payment may have multiple attempts (user retries, retries after decline).
- *
- * @property string $id
- * @property string $tenant_id
- * @property string $payment_id
- * @property string $slug
- * @property string $status
- * @property array $payload Original PaymentData snapshot
- */
 class PaymentAttempt extends Model
 {
-    use HasUuids, ScopedToTenant;
+    use HasFactory, HasUuids, ScopedToTenant;
 
     protected $fillable = [
         'tenant_id',
@@ -32,12 +21,10 @@ class PaymentAttempt extends Model
         'payload',
     ];
 
-    protected $casts = [
-        'payload' => 'array',
-    ];
-
-    public function payment(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Payment::class);
+        return [
+            'payload' => 'array',
+        ];
     }
 }

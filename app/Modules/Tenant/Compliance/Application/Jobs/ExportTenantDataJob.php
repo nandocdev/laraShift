@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Compliance\Application\Jobs;
 
-use App\Modules\Central\Billing\Application\Services\BillingExportService;
 use App\Modules\Platform\Contracts\TenantAware;
 use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
 use App\Modules\Tenant\Access\Domain\Models\User;
@@ -40,7 +39,6 @@ class ExportTenantDataJob implements ShouldQueue, TenantAware
         $exportables = [
             new IdentityExportService,
             new SettingsExportService,
-            new BillingExportService,
         ];
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'tenant_export');

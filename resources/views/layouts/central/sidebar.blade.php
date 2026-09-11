@@ -29,6 +29,20 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
+            <flux:sidebar.group :heading="__('Billing')" class="grid">
+                <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
+                    :current="request()->routeIs('central.billing.*')" wire:navigate>
+                    {{ __('Subscriptions') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
+            <flux:sidebar.group :heading="__('Catalog')" class="grid">
+                <flux:sidebar.item icon="squares-2x2" :href="route('central.catalog.plans')"
+                    :current="request()->routeIs('central.catalog.*')" wire:navigate>
+                    {{ __('Plans') }}
+                </flux:sidebar.item>
+            </flux:sidebar.group>
+
             <flux:sidebar.group :heading="__('Support')" class="grid">
                 <flux:sidebar.item icon="megaphone" :href="route('central.support.broadcasts')"
                     :current="request()->routeIs('central.support.broadcasts')" wire:navigate>
@@ -36,35 +50,10 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
-            <flux:sidebar.group :heading="__('Billing')" class="grid">
-                <flux:sidebar.item icon="credit-card" :href="route('central.billing.subscriptions')"
-                    :current="request()->routeIs('central.billing.subscriptions')" wire:navigate>
-                    {{ __('Subscriptions') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="presentation-chart-line" :href="route('central.billing.plans')"
-                    :current="request()->routeIs('central.billing.plans')" wire:navigate>
-                    {{ __('Plans') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="receipt-percent" :href="route('central.billing.invoices.global')"
-                    :current="request()->routeIs('central.billing.invoices.global')" wire:navigate>
-                    {{ __('Global Invoices') }}
-                </flux:sidebar.item>
-                {{--
-                <flux:sidebar.item icon="book-open" :href="route('central.billing.ledger')"
-                    :current="request()->routeIs('central.billing.ledger')" wire:navigate>
-                    {{ __('Ledger Audit') }}
-                </flux:sidebar.item>
-                --}}
-            </flux:sidebar.group>
-
             <flux:sidebar.group :heading="__('Settings')" class="grid">
                 <flux:sidebar.item icon="paint-brush" :href="route('central.settings.branding')"
                     :current="request()->routeIs('central.settings.*')" wire:navigate>
                     {{ __('Platform Branding') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="command-line" :href="route('central.features.index')"
-                    :current="request()->routeIs('central.features.*')" wire:navigate>
-                    {{ __('Feature Catalog') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>

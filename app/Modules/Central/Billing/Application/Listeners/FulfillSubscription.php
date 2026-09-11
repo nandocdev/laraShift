@@ -4,87 +4,75 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Application\Listeners;
 
+use App\Modules\Central\Billing\Application\Actions\IssueInvoiceAction;
+use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
 use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
-use App\Modules\Central\Provisioning\Models\Tenant;
-use Carbon\CarbonInterface;
+use App\Modules\Central\Catalog\Application\Services\PlanManager;
+use App\Modules\Central\Provisioning\Actions\MarkTenantBillingActive;
 use Illuminate\Support\Facades\Log;
 
 class FulfillSubscription
 {
+    public function __construct(
+        private PlanManager $plans,
+        private MarkTenantBillingActive $activate,
+        private IssueInvoiceAction $invoices,
+    ) {}
+
     /**
-     * Handle the event.
+     * The ONLY point where a Subscription is created for a Clave tenant.
+     * Never via subscribe().
      */
     public function handle(PaymentApproved $event): void
     {
         $payment = $event->payment;
-        $result = $event->result;
-        $metadata = $payment->attempts()->latest()->first()?->payload ?? [];
+        $metadata = $payment->provider_metadata ?? [];
+        $planSlug = $metadata['plan_slug'] ?? null;
 
-        // Check if this payment was for a subscription
-        if (($metadata['customFieldValues']['type'] ?? '') !== 'subscription') {
+        if (! is_string($planSlug) || $planSlug === '') {
+            Log::warning('billing.fulfill_missing_plan', ['payment_id' => $payment->id]);
+
             return;
         }
 
         try {
-            $tenantId = $metadata['customFieldValues']['tenant_id'] ?? $payment->tenant_id;
-            $planId = $metadata['customFieldValues']['plan_id'] ?? null;
+            $plan = $this->plans->find($planSlug);
+        } catch (\Throwable $e) {
+            Log::error('billing.fulfill_plan_not_found', ['payment_id' => $payment->id, 'plan_slug' => $planSlug]);
 
-            if (! $planId) {
-                Log::error('Subscription fulfillment failed: Plan ID missing in metadata', ['payment' => $payment->id]);
-
-                return;
-            }
-
-            $tenant = Tenant::findOrFail($tenantId);
-            $plan = Plan::findOrFail($planId);
-
-            // Saved card reference (dLocal recurring). Stored so the
-            // engine-managed recurring charges can reuse it each period.
-            $cardId = $result->raw['card_id'] ?? null;
-            $periodEnd = $this->periodEnd($plan);
-
-            // Create or update subscription record
-            Subscription::updateOrCreate(
-                [
-                    'tenant_id' => $tenant->id,
-                    'provider_subscription_id' => $result->gatewayReference,
-                ],
-                [
-                    'plan_id' => $plan->id,
-                    'status' => 'active',
-                    'gateway' => $payment->gateway,
-                    'current_period_end' => $periodEnd,
-                    'next_payment_at' => $periodEnd,
-                    'pm_card_id' => $cardId,
-                    'failed_attempts' => 0,
-                ]
-            );
-
-            // Update tenant's current plan and activate if pending
-            $tenant->update([
-                'plan_id' => $plan->slug,
-                'status' => 'active',
-            ]);
-
-            Log::info('Subscription fulfilled via Payments engine', [
-                'tenant' => $tenant->id,
-                'plan' => $plan->slug,
-                'payment_id' => $payment->id,
-                'pm_card_id' => $cardId,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fulfilling subscription from approved payment: '.$e->getMessage());
+            return;
         }
-    }
 
-    private function periodEnd(Plan $plan): CarbonInterface
-    {
-        $interval = $plan->interval ?? 'month';
-        $count = max(1, (int) ($plan->interval_count ?? 1));
+        $periodEnd = $plan->interval === 'year' ? now()->addYear() : now()->addMonth();
 
-        return $interval === 'year' ? now()->addYears($count) : now()->addMonths($count);
+        $subscription = Subscription::updateOrCreate(
+            // Clave/dLocal redirect have no provider-side subscription: one row
+            // per tenant+gateway. (MIT gateways match on provider_subscription_id — Fase 3.)
+            ['tenant_id' => $payment->tenant_id, 'gateway' => $payment->gateway],
+            [
+                'plan_id' => $plan->id,
+                'status' => SubscriptionStatus::Active,
+                'current_period_start' => now(),
+                'current_period_end' => $periodEnd,
+                'next_payment_at' => $periodEnd,
+                'failed_attempts' => 0,
+            ]
+        );
+
+        $this->invoices->execute($payment, (string) $subscription->id);
+
+        // Saved card from a direct/MIT charge (dLocal): enables chargeRecurring.
+        $cardId = $event->event->raw['card_id'] ?? null;
+
+        if (is_string($cardId) && $cardId !== '') {
+            Subscription::where('tenant_id', $payment->tenant_id)
+                ->where('gateway', $payment->gateway)
+                ->update(['pm_card_id' => $cardId]);
+        }
+
+        $this->activate->execute((string) $payment->tenant_id, $plan->slug);
+
+        Log::info('billing.fulfilled', ['payment_id' => $payment->id, 'plan' => $plan->slug]);
     }
 }

@@ -9,8 +9,8 @@ use Spatie\LaravelData\Data;
 final class ProviderSubscriptionRef extends Data
 {
     public function __construct(
-        public readonly string $providerSubscriptionId,
-        public readonly string $status,
-        public readonly string $provider,
+        public string $providerSubscriptionId,
+        public string $gateway,
+        public string $status,
     ) {}
 }

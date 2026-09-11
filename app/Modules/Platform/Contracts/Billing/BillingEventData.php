@@ -9,9 +9,14 @@ use Spatie\LaravelData\Data;
 final class BillingEventData extends Data
 {
     public function __construct(
-        public readonly BillingEventType $type,
-        public readonly string $providerReference,
-        public readonly string $displayId,
-        public readonly int $amountCents,
+        public string $type,
+        public string $gateway,
+        public string $gatewayEventId,
+        public ?string $displayId = null,
+        public ?string $providerCustomerId = null,
+        public ?int $amountCents = null,
+        public ?string $currency = null,
+        /** @var array<string, mixed> */
+        public array $raw = [],
     ) {}
 }

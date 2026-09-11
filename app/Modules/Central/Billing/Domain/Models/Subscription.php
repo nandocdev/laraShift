@@ -4,50 +4,53 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Domain\Models;
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Billing\Database\Factories\SubscriptionFactory;
+use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
+use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Laravel\Cashier\Subscription as CashierSubscription;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class Subscription extends CashierSubscription
+class Subscription extends Model
 {
-    use HasUuids;
+    use HasFactory, HasUuids, ScopedToTenant;
 
     protected $fillable = [
+        'tenant_id',
         'plan_id',
         'provider_subscription_id',
         'status',
         'gateway',
+        'current_period_start',
         'current_period_end',
         'next_payment_at',
-        'pm_card_id',
         'failed_attempts',
-        'cancelled_at',
-        'tenant_id',
+        'pm_card_id',
+        'renewal_link_sent_at',
+        'renewal_reminder_sent_at',
+        'renewal_link_expires_at',
+        'cancel_at_period_end',
+        'canceled_at',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'current_period_end' => 'datetime',
-        'next_payment_at' => 'datetime',
-        'cancelled_at' => 'datetime',
-        'failed_attempts' => 'integer',
-        'ends_at' => 'datetime',
-        'trial_ends_at' => 'datetime',
-    ];
-
-    public function tenant(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Tenant::class);
+        return [
+            'status' => SubscriptionStatus::class,
+            'current_period_start' => 'datetime',
+            'current_period_end' => 'datetime',
+            'next_payment_at' => 'datetime',
+            'failed_attempts' => 'integer',
+            'renewal_link_sent_at' => 'datetime',
+            'renewal_reminder_sent_at' => 'datetime',
+            'renewal_link_expires_at' => 'datetime',
+            'cancel_at_period_end' => 'boolean',
+            'canceled_at' => 'datetime',
+        ];
     }
 
-    public function plan(): BelongsTo
+    protected static function newFactory(): SubscriptionFactory
     {
-        return $this->belongsTo(Plan::class, 'plan_id');
+        return SubscriptionFactory::new();
     }
 }

@@ -8,89 +8,36 @@ use App\Modules\Central\Billing\Database\Factories\PaymentFactory;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Platform\Tenancy\Domain\Concerns\ScopedToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * @property string $id
- * @property string $tenant_id
- * @property string $display_id Your order/invoice ID
- * @property string $slug Unique slug sent to gateway
- * @property float $amount
- * @property float $tax_amount
- * @property float $discount
- * @property string $description
- * @property string $email
- * @property string $currency
- * @property string $status PaymentStatus value
- * @property string $gateway
- * @property string|null $gateway_reference
- * @property string|null $authorization_code
- * @property string|null $error_code
- */
 class Payment extends Model
 {
     use HasFactory, HasUuids, ScopedToTenant;
 
     protected $fillable = [
         'tenant_id',
-        'display_id',
         'slug',
-        'amount',
-        'tax_amount',
-        'discount',
-        'description',
-        'email',
+        'display_id',
+        'amount_cents',
         'currency',
         'status',
         'gateway',
         'gateway_reference',
-        'authorization_code',
-        'error_code',
+        'subscription_id',
+        'provider_metadata',
     ];
 
-    protected $casts = [
-        'amount' => 'float',
-        'tax_amount' => 'float',
-        'discount' => 'float',
-    ];
-
-    // -------------------------------------------------------------------------
-    // Relations
-    // -------------------------------------------------------------------------
-
-    public function attempts(): HasMany
+    protected function casts(): array
     {
-        return $this->hasMany(PaymentAttempt::class);
+        return [
+            'status' => PaymentStatus::class,
+            'amount_cents' => 'integer',
+            'provider_metadata' => 'array',
+        ];
     }
 
-    public function webhooks(): HasMany
-    {
-        return $this->hasMany(PaymentWebhook::class, 'display_id', 'display_id');
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    public function statusEnum(): PaymentStatus
-    {
-        return PaymentStatus::from($this->status);
-    }
-
-    public function isApproved(): bool
-    {
-        return $this->statusEnum() === PaymentStatus::Approved;
-    }
-
-    public function netAmount(): float
-    {
-        return round($this->amount - $this->discount + $this->tax_amount, 2);
-    }
-
-    protected static function newFactory(): Factory
+    protected static function newFactory(): PaymentFactory
     {
         return PaymentFactory::new();
     }

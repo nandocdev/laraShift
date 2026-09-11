@@ -30,9 +30,11 @@ class EnforceTenantMfa
             return $next($request);
         }
 
-        // 2. Check tenant settings
-        $mfaRequired = Cache::remember("tenant:{tenant('id')}:mfa_required", now()->addHour(), function () {
-            return (bool) TenantSetting::where('tenant_id', tenant('id'))->value('mfa_required');
+        // 2. Check tenant settings (key MUST interpolate the tenant id:
+        // a literal key would leak one tenant's MFA setting to all others).
+        $tenantId = tenant('id');
+        $mfaRequired = Cache::remember('tenant:'.$tenantId.':mfa_required', now()->addHour(), function () use ($tenantId) {
+            return (bool) TenantSetting::where('tenant_id', $tenantId)->value('mfa_required');
         });
 
         if ($mfaRequired && ! $user->mfa_enabled) {

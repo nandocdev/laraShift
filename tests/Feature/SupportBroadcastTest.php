@@ -30,7 +30,6 @@ it('renders active banners for the target tenant', function () {
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',
-        'plan_id' => 'pro',
         'status' => 'active',
     ]);
 
@@ -65,7 +64,6 @@ it('hides dismissed banners', function () {
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',
-        'plan_id' => 'pro',
     ]);
 
     $broadcast = app(SendBroadcastAction::class)->execute(new BroadcastData(

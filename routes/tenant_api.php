@@ -17,6 +17,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     AuthenticateApiKey::class,
+    'feature:api_access',
 ])->group(function () {
 
     // Access / Identity API endpoints

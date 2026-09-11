@@ -27,10 +27,6 @@ return new class extends Migration
             $table->timestamp('archived_at')->nullable();
             $table->timestamp('provisioned_at')->nullable();
 
-            // Billing
-            $table->string('plan_id')->default('free');
-            $table->string('billing_gateway')->default('clave'); // default per plan-mode strategy (PagueloFacil)
-
             $table->timestamps();
             $table->softDeletes();
             $table->json('data')->nullable();

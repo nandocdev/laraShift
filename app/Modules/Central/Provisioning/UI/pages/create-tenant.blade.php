@@ -14,12 +14,6 @@
 
                 <flux:input wire:model="email" :label="__('Owner Email')" type="email" placeholder="admin@acme.com"
                     required />
-
-                <flux:select wire:model="plan_id" :label="__('Plan')">
-                    <option value="free">Free</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
-                </flux:select>
             </div>
 
             <div class="flex justify-end gap-2">

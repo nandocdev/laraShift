@@ -10,9 +10,6 @@ enum ClaveEnvironment: string
     case Sandbox = 'sandbox';
     case Dev = 'dev';
 
-    /**
-     * Hosted Fields / LinkDeamon base URL.
-     */
     public function apiBaseUrl(): string
     {
         return match ($this) {
@@ -22,33 +19,9 @@ enum ClaveEnvironment: string
         };
     }
 
-    /**
-     * Management API base URL (Transactions, Customers, etc.)
-     */
-    public function managementBaseUrl(): string
-    {
-        return match ($this) {
-            self::Production => 'https://admin.paguelofacil.com/PFManagementServices/api/v1',
-            self::Sandbox => 'https://sandbox.paguelofacil.com/PFManagementServices/api/v1',
-            self::Dev => 'https://middleapidev.pfserver.net/PFManagementServices/api/v1',
-        };
-    }
-
-    /**
-     * Checkout frontend base URL.
-     */
-    public function checkoutBaseUrl(): string
-    {
-        return match ($this) {
-            self::Production => 'https://checkout.paguelofacil.com',
-            self::Sandbox => 'https://sandbox.paguelofacil.com',
-            self::Dev => 'https://checkout-demo.paguelofacil.com',
-        };
-    }
-
     public static function fromConfig(): self
     {
-        return match (config('payments.clave.environment', 'sandbox')) {
+        return match (config('clave.environment', 'sandbox')) {
             'production' => self::Production,
             'dev' => self::Dev,
             default => self::Sandbox,

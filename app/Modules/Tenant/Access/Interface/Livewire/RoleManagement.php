@@ -41,7 +41,6 @@ class RoleManagement extends Component
         'team:manage' => 'Invite and revoke members',
         'roles:manage' => 'Manage custom roles and permissions',
         'settings:manage' => 'Update organization settings',
-        'billing:manage' => 'Manage subscriptions and invoices',
         'audit:read' => 'View organization audit logs',
     ];
 
