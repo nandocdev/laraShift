@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Catalog\Interface\Livewire\ManagePlans;
+use App\Modules\Central\Provisioning\Models\Tenant;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 function centralStaff(): CentralUser
@@ -140,4 +143,72 @@ it('toggles and archives plans', function () {
         ->call('delete', $plan->id);
 
     expect($plan->fresh()->trashed())->toBeTrue();
+});
+
+it('blocks archive when subscriptions exist and deactivates instead', function () {
+    $this->actingAs(centralStaff(), 'central');
+    $plan = Plan::create([
+        'name' => 'Pro', 'slug' => 'pro', 'price_monthly' => 2900, 'price_yearly' => 29000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => [], 'gateway_ids' => [], 'quotas' => []],
+        'is_active' => true,
+    ]);
+
+    $tenant = Tenant::create([
+        'id' => Str::uuid()->toString(), 'slug' => 'plan-guard', 'name' => 'Guard',
+        'email' => 'guard@test.com', 'status' => 'active', 'plan_id' => 'pro',
+    ]);
+
+    Subscription::create(['tenant_id' => $tenant->id, 'plan_id' => $plan->id, 'status' => 'active', 'gateway' => 'clave']);
+
+    Livewire::test(ManagePlans::class)
+        ->call('delete', $plan->id)
+        ->assertHasNoErrors();
+
+    expect($plan->fresh()->trashed())->toBeFalse()
+        ->and($plan->fresh()->is_active)->toBeFalse();
+});
+
+it('duplicates a plan as inactive with a unique slug', function () {
+    $this->actingAs(centralStaff(), 'central');
+    $plan = Plan::create([
+        'name' => 'Pro', 'slug' => 'pro', 'price_monthly' => 2900, 'price_yearly' => 29000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => ['api_access'], 'gateway_ids' => [], 'quotas' => []],
+        'is_active' => true,
+    ]);
+
+    Livewire::test(ManagePlans::class)
+        ->call('duplicate', $plan->id)
+        ->assertHasNoErrors();
+
+    $copy = Plan::where('slug', 'pro-copy')->firstOrFail();
+
+    expect($copy->is_active)->toBeFalse()
+        ->and($copy->price_monthly)->toBe(2900)
+        ->and($copy->features['display_features'])->toBe(['api_access']);
+
+    Livewire::test(ManagePlans::class)
+        ->call('duplicate', $plan->id)
+        ->assertHasNoErrors();
+
+    expect(Plan::where('slug', 'pro-copy-2')->exists())->toBeTrue();
+});
+
+it('exposes tenants per plan to the list view', function () {
+    $this->actingAs(centralStaff(), 'central');
+    Plan::create([
+        'name' => 'Pro', 'slug' => 'pro', 'price_monthly' => 2900, 'price_yearly' => 29000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true,
+    ]);
+
+    Tenant::create([
+        'id' => Str::uuid()->toString(), 'slug' => 'counted', 'name' => 'Counted',
+        'email' => 'counted@test.com', 'status' => 'active', 'plan_id' => 'pro',
+    ]);
+
+    Livewire::test(ManagePlans::class)
+        ->assertSee('Pro')
+        ->assertViewHas('tenantCounts', fn ($counts) => ($counts['pro'] ?? 0) === 1);
 });
