@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Settings\Domain\Models\CentralSetting;
 use App\Modules\Central\Settings\Infrastructure\Services\CentralBranding;
+use App\Modules\Central\Settings\Interface\Livewire\PlatformBranding;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -63,4 +66,41 @@ test('caches settings after first read', function () {
     CentralSetting::where('key', 'platform_name')->update(['value' => 'Changed']);
 
     expect(CentralBranding::platformName())->toBe('Cached');
+});
+
+test('sets and gets favicon url, forget removes it', function () {
+    expect(CentralBranding::faviconUrl())->toBeNull();
+
+    CentralBranding::set('favicon_url', 'https://example.com/favicon.png');
+    expect(CentralBranding::faviconUrl())->toBe('https://example.com/favicon.png');
+
+    CentralBranding::forget('favicon_url');
+    expect(CentralBranding::faviconUrl())->toBeNull();
+});
+
+test('rejects non-url logo and favicon values', function () {
+    $this->actingAs(CentralUser::factory()->create(), 'central');
+
+    Livewire::test(PlatformBranding::class)
+        ->set('logoUrl', 'javascript:alert(1)')
+        ->set('faviconUrl', 'not-a-url')
+        ->call('save')
+        ->assertHasErrors(['logoUrl', 'faviconUrl']);
+});
+
+test('resets branding to defaults', function () {
+    $this->actingAs(CentralUser::factory()->create(), 'central');
+
+    CentralBranding::set('platform_name', 'Custom');
+    CentralBranding::set('primary_color', '#ff0000');
+    CentralBranding::set('favicon_url', 'https://example.com/favicon.png');
+
+    Livewire::test(PlatformBranding::class)
+        ->call('resetToDefaults')
+        ->assertHasNoErrors()
+        ->assertSet('platformName', config('app.name'))
+        ->assertSet('primaryColor', '#000000')
+        ->assertSet('faviconUrl', '');
+
+    expect(CentralSetting::where('key', 'platform_name')->exists())->toBeFalse();
 });
