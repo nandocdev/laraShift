@@ -23,8 +23,8 @@
                     :current="request()->routeIs('central.provisioning.*')" wire:navigate>
                     {{ __('Tenants') }}
                 </flux:sidebar.item>
-                <flux:sidebar.item icon="heart" :href="route('central.health')"
-                    :current="request()->routeIs('central.health')" target="_blank">
+                <flux:sidebar.item icon="heart" :href="route('central.health.monitor')"
+                    :current="request()->routeIs('central.health.monitor')" wire:navigate>
                     {{ __('Health Monitor') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
