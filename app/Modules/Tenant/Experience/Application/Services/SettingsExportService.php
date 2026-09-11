@@ -9,10 +9,9 @@ use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 
 class SettingsExportService implements Exportable
 {
-    public function getExportData(): array
+    public function exportToStream($handle): void
     {
-        return [
-            'settings' => TenantSetting::where('tenant_id', tenant('id'))->first()?->toArray() ?? [],
-        ];
+        $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
+        fwrite($handle, '"settings":'.json_encode($settings ? $settings->toArray() : []));
     }
 }

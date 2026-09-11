@@ -30,7 +30,7 @@ class TenantInvitationNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__('You have been invited to join :tenant', ['tenant' => $this->tenantName]))
             ->greeting(__('Hello!'))
-            ->line(__('You have been invited to collaborate with **:tenant** on LaraShift.', ['tenant' => $this->tenantName]))
+            ->line(__('You have been invited to collaborate with **:tenant** on openSaaS.', ['tenant' => $this->tenantName]))
             ->line(__('Click the button below to accept the invitation and set up your account.'))
             ->action(__('Join Team', []), $url)
             ->line(__('This invitation link will expire in 48 hours.'))

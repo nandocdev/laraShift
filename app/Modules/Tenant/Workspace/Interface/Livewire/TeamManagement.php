@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
 use App\Modules\Tenant\Access\Application\Actions\CancelTenantInvitation;
+use App\Modules\Tenant\Access\Application\Actions\DeleteTenantUserAction;
+use App\Modules\Tenant\Access\Application\Actions\RestoreTenantUserAccess;
 use App\Modules\Tenant\Access\Application\Actions\RevokeTenantUserAccess;
 use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
 use App\Modules\Tenant\Access\Application\Actions\UpdateTenantUserRole;
@@ -13,6 +15,8 @@ use App\Modules\Tenant\Access\Domain\Models\Invitation;
 use App\Modules\Tenant\Access\Domain\Models\Role;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -22,7 +26,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class TeamManagement extends Component
 {
-    use WithPagination;
+    use AuthorizesRequests, WithPagination;
 
     // Invitation form state
     public string $inviteEmail = '';
@@ -39,9 +43,11 @@ class TeamManagement extends Component
 
     public function invite(SendInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $this->validate([
             'inviteEmail' => 'required|email|max:255',
-            'inviteRole' => 'required|exists:roles,name',
+            'inviteRole' => ['required', Rule::exists('roles', 'name')->where('tenant_id', tenant('id'))],
         ]);
 
         try {
@@ -59,6 +65,8 @@ class TeamManagement extends Component
 
     public function resendInvitation(string $id, SendInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $oldInvite = Invitation::findOrFail($id);
 
         try {
@@ -79,6 +87,8 @@ class TeamManagement extends Component
 
     public function cancelInvitation(string $id, CancelTenantInvitation $action): void
     {
+        $this->authorize('team:manage');
+
         $invite = Invitation::findOrFail($id);
         $action->execute($invite, auth()->user());
 
@@ -94,8 +104,10 @@ class TeamManagement extends Component
 
     public function updateRole(UpdateTenantUserRole $action): void
     {
+        $this->authorize('team:manage');
+
         $this->validate([
-            'newRole' => 'required|exists:roles,name',
+            'newRole' => ['required', Rule::exists('roles', 'name')->where('tenant_id', tenant('id'))],
         ]);
 
         if (! $this->selectedMemberId) {
@@ -120,6 +132,8 @@ class TeamManagement extends Component
 
     public function revokeAccess(string $userId, RevokeTenantUserAccess $action): void
     {
+        $this->authorize('team:manage');
+
         $user = User::findOrFail($userId);
 
         try {
@@ -132,10 +146,42 @@ class TeamManagement extends Component
         }
     }
 
+    public function restoreAccess(string $userId, RestoreTenantUserAccess $action): void
+    {
+        $this->authorize('team:manage');
+
+        $user = User::withTrashed()->findOrFail($userId);
+
+        try {
+            $action->execute($user, auth()->user());
+            session()->flash('status', __('User access restored.'));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function deleteUser(string $userId, DeleteTenantUserAction $action): void
+    {
+        $this->authorize('team:manage');
+
+        $user = User::withTrashed()->findOrFail($userId);
+
+        try {
+            $action->execute($user, auth()->user());
+            session()->flash('status', __('User deleted permanently.'));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render(): View
     {
         return view('workspace::livewire.team-management', [
-            'members' => User::with('roles')->latest()->paginate(10, ['*'], 'members_page'),
+            'members' => User::withTrashed()->with('roles')->latest()->paginate(10, ['*'], 'members_page'),
             'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->paginate(10, ['*'], 'invitations_page'),
             'availableRoles' => Role::all(),
         ]);

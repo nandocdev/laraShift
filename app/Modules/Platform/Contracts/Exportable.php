@@ -7,7 +7,9 @@ namespace App\Modules\Platform\Contracts;
 interface Exportable
 {
     /**
-     * Get the data to be exported by this module.
+     * Export data directly to the given file stream handle to prevent OOM errors.
+     *
+     * @param  resource  $handle
      */
-    public function getExportData(): array;
+    public function exportToStream($handle): void;
 }

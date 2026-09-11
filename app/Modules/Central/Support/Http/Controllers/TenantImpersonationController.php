@@ -25,22 +25,27 @@ class TenantImpersonationController extends Controller
             abort(404);
         }
 
-        $session = SupportSession::where('token', $token)
+        $hashedToken = hash('sha256', $token);
+
+        $session = SupportSession::where('token', $hashedToken)
             ->where('tenant_id', tenant('id'))
             ->where('expires_at', '>', now())
             ->whereNull('ended_at')
             ->firstOrFail();
 
-        // 1. Authenticate the operator in the tenant guard
-        // This ensures the operator has a real session on the tenant side.
-        auth()->loginUsingId($session->operator_id);
+        // Mitigate session fixation
+        $request->session()->migrate(true);
+
+        // 1. Authenticate the operator in the central guard
+        // The central guard allows them to be recognized as central_users without polluting the tenant's web guard.
+        auth('central')->loginUsingId($session->operator_id);
 
         // 2. Mark session as used/active
         Session::put('impersonation_session_id', $session->id);
         Session::put('impersonated_by', $session->operator_id);
 
-        // 3. Clear token for security (one-time use for transition)
-        $session->update(['token' => 'used_'.Str::random(10)]);
+        // 3. Clear token for security (one-time use for transition) — keep hashed to prevent reuse
+        $session->update(['token' => hash('sha256', 'used_'.Str::random(10))]);
 
         return redirect()->intended('/dashboard')->with('status', __('Impersonation active. Actions are audited.'));
     }
@@ -60,7 +65,8 @@ class TenantImpersonationController extends Controller
                 // Notify tenant as per PRD security requirement
                 $session->tenant->notify(new ImpersonationEndedNotification(
                     $session->reason,
-                    $session->started_at->format('Y-m-d H:i')
+                    $session->started_at->format('Y-m-d H:i'),
+                    $session->id
                 ));
             }
         }

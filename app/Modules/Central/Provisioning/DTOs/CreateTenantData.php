@@ -12,9 +12,9 @@ final class CreateTenantData extends Data
         public string $name,
         public string $slug,
         public string $email,
-        public string $plan_id,
         public ?string $password = null,
-        public ?string $payment_token = null,
         public string $status = 'active',
+        /** @var array<string, mixed>|null Serialized FraudSignals payload */
+        public ?array $fraud_signals_payload = null,
     ) {}
 }

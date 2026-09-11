@@ -12,8 +12,9 @@ use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
 use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
 use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Spatie\Permission\PermissionRegistrar;
@@ -21,6 +22,8 @@ use Spatie\Permission\PermissionRegistrar;
 #[Layout('layouts.app')]
 class RoleManagement extends Component
 {
+    use AuthorizesRequests;
+
     // Create Role State
     public string $name = '';
 
@@ -38,22 +41,18 @@ class RoleManagement extends Component
         'team:manage' => 'Invite and revoke members',
         'roles:manage' => 'Manage custom roles and permissions',
         'settings:manage' => 'Update organization settings',
-        'billing:manage' => 'Manage subscriptions and invoices',
         'audit:read' => 'View organization audit logs',
     ];
 
-    public function mount(): void
-    {
-        // Ensure core permissions exist in the DB (for this guard)
-        foreach ($this->availablePermissions as $key => $label) {
-            Permission::firstOrCreate(['name' => $key, 'guard_name' => 'web']);
-        }
-    }
-
     public function create(): void
     {
+        $this->authorize('roles:manage');
+
         $this->validate([
-            'name' => 'required|string|min:3|max:100|unique:roles,name',
+            'name' => [
+                'required', 'string', 'min:3', 'max:100',
+                Rule::unique('roles', 'name')->where('tenant_id', tenant('id')),
+            ],
             'selectedPermissions' => 'array',
         ]);
 
@@ -79,6 +78,8 @@ class RoleManagement extends Component
 
     public function edit(string $roleId): void
     {
+        $this->authorize('roles:manage');
+
         $this->editingRole = Role::findOrFail($roleId);
 
         if ($this->editingRole->is_system) {
@@ -91,8 +92,13 @@ class RoleManagement extends Component
 
     public function update(): void
     {
+        $this->authorize('roles:manage');
+
         $this->validate([
-            'editName' => 'required|string|min:3|max:100',
+            'editName' => [
+                'required', 'string', 'min:3', 'max:100',
+                Rule::unique('roles', 'name')->where('tenant_id', tenant('id'))->ignore($this->editingRole->id),
+            ],
             'editPermissions' => 'array',
         ]);
 
@@ -126,6 +132,8 @@ class RoleManagement extends Component
 
     public function delete(string $roleId): void
     {
+        $this->authorize('roles:manage');
+
         $role = Role::findOrFail($roleId);
 
         if ($role->is_system) {

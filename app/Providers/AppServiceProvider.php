@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
@@ -17,6 +20,8 @@ use Illuminate\Validation\Rules\Password;
 use Livewire\Features\SupportFileUploads\FilePreviewController;
 use Livewire\Livewire;
 use Livewire\Mechanisms\HandleRequests\EndpointResolver;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Saml2\Saml2ExtendSocialite;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 class AppServiceProvider extends ServiceProvider
@@ -41,6 +46,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(
             TenantSetting::class,
             TenantSettingPolicy::class
+        );
+
+        Event::listen(
+            SocialiteWasCalled::class,
+            [Saml2ExtendSocialite::class, 'handle']
         );
 
         $this->configureDefaults();

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Application\Services;
 
-use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
+use App\Modules\Tenant\Experience\Application\DTO\SmtpConfigData;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Transport;
@@ -38,6 +38,10 @@ class TenantMailerService
             return $callback(Mail::mailer('tenant_test'));
         } finally {
             Config::set('mail.mailers.tenant_test', null);
+            // Purge the resolved mailer: under Octane the MailManager caches
+            // instances per process, and a stale tenant_test mailer would leak
+            // one tenant's SMTP transport into the next tenant's request.
+            app('mail.manager')->purge('tenant_test');
         }
     }
 }

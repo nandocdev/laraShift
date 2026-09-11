@@ -4,54 +4,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Console;
 
-use App\Modules\Central\Billing\Application\Actions\ReconcileSubscription;
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Billing\Application\Services\BillingScheduler;
 use Illuminate\Console\Command;
 
 class ReconcileSubscriptionsCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'billing:reconcile {--tenant= : Specific tenant ID to reconcile}';
+    protected $signature = 'billing:reconcile';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Audit and reconcile local subscriptions with payment gateways (Anti-Drift)';
+    protected $description = 'Timeout-based PastDue for subscriptions without payment in the current period';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle(ReconcileSubscription $action): int
+    public function handle(BillingScheduler $scheduler): int
     {
-        $tenantId = $this->option('tenant');
+        $scheduler->reconcileTimeouts();
 
-        if ($tenantId) {
-            $tenants = Tenant::where('id', $tenantId)->get();
-        } else {
-            // Reconcile all tenants with a plan that isn't 'free'
-            // or those who have existing subscriptions
-            $tenants = Tenant::where('plan_id', '!=', 'free')
-                ->orWhereHas('subscriptions')
-                ->get();
-        }
-
-        $this->info('Starting reconciliation for '.$tenants->count().' tenants...');
-        $bar = $this->output->createProgressBar($tenants->count());
-
-        foreach ($tenants as $tenant) {
-            $action->execute($tenant);
-            $bar->advance();
-        }
-
-        $bar->finish();
-        $this->newLine();
-        $this->info('Reconciliation completed.');
+        $this->info('Subscriptions reconciled.');
 
         return self::SUCCESS;
     }

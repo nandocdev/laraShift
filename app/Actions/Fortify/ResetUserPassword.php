@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
+use App\Modules\Tenant\Access\Application\Actions\RevokeOtherTenantSessions;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
@@ -25,5 +28,7 @@ class ResetUserPassword implements ResetsUserPasswords
         $user->forceFill([
             'password' => $input['password'],
         ])->save();
+
+        app(RevokeOtherTenantSessions::class)->revokeAll($user);
     }
 }

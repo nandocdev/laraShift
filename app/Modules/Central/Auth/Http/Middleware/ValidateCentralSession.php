@@ -22,10 +22,22 @@ class ValidateCentralSession
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::guard('central')->check()) {
+            $user = Auth::guard('central')->user();
+
+            // Disabled operators are evicted even with a live session.
+            if ($user->locked_until && $user->locked_until->isFuture()) {
+                Auth::guard('central')->logout();
+                Session::invalidate();
+                Session::regenerateToken();
+
+                return redirect()->route('central.login')
+                    ->with('error', __('Your access has been disabled. Contact an administrator.'));
+            }
+
             $sessionId = Session::getId();
 
             $trackingSession = CentralSession::where('session_id', $sessionId)
-                ->where('user_id', Auth::guard('central')->id())
+                ->where('user_id', $user->getAuthIdentifier())
                 ->first();
 
             // If tracking record is missing or revoked, force logout

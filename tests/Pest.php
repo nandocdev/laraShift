@@ -1,11 +1,37 @@
 <?php
 
-use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Tests\TestCase;
+
+/*
+|--------------------------------------------------------------------------
+| RLS auto-provisioning under PostgreSQL
+|--------------------------------------------------------------------------
+|
+| RefreshDatabase runs migrate:fresh inside the test process, which wipes
+| any manually applied Row Level Security. When running the suite against
+| PostgreSQL with RLS_ENFORCE_IN_TESTS=true (CI isolation job), every
+| tenant-aware table gets its policy re-applied right after migrations.
+|
+*/
+
+if (env('RLS_ENFORCE_IN_TESTS') === 'true') {
+    Event::listen(MigrationsEnded::class, function (): void {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            Artisan::call('tenancy:enable-rls', ['--all' => true]);
+        }
+    });
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -24,23 +50,11 @@ uses(TestCase::class, RefreshDatabase::class)
 
         $class = get_class($this);
         if ((str_contains($class, 'Feature\\Auth') || str_contains($class, 'Feature\\Settings')) && ! str_contains($class, 'AuthenticationTest')) {
-            $plan = Plan::firstOrCreate(['slug' => 'free'], [
-                'name' => 'Free Plan',
-                'price_monthly' => 0,
-                'price_yearly' => 0,
-                'amount' => 0,
-                'currency' => 'USD',
-                'is_active' => true,
-                'features' => [],
-            ]);
-
             $tenant = Tenant::firstOrCreate(['id' => '00000000-0000-0000-0000-000000000001'], [
                 'slug' => 'test-tenant',
                 'name' => 'Test Tenant',
                 'email' => 'test@tenant.com',
-                'plan_id' => 'free',
                 'status' => 'active',
-                'billing_gateway' => 'paguelofacil',
             ]);
 
             $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
@@ -83,4 +97,61 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function claveTestTenant(string $slug): Tenant
+{
+    return Tenant::create([
+        'id' => (string) Str::uuid(),
+        'slug' => $slug,
+        'name' => 'Clave Test',
+        'email' => $slug.'@test.com',
+        'status' => 'active',
+        'billing_gateway' => 'clave',
+    ]);
+}
+
+function clavePlanRef(): PlanRef
+{
+    return new PlanRef(slug: 'pro', amountCents: 2900, currency: 'USD', gatewayIds: []);
+}
+
+function fakeClaveLink(): void
+{
+    config()->set('clave.merchant_id', 'TEST-MERCHANT');
+
+    Http::fake([
+        '*/LinkDeamon.cfm' => Http::response(['success' => true, 'data' => ['url' => 'https://sandbox.paguelofacil.com/pay/TEST123']]),
+    ]);
+}
+
+function claveRawPayload(string $tenantId, string $displayId): string
+{
+    $payload = json_decode(
+        file_get_contents(__DIR__.'/Fixtures/Billing/clave_webhook_approved.json') ?: '{}',
+        true
+    );
+    $payload['PARM_1'] = $tenantId;
+    $payload['PARM_2'] = $displayId;
+
+    return (string) json_encode($payload);
+}
+
+function claveSign(string $raw): string
+{
+    config()->set('clave.webhook_secret', 'test-secret');
+
+    return hash_hmac('sha256', $raw, 'test-secret');
+}
+
+function dlocalTestTenant(string $slug): Tenant
+{
+    return Tenant::create([
+        'id' => (string) Str::uuid(),
+        'slug' => $slug,
+        'name' => 'dLocal Test',
+        'email' => $slug.'@test.com',
+        'status' => 'active',
+        'billing_gateway' => 'dlocal',
+    ]);
 }

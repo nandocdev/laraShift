@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Actions;
 
+use App\Modules\Central\Growth\Application\Actions\QuarantineTenantAction;
+use App\Modules\Central\Growth\Domain\ValueObjects\FraudSignals;
 use App\Modules\Central\Operations\Application\Actions\ProvisionInfrastructureAction;
 use App\Modules\Central\Provisioning\Models\ProvisioningLog;
 use App\Modules\Central\Provisioning\Models\Tenant;
@@ -26,6 +28,7 @@ final readonly class ProvisionTenantPipeline
     public function __construct(
         private SetupTenantCoreDataAction $setupCoreData,
         private ProvisionInfrastructureAction $provisionInfra,
+        private QuarantineTenantAction $quarantineTenant,
     ) {}
 
     public function execute(
@@ -34,6 +37,7 @@ final readonly class ProvisionTenantPipeline
         ?string $password,
         string $adminName = 'Administrator',
         string $finalStatus = 'active',
+        ?FraudSignals $fraudSignals = null,
     ): void {
         $tenant = Tenant::findOrFail($tenantId);
 
@@ -56,6 +60,13 @@ final readonly class ProvisionTenantPipeline
             'provisioned_at' => now(),
         ]);
 
+        // If flagged as quarantine, apply side-effects: read_only + SecOps alert
+        if ($finalStatus === 'quarantine' && $fraudSignals !== null) {
+            $this->runStep($tenant, 'quarantine_notify', function () use ($tenant, $fraudSignals) {
+                $this->quarantineTenant->execute($tenant, $fraudSignals);
+            });
+        }
+
         Cache::forget('horizon_tenant_queues');
 
         activity('provisioning')
@@ -66,7 +77,7 @@ final readonly class ProvisionTenantPipeline
 
     private function runStep(Tenant $tenant, string $step, callable $callback): void
     {
-        $log = ProvisioningLog::updateOrCreate(
+        $log = ProvisioningLog::firstOrCreate(
             ['tenant_id' => $tenant->id, 'step' => $step],
             [
                 'id' => Str::uuid()->toString(),
@@ -79,6 +90,8 @@ final readonly class ProvisionTenantPipeline
         if ($log->status === 'completed') {
             return;
         }
+
+        $log->update(['status' => 'pending', 'executed_at' => now(), 'error' => null]);
 
         try {
             $callback();

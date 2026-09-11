@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Actions\SendBroadcastAction;
 use App\Modules\Central\Support\DTOs\BroadcastData;
+use App\Modules\Central\Support\Livewire\BroadcastCenter;
 use App\Modules\Central\Support\Livewire\GlobalAnnouncements;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,7 +32,6 @@ it('renders active banners for the target tenant', function () {
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',
-        'plan_id' => 'pro',
         'status' => 'active',
     ]);
 
@@ -65,7 +66,6 @@ it('hides dismissed banners', function () {
         'slug' => 'acme',
         'name' => 'Acme',
         'email' => 'acme@test.com',
-        'plan_id' => 'pro',
     ]);
 
     $broadcast = app(SendBroadcastAction::class)->execute(new BroadcastData(
@@ -83,4 +83,112 @@ it('hides dismissed banners', function () {
         ->assertDontSee('Discount!');
 
     expect(DB::table('broadcast_dismissals')->count())->toBe(1);
+});
+
+it('targets plan audiences and validates unknown plans', function () {
+    $admin = CentralUser::create([
+        'id' => Str::uuid()->toString(), 'name' => 'Admin',
+        'email' => 'admin-plan@test.com', 'password' => 'password',
+    ]);
+    $this->actingAs($admin, 'central');
+
+    Plan::create([
+        'slug' => 'pro', 'name' => 'Pro', 'price_monthly' => 1900, 'price_yearly' => 19000,
+        'currency' => 'USD', 'interval' => 'month', 'features' => [], 'is_active' => true,
+    ]);
+
+    $action = app(SendBroadcastAction::class);
+    $broadcast = $action->execute(new BroadcastData(
+        title: 'Pro news', body: 'Hello pro.',
+        filterType: 'plan', filterValue: 'pro', channels: ['banner'],
+    ));
+
+    expect($broadcast->recipient_count)->toBe(0);
+
+    Livewire::test(BroadcastCenter::class)
+        ->set('title', 'x')
+        ->set('body', 'y')
+        ->set('filterType', 'plan')
+        ->set('filterValue', 'ghost-plan')
+        ->call('send')
+        ->assertHasErrors(['filterValue']);
+});
+
+it('sends selected-tenants broadcasts only to the chosen tenants', function () {
+    $admin = CentralUser::create([
+        'id' => Str::uuid()->toString(), 'name' => 'Admin',
+        'email' => 'admin-sel@test.com', 'password' => 'password',
+    ]);
+    $this->actingAs($admin, 'central');
+
+    $chosen = Tenant::create([
+        'id' => '00000000-0000-0000-0000-0000000000a1', 'slug' => 'chosen',
+        'name' => 'Chosen', 'email' => 'chosen@test.com', 'status' => 'active',
+    ]);
+    $other = Tenant::create([
+        'id' => '00000000-0000-0000-0000-0000000000a2', 'slug' => 'other',
+        'name' => 'Other', 'email' => 'other@test.com', 'status' => 'active',
+    ]);
+
+    $broadcast = app(SendBroadcastAction::class)->execute(new BroadcastData(
+        title: 'Selected', body: 'Only you.',
+        filterType: 'selected', channels: ['banner'], tenantIds: [$chosen->id],
+    ));
+
+    expect($broadcast->recipient_count)->toBe(1);
+
+    tenancy()->initialize($chosen);
+    Livewire::test(GlobalAnnouncements::class)->assertSee('Selected');
+
+    tenancy()->initialize($other);
+    Livewire::test(GlobalAnnouncements::class)->assertDontSee('Selected');
+});
+
+it('schedules broadcasts and dispatches them when due', function () {
+    $admin = CentralUser::create([
+        'id' => Str::uuid()->toString(), 'name' => 'Admin',
+        'email' => 'admin-sched@test.com', 'password' => 'password',
+    ]);
+    $this->actingAs($admin, 'central');
+
+    $broadcast = app(SendBroadcastAction::class)->execute(new BroadcastData(
+        title: 'Later', body: 'Not yet.',
+        filterType: 'all', channels: ['banner'],
+        scheduledAt: now()->addHour()->toDateTimeString(),
+    ));
+
+    expect($broadcast->sent_at)->toBeNull()
+        ->and($broadcast->is_draft)->toBeFalse();
+
+    $this->artisan('broadcasts:dispatch-due')->assertSuccessful();
+    expect($broadcast->fresh()->sent_at)->toBeNull();
+
+    $broadcast->update(['scheduled_at' => now()->subMinute()]);
+    $this->artisan('broadcasts:dispatch-due')->assertSuccessful();
+    expect($broadcast->fresh()->sent_at)->not->toBeNull();
+});
+
+it('saves drafts without sending and publishes them on demand', function () {
+    $admin = CentralUser::create([
+        'id' => Str::uuid()->toString(), 'name' => 'Admin',
+        'email' => 'admin-draft@test.com', 'password' => 'password',
+    ]);
+    $this->actingAs($admin, 'central');
+
+    Livewire::test(BroadcastCenter::class)
+        ->set('title', 'Drafted')
+        ->set('body', 'Work in progress.')
+        ->set('filterType', 'all')
+        ->call('saveDraft')
+        ->assertHasNoErrors();
+
+    $draft = Broadcast::where('title', 'Drafted')->firstOrFail();
+    expect($draft->is_draft)->toBeTrue()->and($draft->sent_at)->toBeNull();
+
+    Livewire::test(BroadcastCenter::class)
+        ->call('publishDraft', $draft->id)
+        ->assertHasNoErrors();
+
+    expect($draft->fresh()->is_draft)->toBeFalse()
+        ->and($draft->fresh()->sent_at)->not->toBeNull();
 });

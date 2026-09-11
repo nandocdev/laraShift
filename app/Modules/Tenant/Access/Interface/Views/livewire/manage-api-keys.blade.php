@@ -53,6 +53,7 @@
                             @if ($key->isActive())
                                 <flux:button icon="no-symbol" size="sm" variant="ghost"
                                     wire:click="revoke('{{ $key->id }}')"
+                                    tooltip="{{ __('Revoke key') }}"
                                     wire:confirm="{{ __('Are you sure you want to revoke this key? This action is immediate and permanent.') }}" />
                             @endif
                         </flux:table.cell>

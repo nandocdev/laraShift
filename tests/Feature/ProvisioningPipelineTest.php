@@ -23,7 +23,6 @@ beforeEach(function () {
             'slug' => $slug,
             'name' => Str::headline($slug),
             'email' => $slug.'@test.com',
-            'plan_id' => 'free',
             'status' => $status,
         ]);
     };
@@ -47,15 +46,6 @@ it('provisions a tenant in the background and creates the initial data', functio
 
     expect(ProvisioningLog::where('tenant_id', $tenant->id)->pluck('status')->all())
         ->each->toBe('completed');
-});
-
-it('finalizes to pending_payment when the plan requires payment', function () {
-    $tenant = ($this->makeTenant)('pipeline-paid');
-
-    ProvisionTenantJob::dispatch($tenant->id, 'admin@acme.com', null, 'Administrator', 'pending_payment');
-
-    expect($tenant->fresh()->status)->toBe('pending_payment');
-    expect($tenant->fresh()->provisioned_at)->not->toBeNull();
 });
 
 it('resumes from completed steps instead of restarting', function () {
@@ -107,7 +97,7 @@ it('records a failed step and blocks finalization, then resumes on retry', funct
 
     // Retry: infrastructure now succeeds, the rest of the pipeline resumes
     $railway = Mockery::mock(RailwayService::class);
-    $railway->shouldReceive('provisionDomain')->once();
+    $railway->shouldReceive('provisionDomain')->once()->andReturn(true);
     app()->instance(RailwayService::class, $railway);
 
     $pipeline = app(ProvisionTenantPipeline::class);

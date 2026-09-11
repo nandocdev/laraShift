@@ -18,7 +18,7 @@ class CentralUserSeeder extends Seeder
         CentralUser::updateOrCreate(
             ['email' => $email],
             [
-                'name' => 'LaraShift Admin',
+                'name' => 'openSaaS Admin',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]

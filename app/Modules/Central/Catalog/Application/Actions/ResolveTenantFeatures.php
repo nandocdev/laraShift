@@ -4,69 +4,47 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Catalog\Application\Actions;
 
-use App\Modules\Central\Catalog\Domain\Models\Feature;
-use App\Modules\Central\Catalog\Domain\Models\TenantFeatureOverride;
-use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Platform\Contracts\FeatureResolver;
+use App\Modules\Central\Catalog\Application\Services\PlanManager;
 use App\Modules\Platform\Contracts\TenantContract;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
-final readonly class ResolveTenantFeatures implements FeatureResolver
+final readonly class ResolveTenantFeatures
 {
+    public function __construct(private PlanManager $plans) {}
+
     /**
-     * Resolves and caches the effective feature set for a tenant.
-     * Hierarchy: Override (Deny > Allow) -> Plan Base.
-     *
-     * @param  TenantContract  $tenant  The tenant instance.
-     * @param  bool  $forceRefresh  Whether to force cache rebuild.
-     * @return array<string> List of active feature keys.
-     *
-     * [RIESGOS]
-     * - Cache pollution in testing environment -> Mitigated by forcing Cache::forget when running unit tests.
-     * - High query volume if cache fails -> Solved by caching indefinitely (rememberForever) in production.
+     * @return list<string>
      */
-    public function execute(TenantContract $tenant, bool $forceRefresh = false): array
+    public function execute(TenantContract $tenant, bool $refresh = false): array
     {
-        // Resolve the concrete Tenant model when a non-model contract is passed
-        $tenantModel = $tenant instanceof Tenant ? $tenant : Tenant::findOrFail($tenant->getId());
+        try {
+            $plan = $this->plans->find($tenant->getPlanSlug());
+        } catch (ModelNotFoundException) {
+            Log::warning('billing.plan_not_found', ['tenant_id' => (string) $tenant->getId(), 'plan_slug' => $tenant->getPlanSlug()]);
 
-        $cacheKey = "tenant:{$tenantModel->id}:features";
-
-        if ($forceRefresh || app()->runningUnitTests()) {
-            Cache::forget($cacheKey);
+            return [];
         }
 
-        return Cache::rememberForever($cacheKey, function () use ($tenantModel) {
-            // 1. Get Plan Features
-            $planFeatures = Feature::whereHas('plans', function ($query) use ($tenantModel) {
-                $query->withTrashed(); // Support retired plans for existing tenants
-                $query->where('plans.slug', $tenantModel->plan_id);
+        // A content hash is part of the key: editing a plan in ManagePlans
+        // misses the old cache automatically (timestamps only have
+        // second precision, so updated_at alone can collide).
+        $key = 'tenant:'.$tenant->getId().':features:'.$plan->slug.':'.md5((string) json_encode($plan->features));
 
-                if (Str::isUuid($tenantModel->plan_id)) {
-                    $query->orWhere('plans.id', $tenantModel->plan_id);
-                }
-            })
-                ->where('is_active', true)
-                ->pluck('key')
-                ->toArray();
+        if ($refresh) {
+            Cache::forget($key);
+        }
 
-            // 2. Get Active Overrides
-            $overrides = TenantFeatureOverride::where('tenant_id', $tenantModel->id)
-                ->where(function ($query) {
-                    $query->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', now());
-                })
-                ->with('feature')
-                ->get();
+        return Cache::remember($key, 3600, function () use ($plan) {
+            $features = $plan->features['display_features'] ?? [];
 
-            $allowedByOverride = $overrides->where('type', 'allow')->pluck('feature.key')->toArray();
-            $deniedByOverride = $overrides->where('type', 'deny')->pluck('feature.key')->toArray();
-
-            // 3. Merge: (Plan + Allowed Overrides) - Denied Overrides
-            $effectiveFeatures = array_unique(array_merge($planFeatures, $allowedByOverride));
-
-            return array_values(array_diff($effectiveFeatures, $deniedByOverride));
+            return is_array($features) ? array_values($features) : [];
         });
+    }
+
+    public function hasFeature(TenantContract $tenant, string $key): bool
+    {
+        return in_array($key, $this->execute($tenant), true);
     }
 }

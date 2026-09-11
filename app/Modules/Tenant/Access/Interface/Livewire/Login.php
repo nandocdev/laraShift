@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Interface\Livewire;
 
+use App\Modules\Tenant\Access\Application\Actions\SsoEnforcement;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -24,9 +25,15 @@ class Login extends Component
 
     public bool $remember = false;
 
-    public function authenticate(): void
+    public function authenticate(SsoEnforcement $sso): void
     {
         $this->validate();
+
+        if ($sso->isEnforcedFor($this->email)) {
+            $this->redirect(route('saml.login'));
+
+            return;
+        }
 
         // The query is automatically scoped by tenant_id via BelongsToTenant trait
         $user = User::where('email', $this->email)->first();

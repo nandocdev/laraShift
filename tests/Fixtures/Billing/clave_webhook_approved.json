@@ -1,0 +1,10 @@
+{
+    "status": 1,
+    "codOper": "PF-TEST-000123",
+    "PARM_1": "TENANT_ID_PLACEHOLDER",
+    "PARM_2": "DISPLAY_ID_PLACEHOLDER",
+    "totalPay": "29.00",
+    "currency": "USD",
+    "type": "CLAVE",
+    "authStatus": "APPROVED-TEST"
+}

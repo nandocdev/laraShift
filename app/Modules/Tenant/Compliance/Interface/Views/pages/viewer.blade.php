@@ -12,12 +12,7 @@
     <!-- Filter Bar -->
     <flux:card class="flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[200px]">
-            <flux:select wire:model.live="filterUser" :label="__('Filter by Member')">
-                <option value="">{{ __('All Members') }}</option>
-                @foreach ($users as $user)
-                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                @endforeach
-            </flux:select>
+            <flux:input wire:model.live.debounce.500ms="filterUser" :label="__('Filter by Member Name')" placeholder="e.g. John Doe..." />
         </div>
 
         <div class="flex-1 min-w-[200px]">

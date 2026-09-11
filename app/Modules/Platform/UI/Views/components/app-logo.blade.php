@@ -4,18 +4,18 @@
 
 @php
     $tenant = function_exists('tenant') ? tenant() : null;
-    $brandName = config('app.name');
-    $logoUrl = null;
 
-    if ($tenant) {
-        $brandName = $tenant->name ?? $brandName;
-        $settings = \App\Modules\Tenant\Experience\Domain\Models\TenantSetting::where('tenant_id', $tenant->getTenantKey())->first();
-        if ($settings && $settings->logo_path) {
-            $logoUrl = tenant_asset($settings->logo_path);
-        }
+    if ($tenant && app()->bound(\App\Modules\Platform\Contracts\TenantBrandResolverContract::class)) {
+        $resolver = app(\App\Modules\Platform\Contracts\TenantBrandResolverContract::class);
+        $brandName = $resolver->name();
+        $logoUrl = $resolver->logoUrl();
+    } elseif (app()->bound(\App\Modules\Platform\Contracts\PlatformBrandingContract::class)) {
+        $resolver = app(\App\Modules\Platform\Contracts\PlatformBrandingContract::class);
+        $brandName = $resolver->name();
+        $logoUrl = $resolver->logoUrl();
     } else {
-        $brandName = \App\Modules\Central\Settings\Infrastructure\Services\CentralBranding::platformName();
-        $logoUrl = \App\Modules\Central\Settings\Infrastructure\Services\CentralBranding::logoUrl();
+        $brandName = config('app.name');
+        $logoUrl = null;
     }
 @endphp
 

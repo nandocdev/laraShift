@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Operations\Interface\Http\Controllers;
 
+use App\Modules\Central\Operations\Infrastructure\Horizon\HorizonQueueResolver;
 use App\Modules\Platform\Foundation\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 
@@ -53,7 +55,9 @@ class HealthCheckController extends Controller
 
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {
-            return ['status' => 'fail', 'message' => $e->getMessage()];
+            Log::warning('health.database.fail', ['ip' => request()->ip(), 'error' => $e->getMessage()]);
+
+            return ['status' => 'fail', 'message' => 'Database unreachable'];
         }
     }
 
@@ -73,23 +77,45 @@ class HealthCheckController extends Controller
 
             return ['status' => 'pass', 'message' => 'Connected'];
         } catch (\Exception $e) {
-            return ['status' => 'fail', 'message' => $e->getMessage()];
+            Log::warning('health.redis.fail', ['ip' => request()->ip(), 'error' => $e->getMessage()]);
+
+            return ['status' => 'fail', 'message' => 'Redis unreachable'];
         }
     }
 
     protected function checkQueue(): array
     {
         try {
-            // Check default queue size as a health indicator
-            $size = Queue::size();
+            $queues = HorizonQueueResolver::resolve();
+            $size = collect($queues)->sum(fn (string $queue) => Queue::size($queue));
+            $failedCount = 0;
+            try {
+                $failedCount = DB::table('failed_jobs')->count();
+            } catch (\Throwable $e) {
+                // Table may not exist in testing
+            }
+
+            $status = 'pass';
+            $message = 'Healthy';
+            if ($size > 1000) {
+                $status = 'warn';
+                $message = 'Queue deep';
+            }
+            if ($failedCount > 100) {
+                $status = 'warn';
+                $message = $failedCount > 100 && $size > 1000 ? 'Queue deep + many failed jobs' : ($failedCount > 100 ? 'Many failed jobs' : $message);
+            }
 
             return [
-                'status' => $size > 1000 ? 'warn' : 'pass',
+                'status' => $status,
                 'size' => $size,
-                'message' => $size > 1000 ? 'Queue deep' : 'Healthy',
+                'failed_jobs' => $failedCount,
+                'message' => $message,
             ];
         } catch (\Exception $e) {
-            return ['status' => 'fail', 'message' => $e->getMessage()];
+            Log::warning('health.queue.fail', ['ip' => request()->ip(), 'error' => $e->getMessage()]);
+
+            return ['status' => 'fail', 'message' => 'Queue unreachable'];
         }
     }
 }

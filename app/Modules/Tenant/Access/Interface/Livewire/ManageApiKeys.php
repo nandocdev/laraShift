@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Interface\Livewire;
 
+use App\Modules\Platform\Contracts\TenantFeatureResolver;
 use App\Modules\Platform\Tenancy\Application\Services\QuotaManager;
 use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
 use App\Modules\Tenant\Access\Application\Actions\RevokeApiKey;
 use App\Modules\Tenant\Access\Domain\Models\ApiKey;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class ManageApiKeys extends Component
 {
+    use AuthorizesRequests;
+
     // Form state
     public string $name = '';
 
@@ -33,8 +37,16 @@ class ManageApiKeys extends Component
         'audit:read' => 'View audit logs',
     ];
 
+    public function mount(): void
+    {
+        $this->ensureApiAccess();
+    }
+
     public function generate(GenerateApiKey $action): void
     {
+        $this->ensureApiAccess();
+        $this->authorize('settings:manage');
+
         $this->validate([
             'name' => 'required|string|max:100',
             'selectedScopes' => 'required|array|min:1',
@@ -59,6 +71,9 @@ class ManageApiKeys extends Component
 
     public function revoke(string $id, RevokeApiKey $action): void
     {
+        $this->ensureApiAccess();
+        $this->authorize('settings:manage');
+
         $apiKey = ApiKey::findOrFail($id);
         $action->execute($apiKey);
 
@@ -69,6 +84,15 @@ class ManageApiKeys extends Component
     {
         $this->plainKey = '';
         $this->showingKey = false;
+    }
+
+    private function ensureApiAccess(): void
+    {
+        abort_unless(
+            app(TenantFeatureResolver::class)->hasFeature(tenant(), 'api_access'),
+            403,
+            __('API access is not available on your current plan.')
+        );
     }
 
     public function render(): View

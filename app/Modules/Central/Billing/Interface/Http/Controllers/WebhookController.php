@@ -4,99 +4,66 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
+use App\Modules\Central\Billing\Application\Actions\ResolveWebhookTenant;
 use App\Modules\Central\Billing\Application\Jobs\ProcessPaymentWebhookJob;
+use App\Modules\Central\Billing\Domain\Models\Payment;
+use App\Modules\Central\Billing\Domain\Models\PaymentGatewayEvent;
 use App\Modules\Central\Billing\Infrastructure\Gateways\ClaveGateway;
-use App\Modules\Central\Billing\Infrastructure\Gateways\DlocalGateway;
-use App\Modules\Central\Billing\Infrastructure\Gateways\PaymentGateway;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Webhook endpoint for PagueLo Fácil / Clave.
- *
- * Contract:
- *   - Always return 200 immediately (gateway retries on non-2xx)
- *   - Verification and processing happen async in the job
- *   - Tenant is resolved from the payload's displayId or a dedicated URL param
- */
 final class WebhookController extends Controller
 {
-    public function handle(Request $request): Response
+    public function handle(Request $request, ClaveGateway $clave, ResolveWebhookTenant $resolver): Response
     {
-        $gateway = $this->resolveGateway($request);
         $rawPayload = $request->getContent();
+        $signature = $request->header('X-Clave-Signature', '');
 
-        $signature = match ($gateway) {
-            'clave' => $request->header('X-Clave-Signature', ''),
-            'dlocal' => $request->header('X-Signature', ''),
-            default => '',
-        };
+        // Sync verify: 401 touches no DB.
+        if (! $clave->verify($rawPayload, (string) $signature)) {
+            Log::warning('billing.webhook_bad_signature', ['ip' => $request->ip()]);
 
-        $webhookSecret = config("payments.{$gateway}.webhook_secret");
-
-        // Verify signature synchronously to prevent DoS via queue exhaustion
-        $verifier = app(PaymentGateway::class);
-        // We temporarily swap the implementation to the correct gateway for verification
-        $gatewayService = match ($gateway) {
-            'dlocal' => app(DlocalGateway::class),
-            default => app(ClaveGateway::class),
-        };
-
-        if (! $gatewayService->verifyWebhook($rawPayload, $signature, $webhookSecret)) {
-            Log::warning("{$gateway} Webhook: signature mismatch. Rejecting.", [
-                'ip' => $request->ip(),
-            ]);
-            abort(401, 'Invalid webhook signature');
+            abort(401, 'Invalid webhook signature.');
         }
 
-        $tenantId = $this->resolveTenantId($request);
+        $payload = json_decode($rawPayload, true) ?? $request->all();
+
+        try {
+            $tenantId = $resolver->execute($payload);
+        } catch (\RuntimeException) {
+            // Fase 0, regla 4: persist raw, ack 200, alert for manual review.
+            PaymentGatewayEvent::firstOrCreate(
+                ['gateway' => 'clave', 'gateway_event_id' => 'unresolved_'.sha1($rawPayload)],
+                ['event_type' => 'unresolved.tenant', 'payload' => $payload]
+            );
+
+            Log::warning('billing.webhook_unresolved_tenant');
+
+            return response()->noContent();
+        }
+
+        // Strict tenant match before dispatching.
+        $displayId = $payload['PARM_2'] ?? $payload['PARM_1'] ?? $payload['displayId'] ?? null;
+
+        if (is_string($displayId) && $displayId !== '') {
+            $owner = Payment::withoutGlobalScopes()->where('display_id', $displayId)->value('tenant_id');
+
+            if ($owner && (string) $owner !== (string) $tenantId) {
+                Log::warning('billing.webhook_tenant_mismatch', ['display_id' => $displayId]);
+
+                abort(422, 'Tenant mismatch for payment.');
+            }
+        }
 
         ProcessPaymentWebhookJob::dispatch(
             tenantId: $tenantId,
+            gateway: 'clave',
             rawPayload: $rawPayload,
-            signature: $signature,
-            webhookSecret: $webhookSecret,
+            signature: (string) $signature,
         );
 
-        // Always 200. Gateway must not retry due to our processing latency.
         return response()->noContent();
-    }
-
-    private function resolveGateway(Request $request): string
-    {
-        if ($request->is('*/clave')) {
-            return 'clave';
-        }
-        if ($request->is('*/dlocal')) {
-            return 'dlocal';
-        }
-
-        return 'clave';
-    }
-
-    /**
-     * Tenant can be encoded in the webhook URL as a query param
-     * or derived from the payload. Adjust to match the gateway's behavior.
-     */
-    private function resolveTenantId(Request $request): string
-    {
-        $payload = json_decode($request->getContent(), true) ?? $request->all();
-
-        // Security: Prioritize payload data over untrusted query params.
-        // PagueloFacil often uses PARM_1 for tenant_id if configured in the redirect/webhook setup.
-        $tenantId = $payload['tenant_id']
-            ?? $payload['tenantId']
-            ?? $payload['merchantId']
-            ?? $payload['PARM_1']
-            ?? ($payload['metadata']['tenant_id'] ?? null);
-
-        if (empty($tenantId)) {
-            Log::warning('Webhook received without tenant identifier');
-            abort(400, 'Missing tenant identifier');
-        }
-
-        return (string) $tenantId;
     }
 }

@@ -114,12 +114,13 @@ return new class extends Migration
             ->store(config('permission.cache.store') != 'default' ? config('permission.cache.store') : null)
             ->forget(config('permission.cache.key'));
 
-        if ($teams && DB::getDriverName() === 'pgsql') {
+        if ($teams && Schema::getConnection()->getDriverName() === 'pgsql') {
             $teamKey = $columnNames['team_foreign_key'];
+            $connection = Schema::getConnection();
             foreach ([$tableNames['roles'], $tableNames['model_has_permissions'], $tableNames['model_has_roles']] as $table) {
-                DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
-                DB::statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
-                DB::statement("CREATE POLICY tenant_isolation ON {$table} USING ({$teamKey}::text = current_setting('app.tenant_id')) WITH CHECK ({$teamKey}::text = current_setting('app.tenant_id'));");
+                $connection->statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY;");
+                $connection->statement("ALTER TABLE {$table} FORCE ROW LEVEL SECURITY;");
+                $connection->statement("CREATE POLICY tenant_isolation ON {$table} USING ({$teamKey}::text = current_setting('app.tenant_id')) WITH CHECK ({$teamKey}::text = current_setting('app.tenant_id'));");
             }
         }
     }

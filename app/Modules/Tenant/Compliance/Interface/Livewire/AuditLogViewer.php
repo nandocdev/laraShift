@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Compliance\Interface\Livewire;
 
-use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
 use App\Modules\Tenant\Compliance\Application\Jobs\ExportAuditLogsJob;
 use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
@@ -12,6 +11,7 @@ use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
 use App\Modules\Tenant\Compliance\Domain\Models\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -20,7 +20,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class AuditLogViewer extends Component
 {
-    use WithPagination;
+    use AuthorizesRequests, WithPagination;
 
     #[Url(as: 'user')]
     public string $filterUser = '';
@@ -45,6 +45,7 @@ class AuditLogViewer extends Component
 
     public function mount(): void
     {
+        $this->authorize('audit:read');
         $this->exportFrom = now()->subDays(30)->format('Y-m-d');
         $this->exportTo = now()->format('Y-m-d');
     }
@@ -64,6 +65,8 @@ class AuditLogViewer extends Component
 
     public function export(): void
     {
+        $this->authorize('audit:read');
+
         $this->validate([
             'exportFrom' => 'required|date',
             'exportTo' => 'required|date|after_or_equal:exportFrom',
@@ -101,10 +104,14 @@ class AuditLogViewer extends Component
 
     public function render(): View
     {
+        $this->authorize('audit:read');
+
         $query = AuditLog::with('user')->latest();
 
         if ($this->filterUser) {
-            $query->where('user_id', $this->filterUser);
+            $query->whereHas('user', function ($q) {
+                $q->where('name', 'like', "%{$this->filterUser}%");
+            });
         }
 
         if ($this->filterAction) {
@@ -121,9 +128,6 @@ class AuditLogViewer extends Component
 
         return view('compliance::pages.viewer', [
             'logs' => $query->paginate(50),
-            // Performance: Only fetch users that actually have logs or use a subset.
-            // For now, let's at least pluck ID and Name to avoid hydration of full objects.
-            'users' => User::select(['id', 'name'])->get(),
         ]);
     }
 }

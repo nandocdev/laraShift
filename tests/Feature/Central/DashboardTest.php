@@ -24,12 +24,12 @@ test('authenticated central user can access dashboard and app logo renders corre
 
     $user = CentralUser::factory()->create();
 
-    CentralBranding::set('platform_name', 'LaraShift Test Suite');
+    CentralBranding::set('platform_name', 'openSaaS Test Suite');
 
     $this->actingAs($user, 'central')
         ->get(route('central.dashboard'))
         ->assertOk()
-        ->assertSee('LaraShift Test Suite');
+        ->assertSee('openSaaS Test Suite');
 });
 
 test('central dashboard renders all sections from the wireframe specification', function () {
@@ -41,9 +41,13 @@ test('central dashboard renders all sections from the wireframe specification', 
         ->get(route('central.dashboard'));
 
     $response->assertOk()
-        // Header
+        // Header + spec buttons + breakdown
         ->assertSee('Dashboard')
         ->assertSee('Visión general de toda la plataforma')
+        ->assertSee('View Tenants')
+        ->assertSee('View Health')
+        ->assertSee('View Billing Issues')
+        ->assertSee('Quarantined')
         // Top Metric Cards
         ->assertSee('ORGANIZACIONES')
         ->assertSee('USUARIOS')
@@ -51,23 +55,22 @@ test('central dashboard renders all sections from the wireframe specification', 
         ->assertSee('ALERTAS')
         // Platform Activity & Chart
         ->assertSee('ACTIVIDAD DE LA PLATAFORMA')
-        ->assertSee('Usuarios activos · Últimos 7 días')
+        ->assertSee('Nuevos tenants · Últimos 7 días')
         // System Health
         ->assertSee('SALUD DEL SISTEMA')
         ->assertSee('API')
         ->assertSee('Base de datos')
         ->assertSee('Queue')
-        ->assertSee('Storage')
-        ->assertSee('Email')
-        ->assertSee('Uptime')
-        ->assertSee('Latencia media')
+        ->assertSee('Billing')
+        ->assertSee('Queue size')
+        ->assertSee('Past due')
         // Recent Activity & Alerts
         ->assertSee('ACTIVIDAD RECIENTE')
         ->assertSee('ALERTAS')
         ->assertSee('Ver todas')
         // Organizations Table
         ->assertSee('Empresa')
-        ->assertSee('Plan')
+        ->assertSee('Usuarios')
         ->assertSee('Estado')
         ->assertSee('Acción')
         ->assertSee('Ver organizaciones');

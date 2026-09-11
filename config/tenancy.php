@@ -22,7 +22,7 @@ return [
     /**
      * The main domain for the central application.
      */
-    'central_domain' => env('CENTRAL_DOMAIN', 'larashift.test'),
+    'central_domain' => env('CENTRAL_DOMAIN', 'openSaaS.test'),
 
     /**
      * The list of domains hosting your central app.
@@ -32,7 +32,7 @@ return [
     'central_domains' => array_unique(array_filter([
         '127.0.0.1',
         'localhost',
-        env('CENTRAL_DOMAIN', 'larashift.test'),
+        env('CENTRAL_DOMAIN', 'openSaaS.test'),
         ...explode(',', env('CENTRAL_DOMAINS', '')),
     ])),
 

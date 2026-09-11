@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Tenant\Access\Database\Factories;
 
 use App\Modules\Tenant\Access\Domain\Models\User;

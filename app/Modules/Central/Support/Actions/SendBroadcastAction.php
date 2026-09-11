@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Actions;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\DTOs\BroadcastData;
 use App\Modules\Central\Support\Jobs\SendBulkBroadcastJob;
 use App\Modules\Central\Support\Models\Broadcast;
@@ -13,8 +12,8 @@ use Illuminate\Support\Str;
 final readonly class SendBroadcastAction
 {
     /**
-     * Sends a broadcast message to multiple tenants based on filters.
-     * Uses a background job for scalability.
+     * Crea el broadcast y lo envía, programa o guarda como borrador.
+     * La audiencia vive en Broadcast::recipients() (definición única).
      */
     public function execute(BroadcastData $data): Broadcast
     {
@@ -26,19 +25,53 @@ final readonly class SendBroadcastAction
             'filter_type' => $data->filterType,
             'filter_value' => $data->filterValue,
             'channels' => $data->channels,
+            'scheduled_at' => $data->scheduledAt,
+            'is_draft' => $data->draft,
         ]);
 
-        $query = Tenant::query();
-
-        if ($data->filterType === 'plan' && $data->filterValue) {
-            $query->where('plan_id', $data->filterValue);
-        } elseif ($data->filterType === 'status' && $data->filterValue) {
-            $query->where('status', $data->filterValue);
+        if ($data->filterType === 'selected' && $data->tenantIds !== []) {
+            $broadcast->tenants()->sync($data->tenantIds);
         }
 
-        $broadcast->update(['recipient_count' => $query->count()]);
+        $broadcast->update(['recipient_count' => $broadcast->recipients()->count()]);
 
-        if (in_array('email', $data->channels)) {
+        if ($data->draft || $this->isScheduled($broadcast)) {
+            activity('support')
+                ->performedOn($broadcast)
+                ->log($data->draft ? 'broadcast_drafted' : 'broadcast_scheduled');
+
+            return $broadcast;
+        }
+
+        $this->dispatch($broadcast);
+
+        activity('support')
+            ->performedOn($broadcast)
+            ->log('broadcast_initiated');
+
+        return $broadcast;
+    }
+
+    /**
+     * Envía un broadcast programado vencido o un borrador publicado.
+     * Idempotente: nunca reenvía lo ya enviado.
+     */
+    public function sendNow(Broadcast $broadcast): void
+    {
+        if ($broadcast->sent_at) {
+            return;
+        }
+
+        $this->dispatch($broadcast);
+
+        activity('support')
+            ->performedOn($broadcast)
+            ->log('broadcast_initiated');
+    }
+
+    private function dispatch(Broadcast $broadcast): void
+    {
+        if (in_array('email', $broadcast->channels ?? [])) {
             // Scalability: Move heavy notification sending to background job
             SendBulkBroadcastJob::dispatch($broadcast);
         } else {
@@ -46,11 +79,10 @@ final readonly class SendBroadcastAction
             // as the Tenant UI will pull them dynamically based on filters.
             $broadcast->update(['sent_at' => now()]);
         }
+    }
 
-        activity('support')
-            ->performedOn($broadcast)
-            ->log('broadcast_initiated');
-
-        return $broadcast;
+    private function isScheduled(Broadcast $broadcast): bool
+    {
+        return $broadcast->scheduled_at !== null && $broadcast->scheduled_at->isFuture();
     }
 }

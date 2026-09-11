@@ -7,6 +7,7 @@ namespace App\Modules\Tenant\Access\Interface\Http\Middleware;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnforceTenantMfa
@@ -29,10 +30,14 @@ class EnforceTenantMfa
             return $next($request);
         }
 
-        // 2. Check tenant settings
-        $settings = TenantSetting::where('tenant_id', tenant('id'))->first();
+        // 2. Check tenant settings (key MUST interpolate the tenant id:
+        // a literal key would leak one tenant's MFA setting to all others).
+        $tenantId = tenant('id');
+        $mfaRequired = Cache::remember('tenant:'.$tenantId.':mfa_required', now()->addHour(), function () use ($tenantId) {
+            return (bool) TenantSetting::where('tenant_id', $tenantId)->value('mfa_required');
+        });
 
-        if ($settings && $settings->mfa_required && ! $user->mfa_enabled) {
+        if ($mfaRequired && ! $user->mfa_enabled) {
             return redirect()->route('tenant.settings.security.2fa')
                 ->with('error', __('MFA is mandatory for this organization. Please complete your setup.'));
         }

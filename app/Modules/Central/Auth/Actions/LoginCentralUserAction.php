@@ -35,6 +35,14 @@ final readonly class LoginCentralUserAction
             return 'failed';
         }
 
+        if ($user->locked_until && $user->locked_until->isFuture()) {
+            activity('auth')
+                ->performedOn($user)
+                ->log('central_user_login_blocked');
+
+            return 'failed';
+        }
+
         if ($user->hasTwoFactorEnabled()) {
             Session::put('login.id', $user->id);
             Session::put('login.remember', $data->remember);

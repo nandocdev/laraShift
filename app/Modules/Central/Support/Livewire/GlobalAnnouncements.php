@@ -21,9 +21,8 @@ class GlobalAnnouncements extends Component
             return;
         }
 
-        $connection = config('tenancy.database.central_connection', 'central');
-
-        DB::connection($connection)->table('broadcast_dismissals')->updateOrInsert(
+        // Use default tenant connection (RLS via SET LOCAL), not central — fixes SU002
+        DB::table('broadcast_dismissals')->updateOrInsert(
             [
                 'broadcast_id' => $broadcastId,
                 'user_id' => auth()->id(),
@@ -45,29 +44,17 @@ class GlobalAnnouncements extends Component
             return view('support::livewire.global-announcements', ['activeBroadcasts' => collect()]);
         }
 
-        $connection = config('tenancy.database.central_connection', 'central');
-
         // Fetch broadcasts that:
         // 1. Have 'banner' in channels
         // 2. Are sent (sent_at is not null)
-        // 3. Match tenant filters (all, same plan, or same status)
+        // 3. Match the tenant audience (scope unificado en el modelo)
         // 4. Have NOT been dismissed by this user
 
-        $dismissedIds = DB::connection($connection)->table('broadcast_dismissals')
+        $dismissedIds = DB::table('broadcast_dismissals')
             ->where('user_id', auth()->id())
             ->pluck('broadcast_id');
 
-        $activeBroadcasts = Broadcast::whereNotNull('sent_at')
-            ->whereJsonContains('channels', 'banner')
-            ->where(function ($query) use ($tenant) {
-                $query->where('filter_type', 'all')
-                    ->orWhere(function ($q) use ($tenant) {
-                        $q->where('filter_type', 'plan')->where('filter_value', $tenant->plan_id);
-                    })
-                    ->orWhere(function ($q) use ($tenant) {
-                        $q->where('filter_type', 'status')->where('filter_value', $tenant->status);
-                    });
-            })
+        $activeBroadcasts = Broadcast::visibleToTenant($tenant)
             ->whereNotIn('id', $dismissedIds)
             ->latest()
             ->get();

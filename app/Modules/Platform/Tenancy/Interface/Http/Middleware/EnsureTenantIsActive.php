@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Interface\Http\Middleware;
 
-use App\Modules\Platform\Contracts\FeatureResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,7 +19,23 @@ class EnsureTenantIsActive
             return $next($request);
         }
 
-        // 1. Whitelist critical routes
+        // 1. Strict interception for suspended tenants
+        if (tenant('status') === 'suspended') {
+            if ($request->routeIs([
+                'login',
+                'login.store',
+                'logout',
+                'two-factor.login',
+                'two-factor.login.store',
+                'tenant.billing.*',
+            ]) || $request->is('livewire/*', 'auth/*')) {
+                // Login + billing (regularize payment in dunning).
+            } else {
+                abort(403, 'This account has been suspended.');
+            }
+        }
+
+        // 2. Whitelist critical routes
         if ($request->routeIs([
             'tenant.home',
             'login',
@@ -30,70 +45,28 @@ class EnsureTenantIsActive
             'two-factor.login.store',
             'tenant.invitations.accept',
             'tenant.support.auth',
-            'payments.checkout.initiate',
-            'tenant.billing.plans',
-            'tenant.billing.manage',
-            'tenant.billing.checkout.hosted',
-            'tenant.billing.success',
-            'tenant.billing.cancel',
-            'tenant.billing.update-payment',
-        ]) || $request->is('livewire/*', 'dashboard', 'auth/*', 'billing/*')) {
+        ]) || $request->is('livewire/*', 'dashboard', 'auth/*')) {
             return $next($request);
         }
 
-        // Prime Features Cache (Redis-first)
-        try {
-            if (app()->bound(FeatureResolver::class)) {
-                app(FeatureResolver::class)->execute(tenant());
-            }
-        } catch (\Exception $e) {
-            // Log and continue if features can't be resolved
-            \Log::warning('Could not resolve features for tenant: '.tenant('id'));
-        }
-
-        // 2. Allow pending_payment tenants through billing routes
+        // 2b. Billing dunning lane: pending_payment tenants may only
+        // checkout, browse billing or log in; everything else is blocked here.
         if (tenant('status') === 'pending_payment') {
-            if ($request->routeIs([
-                'tenant.billing.plans',
-                'tenant.billing.manage',
-                'tenant.billing.checkout.hosted',
-                'tenant.billing.success',
-                'tenant.billing.cancel',
-                'tenant.billing.update-payment',
-                'login',
-                'login.store',
-                'logout',
-            ]) || $request->is('livewire/*', 'auth/*', 'billing/*')) {
+            if ($request->routeIs(['payments.checkout.initiate', 'payments.clave.callback', 'tenant.billing.*'])) {
                 return $next($request);
             }
 
-            return redirect()->route('tenant.billing.plans');
+            abort(402, 'Payment required to activate this workspace.');
         }
 
-        // 3. Hard block for archived/expired tenants
-        if (in_array(tenant('status'), ['archived', 'expired'], true)) {
-            abort(404);
+        // 3. Hard block for archived/expired/quarantined tenants
+        if (in_array(tenant('status'), ['archived', 'expired', 'quarantine'], true)) {
+            abort(tenant('status') === 'quarantine' ? 403 : 404);
         }
 
-        // 3. Block for maintenance
+        // 4. Block for maintenance
         if (tenant('maintenance_mode')) {
             abort(503);
-        }
-
-        // 4. Enforce subscription/payment rules for AUTHENTICATED users
-        if (auth()->check()) {
-            $isSuspended = tenant('status') === 'suspended';
-            $isPaidPlan = tenant('plan_id') !== 'free';
-
-            if ($isSuspended || $isPaidPlan) {
-                $subscription = tenant()->subscription('default');
-                $hasActiveSubscription = $subscription && ($subscription->active() || $subscription->onGracePeriod());
-
-                if ($isSuspended || ! $hasActiveSubscription) {
-                    // Redirect to plans page instead of blocking
-                    return redirect()->route('tenant.billing.plans');
-                }
-            }
         }
 
         if (tenant('read_only') && ! $request->isMethod('GET')) {

@@ -7,7 +7,6 @@
 
 <body class="min-h-screen bg-white dark:bg-zinc-800">
     @include('ui::partials.impersonation-banner')
-    @include('ui::partials.subscription-banner')
     <livewire:global-announcements />
     <flux:sidebar sticky collapsible="mobile"
         class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
@@ -30,13 +29,9 @@
                     :current="request()->routeIs('tenant.roles.*')" wire:navigate>
                     {{ __('Roles & Permissions') }}
                 </flux:sidebar.item>
-                
-                @php
-                    $rootLanding = \App\Modules\Tenant\Experience\Domain\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
-                @endphp
-                @if($rootLanding)
-                    <flux:sidebar.item icon="megaphone" :href="route('tenant.landings.builder', $rootLanding)" target="_blank">
-                        {{ __('Landing Page') }}
+                @if($sidebarLandingEntry ?? null)
+                    <flux:sidebar.item icon="megaphone" :href="$sidebarLandingEntry['url']" target="_blank">
+                        {{ $sidebarLandingEntry['label'] }}
                     </flux:sidebar.item>
                 @endif
             </flux:sidebar.group>
@@ -65,10 +60,6 @@
                 <flux:sidebar.item icon="clipboard-document-list" :href="route('tenant.audit.index')"
                     :current="request()->routeIs('tenant.audit.*')" wire:navigate>
                     {{ __('Audit Log') }}
-                </flux:sidebar.item>
-                <flux:sidebar.item icon="credit-card" :href="route('tenant.billing.manage')"
-                    :current="request()->routeIs('tenant.billing.*')" wire:navigate>
-                    {{ __('Billing') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>

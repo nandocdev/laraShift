@@ -4,205 +4,286 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
-use App\Modules\Central\Billing\Application\DTO\MerchantData;
-use App\Modules\Central\Billing\Application\DTO\PaymentData;
-use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
+use App\Modules\Central\Billing\Domain\Enums\BillingEventType;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
-use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
+use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupported;
+use App\Modules\Central\Billing\Domain\Exceptions\WebhookVerificationFailed;
+use App\Modules\Central\Billing\Domain\Models\PaymentReference;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Platform\Contracts\TenantDomainResolverContract;
-use App\Modules\Platform\Integrations\Dlocal\Client\DlocalHttpClient;
-use App\Modules\Platform\Integrations\Dlocal\Contracts\PaymentGatewayContract;
-use App\Modules\Platform\Integrations\Dlocal\DTOs\PayerData;
-use App\Modules\Platform\Integrations\Dlocal\DTOs\PaymentRequestData;
-use App\Modules\Platform\Integrations\Dlocal\Enums\PaymentMethodFlow;
-use App\Modules\Platform\Integrations\Dlocal\Models\PaymentReference;
+use App\Modules\Central\Billing\Infrastructure\Gateways\Dlocal\DlocalApiException;
+use App\Modules\Central\Billing\Infrastructure\Gateways\Dlocal\DlocalHttpClient;
+use App\Modules\Central\Catalog\Application\Services\PlanManager;
+use App\Modules\Platform\Contracts\Billing\BillingCapability;
+use App\Modules\Platform\Contracts\Billing\BillingEventData;
+use App\Modules\Platform\Contracts\Billing\BillingProvider;
+use App\Modules\Platform\Contracts\Billing\CheckoutProvider;
+use App\Modules\Platform\Contracts\Billing\CheckoutSessionData;
+use App\Modules\Platform\Contracts\Billing\DirectPaymentData;
+use App\Modules\Platform\Contracts\Billing\PaymentMethodType;
+use App\Modules\Platform\Contracts\Billing\PaymentProvider;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
+use App\Modules\Platform\Contracts\Billing\ProviderPaymentRef;
+use App\Modules\Platform\Contracts\Billing\ProviderSubscriptionRef;
+use App\Modules\Platform\Contracts\Billing\SubscriptionProvider;
+use App\Modules\Platform\Contracts\Billing\WebhookProvider;
+use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
-final class DlocalGateway implements PaymentGateway
+final readonly class DlocalGateway implements BillingProvider, CheckoutProvider, PaymentProvider, SubscriptionProvider, WebhookProvider
 {
     public function __construct(
-        private readonly PaymentGatewayContract $gateway,
-        private readonly DlocalHttpClient $client,
+        private DlocalHttpClient $client,
+        private PlanManager $plans,
     ) {}
+
+    public function supports(BillingCapability $capability, ?PaymentMethodType $forMethod = null): bool
+    {
+        return match ($capability) {
+            BillingCapability::Checkout => true,
+            // Direct requires an explicit method: bare capability is false
+            // so the UI is forced to ask which method before promising.
+            BillingCapability::DirectPayment => $forMethod === PaymentMethodType::Card,
+            // Recurrence only via MIT on saved cards — never cash.
+            BillingCapability::Subscriptions => $forMethod === PaymentMethodType::Card,
+            default => false,
+        };
+    }
 
     public function identifier(): string
     {
         return 'dlocal';
     }
 
-    public function listTransactions(string $apiKey, array $filters = []): array
+    public function createCheckout(TenantContract $tenant, PlanRef $plan, string $displayId): CheckoutSessionData
     {
-        try {
-            return $this->client->get('/payments');
-        } catch (\Exception $e) {
-            Log::error('dLocal listTransactions failure: '.$e->getMessage());
+        $response = $this->client->post('/payments', [
+            'order_id' => $displayId,
+            'amount' => $plan->amountCents / 100,
+            'currency' => $plan->currency,
+            'country' => config('dlocal.country_default', 'PA'),
+            'payment_method_flow' => 'REDIRECT',
+            'payer' => [
+                'name' => $tenant->getName(),
+                'email' => $this->resolveEmail($tenant),
+            ],
+            'description' => "Plan {$plan->slug}",
+            'notification_url' => route('payments.webhooks.dlocal'),
+            'metadata' => ['tenant_id' => (string) $tenant->getId(), 'plan_slug' => $plan->slug],
+        ], $displayId);
 
-            return [];
+        $url = $response['redirect_url'] ?? throw new DlocalApiException('No redirect URL returned by dLocal.');
+
+        PaymentReference::firstOrCreate(
+            ['external_reference' => (string) $response['id']],
+            ['order_id' => $displayId, 'context' => PaymentReference::CONTEXT_ORDER, 'tenant_id' => (string) $tenant->getId()]
+        );
+
+        return new CheckoutSessionData(id: $displayId, url: (string) $url, provider: 'dlocal');
+    }
+
+    /**
+     * Server-side charge with a Smart Fields token. The PAN never touches us.
+     */
+    public function chargeDirect(DirectPaymentData $payment): ProviderPaymentRef
+    {
+        if (! $payment->paymentToken) {
+            throw new \InvalidArgumentException('A dLocal Smart Fields token is required for direct payments.');
+        }
+
+        $isSubscription = $payment->subscriptionId !== null;
+
+        $payer = ['user_reference' => $payment->tenantId];
+
+        if (is_string($payment->payerDocument) && trim($payment->payerDocument) !== '') {
+            $payer['document'] = trim($payment->payerDocument);
+        }
+
+        $body = [
+            'order_id' => $payment->orderId,
+            'amount' => $payment->amountCents / 100,
+            'currency' => $payment->currency,
+            'country' => config('dlocal.country_default', 'PA'),
+            'payment_method_id' => 'CARD',
+            'payment_method_flow' => 'DIRECT',
+            'card' => ['token' => $payment->paymentToken],
+            'payer' => $payer,
+            'description' => $isSubscription ? 'Subscription first charge' : 'Direct charge',
+            'notification_url' => route('payments.webhooks.dlocal'),
+            'metadata' => array_merge($payment->metadata, [
+                'tenant_id' => $payment->tenantId,
+                'subscription_id' => $payment->subscriptionId,
+            ]),
+        ];
+
+        if ($isSubscription) {
+            $body['save'] = true;
+            $body['stored_credential_type'] = 'SUBSCRIPTION';
+            $body['stored_credential_usage'] = 'FIRST';
+        }
+
+        $response = $this->client->post('/payments', $body, $payment->orderId);
+
+        PaymentReference::firstOrCreate(
+            ['external_reference' => (string) $response['id']],
+            ['order_id' => $payment->orderId, 'context' => PaymentReference::CONTEXT_ORDER, 'tenant_id' => $payment->tenantId]
+        );
+
+        return new ProviderPaymentRef(
+            providerPaymentId: (string) $response['id'],
+            gateway: 'dlocal',
+            status: $this->mapStatus((string) ($response['status'] ?? '')),
+            amountCents: $payment->amountCents,
+            cardId: isset($response['card_id']) ? (string) $response['card_id'] : null,
+        );
+    }
+
+    /**
+     * MIT recurring charge on a saved card. The providerSubscriptionId is OUR
+     * subscription UUID (dLocal holds no subscription object).
+     */
+    public function chargeRecurring(TenantContract $tenant, string $providerSubscriptionId, int $amountCents): ProviderPaymentRef
+    {
+        $subscription = Subscription::findOrFail($providerSubscriptionId);
+
+        if ((string) $subscription->tenant_id !== (string) $tenant->getId()) {
+            throw new \RuntimeException('Subscription does not belong to the tenant.');
+        }
+
+        if (! $subscription->pm_card_id) {
+            throw new RecurringBillingNotSupported("Subscription {$subscription->id} has no saved card (pm_card_id).");
+        }
+
+        $orderId = "sub_{$subscription->id}_".now()->format('Ym');
+
+        $response = $this->client->post('/payments', [
+            'order_id' => $orderId,
+            'amount' => $amountCents / 100,
+            'currency' => $this->planCurrency($subscription),
+            'country' => config('dlocal.country_default', 'PA'),
+            'payment_method_id' => 'CARD',
+            'payment_method_flow' => 'DIRECT',
+            'card_id' => $subscription->pm_card_id,
+            'stored_credential_type' => 'SUBSCRIPTION',
+            'stored_credential_usage' => 'USED',
+            'description' => "Recurring charge — {$subscription->id}",
+            'notification_url' => route('payments.webhooks.dlocal'),
+            'metadata' => ['tenant_id' => (string) $tenant->getId(), 'subscription_id' => $subscription->id, 'type' => 'recurring'],
+        ], $orderId);
+
+        return new ProviderPaymentRef(
+            providerPaymentId: (string) $response['id'],
+            gateway: 'dlocal',
+            status: $this->mapStatus((string) ($response['status'] ?? '')),
+            amountCents: $amountCents,
+        );
+    }
+
+    public function refund(TenantContract $tenant, string $providerPaymentId, ?int $amountCents = null): void
+    {
+        $body = $amountCents !== null ? ['amount' => $amountCents / 100] : [];
+
+        $this->client->post("/payments/{$providerPaymentId}/refunds", $body, "refund_{$providerPaymentId}");
+    }
+
+    /**
+     * No gateway-side subscription object exists: creation happens through
+     * direct-charge + FulfillSubscription, recurrence through chargeRecurring.
+     */
+    public function createSubscription(TenantContract $tenant, PlanRef $plan): ProviderSubscriptionRef
+    {
+        throw new RecurringBillingNotSupported('dLocal holds no subscription object; subscribe via direct charge, MIT via chargeRecurring.');
+    }
+
+    public function changePlan(TenantContract $tenant, string $providerSubscriptionId, PlanRef $plan): ProviderSubscriptionRef
+    {
+        throw new RecurringBillingNotSupported('dLocal holds no subscription object; plan changes apply to the local subscription row.');
+    }
+
+    /**
+     * Nothing to cancel remotely. Documented no-op: the local subscription
+     * row transition (cancel_at_period_end) is owned by the Action.
+     */
+    public function cancel(TenantContract $tenant, string $providerSubscriptionId, bool $immediately = false): void
+    {
+        Log::info('billing.dlocal_cancel_noop', ['subscription_id' => $providerSubscriptionId]);
+    }
+
+    public function verify(string $rawPayload, string $signature): bool
+    {
+        $secret = (string) config('dlocal.webhook_secret');
+
+        if ($secret === '' || $signature === '') {
+            return false;
+        }
+
+        return hash_equals(hash_hmac('sha256', $rawPayload, $secret), $signature);
+    }
+
+    /**
+     * @throws WebhookVerificationFailed
+     */
+    public function verifyOrFail(string $rawPayload, string $signature): void
+    {
+        if (! $this->verify($rawPayload, $signature)) {
+            throw new WebhookVerificationFailed('Invalid dLocal webhook signature.');
         }
     }
 
-    public function loadMerchant(string $apiKey): MerchantData
+    public function normalize(array $payload): BillingEventData
     {
-        return new MerchantData(
-            id: (string) config('dlocal.login', ''),
-            slug: 'dlocal-merchant',
-            name: 'dLocal Merchant',
-            legalName: 'dLocal Merchant S.A.',
-            dailyAmountLimit: 0,
-            monthlyAmountLimit: 0,
-            services: []
-        );
-    }
+        $rawStatus = strtoupper((string) ($payload['status'] ?? ''));
 
-    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
-    {
-        $domainResolver = app(TenantDomainResolverContract::class);
-        $tenantDomain = $domainResolver->resolveDomain($payment->tenantId)
-            ?? $payment->tenantId.'.'.config('tenancy.central_domain');
-
-        $scheme = parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'https';
-        $port = parse_url(config('app.url'), PHP_URL_PORT);
-        $portSuffix = $port ? ":$port" : '';
-        $baseUrl = "$scheme://$tenantDomain$portSuffix";
-
-        $isSubscription = ($payment->customFieldValues['type'] ?? '') === 'subscription';
-
-        $requestData = new PaymentRequestData(
-            orderId: $payment->resolvedSlug(),
-            amountInCents: (int) round($payment->netAmount() * 100),
-            currency: 'USD',
-            country: (string) ($payment->customFieldValues['country'] ?? 'US'),
-            payer: new PayerData(
-                name: (string) ($payment->customFieldValues['name'] ?? 'Customer'),
-                email: $payment->email,
-                documentId: $payment->customFieldValues['document_id'] ?? null,
-                userReference: $payment->tenantId,
-            ),
-            flow: PaymentMethodFlow::Redirect,
-            description: $payment->description,
-            save: $isSubscription ? true : null,
-            storedCredentialType: $isSubscription ? 'SUBSCRIPTION' : null,
-            storedCredentialUsage: $isSubscription ? 'FIRST' : null,
-            notificationUrl: route('payments.webhooks.dlocal'),
-            successUrl: "$baseUrl/billing/success",
-            backUrl: "$baseUrl/billing/cancel",
-            metadata: array_merge($payment->customFieldValues, ['tenant_id' => $payment->tenantId]),
-        );
-
-        $response = $this->gateway->createPayment($requestData);
-
-        PaymentReference::withoutEvents(function () use ($response, $payment): void {
-            PaymentReference::firstOrCreate(
-                ['external_reference' => $response->id],
-                [
-                    'order_id' => $payment->resolvedSlug(),
-                    'context' => 'central',
-                    'tenant_id' => $payment->tenantId,
-                ],
-            );
-        });
-
-        return $response->redirectUrl ?? throw new RuntimeException('No redirect URL returned by dLocal');
-    }
-
-    public function verifyWebhook(string $payload, string $signature, string $secret): bool
-    {
-        $expected = hash_hmac('sha256', $payload, $secret);
-
-        return hash_equals($expected, $signature);
-    }
-
-    public function parseWebhookPayload(array $payload): PaymentResultData
-    {
-        $status = match ($payload['status'] ?? '') {
-            'PAID', 'SUCCESS' => PaymentStatus::Approved,
-            'REJECTED', 'CANCELLED' => PaymentStatus::Declined,
-            'PENDING' => PaymentStatus::Pending,
-            default => PaymentStatus::Failed,
+        $status = match ($rawStatus) {
+            'PAID', 'SUCCESS', 'APPROVED' => PaymentStatus::Approved,
+            'REJECTED', 'CANCELLED', 'FAILED' => PaymentStatus::Declined,
+            default => PaymentStatus::Pending,
         };
 
-        return new PaymentResultData(
-            gatewayReference: (string) ($payload['payment_id'] ?? $payload['id'] ?? ''),
-            displayId: (string) ($payload['order_id'] ?? $payload['metadata']['displayId'] ?? ''),
-            status: $status,
-            amount: (float) ($payload['amount'] ?? 0),
-            gatewayCode: 'DLOCAL',
-            authorizationCode: (string) ($payload['authorization_code'] ?? null),
-            errorCode: null,
-            errorMessage: $payload['status_detail'] ?? null,
+        $type = match ($status) {
+            PaymentStatus::Approved => BillingEventType::PaymentSucceeded->value,
+            PaymentStatus::Declined => BillingEventType::PaymentFailed->value,
+            default => BillingEventType::CheckoutCompleted->value,
+        };
+
+        return new BillingEventData(
+            type: $type,
+            gateway: 'dlocal',
+            gatewayEventId: (string) ($payload['payment_id'] ?? $payload['id'] ?? ''),
+            displayId: (string) ($payload['order_id'] ?? ''),
+            providerCustomerId: isset($payload['user_id']) ? (string) $payload['user_id'] : null,
+            amountCents: isset($payload['amount']) ? (int) round((float) $payload['amount'] * 100) : null,
+            currency: isset($payload['currency']) ? (string) $payload['currency'] : null,
             raw: $payload,
         );
     }
 
-    public function chargeSubscription(Subscription $subscription, int $amountInCents): PaymentResultData
+    private function mapStatus(string $rawStatus): string
     {
-        $tenant = $subscription->tenant;
+        return match (strtoupper($rawStatus)) {
+            'PAID', 'SUCCESS', 'APPROVED' => 'approved',
+            'REJECTED', 'CANCELLED', 'FAILED' => 'declined',
+            default => 'pending',
+        };
+    }
 
-        if (! $tenant) {
-            throw new RecurringBillingNotSupportedException('Recurring charge requires the subscription tenant.');
+    private function planCurrency(Subscription $subscription): string
+    {
+        if ($subscription->plan_id) {
+            try {
+                return $this->plans->findById($subscription->plan_id)->currency;
+            } catch (\Throwable) {
+                // Fall through to default.
+            }
         }
 
-        if (! $subscription->pm_card_id) {
-            throw new RecurringBillingNotSupportedException(
-                "Subscription {$subscription->id} has no saved payment method (pm_card_id)."
-            );
-        }
+        return 'USD';
+    }
 
-        $period = now()->format('Y-m');
-        $orderId = "sub_{$subscription->id}_{$period}";
+    private function resolveEmail(TenantContract $tenant): ?string
+    {
+        $model = config('tenancy.tenant_model');
+        $row = $model::where('id', $tenant->getId())->first();
 
-        $request = new PaymentRequestData(
-            orderId: $orderId,
-            amountInCents: $amountInCents,
-            currency: 'USD',
-            country: 'US',
-            payer: new PayerData(
-                name: $tenant->name,
-                email: $tenant->email,
-                userReference: $tenant->id,
-            ),
-            flow: PaymentMethodFlow::Direct,
-            cardId: $subscription->pm_card_id,
-            storedCredentialType: 'SUBSCRIPTION',
-            storedCredentialUsage: 'USED',
-            description: "Recurring subscription charge — {$subscription->id}",
-            notificationUrl: route('payments.webhooks.dlocal'),
-            metadata: [
-                'tenant_id' => $tenant->id,
-                'subscription_id' => $subscription->id,
-                'type' => 'recurring',
-            ],
-        );
-
-        $response = $this->gateway->createPayment($request);
-
-        PaymentReference::withoutEvents(function () use ($response, $tenant, $subscription): void {
-            PaymentReference::firstOrCreate(
-                ['external_reference' => $response->id],
-                [
-                    'order_id' => "sub_{$subscription->id}_".now()->format('Y-m'),
-                    'context' => 'central',
-                    'tenant_id' => $tenant->id,
-                ],
-            );
-        });
-
-        return new PaymentResultData(
-            gatewayReference: $response->id,
-            displayId: $orderId,
-            status: match (true) {
-                $response->status->isSuccessful() => PaymentStatus::Approved,
-                $response->status->isRejected() => PaymentStatus::Declined,
-                default => PaymentStatus::Pending,
-            },
-            amount: $response->amountInCents / 100,
-            gatewayCode: 'DLOCAL',
-            authorizationCode: null,
-            errorCode: $response->status->isRejected() ? $response->statusDetail : null,
-            errorMessage: $response->statusDetail,
-            raw: ['payment_id' => $response->id, 'order_id' => $orderId, 'status' => $response->status->value],
-        );
+        return is_string($row?->email) ? $row->email : null;
     }
 }

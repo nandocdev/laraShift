@@ -1,13 +1,52 @@
-/.phpunit.cache
-/node_modules
-/public/build
-/public/fonts-manifest.dev.json
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+```
+# Dependencies
+node_modules/
+vendor/
+
+# Logs
+*.log
+
+# Environment
 .env
+.env.local
+.env.*
+
+# Cache
+__pycache__/
+*.pyc
+*.pyo
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.temp
+```
+
+hot
+storage
+
 .env.backup
 .env.production
 .phpactor.json
@@ -23,3 +62,19 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/laravel
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# AI / agent tooling (local only, never tracked)
+.agents/
+.gemini/
+.opencode/
+.claude/
+AGENTS.md
+GEMINI.md
+opencode.json
+
+# Build artifacts (regenerated, never tracked)
+public/fonts-manifest.dev.json

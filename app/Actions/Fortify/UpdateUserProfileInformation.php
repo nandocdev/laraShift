@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Fortify;
 
-use App\Models\User;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -28,7 +30,7 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($user->id),
+                Rule::unique('users')->where('tenant_id', $user->tenant_id)->ignore($user->id),
             ],
         ])->validateWithBag('updateProfileInformation');
 

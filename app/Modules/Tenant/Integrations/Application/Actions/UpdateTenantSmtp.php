@@ -8,47 +8,31 @@ use App\Modules\Platform\Events\TenantSmtpConfigured;
 use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
 use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
 use App\Modules\Tenant\Compliance\Domain\Enums\AuditAction;
-use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
-use App\Modules\Tenant\Integrations\Application\DTO\SmtpConfigData;
+use App\Modules\Tenant\Experience\Application\Actions\PersistTenantSmtpSettings;
+use App\Modules\Tenant\Experience\Application\DTO\SmtpConfigData;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateTenantSmtp
 {
     /**
-     * Updates tenant SMTP settings.
+     * Orchestrates the SMTP configuration use case: persists via Experience,
+     * then records audit trail and announces the integration event.
      */
-    public function execute(SmtpConfigData $data): TenantSetting
+    public function execute(SmtpConfigData $data): void
     {
-        return DB::transaction(function () use ($data) {
-            $settings = TenantSetting::where('tenant_id', tenant('id'))->firstOrFail();
-
-            $updateData = [
-                'smtp_host' => $data->host,
-                'smtp_port' => $data->port,
-                'smtp_user' => $data->user,
-                'smtp_from_email' => $data->fromEmail,
-                'smtp_from_name' => $data->fromName,
-                'smtp_verified' => false, // Reset on save
-            ];
-
-            if ($data->password) {
-                $updateData['smtp_password'] = $data->password;
-            }
-
-            $settings->update($updateData);
+        DB::transaction(function () use ($data): void {
+            app(PersistTenantSmtpSettings::class)->execute($data);
 
             app(RecordAuditLogAction::class)->execute(
                 new AuditLogData(
                     action: AuditAction::SETTINGS_SMTP_CONFIGURED,
                     resource: 'settings',
-                    resourceId: $settings->id,
+                    resourceId: tenant('id'),
                     metadata: ['from_email' => $data->fromEmail]
                 )
             );
 
             event(new TenantSmtpConfigured(tenant('id'), $data->fromEmail));
-
-            return $settings;
         });
     }
 }

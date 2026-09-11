@@ -33,8 +33,14 @@ class AuditLog extends Model
         'action' => AuditAction::class,
     ];
 
+    /**
+     * @return BelongsTo<Model, $this>
+     */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        /** @var class-string<Model> $userModel */
+        $userModel = config('compliance.user_model', config('auth.providers.users.model', User::class));
+
+        return $this->belongsTo($userModel, 'user_id');
     }
 }

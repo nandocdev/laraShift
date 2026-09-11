@@ -6,13 +6,16 @@ namespace App\Modules\Tenant\Compliance\Application\Jobs;
 
 use App\Modules\Platform\Contracts\TenantAware;
 use App\Modules\Platform\Tenancy\Infrastructure\Jobs\Concerns\RehydratesTenantContext;
-use App\Modules\Tenant\Access\Domain\Models\User;
+use App\Modules\Tenant\Compliance\Application\Contracts\UserResolverContract;
+use App\Modules\Tenant\Compliance\Application\Queries\GetAuditLogsForExport;
 use App\Modules\Tenant\Compliance\Domain\Models\AuditLog;
 use App\Modules\Tenant\Compliance\Infrastructure\Notifications\AuditLogExportNotification;
+use BackedEnum;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -30,54 +33,75 @@ class ExportAuditLogsJob implements ShouldQueue, TenantAware
         public string $dateTo
     ) {}
 
-    public function handle(): void
-    {
-        $user = User::find($this->userId);
+    public function handle(
+        UserResolverContract $userResolver,
+        GetAuditLogsForExport $queryBuilder
+    ): void {
+        $user = $userResolver->resolve($this->userId);
 
         if (! $user) {
             return;
         }
 
-        $diff = Carbon::parse($this->dateFrom)->diffInDays($this->dateTo);
-        if ($diff > 90) {
-            Log::error('ExportAuditLogsJob: Range exceeded security policy.', [
+        $start = Carbon::parse($this->dateFrom)->startOfDay();
+        $end = Carbon::parse($this->dateTo)->endOfDay();
+
+        if ($start->gt($end) || $start->diffInDays($end) > 90) {
+            Log::error('ExportAuditLogsJob: Range invalid or exceeded security policy.', [
                 'tenant_id' => $this->tenantId,
                 'user_id' => $this->userId,
+                'from' => $this->dateFrom,
+                'to' => $this->dateTo,
             ]);
 
             return;
         }
 
-        $logs = AuditLog::with('user')
-            ->whereDate('created_at', '>=', $this->dateFrom)
-            ->whereDate('created_at', '<=', $this->dateTo)
-            ->oldest()
-            ->get();
+        $query = $queryBuilder->execute(
+            dateFrom: $this->dateFrom,
+            dateTo: $this->dateTo
+        );
 
-        $fileName = "exports/audit/audit_log_{$this->tenantId}_".Str::random(8).'.csv';
-        $handle = fopen('php://temp', 'r+');
+        $tmpPath = tempnam(sys_get_temp_dir(), 'audit_export');
+        if ($tmpPath === false) {
+            Log::error('ExportAuditLogsJob: Failed to create temporary file.');
+
+            return;
+        }
+
+        $handle = fopen($tmpPath, 'w');
+        if ($handle === false) {
+            Log::error('ExportAuditLogsJob: Failed to open temporary file stream.');
+            @unlink($tmpPath);
+
+            return;
+        }
 
         fputcsv($handle, ['ID', 'Date', 'Action', 'Member', 'Resource', 'Resource ID', 'IP', 'Metadata']);
 
-        foreach ($logs as $log) {
+        /** @var AuditLog $log */
+        foreach ($query->cursor() as $log) {
+            $actionValue = $log->action instanceof BackedEnum ? $log->action->value : (string) $log->action;
+
             fputcsv($handle, [
                 $log->id,
-                $log->created_at->toDateTimeString(),
-                $log->action,
+                $log->created_at?->toDateTimeString() ?? '',
+                $actionValue,
                 $log->user?->name ?? 'System',
                 $log->resource,
                 $log->resource_id,
                 $log->ip,
-                json_encode($log->metadata),
+                json_encode($log->metadata ?? []),
             ]);
         }
-
-        rewind($handle);
-        $content = stream_get_contents($handle);
         fclose($handle);
 
-        Storage::disk('private')->put($fileName, $content);
+        $fileName = "exports/audit/audit_log_{$this->tenantId}_".Str::random(8).'.csv';
+        Storage::disk('private')->putFileAs('', new File($tmpPath), $fileName);
+        @unlink($tmpPath);
 
-        $user->notify(new AuditLogExportNotification($fileName));
+        if (method_exists($user, 'notify')) {
+            $user->notify(new AuditLogExportNotification($fileName));
+        }
     }
 }

@@ -4,50 +4,50 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Application\Listeners;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Platform\Events\PaymentFailed;
-use App\Modules\Platform\Events\TenantSuspendedByDunning;
+use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
+use App\Modules\Central\Billing\Domain\Events\PaymentDeclined;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Provisioning\Actions\SuspendTenantForNonPayment;
 use Illuminate\Support\Facades\Log;
 
 class HandlePaymentFailure
 {
+    private const MIT_MAX_ATTEMPTS = 3;
+
+    public function __construct(private SuspendTenantForNonPayment $suspend) {}
+
     /**
-     * Handle the payment failure event.
-     * Centralizes Dunning logic for all providers.
+     * Async gateway decline (webhook) for a subscription-linked payment.
+     * MIT track only: link-based renewals never touch failed_attempts.
      */
-    public function handle(PaymentFailed $event): void
+    public function handle(PaymentDeclined $event): void
     {
-        $tenant = Tenant::find($event->tenantId);
+        $payment = $event->payment;
 
-        if (! $tenant) {
-            Log::error('Dunning: Tenant not found', ['tenant_id' => $event->tenantId]);
-
+        if (! $payment->subscription_id) {
             return;
         }
 
-        // Logic moved from StripeWebhookController for consistency
-        $attemptCount = $event->attemptCount;
+        $subscription = Subscription::find($payment->subscription_id);
 
-        // We'd ideally have amount/currency in the event or fetch it from invoice
-        // For now, we rely on the event or log as generic
+        if (! $subscription || ! $subscription->pm_card_id) {
+            return; // Not an MIT subscription: link track handles its own deadlines.
+        }
 
-        if ($attemptCount < 3) {
-            Log::info("Dunning: Payment attempt {$attemptCount} failed for tenant {$tenant->slug}");
-            // Notification logic...
-        } else {
-            Log::alert("Dunning: Maximum attempts reached. Suspending tenant {$tenant->slug}");
+        $attempts = $subscription->failed_attempts + 1;
 
-            $tenant->update([
-                'status' => 'suspended',
-                'suspended_at' => now(),
-            ]);
+        $subscription->update([
+            'failed_attempts' => $attempts,
+            'status' => SubscriptionStatus::PastDue,
+        ]);
 
-            TenantSuspendedByDunning::dispatch($tenant->id, $event->invoiceId);
+        Log::warning('billing.webhook_decline_counted', [
+            'subscription_id' => $subscription->id,
+            'attempt' => $attempts,
+        ]);
 
-            activity('billing')
-                ->performedOn($tenant)
-                ->withProperties(['invoice_id' => $event->invoiceId, 'attempts' => $attemptCount])
-                ->log('tenant_suspended_by_dunning');
+        if ($attempts >= self::MIT_MAX_ATTEMPTS) {
+            $this->suspend->execute((string) $subscription->tenant_id, 'mit_attempts_exhausted');
         }
     }
 }

@@ -4,90 +4,57 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
-use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
-use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
-use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
-use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Platform\Foundation\Http\Controllers\Controller;
+use App\Modules\Central\Billing\Domain\Models\Payment;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 
-class PaguelofacilCallbackController extends Controller
+final class PaguelofacilCallbackController extends Controller
 {
     /**
-     * Handle the return redirect from PagueloFacil Hosted Checkout.
+     * Browser return from the hosted checkout. UX-ONLY: never mutates state.
+     * Fulfillment happens exclusively via the server-side webhook.
      */
-    public function handleReturn(Request $request)
+    public function handleReturn(Request $request): RedirectResponse
     {
-        Log::info('PagueloFacil Callback received', $request->all());
+        $displayId = (string) ($request->input('PARM_2') ?? $request->input('PARM_1') ?? '');
+        $approved = ($request->input('Estado') === 'Aprobada') || ((int) $request->input('status') === 1);
 
-        $result = PaymentResultData::fromClavePayload($request->all());
-        $tenantId = $request->input('PARM_1');
-        $planId = $request->input('PARM_2');
+        Log::info('billing.clave_return', ['display_id' => $displayId, 'approved' => $approved]);
 
-        // Protocol and Port logic for environment-safe redirects
-        $protocol = $request->secure() ? 'https://' : 'http://';
-        $appUrlHost = parse_url(config('app.url'), PHP_URL_HOST);
-        $appUrlPort = parse_url(config('app.url'), PHP_URL_PORT);
-        $portSuffix = $appUrlPort ? ":{$appUrlPort}" : '';
+        $domain = $this->resolveDomain($displayId);
 
-        if ($result->status !== PaymentStatus::Approved || $result->amount <= 0) {
-            Log::warning('PagueloFacil Payment failed or denied', [
-                'status' => $result->status,
-                'error' => $result->errorMessage,
-            ]);
-
-            // Try to redirect back to the tenant's cancel page if we have the tenant
-            if ($tenantId && $tenant = Tenant::find($tenantId)) {
-                $primaryDomain = $tenant->domains()->first()?->domain ?? $tenant->slug.'.'.$appUrlHost;
-
-                return redirect()->away($protocol.$primaryDomain.$portSuffix.'/billing/cancel');
-            }
-
-            return redirect()->route('home')->with('error', __('Payment was denied or cancelled.'));
+        if (! $domain) {
+            return redirect('/')
+                ->with('status', __('Payment received. Your subscription will be activated shortly.'));
         }
 
-        try {
-            if (! $tenantId || ! $planId) {
-                throw new \Exception('Missing tenant or plan identifier in callback.');
-            }
+        $path = $approved ? '/billing/success' : '/billing/cancel';
 
-            $tenant = Tenant::findOrFail($tenantId);
-            $plan = Plan::where('id', $planId)->orWhere('slug', $planId)->firstOrFail();
+        return redirect()->away("https://{$domain}{$path}");
+    }
 
-            DB::transaction(function () use ($tenant, $plan, $result) {
-                // Create or update subscription record
-                Subscription::updateOrCreate(
-                    [
-                        'tenant_id' => $tenant->id,
-                        'provider_subscription_id' => $result->gatewayReference ?: 'PF_'.uniqid(),
-                    ],
-                    [
-                        'plan_id' => $plan->id,
-                        'status' => 'active',
-                        'gateway' => 'paguelofacil',
-                        'current_period_end' => now()->addMonth(), // Assuming monthly for this flow
-                    ]
-                );
-
-                // Update tenant's current plan
-                $tenant->update(['plan_id' => $plan->slug]);
-            });
-
-            Log::info('PagueloFacil Subscription activated', ['tenant' => $tenant->id, 'plan' => $plan->slug]);
-
-            // Redirect to success page on tenant domain
-            $primaryDomain = $tenant->domains()->first()?->domain ?? $tenant->slug.'.'.$appUrlHost;
-            $successUrl = $protocol.$primaryDomain.$portSuffix.'/billing/success';
-
-            return redirect()->away($successUrl);
-
-        } catch (\Exception $e) {
-            Log::error('Error processing PagueloFacil callback: '.$e->getMessage());
-
-            return redirect()->route('home')->with('error', __('An error occurred while finalizing your subscription.'));
+    private function resolveDomain(string $displayId): ?string
+    {
+        if ($displayId === '') {
+            return null;
         }
+
+        $tenantId = Payment::withoutGlobalScopes()->where('display_id', $displayId)->value('tenant_id');
+
+        if (! $tenantId) {
+            return null;
+        }
+
+        // Resolved via config to avoid importing the Provisioning model.
+        $model = config('tenancy.tenant_model');
+        $tenant = $model::find($tenantId);
+
+        if (! $tenant) {
+            return null;
+        }
+
+        return $tenant->domains()->first()?->domain ?? $tenant->slug.'.'.config('tenancy.central_domain');
     }
 }

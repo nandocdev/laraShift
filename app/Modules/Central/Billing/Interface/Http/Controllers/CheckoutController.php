@@ -4,58 +4,32 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Interface\Http\Controllers;
 
-use App\Modules\Central\Billing\Application\Actions\InitiateCheckout;
-use App\Modules\Central\Billing\Application\DTO\PaymentData;
-use App\Modules\Platform\Contracts\PaymentAmountResolverContract;
-use App\Modules\Platform\Foundation\Http\Controllers\Controller;
+use App\Modules\Central\Billing\Application\Actions\CreateCheckoutSessionAction;
+use App\Modules\Central\Catalog\Application\Services\PlanManager;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 final class CheckoutController extends Controller
 {
-    public function __construct(
-        private readonly InitiateCheckout $initiateAction
-    ) {}
-
-    /**
-     * Inicia una sesión de pago desde una petición HTTP estándar.
-     */
-    public function initiate(Request $request): JsonResponse
+    public function initiate(Request $request, CreateCheckoutSessionAction $checkouts, PlanManager $plans): JsonResponse
     {
         $data = $request->validate([
-            'description' => ['required', 'string', 'max:150'],
-            'display_id' => ['required', 'string'],
-            'email' => ['required', 'email'],
-            'taxAmount' => ['nullable', 'numeric', 'min:0'],
-            'discount' => ['nullable', 'numeric', 'min:0'],
-            'lang' => ['nullable', 'string', 'in:es,en'],
+            'plan' => ['required', 'string'],
+            'display_id' => ['required', 'string', 'max:64'],
         ]);
 
-        try {
-            $amountResolver = app(PaymentAmountResolverContract::class);
-            $amount = $amountResolver->resolveAmount($data['display_id']);
+        $tenant = tenant();
+        $plan = $plans->find($data['plan']);
 
-            $session = $this->initiateAction->execute(
-                data: new PaymentData(
-                    amount: $amount,
-                    description: $data['description'],
-                    displayId: $data['display_id'],
-                    email: $data['email'],
-                    tenantId: tenant('id'),
-                    taxAmount: (float) ($data['taxAmount'] ?? 0),
-                    discount: (float) ($data['discount'] ?? 0),
-                    lang: $data['lang'] ?? 'es',
-                ),
-                tenantId: tenant('id'),
-                apiKey: config('payments.clave.api_key'),
-            );
+        $session = $checkouts->execute($tenant, new PlanRef(
+            slug: $plan->slug,
+            amountCents: $plan->price_monthly,
+            currency: $plan->currency,
+            gatewayIds: $plan->gatewayIds(),
+        ), $data['display_id']);
 
-            return response()->json([
-                'checkout_url' => $session->checkoutUrl,
-                'slug' => $session->slug,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json(['checkout_url' => $session->url, 'display_id' => $session->id]);
     }
 }

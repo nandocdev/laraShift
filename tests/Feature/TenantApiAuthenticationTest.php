@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Tenant\Access\Application\Actions\GenerateApiKey;
 use App\Modules\Tenant\Access\Domain\Models\User;
@@ -18,9 +19,16 @@ it('authenticates a request via bearer token and api key', function () {
         'slug' => 'api-auth',
         'name' => 'API Auth Test',
         'email' => 'api-auth@test.com',
-        'plan_id' => 'free',
+        'plan_id' => 'api-auth-plan',
     ]);
-    $tenant->domains()->create(['domain' => 'api-auth.larashift.test']);
+    $tenant->domains()->create(['domain' => 'api-auth.openSaaS.test']);
+
+    Plan::create([
+        'name' => 'API Auth', 'slug' => 'api-auth-plan', 'price_monthly' => 1000, 'price_yearly' => 10000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => ['api_access'], 'gateway_ids' => [], 'quotas' => []],
+        'is_active' => true,
+    ]);
 
     $action = app(GenerateApiKey::class);
 
@@ -31,12 +39,12 @@ it('authenticates a request via bearer token and api key', function () {
     tenancy()->end();
 
     // 1. Unauthorized request (no token)
-    $this->getJson('http://api-auth.larashift.test/api/me')
+    $this->getJson('http://api-auth.openSaaS.test/api/me')
         ->assertStatus(401);
 
     // 2. Authorized request
     $this->withToken($plainKey)
-        ->getJson('http://api-auth.larashift.test/api/me')
+        ->getJson('http://api-auth.openSaaS.test/api/me')
         ->assertStatus(200)
         ->assertJson([
             'tenant' => 'API Auth Test',
@@ -55,7 +63,7 @@ it('denies access if scope is missing', function () {
         'name' => 'Scope Test',
         'email' => 'scope@test.com',
     ]);
-    $tenant->domains()->create(['domain' => 'scope.larashift.test']);
+    $tenant->domains()->create(['domain' => 'scope.openSaaS.test']);
 
     tenancy()->initialize($tenant);
     $result = app(GenerateApiKey::class)->execute('Limited Key', ['identity:read']);
@@ -69,7 +77,7 @@ it('denies access if scope is missing', function () {
         });
 
     $this->withToken($plainKey)
-        ->getJson('http://scope.larashift.test/api/protected')
+        ->getJson('http://scope.openSaaS.test/api/protected')
         ->assertStatus(403);
 });
 

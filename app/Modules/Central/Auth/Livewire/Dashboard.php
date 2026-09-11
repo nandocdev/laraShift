@@ -24,57 +24,79 @@ class Dashboard extends Component
         $tenantCount = Tenant::count();
         $tenantsThisMonth = Tenant::where('created_at', '>=', now()->startOfMonth())->count();
 
-        // Count users across tenants
-        $userCount = DB::table('users')->count();
-        $usersThisMonth = DB::table('users')->where('created_at', '>=', now()->startOfMonth())->count();
+        $activeCount = Tenant::where('status', 'active')->count();
+        $suspendedCount = Tenant::where('status', 'suspended')->count();
+        $quarantinedCount = Tenant::where('status', 'quarantine')->count();
 
-        $activeTenantsCount = Tenant::where('status', 'active')->count();
+        $userCount = $this->tableCount('users');
+        $usersThisMonth = $this->tableCountSince('users', now()->startOfMonth());
+
         $activePercentage = $tenantCount > 0
-            ? round(($activeTenantsCount / $tenantCount) * 100, 1)
-            : 100.0;
+            ? round(($activeCount / $tenantCount) * 100, 1)
+            : 0.0;
+
+        $alerts = $this->alerts();
+
+        $critical = count(array_filter($alerts, fn (array $a) => ($a['type'] ?? '') === 'critical'));
 
         return [
             'organizations' => [
-                'total' => $tenantCount > 0 ? $tenantCount : 128,
-                'growth' => $tenantsThisMonth > 0 ? "+{$tenantsThisMonth} este mes" : '+8 este mes',
+                'total' => $tenantCount,
+                'growth' => "+{$tenantsThisMonth} este mes",
             ],
             'users' => [
-                'total' => $userCount > 0 ? $userCount : 4821,
-                'growth' => $usersThisMonth > 0 ? "+{$usersThisMonth} este mes" : '+214 este mes',
+                'total' => $userCount,
+                'growth' => "+{$usersThisMonth} este mes",
             ],
             'active' => [
-                'total' => $activeTenantsCount > 0 ? $activeTenantsCount : 117,
-                'percentage' => $activePercentage > 0 ? "{$activePercentage}%" : '91.4%',
+                'total' => $activeCount,
+                'percentage' => "{$activePercentage}%",
+            ],
+            'breakdown' => [
+                'total' => $tenantCount,
+                'active' => $activeCount,
+                'suspended' => $suspendedCount,
+                'quarantined' => $quarantinedCount,
             ],
             'alerts' => [
-                'total' => 7,
-                'critical' => 2,
-                'critical_label' => '2 críticas',
+                'total' => count($alerts),
+                'critical' => $critical,
+                'critical_label' => $critical === 1 ? '1 crítica' : "{$critical} críticas",
             ],
         ];
     }
 
     /**
+     * Nuevos tenants por día, últimos 7 días. SQLite + PG portable.
+     * Sin datos retorna ceros — nunca cifras inventadas.
+     *
      * @return array<string, mixed>
      */
     #[Computed]
     public function activityChart(): array
     {
-        $days = [
-            ['key' => 'L', 'label' => 'Lunes', 'value' => 2150, 'users' => 2150],
-            ['key' => 'M', 'label' => 'Martes', 'value' => 2680, 'users' => 2680],
-            ['key' => 'M', 'label' => 'Miércoles', 'value' => 3420, 'users' => 3420],
-            ['key' => 'J', 'label' => 'Jueves', 'value' => 4100, 'users' => 4100],
-            ['key' => 'V', 'label' => 'Viernes', 'value' => 4821, 'users' => 4821],
-            ['key' => 'S', 'label' => 'Sábado', 'value' => 5200, 'users' => 5200],
-            ['key' => 'D', 'label' => 'Domingo', 'value' => 4450, 'users' => 4450],
-        ];
+        $days = [];
+        $counts = $this->tenantsPerDay(7);
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $key = $date->format('Y-m-d');
+            $value = (int) ($counts[$key] ?? 0);
+            $days[] = [
+                'key' => $date->translatedFormat('D'),
+                'label' => $date->translatedFormat('l'),
+                'value' => $value,
+                'users' => $value,
+            ];
+        }
+
+        $max = max(array_column($days, 'value'));
 
         return [
             'days' => $days,
-            'max' => 5500,
-            'min' => 2000,
-            'subtitle' => 'Usuarios activos · Últimos 7 días',
+            'max' => max($max, 1),
+            'min' => 0,
+            'subtitle' => 'Nuevos tenants · Últimos 7 días',
         ];
     }
 
@@ -91,17 +113,37 @@ class Dashboard extends Component
             $dbOk = false;
         }
 
+        $redisOk = true;
+        try {
+            if (! class_exists('Redis') && config('database.redis.client') === 'phpredis') {
+                $redisOk = false;
+            } else {
+                Redis::connection()->ping();
+            }
+        } catch (\Throwable) {
+            $redisOk = false;
+        }
+
+        $queueSize = $this->queueSize();
+        $queueOk = $queueSize <= 1000;
+
+        $pastDue = $this->safeCount(Subscription::class, 'past_due');
+
+        $billingOk = $pastDue === 0;
+
+        $allOk = $dbOk && $redisOk && $queueOk && $billingOk;
+
         return [
+            'status' => $allOk ? 'healthy' : 'degraded',
             'services' => [
-                ['name' => 'API', 'status' => 'operational', 'status_label' => 'Operativo'],
+                ['name' => 'API', 'status' => $dbOk ? 'operational' : 'degraded', 'status_label' => $dbOk ? 'Operativo' : 'Degradado'],
                 ['name' => 'Base de datos', 'status' => $dbOk ? 'operational' : 'degraded', 'status_label' => $dbOk ? 'Operativo' : 'Degradado'],
-                ['name' => 'Queue', 'status' => 'operational', 'status_label' => 'Operativo'],
-                ['name' => 'Storage', 'status' => 'operational', 'status_label' => 'Operativo'],
-                ['name' => 'Email', 'status' => 'degraded', 'status_label' => 'Degradado'],
+                ['name' => 'Queue', 'status' => $queueOk ? 'operational' : 'degraded', 'status_label' => $queueOk ? 'Operativo' : 'Degradado'],
+                ['name' => 'Billing', 'status' => $billingOk ? 'operational' : 'degraded', 'status_label' => $billingOk ? 'Operativo' : "{$pastDue} en mora"],
             ],
             'metrics' => [
-                'uptime' => '99.98%',
-                'avg_latency' => '142 ms',
+                'queue_size' => $queueSize,
+                'past_due' => $pastDue,
             ],
         ];
     }
@@ -114,57 +156,70 @@ class Dashboard extends Component
     {
         $activities = Activity::latest()->take(6)->get();
 
-        if ($activities->isNotEmpty()) {
-            return $activities->map(fn ($act) => [
-                'title' => str($act->description)->replace('_', ' ')->title()->toString(),
-                'detail' => ($act->causer?->name ?? 'Sistema').' · '.$act->created_at->diffForHumans(),
-                'time' => $act->created_at->diffForHumans(),
-            ])->toArray();
-        }
-
-        return [
-            [
-                'title' => 'Nueva organización',
-                'detail' => 'Acme Corp · hace 4 min',
-            ],
-            [
-                'title' => 'Usuario creado',
-                'detail' => 'admin@empresa.com · hace 11 min',
-            ],
-            [
-                'title' => 'Suscripción actualizada',
-                'detail' => 'Empresa XYZ · hace 18 min',
-            ],
-            [
-                'title' => 'Login administrativo',
-                'detail' => 'admin@sope.com · hace 26 min',
-            ],
-        ];
+        return $activities->map(fn ($act) => [
+            'title' => str($act->description)->replace('_', ' ')->title()->toString(),
+            'detail' => ($act->causer?->name ?? 'Sistema').' · '.$act->created_at->diffForHumans(),
+            'time' => $act->created_at->diffForHumans(),
+        ])->toArray();
     }
 
     /**
+     * Alertas derivadas de estado real: quarantine/suspend/past_due/cola.
+     * Vacío cuando todo está sano — nunca alertas inventadas.
+     *
      * @return array<int, array<string, string>>
      */
     #[Computed]
     public function alerts(): array
     {
-        return [
-            [
+        $alerts = [];
+
+        $quarantined = Tenant::where('status', 'quarantine')->count();
+        if ($quarantined > 0) {
+            $alerts[] = [
                 'type' => 'critical',
-                'title' => 'Servicio de email degradado',
-                'time' => 'hace 8 min',
-            ],
-            [
+                'title' => $quarantined === 1 ? '1 tenant en cuarentena' : "{$quarantined} tenants en cuarentena",
+                'time' => 'ahora',
+            ];
+        }
+
+        $suspended = Tenant::where('status', 'suspended')->count();
+        if ($suspended > 0) {
+            $alerts[] = [
                 'type' => 'warning',
-                'title' => '12 pagos pendientes',
-                'time' => 'hace 24 min',
-            ],
-            [
+                'title' => $suspended === 1 ? '1 tenant suspendido' : "{$suspended} tenants suspendidos",
+                'time' => 'ahora',
+            ];
+        }
+
+        $pastDue = $this->safeCount(Subscription::class, 'past_due');
+        if ($pastDue > 0) {
+            $alerts[] = [
                 'type' => 'warning',
-                'title' => '3 organizaciones próximas a vencer',
-                'time' => 'hace 1 h',
-            ],
-        ];
+                'title' => $pastDue === 1 ? '1 suscripción en mora' : "{$pastDue} suscripciones en mora",
+                'time' => 'ahora',
+            ];
+        }
+
+        $pendingPayments = $this->safeCount(Payment::class, 'pending');
+        if ($pendingPayments > 0) {
+            $alerts[] = [
+                'type' => 'warning',
+                'title' => $pendingPayments === 1 ? '1 pago pendiente' : "{$pendingPayments} pagos pendientes",
+                'time' => 'ahora',
+            ];
+        }
+
+        $failedJobs = $this->failedJobsCount();
+        if ($failedJobs > 0) {
+            $alerts[] = [
+                'type' => $failedJobs > 10 ? 'critical' : 'warning',
+                'title' => $failedJobs === 1 ? '1 job fallido en cola' : "{$failedJobs} jobs fallidos en cola",
+                'time' => 'ahora',
+            ];
+        }
+
+        return $alerts;
     }
 
     /**
@@ -175,70 +230,117 @@ class Dashboard extends Component
     {
         $dbTenants = Tenant::with('domains')->latest()->take(5)->get();
 
-        if ($dbTenants->isNotEmpty()) {
+        if ($dbTenants->isEmpty()) {
+            return [];
+        }
+
+        $userCounts = collect();
+        try {
             $userCounts = DB::table('users')
                 ->whereIn('tenant_id', $dbTenants->pluck('id'))
                 ->selectRaw('tenant_id, count(*) as total')
                 ->groupBy('tenant_id')
                 ->pluck('total', 'tenant_id');
-
-            $centralHost = parse_url((string) config('app.url'), PHP_URL_HOST) ?? 'localhost';
-
-            return $dbTenants->map(function ($tenant) use ($userCounts, $centralHost) {
-                return [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domains->first()?->domain ?? ($tenant->slug.'.'.$centralHost),
-                    'plan' => $tenant->plan_id ? ucfirst((string) $tenant->plan_id) : 'Pro',
-                    'users_count' => (int) ($userCounts[$tenant->id] ?? 8),
-                    'status' => $tenant->status === 'active' ? 'active' : ($tenant->status === 'suspended' ? 'review' : 'active'),
-                    'status_label' => $tenant->status === 'active' ? 'Activa' : 'Revisar',
-                ];
-            })->toArray();
+        } catch (\Throwable) {
+            // Tabla users ausente en algún contexto: conteos en 0.
         }
 
-        return [
-            [
-                'id' => 'acme-corp',
-                'name' => 'Acme Corp',
-                'domain' => 'acme.larashift.com',
-                'plan' => 'Pro',
-                'users_count' => 42,
-                'status' => 'active',
-                'status_label' => 'Activa',
-            ],
-            [
-                'id' => 'empresa-xyz',
-                'name' => 'Empresa XYZ',
-                'domain' => 'xyz.larashift.com',
-                'plan' => 'Business',
-                'users_count' => 87,
-                'status' => 'active',
-                'status_label' => 'Activa',
-            ],
-            [
-                'id' => 'startup-labs',
-                'name' => 'Startup Labs',
-                'domain' => 'startuplabs.larashift.com',
-                'plan' => 'Starter',
-                'users_count' => 8,
-                'status' => 'active',
-                'status_label' => 'Activa',
-            ],
-            [
-                'id' => 'global-services',
-                'name' => 'Global Services',
-                'domain' => 'globalservices.larashift.com',
-                'plan' => 'Pro',
-                'users_count' => 61,
-                'status' => 'review',
-                'status_label' => 'Revisar',
-            ],
-        ];
+        $centralHost = parse_url((string) config('app.url'), PHP_URL_HOST) ?? 'localhost';
+
+        return $dbTenants->map(function ($tenant) use ($userCounts, $centralHost) {
+            return [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'domain' => $tenant->domains->first()?->domain ?? ($tenant->slug.'.'.$centralHost),
+                'users_count' => (int) ($userCounts[$tenant->id] ?? 0),
+                'status' => $tenant->status,
+                'status_label' => $this->tenantStatusLabel($tenant->status),
+            ];
+        })->toArray();
     }
 
     public function render(): View
     {
         return view('central-auth::pages.dashboard');
+    }
+
+    private function tenantStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'active' => 'Activa',
+            'suspended' => 'Suspendida',
+            'quarantine' => 'Cuarentena',
+            'past_due' => 'En mora',
+            'pending_payment' => 'Pago pendiente',
+            'provisioning' => 'Aprovisionando',
+            'archived' => 'Archivada',
+            'failed' => 'Fallida',
+            'expired' => 'Expirada',
+            default => ucfirst($status),
+        };
+    }
+
+    private function tableCount(string $table): int
+    {
+        try {
+            return DB::table($table)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function tableCountSince(string $table, \DateTimeInterface $since): int
+    {
+        try {
+            return DB::table($table)->where('created_at', '>=', $since)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Conteo por status tolerante a tablas ausentes (tests SQLite parciales).
+     */
+    private function safeCount(string $model, string $status): int
+    {
+        try {
+            return $model::where('status', $status)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * @return array<string, int> Y-m-d => total
+     */
+    private function tenantsPerDay(int $days): array
+    {
+        try {
+            return Tenant::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
+                ->selectRaw('date(created_at) as day, count(*) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day')
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private function queueSize(): int
+    {
+        try {
+            return Queue::size();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function failedJobsCount(): int
+    {
+        try {
+            return DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 }

@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Jobs\ProvisionTenantJob;
 use App\Modules\Central\Provisioning\Models\Tenant;
-use App\Modules\Central\Provisioning\Notifications\OnboardingExpiredNotification;
 use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
@@ -21,7 +19,6 @@ beforeEach(function () {
             'slug' => $slug,
             'name' => Str::headline($slug),
             'email' => $slug.'@test.com',
-            'plan_id' => 'free',
             'status' => $status,
         ]);
 
@@ -68,30 +65,6 @@ it('does not re-dispatch fresh provisioning tenants', function () {
     $this->artisan('provisioning:reconcile')->assertExitCode(0);
 
     Bus::assertNotDispatched(ProvisionTenantJob::class);
-});
-
-it('expires pending_payment tenants that never paid and notifies them', function () {
-    Notification::fake();
-
-    $tenant = ($this->makeTenant)('reconcile-expire', 'pending_payment', now()->subDays(2));
-
-    $this->artisan('provisioning:reconcile')->assertExitCode(0);
-
-    expect($tenant->fresh()->status)->toBe('expired');
-    expect($tenant->fresh()->provisioned_at)->toBeNull();
-
-    Notification::assertSentTo($tenant, OnboardingExpiredNotification::class);
-});
-
-it('keeps recent pending_payment tenants', function () {
-    Notification::fake();
-
-    $tenant = ($this->makeTenant)('reconcile-recent', 'pending_payment', now()->subHour());
-
-    $this->artisan('provisioning:reconcile')->assertExitCode(0);
-
-    expect($tenant->fresh()->status)->toBe('pending_payment');
-    Notification::assertNotSentTo($tenant, OnboardingExpiredNotification::class);
 });
 
 it('reconciles a single tenant with the --tenant option', function () {

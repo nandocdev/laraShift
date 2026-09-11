@@ -7,6 +7,7 @@ namespace App\Modules\Tenant\Experience\Domain\Policies;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Experience\Domain\Models\TenantSetting;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 class TenantSettingPolicy
 {
@@ -17,7 +18,18 @@ class TenantSettingPolicy
      */
     public function update(User $user, TenantSetting $settings): bool
     {
-        // For now, allow any user with 'admin' role or 'manage settings' permission
-        return $user->hasRole('admin') || $user->hasPermissionTo('manage settings');
+        if ((string) $user->tenant_id !== (string) $settings->tenant_id) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['admin', 'Administrator', 'owner', 'Owner'])) {
+            return true;
+        }
+
+        try {
+            return $user->hasAnyPermission(['settings:manage', 'manage settings']);
+        } catch (PermissionDoesNotExist) {
+            return false;
+        }
     }
 }

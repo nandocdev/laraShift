@@ -1,10 +1,12 @@
 <?php
 
 use App\Modules\Tenant\Access\Domain\Models\User;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 test('profile page is displayed', function () {
-    $this->actingAs($user = User::factory()->create());
+    $this->actingAs($user = User::factory()->create(['status' => 'active']));
 
     $this->get(route('profile.edit'))->assertOk();
 });
@@ -58,6 +60,15 @@ test('user can delete their account', function () {
 
     expect($user->fresh()->trashed())->toBeTrue();
     expect(auth()->check())->toBeFalse();
+});
+
+test('settings pages live under tenancy initialisation', function () {
+    foreach (['profile.edit', 'appearance.edit', 'security.edit'] as $name) {
+        $route = Route::getRoutes()->getByName($name);
+
+        expect($route)->not->toBeNull()
+            ->and($route->gatherMiddleware())->toContain(InitializeTenancyByDomain::class);
+    }
 });
 
 test('correct password must be provided to delete account', function () {

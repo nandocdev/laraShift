@@ -6,16 +6,21 @@ namespace App\Modules\Tenant\Compliance\Interface\Livewire;
 
 use App\Modules\Tenant\Compliance\Application\Actions\ExportTenantData;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class DataExport extends Component
 {
+    use AuthorizesRequests;
+
     public bool $exporting = false;
 
     public function export(ExportTenantData $action): void
     {
+        $this->authorize('settings:manage');
+
         $this->exporting = true;
 
         try {
@@ -30,6 +35,8 @@ class DataExport extends Component
 
     public function render(): View
     {
+        $this->authorize('settings:manage');
+
         return view('compliance::livewire.data-export');
     }
 }

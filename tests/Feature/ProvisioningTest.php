@@ -22,7 +22,6 @@ it('provisions a tenant atomically and dispatches the event', function () {
         name: 'Acme Corp',
         slug: 'acme',
         email: 'admin@acme.com',
-        plan_id: 'free',
         password: 'password123'
     );
 
@@ -44,7 +43,6 @@ it('creates the initial admin user via the listener', function () {
         name: 'Acme Corp',
         slug: 'acme',
         email: 'admin@acme.com',
-        plan_id: 'free',
         password: 'password123'
     );
 

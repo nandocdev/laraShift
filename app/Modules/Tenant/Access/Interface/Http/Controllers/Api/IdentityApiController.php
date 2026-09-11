@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class IdentityApiController extends Controller
 {
@@ -23,7 +24,7 @@ class IdentityApiController extends Controller
     {
         Gate::authorize('team:read');
 
-        $members = User::with('roles')->latest()->get()->map(fn ($user) => [
+        $members = User::with('roles')->latest()->paginate(50)->through(fn ($user) => [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -44,7 +45,10 @@ class IdentityApiController extends Controller
 
         $validated = $request->validate([
             'email' => 'required|email|max:255',
-            'role' => 'required|exists:roles,name',
+            'role' => [
+                'required',
+                Rule::exists('roles', 'name')->where('tenant_id', tenant('id')),
+            ],
         ]);
 
         try {
@@ -74,8 +78,8 @@ class IdentityApiController extends Controller
         $invitations = Invitation::with('role')
             ->whereNull('accepted_at')
             ->latest()
-            ->get()
-            ->map(fn ($invite) => [
+            ->paginate(50)
+            ->through(fn ($invite) => [
                 'id' => $invite->id,
                 'email' => $invite->email,
                 'role' => $invite->role->name,
@@ -126,7 +130,10 @@ class IdentityApiController extends Controller
         Gate::authorize('team:manage');
 
         $validated = $request->validate([
-            'role' => 'required|exists:roles,name',
+            'role' => [
+                'required',
+                Rule::exists('roles', 'name')->where('tenant_id', tenant('id')),
+            ],
         ]);
 
         $user = User::findOrFail($id);
@@ -149,7 +156,10 @@ class IdentityApiController extends Controller
         Gate::authorize('roles:manage');
 
         $validated = $request->validate([
-            'name' => 'required|string|min:3|max:100|unique:roles,name',
+            'name' => [
+                'required', 'string', 'min:3', 'max:100',
+                Rule::unique('roles', 'name')->where('tenant_id', tenant('id')),
+            ],
             'permissions' => 'array',
         ]);
 

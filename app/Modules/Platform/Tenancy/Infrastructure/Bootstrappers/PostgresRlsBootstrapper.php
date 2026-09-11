@@ -23,7 +23,9 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
         try {
             $connection = DB::connection();
             if ($connection->getDriverName() === 'pgsql') {
-                $connection->statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenantId]);
+                // Use SET LOCAL when inside a transaction (preferred for Octane/PgBouncer), else session fallback
+                $isLocal = DB::transactionLevel() > 0;
+                $connection->statement("SELECT set_config('app.tenant_id', ?, ?)", [(string) $tenantId, $isLocal]);
             }
         } catch (\Throwable $e) {
             \Log::critical("RLS Bootstrapping failed for tenant {$tenantId}: ".$e->getMessage());
@@ -38,7 +40,8 @@ final class PostgresRlsBootstrapper implements TenancyBootstrapper
         try {
             $connection = DB::connection();
             if ($connection->getDriverName() === 'pgsql') {
-                $connection->statement("SELECT set_config('app.tenant_id', '', false)");
+                $isLocal = DB::transactionLevel() > 0;
+                $connection->statement("SELECT set_config('app.tenant_id', '', ?)", [$isLocal]);
             }
         } catch (\Throwable $e) {
             \Log::error('RLS Revert failed: '.$e->getMessage());

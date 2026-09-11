@@ -26,10 +26,10 @@ class OnboardingExpiredNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Your LaraShift onboarding has expired'))
+            ->subject(__('Your openSaaS onboarding has expired'))
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('Your instance for **:tenant** was created but the payment was not completed, so the onboarding has expired.', ['tenant' => $this->tenantName]))
             ->line(__('If you still want to use the platform, you can start a new onboarding at any time.'))
-            ->action(__('Return to LaraShift', []), "http://{$this->domain}");
+            ->action(__('Return to openSaaS', []), "http://{$this->domain}");
     }
 }

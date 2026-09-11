@@ -21,7 +21,7 @@ beforeEach(function () {
 });
 
 test('security settings page can be rendered', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['status' => 'active']);
 
     $response = $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
@@ -36,7 +36,7 @@ test('security settings page can be rendered', function () {
 });
 
 test('security settings page requires password confirmation when enabled', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['status' => 'active']);
 
     $response = $this->actingAs($user)
         ->get(route('security.edit'));
@@ -47,7 +47,7 @@ test('security settings page requires password confirmation when enabled', funct
 test('security settings page renders without two factor when feature is disabled', function () {
     config(['fortify.features' => []]);
 
-    $user = User::factory()->create();
+    $user = User::factory()->create(['status' => 'active']);
 
     $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
@@ -60,7 +60,7 @@ test('security settings page renders without two factor when feature is disabled
 });
 
 test('two factor authentication disabled when confirmation abandoned between requests', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['status' => 'active']);
 
     $user->forceFill([
         'two_factor_secret' => encrypt('test-secret'),

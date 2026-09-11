@@ -37,8 +37,7 @@ class QuotaThresholdReachedNotification extends Notification implements ShouldQu
             $message->error()
                 ->line(__('Your organization has reached **100%** of its :metric quota.', ['metric' => $metricName]))
                 ->line(__('Current usage: **:current / :limit**', ['current' => $this->current, 'limit' => $this->limit]))
-                ->line(__('To prevent service interruption, please consider upgrading your plan.'))
-                ->action(__('View Plans', []), route('tenant.billing.manage'));
+                ->action(__('Dashboard', []), route('dashboard'));
         } else {
             $message->line(__('Your organization has reached **:threshold%** of its :metric quota.', ['metric' => $metricName, 'threshold' => $this->threshold]))
                 ->line(__('Current usage: **:current / :limit**', ['current' => $this->current, 'limit' => $this->limit]))

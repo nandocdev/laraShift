@@ -8,8 +8,11 @@ use App\Modules\Central\Auth\Livewire\Dashboard;
 use App\Modules\Central\Auth\Livewire\ForgotPassword;
 use App\Modules\Central\Auth\Livewire\Login;
 use App\Modules\Central\Auth\Livewire\LoginChallenge;
+use App\Modules\Central\Auth\Livewire\ManageCentralUsers;
 use App\Modules\Central\Auth\Livewire\ResetPassword;
 use App\Modules\Central\Auth\Livewire\TwoFactorEnrollment;
+use App\Modules\Central\Auth\Models\CentralUser;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -22,6 +25,8 @@ class CentralAuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::define('admin-users:manage', fn (CentralUser $user) => $user->is_global_admin);
+
         $this->loadViewsFrom(__DIR__.'/../UI', 'central-auth');
         $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
 
@@ -31,5 +36,6 @@ class CentralAuthServiceProvider extends ServiceProvider
         Livewire::component('central-auth-reset-password', ResetPassword::class);
         Livewire::component('central-auth-2fa-enrollment', TwoFactorEnrollment::class);
         Livewire::component('central-auth-dashboard', Dashboard::class);
+        Livewire::component('central-auth-manage-users', ManageCentralUsers::class);
     }
 }

@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Platform\Tenancy\Application\Services;
 
+use App\Modules\Platform\Contracts\PlanQuotaResolver;
 use App\Modules\Platform\Contracts\TenantContract;
 use App\Modules\Platform\Tenancy\Infrastructure\Notifications\QuotaThresholdReachedNotification;
 use Illuminate\Support\Facades\Cache;
 
 class QuotaManager
 {
+    // C005: namespace cache per tenant per PROJECT_DECISIONS.md §6 -> tenant:{id}:quota:{metric}:{period}
     private const KEY_PREFIX = 'quota';
+
+    public function __construct(private PlanQuotaResolver $planQuotas) {}
 
     /**
      * Increments a metric and checks if it exceeds the plan limit.
@@ -46,7 +50,7 @@ class QuotaManager
 
     public function getLimit(TenantContract $tenant, string $metric): int
     {
-        return $tenant->getQuotaLimit($metric);
+        return $this->planQuotas->limitFor($tenant, $metric) ?? $tenant->getQuotaLimit($metric);
     }
 
     public function forceIncrement(TenantContract $tenant, string $metric, int $amount = 1): void
@@ -70,7 +74,8 @@ class QuotaManager
         $period = now()->format('Y-m');
         $prefix = self::KEY_PREFIX;
 
-        return "{$prefix}:{$tenant->getId()}:{$metric}:{$period}";
+        // PROJECT_DECISIONS.md §6: tenant:{tenant_id}:{key}
+        return "tenant:{$tenant->getId()}:{$prefix}:{$metric}:{$period}";
     }
 
     private function checkThresholds(TenantContract $tenant, string $metric, int $current, int $limit): void
@@ -85,7 +90,7 @@ class QuotaManager
 
         foreach ([80, 100] as $threshold) {
             if ($percentage >= $threshold) {
-                $lockKey = "{$prefix}:alert:{$tenant->getId()}:{$metric}:{$threshold}:{$period}";
+                $lockKey = "tenant:{$tenant->getId()}:{$prefix}:alert:{$metric}:{$threshold}:{$period}";
 
                 if (Cache::add($lockKey, '1', now()->addDays(30))) {
                     $tenant->notify(new QuotaThresholdReachedNotification($metric, $current, $limit, $threshold));

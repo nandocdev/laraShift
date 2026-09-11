@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Fortify;
 
-use App\Models\User;
+use App\Modules\Tenant\Access\Application\Actions\RevokeOtherTenantSessions;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -31,5 +34,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
         $user->forceFill([
             'password' => Hash::make($input['password']),
         ])->save();
+
+        app(RevokeOtherTenantSessions::class)->execute($user);
     }
 }

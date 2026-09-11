@@ -18,7 +18,7 @@ final readonly class EnsureTenantRolesExist
         $tenantId = $tenant->getTenantKey();
 
         // Admin Role
-        Role::updateOrCreate(
+        Role::firstOrCreate(
             ['tenant_id' => $tenantId, 'name' => 'admin', 'guard_name' => 'web'],
             [
                 'id' => Str::uuid()->toString(),
@@ -27,7 +27,7 @@ final readonly class EnsureTenantRolesExist
         );
 
         // Member Role (not system — regular user role)
-        Role::updateOrCreate(
+        Role::firstOrCreate(
             ['tenant_id' => $tenantId, 'name' => 'member', 'guard_name' => 'web'],
             [
                 'id' => Str::uuid()->toString(),

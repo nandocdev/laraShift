@@ -4,135 +4,32 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Billing\Infrastructure\Gateways;
 
-use App\Modules\Central\Billing\Application\DTO\MerchantData;
-use App\Modules\Central\Billing\Application\DTO\PaymentData;
-use App\Modules\Central\Billing\Application\DTO\PaymentResultData;
-use App\Modules\Central\Billing\Domain\Exceptions\ClaveGatewayException;
-use App\Modules\Central\Billing\Domain\Exceptions\InvalidMerchantException;
-use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupportedException;
-use App\Modules\Central\Billing\Domain\Exceptions\ServiceNotFoundException;
-use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Billing\Domain\Enums\BillingEventType;
+use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
+use App\Modules\Central\Billing\Domain\Exceptions\WebhookVerificationFailed;
+use App\Modules\Platform\Contracts\Billing\BillingCapability;
+use App\Modules\Platform\Contracts\Billing\BillingEventData;
+use App\Modules\Platform\Contracts\Billing\BillingProvider;
+use App\Modules\Platform\Contracts\Billing\CheckoutProvider;
+use App\Modules\Platform\Contracts\Billing\CheckoutSessionData;
+use App\Modules\Platform\Contracts\Billing\PaymentMethodType;
+use App\Modules\Platform\Contracts\Billing\PlanRef;
+use App\Modules\Platform\Contracts\Billing\WebhookProvider;
+use App\Modules\Platform\Contracts\TenantContract;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
-final class ClaveGateway implements PaymentGateway
+final readonly class ClaveGateway implements BillingProvider, CheckoutProvider, WebhookProvider
 {
-    /**
-     * Gateway codes accepted as Clave services.
-     */
-    private const CLAVE_GATEWAY_CODES = ['CLAVE', 'CROEM_CLAV'];
+    public function __construct(private ClaveEnvironment $environment) {}
 
-    /**
-     * Service code used when loading merchant services from the API.
-     */
-    private const SERVICE_CODE = 'LK';
-
-    public function __construct(
-        private readonly ClaveEnvironment $environment,
-    ) {}
-
-    public function loadMerchant(string $apiKey): MerchantData
+    public function supports(BillingCapability $capability, ?PaymentMethodType $forMethod = null): bool
     {
-        // loadMerchantServices is usually under HostedFields or root depending on the API version
-        // We'll try management base first
-        $response = $this->post('/loadMerchantServices', [
-            'CCLW' => $apiKey,
-            'serviceCode' => self::SERVICE_CODE,
-        ], $apiKey);
-
-        if (! ($response['success'] ?? false)) {
-            throw new InvalidMerchantException(
-                $response['description'] ?? 'Invalid merchant response',
-            );
-        }
-
-        $services = $response['services'] ?? [];
-
-        if (empty($services)) {
-            throw new ServiceNotFoundException('No services returned for merchant');
-        }
-
-        $claveServices = array_values(array_filter(
-            $services,
-            fn (array $s) => in_array($s['gatewayCode'] ?? '', self::CLAVE_GATEWAY_CODES, true),
-        ));
-
-        if (empty($claveServices)) {
-            throw new ServiceNotFoundException(
-                'No CLAVE service found for this merchant. Valid gateway codes: '.implode(', ', self::CLAVE_GATEWAY_CODES),
-            );
-        }
-
-        // First service entry also carries merchant-level fields
-        $merchantFields = $claveServices[0];
-
-        return MerchantData::fromApiResponse($merchantFields, $claveServices);
-    }
-
-    public function buildCheckoutUrl(PaymentData $payment, string $apiKey): string
-    {
-        // LinkDeamon.cfm lives at the root of the apiBaseUrl
-        $url = rtrim($this->environment->apiBaseUrl(), '/').'/LinkDeamon.cfm';
-
-        $payload = [
-            'CCLW' => config('payments.clave.cclw', $apiKey),
-            'CMTN' => number_format((float) $payment->netAmount(), 2, '.', ''),
-            'CDSC' => substr($payment->description, 0, 150),
-            'RETURN_URL' => bin2hex(route('central.billing.paguelofacil.callback')),
-            'PARM_1' => $payment->tenantId,
-            'PARM_2' => $payment->customFieldValues['plan_id'] ?? $payment->displayId,
-        ];
-
-        if (! empty($payment->customFieldValues)) {
-            // PagueloFacil expects PF_CF as a hex-encoded JSON array of objects:
-            // [ {"id":"key", "nameOrLabel":"Label", "type":"hidden", "value":"val"} ]
-            $customFields = [];
-            foreach ($payment->customFieldValues as $key => $value) {
-                $customFields[] = [
-                    'id' => $key,
-                    'nameOrLabel' => ucwords(str_replace(['_', '-'], ' ', (string) $key)),
-                    'type' => 'hidden',
-                    'value' => (string) $value,
-                ];
-            }
-            $payload['PF_CF'] = bin2hex(json_encode($customFields));
-        }
-
-        Log::info('PagueloFacil: Requesting Enlace de Pago', ['url' => $url, 'payload' => $payload]);
-
-        $response = Http::asForm()->timeout(15)->post($url, $payload);
-
-        if ($response->failed()) {
-            throw new ClaveGatewayException('Failed to connect to PagueloFacil LinkDeamon: '.$response->status());
-        }
-
-        $responseData = $response->json();
-
-        if (! ($responseData['success'] ?? false)) {
-            throw new ClaveGatewayException($responseData['message'] ?? 'Failed to generate PagueloFacil payment link.');
-        }
-
-        return $responseData['data']['url'] ?? throw new ClaveGatewayException('No URL returned by PagueloFacil.');
-    }
-
-    public function verifyWebhook(string $payload, string $signature, string $secret): bool
-    {
-        // PagueLo Fácil signs webhooks with HMAC-SHA256 if configured,
-        // or uses a simple token match. Our implementation assumes HMAC.
-        if (empty($signature)) {
-            // Fallback for non-signed webhooks if needed, but security first
-            return false;
-        }
-
-        $expected = hash_hmac('sha256', $payload, $secret);
-
-        return hash_equals($expected, $signature);
-    }
-
-    public function parseWebhookPayload(array $payload): PaymentResultData
-    {
-        return PaymentResultData::fromClavePayload($payload);
+        // Clave/PagueloFácil is redirect-checkout only. Recurrence happens
+        // through scheduler-generated checkouts (§9), never gateway-side.
+        return $capability === BillingCapability::Checkout;
     }
 
     public function identifier(): string
@@ -140,122 +37,118 @@ final class ClaveGateway implements PaymentGateway
         return 'clave';
     }
 
-    public function listTransactions(string $apiKey, array $filters = []): array
+    public function createCheckout(TenantContract $tenant, PlanRef $plan, string $displayId): CheckoutSessionData
     {
-        // MerchantTransactions uses the management base URL
-        $response = $this->get('/MerchantTransactions', $filters, $apiKey);
-
-        if (! ($response['success'] ?? false)) {
-            return [];
-        }
-
-        return $response['data'] ?? [];
-    }
-
-    public function chargeSubscription(Subscription $subscription, int $amountInCents): PaymentResultData
-    {
-        // Clave (PagueloFacil) manages recurrence on its own side via its
-        // subscription API; engine-managed recurring charges are not supported.
-        throw new RecurringBillingNotSupportedException(
-            'Clave recurrence is gateway-managed; reconcile via SyncSubscription.'
+        return new CheckoutSessionData(
+            id: $displayId,
+            url: $this->buildCheckoutUrl($tenant, $plan, $displayId),
+            provider: 'clave',
         );
     }
 
-    // -------------------------------------------------------------------------
-    // Internal HTTP helpers
-    // -------------------------------------------------------------------------
-
     /**
-     * @throws ClaveGatewayException
+     * Build the hosted checkout (Enlace de Pago) URL via LinkDeamon.cfm.
+     * Pure HTTP: writes nothing, creates no records.
      */
-    private function post(string $path, array $body, ?string $apiKey = null): array
+    public function buildCheckoutUrl(TenantContract $tenant, PlanRef $plan, string $displayId): string
     {
-        $url = rtrim($this->environment->managementBaseUrl(), '/').$path;
+        $merchantId = (string) config('clave.merchant_id');
+
+        if ($merchantId === '') {
+            throw new RuntimeException('Clave merchant not configured: set CLAVE_MERCHANT_ID in .env.');
+        }
+
+        $url = rtrim($this->environment->apiBaseUrl(), '/').'/LinkDeamon.cfm';
+
+        $payload = [
+            'CCLW' => $merchantId,
+            'CMTN' => number_format($plan->amountCents / 100, 2, '.', ''),
+            'CDSC' => substr("Plan {$plan->slug} — {$tenant->getName()}", 0, 150),
+            'RETURN_URL' => bin2hex(route('payments.clave.callback')),
+            'PARM_1' => (string) $tenant->getId(),
+            'PARM_2' => $displayId,
+            'PF_CF' => bin2hex((string) json_encode([
+                ['id' => 'tenant_id', 'nameOrLabel' => 'Tenant Id', 'type' => 'hidden', 'value' => (string) $tenant->getId()],
+                ['id' => 'plan_slug', 'nameOrLabel' => 'Plan Slug', 'type' => 'hidden', 'value' => $plan->slug],
+            ])),
+        ];
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-                'Authorization' => $apiKey ?? config('payments.clave.api_key'),
-            ])
-                ->timeout(5)
-                ->retry(1, 100)
-                ->post($url, $body);
+            $response = Http::asForm()->timeout(15)->post($url, $payload);
         } catch (ConnectionException $e) {
-            Log::error('ClaveGateway: connection failure', [
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('ClaveGateway: connection failure', ['url' => $url, 'error' => $e->getMessage()]);
 
-            throw new ClaveGatewayException('Clave gateway unreachable: '.$e->getMessage(), previous: $e);
+            throw new RuntimeException('Clave gateway unreachable: '.$e->getMessage(), previous: $e);
         }
 
         if ($response->failed()) {
-            // Fallback to HostedFields if management fails (some accounts are legacy)
-            if ($response->status() === 404 && ! str_contains($url, '/HostedFields')) {
-                $url = rtrim($this->environment->apiBaseUrl(), '/').'/HostedFields'.$path;
+            Log::error('ClaveGateway: HTTP error', ['url' => $url, 'status' => $response->status()]);
 
-                return $this->postRetry($url, $body, $apiKey);
-            }
-
-            Log::error('ClaveGateway: HTTP error', [
-                'url' => $url,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            throw new ClaveGatewayException(
-                sprintf('Clave API returned HTTP %d', $response->status()),
-            );
+            throw new RuntimeException(sprintf('Clave API returned HTTP %d', $response->status()));
         }
 
-        return $response->json() ?? [];
+        $data = $response->json();
+
+        if (! ($data['success'] ?? false)) {
+            Log::warning('billing.clave_link_rejected', [
+                'http_status' => $response->status(),
+                'body' => substr($response->body(), 0, 500),
+            ]);
+
+            throw new RuntimeException($data['message'] ?? 'PagueloFacil rejected the payment link request.');
+        }
+
+        return $data['data']['url'] ?? throw new RuntimeException('No URL returned by PagueloFacil.');
     }
 
-    private function postRetry(string $url, array $body, ?string $apiKey = null): array
+    public function verify(string $rawPayload, string $signature): bool
     {
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'Authorization' => $apiKey ?? config('payments.clave.api_key'),
-        ])->post($url, $body);
+        $secret = (string) config('clave.webhook_secret');
 
-        return $response->json() ?? [];
+        if ($secret === '' || $signature === '') {
+            return false;
+        }
+
+        return hash_equals(hash_hmac('sha256', $rawPayload, $secret), $signature);
     }
 
     /**
-     * @throws ClaveGatewayException
+     * @throws WebhookVerificationFailed
      */
-    private function get(string $path, array $query, ?string $apiKey = null): array
+    public function verifyOrFail(string $rawPayload, string $signature): void
     {
-        $url = rtrim($this->environment->managementBaseUrl(), '/').$path;
-
-        try {
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => $apiKey ?? config('payments.clave.api_key'),
-            ])
-                ->timeout(5)
-                ->get($url, $query);
-        } catch (ConnectionException $e) {
-            Log::error('ClaveGateway: connection failure', [
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw new ClaveGatewayException('Clave gateway unreachable: '.$e->getMessage(), previous: $e);
+        if (! $this->verify($rawPayload, $signature)) {
+            throw new WebhookVerificationFailed('Invalid Clave webhook signature.');
         }
+    }
 
-        if ($response->failed()) {
-            Log::error('ClaveGateway GET: HTTP error', [
-                'url' => $url,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+    public function normalize(array $payload): BillingEventData
+    {
+        // Webhook uses 'status' (1 approved, 0 declined);
+        // browser redirect uses 'Estado' ('Aprobada', 'Denegada').
+        $status = match (true) {
+            ($payload['status'] ?? null) === 1 => PaymentStatus::Approved,
+            ($payload['status'] ?? null) === 0 => PaymentStatus::Declined,
+            ($payload['Estado'] ?? '') === 'Aprobada' => PaymentStatus::Approved,
+            ($payload['Estado'] ?? '') === 'Denegada' => PaymentStatus::Declined,
+            default => PaymentStatus::Pending,
+        };
 
-            return ['success' => false];
-        }
+        $type = match ($status) {
+            PaymentStatus::Approved => BillingEventType::PaymentSucceeded->value,
+            PaymentStatus::Declined => BillingEventType::PaymentFailed->value,
+            default => BillingEventType::CheckoutCompleted->value,
+        };
 
-        return $response->json() ?? [];
+        return new BillingEventData(
+            type: $type,
+            gateway: 'clave',
+            gatewayEventId: (string) ($payload['codOper'] ?? $payload['Oper'] ?? $payload['transactionId'] ?? ''),
+            displayId: (string) ($payload['PARM_2'] ?? $payload['PARM_1'] ?? $payload['displayId'] ?? ''),
+            providerCustomerId: isset($payload['customerId']) ? (string) $payload['customerId'] : null,
+            amountCents: (int) round((float) ($payload['totalPay'] ?? $payload['TotalPagado'] ?? $payload['amount'] ?? 0) * 100),
+            currency: isset($payload['currency']) ? (string) $payload['currency'] : null,
+            raw: $payload,
+        );
     }
 }

@@ -9,10 +9,17 @@ use App\Modules\Tenant\Access\Domain\Models\User;
 
 class IdentityExportService implements Exportable
 {
-    public function getExportData(): array
+    public function exportToStream($handle): void
     {
-        return [
-            'users' => User::all()->toArray(),
-        ];
+        fwrite($handle, '"users":[');
+        $first = true;
+        foreach (User::cursor() as $user) {
+            if (! $first) {
+                fwrite($handle, ',');
+            }
+            fwrite($handle, json_encode($user));
+            $first = false;
+        }
+        fwrite($handle, ']');
     }
 }

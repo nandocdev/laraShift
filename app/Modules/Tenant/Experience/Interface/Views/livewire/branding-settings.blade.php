@@ -76,12 +76,8 @@
                 </div>
             </div>
 
-            @php
-                $landing = \App\Modules\Tenant\Experience\Domain\Models\Landing::where('tenant_id', tenant('id'))->where('slug', 'saas-landing')->first();
-            @endphp
-
-            @if($landing)
-                <flux:button href="{{ route('tenant.landings.builder', $landing) }}" variant="primary" icon="pencil-square" target="_blank">
+            @if($this->landing)
+                <flux:button href="{{ route('tenant.landings.builder', $this->landing) }}" variant="primary" icon="pencil-square" target="_blank">
                     {{ __('Open Builder') }}
                 </flux:button>
             @else

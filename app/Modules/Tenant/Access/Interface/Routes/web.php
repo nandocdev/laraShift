@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Tenant\Access\Interface\Http\Controllers\SamlController;
 use App\Modules\Tenant\Access\Interface\Livewire\AcceptInvitation;
 use App\Modules\Tenant\Access\Interface\Livewire\Login;
 use App\Modules\Tenant\Access\Interface\Livewire\LoginChallenge;
@@ -21,6 +22,11 @@ use Laravel\Passkeys\Http\Controllers\PasskeyRegistrationController;
 Route::get('/auth/login', Login::class)->name('login');
 Route::post('/auth/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
 Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+// SAML 2.0
+Route::get('/auth/saml2/metadata', [SamlController::class, 'metadata'])->name('saml.metadata');
+Route::get('/auth/saml2/login', [SamlController::class, 'redirect'])->name('saml.login');
+Route::post('/auth/saml2/acs', [SamlController::class, 'callback'])->name('saml.acs');
 
 Route::get('/auth/2fa/verify', LoginChallenge::class)->name('two-factor.login');
 Route::post('/auth/2fa/verify', [TwoFactorAuthenticatedSessionController::class, 'store'])->name('two-factor.login.store');

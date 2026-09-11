@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Http\Middleware;
 
+use App\Modules\Central\Support\Models\SupportSession;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -23,6 +24,13 @@ class AuditImpersonationActions
         if (Session::has('impersonated_by')) {
             $impersonatorId = Session::get('impersonated_by');
             $sessionId = Session::get('impersonation_session_id');
+
+            $session = SupportSession::find($sessionId);
+            if (! $session || $session->expires_at->isPast() || $session->ended_at) {
+                Session::forget(['impersonated_by', 'impersonation_session_id']);
+                auth()->logout();
+                abort(401, 'Support session has expired or was revoked.');
+            }
 
             // In Spatie Activitylog v5+, LogBatch was removed.
             // We use the beforeLogging hook to inject context globally for this request.

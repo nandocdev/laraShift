@@ -1,185 +1,154 @@
-# 🧱 LaraShift
+# 🧱 openSaaS
 
-> Enterprise SaaS Modular Monolith for Laravel.
->
-> Multi-tenancy, Billing, Provisioning, Features, Quotas, Security and Tenant Operations — built from day one for production.
+> Boilerplate SaaS multitenant listo para producción: Monolito Modular sobre Laravel, con aislamiento real por PostgreSQL RLS, billing agnóstico al proveedor e IAM completo por tenant.
 
-[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.3+-777BB4?style=for-the-badge&logo=php)](https://www.php.net)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
+[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.4+-777BB4?style=for-the-badge&logo=php)](https://www.php.net)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-RLS-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
+[![Livewire](https://img.shields.io/badge/Livewire-4+Flux-4e1d95?style=for-the-badge&logo=livewire)](https://livewire.laravel.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ---
 
-## Why LaraShift?
+## Por qué openSaaS
 
-Most Laravel SaaS starters stop at:
+La mayoría de los starters se detienen en login + equipos + suscripciones básicas. Una plataforma SaaS real necesita:
 
-- Authentication
-- Teams
-- Basic subscriptions
+- **Provisioning idempotente** de tenants (reintentos sin duplicados, rollback transaccional)
+- **Billing agnóstico al proveedor** (Clave redirect, dLocal tarjeta/efectivo, Stripe diferido)
+- **Dunning unificado** con reloj propio (reintentos MIT vs renovación por link)
+- **Aislamiento bank-grade** con PostgreSQL Row-Level Security como garantía real
+- **IAM por tenant**: roles granulares, SSO/SAML, sesiones revocables, 2FA + passkeys
+- **Portabilidad y cierre**: exportación con purga a 24h, danger zone con gracia de 30 días
 
-Real SaaS platforms require much more:
-
-- **Idempotent Tenant Provisioning** (with rollback and retry)
-- **Subscription Lifecycle Management** (including unified Dunning)
-- **Feature & Quota Management Engine**
-- **Bank-Grade Isolation** (via PostgreSQL Row-Level Security)
-- Audit trails & Secure API Access (HMAC)
-- Operational tooling
-
-LaraShift provides those capabilities as a **Modular Monolith**, avoiding the complexity and operational cost of microservices while maintaining strong domain boundaries.
+Todo como **Monolito Modular**: límites de dominio fuertes sin el costo operativo de microservicios.
 
 ---
 
-## Core Principles
+## ⚡ Quickstart
 
-### 1. Modular Monolith (RUP Oriented)
+```bash
+# 1. Instalar dependencias
+composer setup
 
-Business capabilities are isolated into bounded contexts, strictly enforcing architectural boundaries.
+# 2. Desarrollo local (app + Vite concurrently)
+composer dev
 
-```text
-app/
-└── Modules/
-    ├── Central/ (Platform)
-    ├── Tenant/ (Product)
-    └── Shared/ (Contracts & Events)
+# 3. Tests
+composer test          # o: php artisan test --compact
+
+# 4. Calidad antes de cada commit
+vendor/bin/pint --dirty --format agent
+php artisan test --compact --filter=NombreDelTest
 ```
 
-No service spaghetti. No god folders. No microservices unless there is a proven need.
+> **Requisitos:** PHP ^8.4 · Node 22 · PostgreSQL 15+ (prod) / SQLite `:memory:` (tests) · Redis (prod: cache, colas, sesiones).
 
 ---
 
-### 2. Bank-Grade PostgreSQL Row-Level Security (RLS)
+## 🏗 Arquitectura
 
-Tenant isolation is enforced at the database layer, completely decoupling security from application-level ORM scopes.
+Tres scopes estrictos. La comunicación entre módulos ocurre solo vía **Actions públicas, Contracts o Domain Events** — nunca `Model::find()` cruzado.
 
-Benefits:
-- **Defense in depth:** Validated through `RLSIsolationTest`.
-- Reduced risk of tenant data leakage.
-- Centralized access control: `tenant_isolation` policy applied with `WITH CHECK`.
+```text
+app/Modules/
+├── Platform/   → Transversal sin reglas de negocio: Contracts, Events, Tenancy (RLS),
+│                  Security, UI, Observability, Data
+├── Central/    → Operación de la plataforma: Auth, Billing, Catalog, Provisioning,
+│                  Growth, Operations, Settings, Support
+└── Tenant/     → Scaffolding del producto: Access, Workspace, Experience,
+                   Compliance, Integrations
+```
 
----
+```text
+Central ─┐
+          ├──> Platform   (Platform nunca importa Central ni Tenant)
+Tenant  ─┘
+```
 
-### 3. Production First
+Cada módulo complejo sigue `Domain / Application / Infrastructure / Interface / Database / Providers`. Lógica de negocio solo en **Actions** (`final readonly class` + `execute(DTO)` con `spatie/laravel-data`); Livewire solo estado de UI.
 
-Every module is designed around real SaaS operational requirements:
-- Atomic, modular provisioning with `TenantDataSeeder` initialization.
-- Centralized Dunning workflows (suspension on failed payments).
-- HMAC-SHA256 hardened API Keys with throttled usage tracking.
-- Dynamic `Feature` and `Quota` middleware protection (`HTTP 403` / `HTTP 429`).
-
----
-
-# Architecture
-
-## Central Context
-
-Platform-level operations.
-
-### Provisioning
-Responsible for the robust tenant lifecycle via a modular pipeline.
-Capabilities:
-- Domain Reservation (`ReserveTenantDomainAction`)
-- Database Core Data Seeding (`SetupTenantCoreDataAction`)
-- External Infrastructure Hook (`ProvisionInfrastructureAction` -> `RailwayService`)
-- Idempotent execution (retry without duplication)
-
-### Billing
-Subscription and payment engine.
-Capabilities:
-- Subscription plans
-- Invoices & Dunning workflows
-- Unified Webhook handling
-- Supported gateways: Stripe, PagueloFacil, dLocal.
-
-### Features & Quotas
-Usage limitation engine running at runtime.
-Capabilities:
-- Trait-based validation: `$tenant->hasFeature()`, `$tenant->withinQuota()`.
-- Middlewares: `feature`, `quota`.
-- Graceful exception handling: `QuotaExceededException`.
+**Regla de oro:** nada de capas "por si acaso" — cada abstracción se gana con 2+ casos de uso reales.
 
 ---
 
-## Tenant Context
+## 🔒 Multitenancy: Single DB + RLS
 
-Customer-facing product capabilities.
+El aislamiento no depende de Scopes de Eloquent (defensa secundaria) sino de PostgreSQL RLS como mecanismo principal:
 
-### Identity & API Keys
-Authentication and authorization.
-Capabilities:
-- Users, Roles, Permissions (Spatie).
-- Secure API Keys (HMAC hashed, no dynamic `Gate::define` memory leaks).
-- Throttled metric updates to protect Database I/O.
+- `TenantContext` registrado como binding `scoped()` (compatible Octane, nunca `singleton`)
+- `SET LOCAL app.tenant_id` dentro de transacción explícita por unidad de trabajo
+- Jobs en cola con contrato `TenantAware` + rehidratación propia de contexto
+- Todo módulo tenant-aware incluye su `CrossTenantLeakTest`
 
 ---
 
-# Roadmap & Status
+## 💳 Billing
 
-LaraShift has reached a high level of **SaaS Readiness**, completing its core architectural foundation.
+Core propio agnóstico al proveedor, con capacidades resueltas por **proveedor × método de pago**:
 
-## Phase 1 — SaaS Foundation [COMPLETED]
-- [x] Identity & Roles
-- [x] Idempotent Provisioning
-- [x] Billing & Dunning
-- [x] RLS Database Isolation
-- [x] Secure API Keys
+| Vía | Checkout | Recurrencia |
+| --- | -------- | ----------- |
+| Clave (PagueloFacil) | Redirect + webhook HMAC | Por link de renovación (scheduler + dunning separado) |
+| dLocal tarjeta | Smart Fields + cobro server-side | MIT silencioso (3 reintentos → `suspended`) |
+| dLocal efectivo | Checkout único | Sin recurrencia (la UI nunca la promete) |
+| Stripe | Diferido hasta demanda real | — |
 
-## Phase 2 — Product & Operations [IN PROGRESS]
-- [x] Feature & Quota Engine
-- [x] Infrastructure Hooks
-- [ ] Real Domain mutator implementation (Railway API)
-- [ ] Comprehensive Audit Logs
-- [ ] Webhook outbound delivery
-
-## Phase 3 — Platform Extensions
-- [ ] Notifications Center
-- [ ] SMTP Configuration
-- [ ] Data Export
-
-## Phase 4 — Growth Tools
-- [ ] Landing Builder
-- [ ] Marketing & CMS
+Idempotencia no negociable: `UNIQUE(gateway, gateway_event_id)`, `lockForUpdate` + recuperación `23505`, `Cache::lock` en verificación. Detalle completo en [`docs/BILLING.md`](docs/BILLING.md) y roadmap en [`docs/ROADMAP_BILLING.md`](docs/ROADMAP_BILLING.md).
 
 ---
 
-# Technology Stack
+## 🧪 Testing
 
-| Layer          | Technology        |
-| -------------- | ----------------- |
-| Backend        | Laravel 11        |
-| Language       | PHP 8.3+          |
-| Database       | PostgreSQL 16+    |
-| Multi-Tenancy  | stancl/tenancy    |
-| Frontend       | Livewire 4        |
-| UI             | Flux UI           |
-| Styling        | Tailwind CSS      |
-| Authentication | Fortify           |
-| Authorization  | Spatie Permission |
-| Queues         | Laravel Horizon   |
-| Audit          | Activitylog       |
+```bash
+php artisan test --compact                          # suite completa (SQLite)
+php artisan test --compact --filter=NombreDelTest    # iteración rápida
+vendor/bin/pint --parallel --test                    # lo que el CI exige
+```
+
+- **Pest** sobre SQLite `:memory:`; tests `RLSEnforce` contra Postgres real en CI
+- Mínimo por feature: caso feliz + validación + permisos + aislamiento + error
+- Pipeline de verificación: `config:clear` → `pint` → tests (ver `composer ci:check`)
 
 ---
 
-# Design Goals
+## 🗂 Módulos Tenant (scaffolding, sin dominio vertical)
 
-LaraShift is designed for teams building:
-- B2B SaaS products
-- Internal business platforms
-- White-label applications
-- Multi-tenant products
-- Enterprise software
+| Módulo | Qué cubre |
+| ------ | --------- |
+| Access | Usuarios, roles granulares, API keys, invitaciones con token, SSO/SAML, sesiones revocables, 2FA + passkeys |
+| Workspace | Dashboard, equipo, notificaciones, danger zone con gracia de purga |
+| Experience | Branding, localización, SMTP, landing builder |
+| Compliance | Auditoría, exportación autolimpiable (24h) |
+| Integrations | SMTP por tenant (con aislamiento Octane) |
 
-Not intended for:
-- Consumer social networks
-- Real-time gaming platforms
-- Microservice-first architectures
+> CRM, Documents, Forms o cualquier vertical **no viven en el core**: cada producto los construye sobre este framework en su propio ciclo de release.
 
 ---
 
-# License
+## 📚 Documentación
 
-MIT License.
+| Documento | Contenido |
+| --------- | --------- |
+| [`docs/PRD.md`](docs/PRD.md) | Visión y alcance del framework |
+| [`docs/CU.md`](docs/CU.md) | Matriz de casos de uso Central + Tenant |
+| [`docs/BILLING.md`](docs/BILLING.md) | Especificación del Billing Core |
+| [`docs/ARCHITECTURE_RULES.md`](docs/ARCHITECTURE_RULES.md) | Reglas obligatorias de implementación |
+| [`docs/PROJECT_DECISIONS.md`](docs/PROJECT_DECISIONS.md) | Decisiones arquitectónicas (multitenancy, scopes, módulos) |
+| [`docs/CentralEntry.md`](docs/CentralEntry.md) | Mapa del panel Central |
+| [`docs/modules/`](docs/modules/) | Auditorías por módulo con hallazgos y rutas de trabajo |
+| [`AGENTS.md`](AGENTS.md) | Protocolo del Tech Lead + skills por dominio |
 
-Use it. Fork it. Build something valuable.
+---
+
+## 🎯 Para quién es (y para quién no)
+
+**Ideal para:** B2B SaaS, plataformas internas, white-labels, productos multitenant, software empresarial.
+
+**No es:** un CMS, un eCommerce, una SPA, ni un producto final — es la base sobre la que se construye.
+
+---
+
+## 📄 Licencia
+
+MIT. Úsalo. Forkéalo. Construye algo valioso.

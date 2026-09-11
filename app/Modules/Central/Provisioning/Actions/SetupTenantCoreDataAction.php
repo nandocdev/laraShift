@@ -16,17 +16,22 @@ final readonly class SetupTenantCoreDataAction
      */
     public function execute(Tenant $tenant): void
     {
-        // When running under a rehydrated tenant context (ProvisionTenantJob),
-        // RLS is already active via SET LOCAL inside the job's transaction.
-        // Only fall back to a session-level config when no context is present,
-        // avoiding the session-level SET that would leak across units of work.
-        if (DB::getDriverName() === 'pgsql' && (! function_exists('tenancy') || ! tenancy()->initialized)) {
-            DB::statement("SELECT set_config('app.tenant_id', ?, false)", [(string) $tenant->id]);
-        }
+        // Ensure RLS context is set via SET LOCAL inside a transaction (never session-level SET)
+        // When running under RehydrateTenantContext the transaction is already active and SET LOCAL is set.
+        // Fallback path (tinker/artisan without tenancy) wraps seeder in explicit transaction + SET LOCAL.
+        $needsTransaction = DB::getDriverName() === 'pgsql' && (! function_exists('tenancy') || ! tenancy()->initialized);
 
-        // 2. Run the data seeder for the tenant
-        $seeder = new TenantDataSeeder;
-        $seeder->run((string) $tenant->id);
+        if ($needsTransaction) {
+            DB::transaction(function () use ($tenant) {
+                DB::statement("SELECT set_config('app.tenant_id', ?, true)", [(string) $tenant->id]);
+                $seeder = new TenantDataSeeder;
+                $seeder->run((string) $tenant->id);
+            });
+        } else {
+            // 2. Run the data seeder for the tenant
+            $seeder = new TenantDataSeeder;
+            $seeder->run((string) $tenant->id);
+        }
 
         activity('provisioning')
             ->performedOn($tenant)

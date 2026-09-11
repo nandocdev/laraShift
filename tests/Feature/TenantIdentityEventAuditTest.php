@@ -17,7 +17,6 @@ it('automatically records an audit log when an identity event is fired', functio
         'slug' => 'event-test',
         'name' => 'Event Test',
         'email' => 'events@test.com',
-        'plan_id' => 'free',
     ]);
 
     tenancy()->initialize($tenant);

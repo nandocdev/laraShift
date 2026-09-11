@@ -5,18 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Central;
 
 use App\Modules\Central\Growth\Interface\Livewire\RegisterTenant;
-use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    $this->seed(PlanSeeder::class);
-});
-
 it('can advance through the wizard steps', function () {
-    $component = Livewire::test(RegisterTenant::class)
+    Livewire::test(RegisterTenant::class)
         // Step 1
         ->set('name', 'John Doe')
         ->set('company', 'Acme Corp')
@@ -25,24 +20,17 @@ it('can advance through the wizard steps', function () {
         ->set('password', 'Password123!')
         ->call('nextStep')
         ->assertHasNoErrors()
-        ->assertSet('step', 2)
-
-        // Step 2
-        ->set('plan_id', 'pro')
-        ->call('nextStep')
-        ->assertHasNoErrors()
-        ->assertSet('step', 3);
+        ->assertSet('step', 2);
 });
 
-it('can register a tenant from step 3 without rules exception', function () {
+it('can register a tenant from step 2 without rules exception', function () {
     Livewire::test(RegisterTenant::class)
-        ->set('step', 3)
+        ->set('step', 2)
         ->set('name', 'John Doe')
         ->set('company', 'Acme Corp')
         ->set('slug', 'acme-corp')
         ->set('email', 'admin@acme.com')
         ->set('password', 'Password123!')
-        ->set('plan_id', 'free')
         ->call('register')
         ->assertHasNoErrors()
         ->assertStatus(200);
@@ -50,12 +38,11 @@ it('can register a tenant from step 3 without rules exception', function () {
 
 it('fails validation in register if any field is missing', function () {
     Livewire::test(RegisterTenant::class)
-        ->set('step', 3)
+        ->set('step', 2)
         ->set('company', '') // Empty company
         ->set('slug', 'acme-corp')
         ->set('email', 'admin@acme.com')
         ->set('password', 'Password123!')
-        ->set('plan_id', 'free')
         ->call('register')
         ->assertHasErrors(['company' => 'required']);
 });
