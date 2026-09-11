@@ -7,7 +7,6 @@ namespace App\Modules\Platform\Tenancy\Infrastructure\Jobs;
 use App\Modules\Platform\Contracts\TenantAware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Stancl\Tenancy\Exceptions\TenantCouldNotBeIdentifiedById;
 
 class RehydrateTenantContext
 {
@@ -32,19 +31,7 @@ class RehydrateTenantContext
                 }
 
                 if (function_exists('tenancy') && ! tenancy()->initialized) {
-                    try {
-                        tenancy()->initialize($tenantId);
-                    } catch (TenantCouldNotBeIdentifiedById) {
-                        // The tenant row is gone (e.g. soft-deleted workspace
-                        // awaiting a delayed purge). RLS scoping above still
-                        // applies, so the job runs safely without the stancl
-                        // runtime; jobs needing the model must fail loudly
-                        // in handle() themselves.
-                        Log::warning('tenancy.initialize_skipped_missing_tenant', [
-                            'tenant_id' => $tenantId,
-                            'job' => get_class($job),
-                        ]);
-                    }
+                    tenancy()->initialize($tenantId);
                 }
 
                 $next($job);

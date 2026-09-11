@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Modules\Central\Provisioning\Infrastructure\Jobs\PurgeTenantContext;
 use App\Modules\Central\Provisioning\Jobs\PurgeTenantJob;
 use App\Modules\Central\Provisioning\Models\Tenant as CentralTenant;
-use App\Modules\Platform\Contracts\TenantAware;
-use App\Modules\Platform\Tenancy\Infrastructure\Jobs\RehydrateTenantContext;
 use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Access\Domain\Models\UserMfa;
@@ -155,25 +154,20 @@ it('forbids closure for non-owners', function () {
     expect(tenantRow($this->tenant->id)->deleted_at)->toBeNull();
 });
 
-it('lets delayed purge jobs run without stancl tenancy', function () {
+it('lets the purge middleware run without stancl tenancy', function () {
     $this->tenant->delete();
     tenancy()->end();
 
-    $stub = new class($this->tenant->id) implements TenantAware
-    {
-        public function __construct(public string $tenantId) {}
-
-        public function tenantId(): string
-        {
-            return $this->tenantId;
-        }
-    };
+    $job = new PurgeTenantJob($this->tenant->id, $this->tenant->slug);
 
     $ran = false;
 
-    app(RehydrateTenantContext::class)->handle($stub, function () use (&$ran) {
-        $ran = true;
-    });
+    foreach ($job->middleware() as $middleware) {
+        $middleware->handle($job, function () use (&$ran) {
+            $ran = true;
+        });
+    }
 
-    expect($ran)->toBeTrue();
+    expect($ran)->toBeTrue()
+        ->and($job->middleware()[0])->toBeInstanceOf(PurgeTenantContext::class);
 });
