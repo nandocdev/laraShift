@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Support\Providers;
 
 use App\Modules\Central\Support\Livewire\BroadcastCenter;
+use App\Modules\Central\Support\Livewire\CentralAuditLog;
 use App\Modules\Central\Support\Livewire\GlobalAnnouncements;
 use App\Modules\Central\Support\Livewire\TenantSupportBitacora;
 use Illuminate\Support\Facades\Gate;
@@ -34,10 +35,13 @@ class SupportServiceProvider extends ServiceProvider
                 ->group(function () {
                     Route::get('/central/support/broadcasts', BroadcastCenter::class)
                         ->name('central.support.broadcasts');
+                    Route::get('/central/audit-log', CentralAuditLog::class)
+                        ->name('central.audit.log');
                 });
         });
 
         Livewire::component('support-broadcast-center', BroadcastCenter::class);
+        Livewire::component('central-audit-log', CentralAuditLog::class);
         Livewire::component('tenant-support-bitacora', TenantSupportBitacora::class);
         Livewire::component('global-announcements', GlobalAnnouncements::class);
     }

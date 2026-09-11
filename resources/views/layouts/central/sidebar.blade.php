@@ -27,6 +27,11 @@
                     :current="request()->routeIs('central.health.monitor')" wire:navigate>
                     {{ __('Health Monitor') }}
                 </flux:sidebar.item>
+
+                <flux:sidebar.item icon="clipboard-document-list" :href="route('central.audit.log')"
+                    :current="request()->routeIs('central.audit.log')" wire:navigate>
+                    {{ __('Audit Log') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
 
             <flux:sidebar.group :heading="__('Billing')" class="grid">
