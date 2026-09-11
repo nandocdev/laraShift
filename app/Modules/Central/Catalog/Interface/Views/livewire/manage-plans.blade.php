@@ -18,6 +18,7 @@
             <flux:table.columns>
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Slug') }}</flux:table.column>
+                <flux:table.column>{{ __('Tenants') }}</flux:table.column>
                 <flux:table.column>{{ __('Features / quotas') }}</flux:table.column>
                 <flux:table.column>{{ __('Monthly') }}</flux:table.column>
                 <flux:table.column>{{ __('Yearly') }}</flux:table.column>
@@ -29,6 +30,7 @@
                     <flux:table.row :key="$plan->id">
                         <flux:table.cell>{{ $plan->name }}</flux:table.cell>
                         <flux:table.cell>{{ $plan->slug }}</flux:table.cell>
+                        <flux:table.cell class="font-mono">{{ number_format($tenantCounts[$plan->slug] ?? 0) }}</flux:table.cell>
                         <flux:table.cell>
                             <div class="flex flex-wrap gap-1">
                                 @foreach ($plan->features['display_features'] ?? [] as $feature)
@@ -47,6 +49,7 @@
                         <flux:table.cell>
                             <div class="flex justify-end gap-1">
                                 <flux:button size="sm" variant="ghost" icon="pencil" wire:click="edit('{{ $plan->id }}')" x-on:click="$flux.modal('plan-form').show()" tooltip="{{ __('Edit') }}" />
+                                <flux:button size="sm" variant="ghost" icon="square-2-stack" wire:click="duplicate('{{ $plan->id }}')" tooltip="{{ __('Duplicate') }}" />
                                 <flux:button size="sm" variant="ghost" icon="power" wire:click="toggleActive('{{ $plan->id }}')" tooltip="{{ $plan->is_active ? __('Deactivate') : __('Activate') }}" />
                                 <flux:button size="sm" variant="ghost" icon="archive-box" wire:click="delete('{{ $plan->id }}')" wire:confirm="{{ __('Archive this plan?') }}" tooltip="{{ __('Archive') }}" />
                             </div>
@@ -54,7 +57,7 @@
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="7">{{ __('No plans yet.') }}</flux:table.cell>
+                        <flux:table.cell colspan="8">{{ __('No plans yet.') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>

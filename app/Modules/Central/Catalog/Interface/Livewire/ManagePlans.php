@@ -7,6 +7,7 @@ namespace App\Modules\Central\Catalog\Interface\Livewire;
 use App\Modules\Central\Catalog\Application\Services\CatalogFeatureRegistry;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -173,12 +174,50 @@ class ManagePlans extends Component
 
     public function delete(string $id): void
     {
-        Plan::findOrFail($id)->delete();
+        $plan = Plan::findOrFail($id);
+
+        // Un plan con suscripciones no se archiva: se desactiva para que
+        // los tenants existentes lo conserven y nadie nuevo lo contrate.
+        if ($this->subscriptionCount($id) > 0) {
+            $plan->update(['is_active' => false]);
+            if ($this->editingId === $id) {
+                $this->cancelEdit();
+            }
+            session()->flash('status', __('Plan has subscriptions: archived is blocked, deactivated instead.'));
+            $this->dispatch('plan-modal-close');
+
+            return;
+        }
+
+        $plan->delete();
         if ($this->editingId === $id) {
             $this->cancelEdit();
         }
         session()->flash('status', __('Plan archived.'));
         $this->dispatch('plan-modal-close');
+    }
+
+    public function duplicate(string $id): void
+    {
+        $plan = Plan::findOrFail($id);
+
+        $slug = $plan->slug.'-copy';
+        for ($i = 2; Plan::withTrashed()->where('slug', $slug)->exists(); $i++) {
+            $slug = $plan->slug.'-copy-'.$i;
+        }
+
+        Plan::create([
+            'name' => $plan->name.' (copy)',
+            'slug' => $slug,
+            'price_monthly' => $plan->price_monthly,
+            'price_yearly' => $plan->price_yearly,
+            'currency' => $plan->currency,
+            'interval' => $plan->interval,
+            'features' => $plan->features,
+            'is_active' => false,
+        ]);
+
+        session()->flash('status', __('Plan duplicated as :slug (inactive).', ['slug' => $slug]));
     }
 
     public function render(): View
@@ -187,6 +226,33 @@ class ManagePlans extends Component
             'plans' => Plan::latest()->paginate(15),
             'featureLabels' => $this->registry()->featureLabels(),
             'quotaLabels' => $this->registry()->quotaLabels(),
+            'tenantCounts' => $this->tenantCounts(),
         ]);
+    }
+
+    /**
+     * @return array<string, int> plan slug => tenants
+     */
+    private function tenantCounts(): array
+    {
+        try {
+            return DB::table('tenants')
+                ->selectRaw('plan_id, count(*) as total')
+                ->groupBy('plan_id')
+                ->pluck('total', 'plan_id')
+                ->map(fn ($total) => (int) $total)
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private function subscriptionCount(string $planId): int
+    {
+        try {
+            return DB::table('subscriptions')->where('plan_id', $planId)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 }
