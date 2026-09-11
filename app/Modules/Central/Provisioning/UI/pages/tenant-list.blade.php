@@ -14,17 +14,44 @@
     @endif
 
     <flux:card>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+            <flux:input wire:model.live.debounce.500ms="search" :label="__('Search')" placeholder="{{ __('Name, slug or email…') }}" />
+            <flux:select wire:model.live="statusFilter" :label="__('Status')">
+                <option value="">{{ __('All') }}</option>
+                @foreach ($statuses as $option)
+                    <option value="{{ $option['value'] }}">{{ __($option['label']) }}</option>
+                @endforeach
+            </flux:select>
+            <flux:select wire:model.live="planFilter" :label="__('Plan')">
+                <option value="">{{ __('All') }}</option>
+                @foreach ($plans as $plan)
+                    <option value="{{ $plan['slug'] }}">{{ $plan['name'] }}</option>
+                @endforeach
+            </flux:select>
+            <flux:select wire:model.live="healthFilter" :label="__('Health')">
+                <option value="">{{ __('All') }}</option>
+                <option value="healthy">{{ __('Healthy') }}</option>
+                <option value="warning">{{ __('Warning') }}</option>
+                <option value="critical">{{ __('Critical') }}</option>
+            </flux:select>
+            <div class="flex items-end">
+                <flux:button variant="ghost" size="sm" wire:click="clearFilters">{{ __('Clear') }}</flux:button>
+            </div>
+        </div>
+
         <flux:table :paginate="$tenants">
             <flux:table.columns>
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Domain') }}</flux:table.column>
                 <flux:table.column>{{ __('Status') }}</flux:table.column>
+                <flux:table.column>{{ __('Plan') }}</flux:table.column>
+                <flux:table.column>{{ __('Health') }}</flux:table.column>
                 <flux:table.column>{{ __('Created At') }}</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
-                @foreach ($tenants as $tenant)
+                @forelse ($tenants as $tenant)
                     <flux:table.row :key="$tenant->id">
                         <flux:table.cell class="font-medium">
                             {{ $tenant->name }}
@@ -42,6 +69,24 @@
                                 </flux:badge>
                                 @if($tenant->read_only)
                                     <flux:badge size="sm" variant="neutral">{{ __('READ-ONLY') }}</flux:badge>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            {{ $tenant->plan_id ?? 'free' }}
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @php($health = \App\Modules\Central\Provisioning\Livewire\TenantList::healthFor($tenant->status))
+                            <div class="flex items-center gap-1.5 text-xs font-medium">
+                                @if($health === 'healthy')
+                                    <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                    <span class="text-emerald-600 dark:text-emerald-400">{{ __('Healthy') }}</span>
+                                @elseif($health === 'warning')
+                                    <span class="size-1.5 rounded-full bg-amber-500"></span>
+                                    <span class="text-amber-600 dark:text-amber-400">{{ __('Warning') }}</span>
+                                @else
+                                    <span class="size-1.5 rounded-full bg-rose-500"></span>
+                                    <span class="text-rose-600 dark:text-rose-400">{{ __('Critical') }}</span>
                                 @endif
                             </div>
                         </flux:table.cell>
@@ -66,7 +111,13 @@
                             </flux:dropdown>
                         </flux:table.cell>
                     </flux:table.row>
-                @endforeach
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7" class="text-center text-sm text-zinc-500">
+                            {{ __('No tenants match the current filters.') }}
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
             </flux:table.rows>
         </flux:table>
     </flux:card>
