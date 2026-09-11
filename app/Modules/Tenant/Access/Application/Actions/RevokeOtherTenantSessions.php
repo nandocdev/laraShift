@@ -13,33 +13,53 @@ final readonly class RevokeOtherTenantSessions
 {
     public function execute(User $user): int
     {
-        $current = Session::getId();
+        return $this->revokeExcept($user, Session::getId());
+    }
 
-        $others = TenantSession::where('user_id', $user->getKey())
-            ->where('session_id', '!=', $current)
-            ->whereNull('revoked_at')
-            ->get();
+    /**
+     * Revokes every session of the user, including the current one.
+     * Used after a forgotten-password reset (possible compromise).
+     */
+    public function revokeAll(User $user): int
+    {
+        return $this->revokeExcept($user, null);
+    }
 
-        if ($others->isEmpty()) {
+    private function revokeExcept(User $user, ?string $keepSessionId): int
+    {
+        $query = TenantSession::where('user_id', $user->getKey())
+            ->whereNull('revoked_at');
+
+        if ($keepSessionId !== null) {
+            $query->where('session_id', '!=', $keepSessionId);
+        }
+
+        $targets = $query->get();
+
+        if ($targets->isEmpty()) {
             return 0;
         }
 
-        TenantSession::where('user_id', $user->getKey())
-            ->where('session_id', '!=', $current)
-            ->whereNull('revoked_at')
-            ->update(['revoked_at' => now()]);
+        $revoke = TenantSession::where('user_id', $user->getKey())
+            ->whereNull('revoked_at');
+
+        if ($keepSessionId !== null) {
+            $revoke->where('session_id', '!=', $keepSessionId);
+        }
+
+        $revoke->update(['revoked_at' => now()]);
 
         if (config('session.driver') === 'database') {
             DB::table(config('session.table', 'sessions'))
-                ->whereIn('id', $others->pluck('session_id'))
+                ->whereIn('id', $targets->pluck('session_id'))
                 ->delete();
         }
 
         activity('auth')
             ->performedOn($user)
-            ->withProperties(['revoked_count' => $others->count()])
+            ->withProperties(['revoked_count' => $targets->count()])
             ->log('tenant_sessions_revoked');
 
-        return $others->count();
+        return $targets->count();
     }
 }
