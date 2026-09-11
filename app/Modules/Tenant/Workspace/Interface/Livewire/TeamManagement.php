@@ -14,6 +14,7 @@ use App\Modules\Tenant\Access\Domain\Models\Role;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
