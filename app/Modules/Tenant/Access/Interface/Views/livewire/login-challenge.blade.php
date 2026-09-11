@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-6">
     <x-auth-header 
         :title="__('Security Challenge')" 
-        :description="__('Please enter the 6-digit code from your authenticator app.')" 
+        :description="__('Enter the 6-digit code from your authenticator app, or a recovery code.')" 
     />
 
     <flux:card>
@@ -10,7 +10,7 @@
                 wire:model="code" 
                 :label="__('Verification Code')" 
                 placeholder="000000" 
-                maxlength="6" 
+                maxlength="25" 
                 required 
                 autofocus
             />

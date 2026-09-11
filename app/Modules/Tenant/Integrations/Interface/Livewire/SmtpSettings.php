@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Integrations\Interface\Livewire;
 
+use App\Modules\Tenant\Experience\Application\Actions\EnsureUserCanManageTenantSettings;
 use App\Modules\Tenant\Experience\Application\Actions\GetTenantSmtpSettings;
 use App\Modules\Tenant\Experience\Application\Actions\MarkTenantSmtpVerified;
 use App\Modules\Tenant\Experience\Application\DTO\SmtpConfigData;
@@ -36,6 +37,8 @@ class SmtpSettings extends Component
 
     public function mount(GetTenantSmtpSettings $action): void
     {
+        $this->authorizeManagement();
+
         $settings = $action->execute();
 
         if ($settings) {
