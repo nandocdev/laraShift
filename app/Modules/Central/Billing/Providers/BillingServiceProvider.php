@@ -47,6 +47,7 @@ class BillingServiceProvider extends ServiceProvider
         Livewire::component('billing-hosted-checkout', HostedCheckout::class);
         Livewire::component('billing-update-payment-method', UpdatePaymentMethod::class);
         Livewire::component('billing-subscription-list', SubscriptionList::class);
+        Livewire::component('billing-subscription-detail', SubscriptionDetail::class);
         Livewire::component('billing-tenant-invoice-list', TenantInvoiceList::class);
 
         if ($this->app->runningInConsole()) {
