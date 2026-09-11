@@ -75,3 +75,6 @@ yarn-error.log
 AGENTS.md
 GEMINI.md
 opencode.json
+
+# Build artifacts (regenerated, never tracked)
+public/fonts-manifest.dev.json
