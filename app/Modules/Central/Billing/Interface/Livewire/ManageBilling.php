@@ -22,6 +22,8 @@ class ManageBilling extends Component
 
     public function cancel(CancelSubscriptionAction $action): void
     {
+        $this->authorize('settings:manage');
+
         $subscription = $this->subscription();
 
         if (! $subscription) {
@@ -36,6 +38,8 @@ class ManageBilling extends Component
 
     public function resume(CancelSubscriptionAction $action): void
     {
+        $this->authorize('settings:manage');
+
         $subscription = $this->subscription();
 
         if (! $subscription) {

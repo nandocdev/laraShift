@@ -23,6 +23,10 @@
         <flux:card class="max-w-lg">
             <form @submit.prevent="tokenize()" class="flex flex-col gap-4">
                 <div>
+                    <flux:label>{{ __('ID document number') }}</flux:label>
+                    <flux:input wire:model="payerDocument" placeholder="12345678" required />
+                </div>
+                <div>
                     <label class="text-sm font-medium">{{ __('Card number') }}</label>
                     <div id="dlocal-card-number" class="mt-1 rounded-lg border border-zinc-300 p-3 dark:border-zinc-700"></div>
                 </div>
@@ -37,7 +41,7 @@
                     </div>
                 </div>
                 <flux:text class="text-xs" id="dlocal-error"></flux:text>
-                <flux:button type="submit" variant="primary" ::disabled="processing">
+                <flux:button type="submit" variant="primary" x-bind:disabled="processing">
                     <span x-show="!processing">{{ __('Retry payment') }}</span>
                     <span x-show="processing">{{ __('Processing…') }}</span>
                 </flux:button>
