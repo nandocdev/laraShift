@@ -13,12 +13,16 @@ use App\Modules\Platform\Contracts\Billing\DirectPaymentData;
 use App\Modules\Platform\Contracts\Billing\PaymentMethodType;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
 class UpdatePaymentMethod extends Component
 {
+    #[Locked]
     public string $displayId = '';
+
+    public string $payerDocument = '';
 
     public ?string $error = null;
 
@@ -42,10 +46,27 @@ class UpdatePaymentMethod extends Component
             return;
         }
 
+        if (trim($this->payerDocument) === '') {
+            $this->error = __('An ID document number is required for card payments.');
+            $this->addError('payerDocument', __('An ID document number is required.'));
+
+            return;
+        }
+
         $subscription = $this->subscription();
 
         if (! $subscription) {
             $this->error = __('No subscription to regularize.');
+
+            return;
+        }
+
+        [$amountCents, $currency] = $this->outstanding($subscription);
+
+        // Never approve a regularization without a resolvable amount:
+        // a 0 charge would reactivate the subscription for free.
+        if ($amountCents <= 0) {
+            $this->error = __('Could not determine the outstanding amount. Contact support.');
 
             return;
         }
@@ -60,10 +81,11 @@ class UpdatePaymentMethod extends Component
                 tenantId: (string) $tenant->getId(),
                 gateway: $tenant->getBillingGateway(),
                 orderId: $this->displayId,
-                amountCents: $this->outstandingCents($subscription),
-                currency: 'USD',
+                amountCents: $amountCents,
+                currency: $currency,
                 method: PaymentMethodType::Card,
                 paymentToken: $token,
+                payerDocument: trim($this->payerDocument),
                 subscriptionId: $subscription->id,
             ));
 
@@ -87,18 +109,22 @@ class UpdatePaymentMethod extends Component
         return Subscription::where('tenant_id', tenant()->getId())->latest()->first();
     }
 
-    private function outstandingCents(Subscription $subscription): int
+    /**
+     * @return array{0:int,1:string} [amountCents, currency]
+     */
+    private function outstanding(Subscription $subscription): array
     {
         if ($subscription->plan_id) {
             try {
-                return app(PlanManager::class)
-                    ->findById($subscription->plan_id)->price_monthly;
+                $plan = app(PlanManager::class)->findById($subscription->plan_id);
+
+                return [$plan->price_monthly, $plan->currency];
             } catch (\Throwable) {
                 // Fall through.
             }
         }
 
-        return 0;
+        return [0, 'USD'];
     }
 
     public function render(BillingManager $billing): View

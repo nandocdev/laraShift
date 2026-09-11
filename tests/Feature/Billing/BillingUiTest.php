@@ -8,6 +8,8 @@ use App\Modules\Central\Billing\Interface\Livewire\ManageBilling;
 use App\Modules\Central\Billing\Interface\Livewire\SelectPlan;
 use App\Modules\Central\Billing\Interface\Livewire\UpdatePaymentMethod;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Livewire\Livewire;
 
 use function Pest\Laravel\assertDatabaseHas;
@@ -78,6 +80,12 @@ it('manages billing and cancels at period end through actions', function () {
         'status' => 'active',
         'gateway' => 'clave',
     ]);
+
+    app(EnsureTenantRolesExist::class)->execute($tenant);
+    setPermissionsTeamId($tenant->id);
+    $admin = User::factory()->create(['tenant_id' => $tenant->id, 'status' => 'active']);
+    $admin->assignRole('admin');
+    $this->actingAs($admin);
 
     try {
         Livewire::test(ManageBilling::class)
@@ -166,6 +174,7 @@ it('regularizes a past_due subscription with a new card', function () {
 
     try {
         Livewire::test(UpdatePaymentMethod::class)
+            ->set('payerDocument', '12345678')
             ->call('payWithNewCard', 'tok_ui_new_card')
             ->assertRedirect(route('tenant.billing.success'));
 
