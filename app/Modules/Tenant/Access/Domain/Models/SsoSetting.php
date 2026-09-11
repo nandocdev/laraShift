@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace App\Modules\Tenant\Access\Domain\Models;
 
+use App\Modules\Platform\Tenancy\Domain\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class SsoSetting extends Model
 {
-    use HasUuids;
+    use BelongsToTenant, HasUuids;
 
     protected $table = 'tenant_sso_settings';
 
     protected $fillable = [
         'id',
+        'tenant_id',
         'idp_entity_id',
         'idp_sso_url',
         'idp_x509_cert',

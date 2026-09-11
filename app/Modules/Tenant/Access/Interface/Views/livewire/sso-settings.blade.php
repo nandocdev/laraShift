@@ -18,7 +18,7 @@
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                @if ($setting && $setting->id)
+                @if ($hasSetting)
                     <flux:button href="{{ route('saml.login') }}" variant="danger">
                         {{ __('Test Connection') }}
                     </flux:button>

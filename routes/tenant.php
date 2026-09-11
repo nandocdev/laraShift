@@ -8,6 +8,7 @@ use App\Modules\Platform\Tenancy\Interface\Http\Middleware\EnsureTenantIsActive;
 use App\Modules\Tenant\Access\Interface\Http\Middleware\EnforceTenantMfa;
 use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserBelongsToTenant;
 use App\Modules\Tenant\Access\Interface\Http\Middleware\EnsureUserIsActive;
+use App\Modules\Tenant\Access\Interface\Http\Middleware\ValidateTenantSession;
 use App\Modules\Tenant\Experience\Interface\Http\Controllers\ServeTenantLandingController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -39,6 +40,7 @@ Route::middleware([
     // Authenticated Tenant Group
     Route::middleware([
         'auth',
+        ValidateTenantSession::class,
         EnforceTenantMfa::class,
         EnsureUserIsActive::class,
         EnsureUserBelongsToTenant::class,
