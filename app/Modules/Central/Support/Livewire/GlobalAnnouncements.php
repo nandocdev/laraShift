@@ -47,21 +47,14 @@ class GlobalAnnouncements extends Component
         // Fetch broadcasts that:
         // 1. Have 'banner' in channels
         // 2. Are sent (sent_at is not null)
-        // 3. Match tenant filters (all or same status)
+        // 3. Match the tenant audience (scope unificado en el modelo)
         // 4. Have NOT been dismissed by this user
 
         $dismissedIds = DB::table('broadcast_dismissals')
             ->where('user_id', auth()->id())
             ->pluck('broadcast_id');
 
-        $activeBroadcasts = Broadcast::whereNotNull('sent_at')
-            ->whereJsonContains('channels', 'banner')
-            ->where(function ($query) use ($tenant) {
-                $query->where('filter_type', 'all')
-                    ->orWhere(function ($q) use ($tenant) {
-                        $q->where('filter_type', 'status')->where('filter_value', $tenant->status);
-                    });
-            })
+        $activeBroadcasts = Broadcast::visibleToTenant($tenant)
             ->whereNotIn('id', $dismissedIds)
             ->latest()
             ->get();

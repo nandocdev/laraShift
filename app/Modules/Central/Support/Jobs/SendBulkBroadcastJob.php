@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Jobs;
 
-use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Models\Broadcast;
 use App\Modules\Central\Support\Notifications\BroadcastNotification;
 use Illuminate\Bus\Queueable;
@@ -30,15 +29,9 @@ final class SendBulkBroadcastJob implements ShouldQueue
      */
     public function handle(): void
     {
-        // Clone query for recipient_count update to avoid mutating original
-        $query = Tenant::query();
-
-        if ($this->broadcast->filter_type === 'status' && $this->broadcast->filter_value) {
-            $query->where('status', $this->broadcast->filter_value);
-        }
-
+        // Audiencia desde Broadcast::recipients() (definición única).
         // Process in chunks to avoid memory issues and timeouts
-        $query->chunkById(100, function ($tenants) {
+        $this->broadcast->recipients()->chunkById(100, function ($tenants) {
             Notification::send($tenants, new BroadcastNotification(
                 $this->broadcast->title,
                 $this->broadcast->body

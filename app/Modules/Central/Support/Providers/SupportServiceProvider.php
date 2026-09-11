@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Providers;
 
+use App\Modules\Central\Support\Infrastructure\Console\DispatchDueBroadcastsCommand;
 use App\Modules\Central\Support\Livewire\BroadcastCenter;
 use App\Modules\Central\Support\Livewire\CentralAuditLog;
 use App\Modules\Central\Support\Livewire\GlobalAnnouncements;
@@ -44,5 +45,11 @@ class SupportServiceProvider extends ServiceProvider
         Livewire::component('central-audit-log', CentralAuditLog::class);
         Livewire::component('tenant-support-bitacora', TenantSupportBitacora::class);
         Livewire::component('global-announcements', GlobalAnnouncements::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                DispatchDueBroadcastsCommand::class,
+            ]);
+        }
     }
 }
