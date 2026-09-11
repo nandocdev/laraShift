@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Tenant\Workspace\Interface\Livewire;
 
 use App\Modules\Tenant\Access\Application\Actions\CancelTenantInvitation;
+use App\Modules\Tenant\Access\Application\Actions\DeleteTenantUserAction;
+use App\Modules\Tenant\Access\Application\Actions\RestoreTenantUserAccess;
 use App\Modules\Tenant\Access\Application\Actions\RevokeTenantUserAccess;
 use App\Modules\Tenant\Access\Application\Actions\SendInvitation;
 use App\Modules\Tenant\Access\Application\Actions\UpdateTenantUserRole;
@@ -144,10 +146,42 @@ class TeamManagement extends Component
         }
     }
 
+    public function restoreAccess(string $userId, RestoreTenantUserAccess $action): void
+    {
+        $this->authorize('team:manage');
+
+        $user = User::withTrashed()->findOrFail($userId);
+
+        try {
+            $action->execute($user, auth()->user());
+            session()->flash('status', __('User access restored.'));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function deleteUser(string $userId, DeleteTenantUserAction $action): void
+    {
+        $this->authorize('team:manage');
+
+        $user = User::withTrashed()->findOrFail($userId);
+
+        try {
+            $action->execute($user, auth()->user());
+            session()->flash('status', __('User deleted permanently.'));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
     public function render(): View
     {
         return view('workspace::livewire.team-management', [
-            'members' => User::with('roles')->latest()->paginate(10, ['*'], 'members_page'),
+            'members' => User::withTrashed()->with('roles')->latest()->paginate(10, ['*'], 'members_page'),
             'invitations' => Invitation::with('role')->whereNull('accepted_at')->latest()->paginate(10, ['*'], 'invitations_page'),
             'availableRoles' => Role::all(),
         ]);

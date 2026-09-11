@@ -67,15 +67,21 @@
                                         </flux:modal.trigger>
 
                                         <flux:menu.separator />
-                                        @if ($member->is_active)
+                                        @if ($member->is_active && ! $member->trashed())
                                             <flux:menu.item variant="danger" icon="user-minus"
                                                 wire:click="revokeAccess('{{ $member->id }}')"
                                                 wire:confirm="{{ __('Are you sure you want to revoke access for this user?') }}">
                                                 {{ __('Revoke Access') }}</flux:menu.item>
                                         @else
-                                            <flux:menu.item variant="success" icon="user-plus">
+                                            <flux:menu.item icon="user-plus"
+                                                wire:click="restoreAccess('{{ $member->id }}')">
                                                 {{ __('Restore Access') }}</flux:menu.item>
                                         @endif
+                                        <flux:menu.separator />
+                                        <flux:menu.item variant="danger" icon="trash"
+                                            wire:click="deleteUser('{{ $member->id }}')"
+                                            wire:confirm="{{ __('Permanently delete this user? Sessions and MFA are removed. This cannot be undone.') }}">
+                                            {{ __('Delete permanently') }}</flux:menu.item>
                                     </flux:menu>
                                 </flux:dropdown>
                             @endif
