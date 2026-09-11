@@ -27,7 +27,7 @@ class LoginChallenge extends Component
     public function verify(Google2FA $google2fa): void
     {
         $this->validate([
-            'code' => 'required|string|size:6',
+            'code' => 'required|string|max:25',
         ]);
 
         $userId = Session::get('login.id');
@@ -35,22 +35,62 @@ class LoginChallenge extends Component
         // Use model with tenant scope
         $user = User::findOrFail($userId);
 
-        $secret = $user->mfa->secret;
+        $secret = $user->mfa?->secret;
 
-        if ($google2fa->verifyKey($secret, $this->code)) {
-            Auth::guard('web')->login($user, Session::get('login.remember', false));
-
-            Session::forget(['login.id', 'login.remember']);
-            session()->regenerate();
+        if (is_string($secret) && $secret !== '' && $google2fa->verifyKey($secret, $this->code)) {
+            $this->loginUser($user);
 
             activity('identity')
                 ->performedOn($user)
                 ->log('tenant_user_logged_in_mfa');
 
             $this->redirectIntended(default: route('dashboard'));
-        } else {
-            $this->addError('code', __('Invalid verification code.'));
+
+            return;
         }
+
+        if ($this->consumeRecoveryCode($user, $this->code)) {
+            $this->loginUser($user);
+
+            activity('identity')
+                ->performedOn($user)
+                ->log('tenant_user_logged_in_recovery_code');
+
+            $this->redirectIntended(default: route('dashboard'));
+
+            return;
+        }
+
+        $this->addError('code', __('Invalid verification code.'));
+    }
+
+    private function loginUser(User $user): void
+    {
+        Auth::guard('web')->login($user, Session::get('login.remember', false));
+
+        Session::forget(['login.id', 'login.remember']);
+        session()->regenerate();
+    }
+
+    private function consumeRecoveryCode(User $user, string $code): bool
+    {
+        $codes = $user->mfa?->recovery_codes;
+
+        if (! is_array($codes) || $codes === []) {
+            return false;
+        }
+
+        foreach ($codes as $index => $stored) {
+            if (is_string($stored) && hash_equals($stored, $code)) {
+                unset($codes[$index]);
+
+                $user->mfa->update(['recovery_codes' => array_values($codes)]);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function render(): View

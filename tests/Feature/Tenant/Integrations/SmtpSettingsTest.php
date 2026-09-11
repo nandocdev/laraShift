@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Tenant\Access\Application\Actions\EnsureTenantRolesExist;
 use App\Modules\Tenant\Access\Domain\Models\User;
 use App\Modules\Tenant\Integrations\Interface\Livewire\SmtpSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +28,11 @@ beforeEach(function () {
 });
 
 test('renders the smtp settings page', function () {
-    $user = User::factory()->create(['tenant_id' => tenant('id')]);
+    app(EnsureTenantRolesExist::class)->execute(tenant());
+    setPermissionsTeamId(tenant('id'));
+
+    $user = User::factory()->create(['tenant_id' => tenant('id'), 'status' => 'active']);
+    $user->assignRole('admin');
 
     $this->actingAs($user);
 
