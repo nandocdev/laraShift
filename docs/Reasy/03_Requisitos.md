@@ -106,10 +106,10 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 #### RF3 - Dashboard de Plataforma
 
-- [ ] **RF3.1** - El sistema debe mostrar métricas de negocio clave (MRR, Churn Rate, Tenants Activos)
-- [ ] **RF3.2** - El dashboard debe mostrar el número total de transacciones y reservas
-- [ ] **RF3.3** - El sistema debe proporcionar gráficos de tendencias temporales
-- [ ] **RF3.4** - El dashboard debe actualizarse en tiempo casi real
+- [x] **RF3.1** - El sistema debe mostrar métricas de negocio clave (`Auth/Livewire/Dashboard`: MRR por moneda desde suscripciones no canceladas, churn 30d, breakdown Active/Suspended/Quarantined)
+- [~] **RF3.2** - El dashboard debe mostrar el número total de transacciones y reservas (transacciones ✅: volumen aprobado 30d + pendientes vía `payments`; reservas ⬜: sin módulo de producto en el repo)
+- [x] **RF3.3** - El sistema debe proporcionar gráficos de tendencias temporales (tenants + suscripciones por día, 7 días, doble serie)
+- [x] **RF3.4** - El dashboard debe actualizarse en tiempo casi real (`wire:poll.60s` sobre computeds sin caché)
 
 #### RF4 - Facturación de Plataforma
 
@@ -632,7 +632,7 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 | ---------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RF1 tenants            | ✅                     | `Provisioning/Actions/{CreateTenantAction, ProvisionTenantPipeline, PurgeTenantDataAction}`, `TenantList` (filtros search/status/plan/health) + `ManageTenant` (tabs + suspender/purgar), `provisioning:reconcile`; gates `tenants:view` (staff) / `tenants:manage` (global admin) + tests en `TenantManagementTest` (incl. no-exposición de datos de clientes) |
 | RF2 planes             | ✅                     | `Catalog/Livewire/ManagePlans`, `Catalog/Application/Services/PlanManager`, `Provisioning/Actions/ChangeTenantPlanAction` (sync tenant↔subscriptions, rechazo inactivos), migración `plans`                                                                                                                                                                     |
-| RF3 dashboard          | 🟡                     | Dashboard existe con mocks (`128/4821`, chart fijo) — ver `docs/CentralEntry.md` anexo                                                                                                                                                                                                                                                                          |
+| RF3 dashboard          | ✅                     | `Auth/Livewire/Dashboard` (MRR, churn 30d, transacciones, chart dual, `wire:poll.60s`, alertas/health con datos reales); reservas N/A sin producto                                                                                                                                                                                                              |
 | RF4 facturación        | 🟡                     | `Billing/Actions/IssueInvoiceAction`, `GenerateInvoicePdf`, `SubscriptionList`, `TenantInvoiceList`; prorrateo manual                                                                                                                                                                                                                                           |
 | RF5 config global      | ✅                     | `Settings/Infrastructure/Services/CentralBranding`, `CentralSetting`, `PlatformBranding`                                                                                                                                                                                                                                                                        |
 | RF6 broadcasts         | ✅/🟡                  | `Support/Livewire/BroadcastCenter`, `Support/Actions/SendBroadcastAction`, historial ✅; programado/audiencia avanzada 🟡                                                                                                                                                                                                                                       |

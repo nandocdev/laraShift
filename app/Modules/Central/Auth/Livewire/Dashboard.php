@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Auth\Livewire;
 
+use App\Modules\Central\Billing\Domain\Models\Payment;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Observability\Audit\Activity;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Redis;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -67,8 +72,90 @@ class Dashboard extends Component
     }
 
     /**
-     * Nuevos tenants por día, últimos 7 días. SQLite + PG portable.
-     * Sin datos retorna ceros — nunca cifras inventadas.
+     * MRR por moneda: suma de price_monthly de los planes con
+     * suscripciones no canceladas. Mezclar monedas sería falso,
+     * así que se agrupa y se destaca la moneda con más suscripciones.
+     *
+     * @return array<string, mixed>
+     */
+    #[Computed]
+    public function revenue(): array
+    {
+        try {
+            $rows = DB::table('subscriptions as s')
+                ->join('plans as p', function ($join): void {
+                    $join->on('p.id', '=', 's.plan_id')->orOn('p.slug', '=', 's.plan_id');
+                })
+                ->whereNotIn('s.status', ['canceled'])
+                ->selectRaw('p.currency as currency, sum(p.price_monthly) as total, count(*) as subs')
+                ->groupBy('p.currency')
+                ->get();
+        } catch (\Throwable) {
+            return $this->emptyMoney('mrr');
+        }
+
+        return $this->primaryMoney($rows, 'mrr');
+    }
+
+    /**
+     * Churn 30d: canceladas / (base activa + canceladas). Ventana y
+     * fórmula fijas para que el número sea comparable mes a mes.
+     *
+     * @return array<string, mixed>
+     */
+    #[Computed]
+    public function churn(): array
+    {
+        try {
+            $since = now()->subDays(30);
+            $canceled = DB::table('subscriptions')
+                ->where('status', 'canceled')
+                ->where('canceled_at', '>=', $since)
+                ->count();
+            $base = DB::table('subscriptions')->whereNotIn('status', ['canceled'])->count() + $canceled;
+        } catch (\Throwable) {
+            return ['canceled_30d' => 0, 'rate' => 0.0, 'rate_label' => '0%'];
+        }
+
+        $rate = $base > 0 ? round(($canceled / $base) * 100, 1) : 0.0;
+
+        return [
+            'canceled_30d' => $canceled,
+            'rate' => $rate,
+            'rate_label' => "{$rate}%",
+        ];
+    }
+
+    /**
+     * Transacciones: aprobadas últimos 30d por moneda + pendientes.
+     * Reservas no aplica: este repo no tiene módulo de producto.
+     *
+     * @return array<string, mixed>
+     */
+    #[Computed]
+    public function transactions(): array
+    {
+        try {
+            $rows = DB::table('payments')
+                ->where('status', 'approved')
+                ->where('created_at', '>=', now()->subDays(30))
+                ->selectRaw('currency, sum(amount_cents) as total, count(*) as subs')
+                ->groupBy('currency')
+                ->get();
+            $pending = (int) DB::table('payments')->where('status', 'pending')->count();
+        } catch (\Throwable) {
+            return array_merge($this->emptyMoney('volume_30d'), ['pending' => 0, 'count_30d' => 0]);
+        }
+
+        return array_merge($this->primaryMoney($rows, 'volume_30d'), [
+            'pending' => $pending,
+            'count_30d' => (int) $rows->sum('subs'),
+        ]);
+    }
+
+    /**
+     * Nuevos tenants y suscripciones por día, últimos 7 días.
+     * SQLite + PG portable. Sin datos retorna ceros.
      *
      * @return array<string, mixed>
      */
@@ -76,21 +163,24 @@ class Dashboard extends Component
     public function activityChart(): array
     {
         $days = [];
-        $counts = $this->tenantsPerDay(7);
+        $tenants = $this->tenantsPerDay(7);
+        $subs = $this->subscriptionsPerDay(7);
 
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $key = $date->format('Y-m-d');
-            $value = (int) ($counts[$key] ?? 0);
+            $value = (int) ($tenants[$key] ?? 0);
+            $subValue = (int) ($subs[$key] ?? 0);
             $days[] = [
                 'key' => $date->translatedFormat('D'),
                 'label' => $date->translatedFormat('l'),
                 'value' => $value,
                 'users' => $value,
+                'subs' => $subValue,
             ];
         }
 
-        $max = max(array_column($days, 'value'));
+        $max = max(array_merge(array_column($days, 'value'), array_column($days, 'subs')));
 
         return [
             'days' => $days,
@@ -311,12 +401,68 @@ class Dashboard extends Component
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function emptyMoney(string $totalKey): array
+    {
+        return [
+            'currencies' => [],
+            $totalKey => 0,
+            'primary_label' => '—',
+            'primary_subs' => 0,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $rows  currency/total/subs
+     * @return array<string, mixed>
+     */
+    private function primaryMoney($rows, string $totalKey): array
+    {
+        $currencies = [];
+        foreach ($rows as $row) {
+            $currencies[] = [
+                'currency' => (string) $row->currency,
+                'total' => (int) $row->total,
+                'subs' => (int) $row->subs,
+                'label' => number_format(((int) $row->total) / 100, 2).' '.(string) $row->currency,
+            ];
+        }
+
+        usort($currencies, fn ($a, $b) => $b['subs'] <=> $a['subs']);
+        $primary = $currencies[0] ?? null;
+
+        return [
+            'currencies' => $currencies,
+            $totalKey => $primary['total'] ?? 0,
+            'primary_label' => $primary['label'] ?? '—',
+            'primary_subs' => $primary['subs'] ?? 0,
+        ];
+    }
+
+    /**
      * @return array<string, int> Y-m-d => total
      */
     private function tenantsPerDay(int $days): array
     {
         try {
             return Tenant::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
+                ->selectRaw('date(created_at) as day, count(*) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day')
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return array<string, int> Y-m-d => total
+     */
+    private function subscriptionsPerDay(int $days): array
+    {
+        try {
+            return Subscription::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
                 ->selectRaw('date(created_at) as day, count(*) as total')
                 ->groupBy('day')
                 ->pluck('total', 'day')
