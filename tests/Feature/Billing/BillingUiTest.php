@@ -184,3 +184,25 @@ it('regularizes a past_due subscription with a new card', function () {
         tenancy()->end();
     }
 });
+
+it('hides custom enterprise plans from self-service selection', function () {
+    billingUiPlans();
+    Plan::create([
+        'slug' => 'acme-enterprise', 'name' => 'Acme Enterprise',
+        'price_monthly' => 99900, 'price_yearly' => 999000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true, 'is_custom' => true,
+    ]);
+    $tenant = claveTestTenant('ui-select-custom');
+    tenancy()->initialize($tenant);
+
+    try {
+        Livewire::test(SelectPlan::class)
+            ->assertSee('Pro')
+            ->assertDontSee('Acme Enterprise')
+            ->call('checkout', 'acme-enterprise')
+            ->assertSet('error', __('This plan is available through your account manager only.'));
+    } finally {
+        tenancy()->end();
+    }
+});

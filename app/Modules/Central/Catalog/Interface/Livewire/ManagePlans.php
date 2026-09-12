@@ -39,6 +39,8 @@ class ManagePlans extends Component
 
     public bool $isActive = true;
 
+    public bool $isCustom = false;
+
     /** @var list<string> */
     public array $displayFeatures = [];
 
@@ -86,6 +88,7 @@ class ManagePlans extends Component
         $this->currency = $plan->currency;
         $this->interval = $plan->interval;
         $this->isActive = (bool) $plan->is_active;
+        $this->isCustom = (bool) ($plan->is_custom ?? false);
         $this->displayFeatures = array_values(array_intersect(
             $this->registry()->featureKeys(),
             is_array($plan->features['display_features'] ?? null) ? $plan->features['display_features'] : []
@@ -105,7 +108,7 @@ class ManagePlans extends Component
         $this->showForm = false;
         $this->reset([
             'editingId', 'name', 'slug', 'slugLocked', 'priceMonthly', 'priceYearly',
-            'currency', 'interval', 'isActive', 'displayFeatures',
+            'currency', 'interval', 'isActive', 'isCustom', 'displayFeatures',
             'quotas', 'gatewayClave', 'gatewayDlocal',
         ]);
         $this->resetValidation();
@@ -121,6 +124,7 @@ class ManagePlans extends Component
             'currency' => ['required', 'alpha', 'size:3'],
             'interval' => ['required', 'in:month,year'],
             'isActive' => ['boolean'],
+            'isCustom' => ['boolean'],
             'displayFeatures' => ['array'],
             'displayFeatures.*' => ['in:'.implode(',', $this->registry()->featureKeys())],
             'quotas' => ['array'],
@@ -150,6 +154,7 @@ class ManagePlans extends Component
             'interval' => $validated['interval'],
             'features' => $features,
             'is_active' => (bool) ($validated['isActive'] ?? true),
+            'is_custom' => (bool) ($validated['isCustom'] ?? false),
         ];
 
         if ($this->editingId) {
@@ -215,6 +220,7 @@ class ManagePlans extends Component
             'interval' => $plan->interval,
             'features' => $plan->features,
             'is_active' => false,
+            'is_custom' => (bool) ($plan->is_custom ?? false),
         ]);
 
         session()->flash('status', __('Plan duplicated as :slug (inactive).', ['slug' => $slug]));

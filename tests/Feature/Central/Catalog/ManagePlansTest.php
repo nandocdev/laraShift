@@ -212,3 +212,30 @@ it('exposes tenants per plan to the list view', function () {
         ->assertSee('Pro')
         ->assertViewHas('tenantCounts', fn ($counts) => ($counts['pro'] ?? 0) === 1);
 });
+
+it('creates a custom enterprise plan hidden from the public catalog', function () {
+    $this->actingAs(centralStaff(), 'central');
+
+    Livewire::test(ManagePlans::class)
+        ->set('name', 'Acme Enterprise')
+        ->set('priceMonthly', '999.00')
+        ->set('priceYearly', '9990.00')
+        ->set('isCustom', true)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee('Custom');
+
+    $plan = Plan::where('slug', 'acme-enterprise')->firstOrFail();
+
+    expect($plan->is_custom)->toBeTrue()
+        ->and($plan->is_active)->toBeTrue();
+
+    Livewire::test(ManagePlans::class)
+        ->call('edit', $plan->id)
+        ->assertSet('isCustom', true)
+        ->set('isCustom', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($plan->fresh()->is_custom)->toBeFalse();
+});

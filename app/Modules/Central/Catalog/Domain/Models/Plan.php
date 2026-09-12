@@ -23,6 +23,7 @@ class Plan extends Model
         'interval',
         'features',
         'is_active',
+        'is_custom',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class Plan extends Model
             'price_yearly' => 'integer',
             'features' => 'array',
             'is_active' => 'boolean',
+            'is_custom' => 'boolean',
         ];
     }
 
