@@ -33,11 +33,16 @@ final readonly class PlanManager
     }
 
     /**
+     * Public catalog: active, non-custom plans. Custom (enterprise)
+     * plans are staff-assigned only — see ManageTenant/SubscriptionDetail.
+     * find() still resolves them by slug so features and billing keep
+     * working for tenants already on one.
+     *
      * @return Collection<int, Plan>
      */
     public function active(): Collection
     {
-        return Plan::where('is_active', true)->orderBy('price_monthly')->get();
+        return Plan::where('is_active', true)->where('is_custom', false)->orderBy('price_monthly')->get();
     }
 
     /**

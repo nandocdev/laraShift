@@ -69,3 +69,35 @@ it('resolves tenant features and misses cache on plan change', function () {
 
     assertDatabaseHas('plans', ['slug' => 'pro']);
 });
+
+it('hides custom plans from the public catalog but resolves them by slug', function () {
+    Plan::create([
+        'slug' => 'pro', 'name' => 'Pro', 'price_monthly' => 2900, 'price_yearly' => 29000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => ['api_access']],
+        'is_active' => true, 'is_custom' => false,
+    ]);
+    Plan::create([
+        'slug' => 'acme-enterprise', 'name' => 'Acme Enterprise',
+        'price_monthly' => 99900, 'price_yearly' => 999000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => ['display_features' => ['api_access', 'sso']],
+        'is_active' => true, 'is_custom' => true,
+    ]);
+
+    $manager = app(PlanManager::class);
+
+    expect($manager->active()->pluck('slug')->all())->toBe(['pro'])
+        ->and($manager->find('acme-enterprise')->slug)->toBe('acme-enterprise');
+
+    $tenant = Tenant::create([
+        'id' => (string) Str::uuid(),
+        'slug' => 'enterprise-co',
+        'name' => 'Enterprise Co',
+        'email' => 'enterprise@test.com',
+        'status' => 'active',
+        'plan_id' => 'acme-enterprise',
+    ]);
+
+    expect(app(ResolveTenantFeatures::class)->hasFeature($tenant, 'sso'))->toBeTrue();
+});

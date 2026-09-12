@@ -29,6 +29,12 @@ class SelectPlan extends Component
         try {
             $plan = $plans->find($planSlug);
 
+            if ($plan->is_custom) {
+                $this->error = __('This plan is available through your account manager only.');
+
+                return;
+            }
+
             // One display_id per attempt: reusing a mount-time id across
             // plans would bind the new plan to the old payment row (amount
             // mismatch). Same plan + same second still collapses to one row
