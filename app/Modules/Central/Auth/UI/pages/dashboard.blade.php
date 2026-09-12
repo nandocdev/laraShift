@@ -107,6 +107,54 @@
         </flux:card>
     </div>
 
+    {{-- Business metrics: MRR / Churn / Transactions (RF3.1 + RF3.2) --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {{-- MRR --}}
+        <flux:card class="flex flex-col justify-between p-5 space-y-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ __('MRR') }}
+            </span>
+            <div class="space-y-1">
+                <div class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-mono">
+                    {{ $this->revenue['primary_label'] }}
+                </div>
+                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    {{ trans_choice(':count suscripción|:count suscripciones', $this->revenue['primary_subs'], ['count' => $this->revenue['primary_subs']]) }}
+                </div>
+            </div>
+        </flux:card>
+
+        {{-- CHURN 30D --}}
+        <flux:card class="flex flex-col justify-between p-5 space-y-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ __('CHURN 30D') }}
+            </span>
+            <div class="space-y-1">
+                <div class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-mono">
+                    {{ $this->churn['rate_label'] }}
+                </div>
+                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    {{ trans_choice(':count cancelada|:count canceladas', $this->churn['canceled_30d'], ['count' => $this->churn['canceled_30d']]) }}
+                </div>
+            </div>
+        </flux:card>
+
+        {{-- TRANSACCIONES 30D --}}
+        <flux:card class="flex flex-col justify-between p-5 space-y-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ __('TRANSACCIONES 30D') }}
+            </span>
+            <div class="space-y-1">
+                <div class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-mono">
+                    {{ $this->transactions['primary_label'] }}
+                </div>
+                <div class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                    {{ trans_choice(':count aprobada|:count aprobadas', $this->transactions['count_30d'], ['count' => $this->transactions['count_30d']]) }} · {{ $this->transactions['pending'] }} {{ __('pendientes') }}
+                </div>
+            </div>
+        </flux:card>
+    </div>
+
     {{-- Middle Section 1: Platform Activity & System Health --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left (2 cols): ACTIVIDAD DE LA PLATAFORMA --}}
