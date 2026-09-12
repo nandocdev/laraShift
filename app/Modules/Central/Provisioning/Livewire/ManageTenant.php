@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Livewire;
 
-use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Actions\ChangeTenantPlanAction;
 use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Observability\Audit\Activity;
@@ -89,7 +88,7 @@ class ManageTenant extends Component
         $this->redirect(route('central.provisioning.index'), navigate: true);
     }
 
-    public function changePlan(): void
+    public function changePlan(ChangeTenantPlanAction $action): void
     {
         $this->authorize('tenants:manage');
 
@@ -97,23 +96,11 @@ class ManageTenant extends Component
             'plan_id' => 'required|string|max:60|exists:plans,slug',
         ]);
 
-        $old = (string) ($this->tenant->plan_id ?? 'free');
+        $result = $action->execute($this->tenant, $this->plan_id);
 
-        if ($old === $this->plan_id) {
-            session()->flash('status', __('Tenant is already on this plan.'));
-
-            return;
-        }
-
-        $this->tenant->update(['plan_id' => $this->plan_id]);
-
-        activity('provisioning')
-            ->causedBy(auth('central')->user())
-            ->performedOn($this->tenant)
-            ->withProperties(['from' => $old, 'to' => $this->plan_id])
-            ->log('tenant_plan_changed');
-
-        session()->flash('status', __('Plan changed successfully.'));
+        session()->flash('status', $result['changed']
+            ? __('Plan changed successfully.')
+            : __('Tenant is already on this plan.'));
     }
 
     public function suspend(): void
@@ -211,7 +198,12 @@ class ManageTenant extends Component
     public function plans(): array
     {
         try {
-            return Plan::orderBy('name')
+            return DB::table('plans')
+                ->where(function ($query): void {
+                    $query->where('is_active', true)
+                        ->orWhere('slug', $this->tenant->plan_id ?? 'free');
+                })
+                ->orderBy('name')
                 ->get(['slug', 'name'])
                 ->map(fn ($plan) => ['slug' => $plan->slug, 'name' => $plan->name])
                 ->all();
@@ -227,9 +219,12 @@ class ManageTenant extends Component
     public function currentSubscription(): ?array
     {
         try {
-            $subscription = Subscription::where('tenant_id', $this->tenant->id)->latest()->first();
+            $subscription = DB::table('subscriptions')
+                ->where('tenant_id', $this->tenant->id)
+                ->latest()
+                ->first();
 
-            return $subscription ? $subscription->toArray() : null;
+            return $subscription ? (array) $subscription : null;
         } catch (\Throwable) {
             return null;
         }

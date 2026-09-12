@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Livewire\CreateTenant;
 use App\Modules\Central\Provisioning\Livewire\ManageTenant;
@@ -115,6 +116,50 @@ it('changes plan only to an existing plan slug', function () {
         ->set('plan_id', 'ghost-plan')
         ->call('changePlan')
         ->assertHasErrors(['plan_id']);
+});
+
+it('syncs non-canceled subscriptions and rejects inactive plans on changePlan', function () {
+    $tenant = makeTenantRow('plan-sync', 'active', 'free');
+
+    Plan::create([
+        'slug' => 'pro', 'name' => 'Pro',
+        'price_monthly' => 1900, 'price_yearly' => 19000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true,
+    ]);
+    Plan::create([
+        'slug' => 'legacy', 'name' => 'Legacy',
+        'price_monthly' => 900, 'price_yearly' => 9000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => false,
+    ]);
+
+    $proId = Plan::where('slug', 'pro')->firstOrFail()->id;
+
+    $active = Subscription::create([
+        'tenant_id' => $tenant->id, 'plan_id' => null,
+        'status' => 'active', 'gateway' => 'clave',
+    ]);
+    $canceled = Subscription::create([
+        'tenant_id' => $tenant->id, 'plan_id' => null,
+        'status' => 'canceled', 'gateway' => 'clave',
+    ]);
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'pro')
+        ->call('changePlan')
+        ->assertHasNoErrors();
+
+    expect($tenant->fresh()->plan_id)->toBe('pro')
+        ->and($active->fresh()->plan_id)->toBe($proId)
+        ->and($canceled->fresh()->plan_id)->toBeNull();
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'legacy')
+        ->call('changePlan')
+        ->assertHasErrors(['plan_id']);
+
+    expect($tenant->fresh()->plan_id)->toBe('pro');
 });
 
 it('rejects purge when slug confirmation does not match', function () {
