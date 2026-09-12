@@ -22,7 +22,7 @@ it('renders active banners for the target tenant', function () {
         'id' => Str::uuid()->toString(),
         'name' => 'Admin',
         'email' => 'admin@test.com',
-        'password' => 'password',
+        'password' => 'password', 'is_global_admin' => true,
     ]);
 
     $this->actingAs($admin, 'central');
@@ -56,7 +56,7 @@ it('hides dismissed banners', function () {
         'id' => Str::uuid()->toString(),
         'name' => 'Admin',
         'email' => 'admin@test.com',
-        'password' => 'password',
+        'password' => 'password', 'is_global_admin' => true,
     ]);
 
     $this->actingAs($admin, 'central');
@@ -88,7 +88,7 @@ it('hides dismissed banners', function () {
 it('targets plan audiences and validates unknown plans', function () {
     $admin = CentralUser::create([
         'id' => Str::uuid()->toString(), 'name' => 'Admin',
-        'email' => 'admin-plan@test.com', 'password' => 'password',
+        'email' => 'admin-plan@test.com', 'password' => 'password', 'is_global_admin' => true,
     ]);
     $this->actingAs($admin, 'central');
 
@@ -117,7 +117,7 @@ it('targets plan audiences and validates unknown plans', function () {
 it('sends selected-tenants broadcasts only to the chosen tenants', function () {
     $admin = CentralUser::create([
         'id' => Str::uuid()->toString(), 'name' => 'Admin',
-        'email' => 'admin-sel@test.com', 'password' => 'password',
+        'email' => 'admin-sel@test.com', 'password' => 'password', 'is_global_admin' => true,
     ]);
     $this->actingAs($admin, 'central');
 
@@ -147,7 +147,7 @@ it('sends selected-tenants broadcasts only to the chosen tenants', function () {
 it('schedules broadcasts and dispatches them when due', function () {
     $admin = CentralUser::create([
         'id' => Str::uuid()->toString(), 'name' => 'Admin',
-        'email' => 'admin-sched@test.com', 'password' => 'password',
+        'email' => 'admin-sched@test.com', 'password' => 'password', 'is_global_admin' => true,
     ]);
     $this->actingAs($admin, 'central');
 
@@ -171,7 +171,7 @@ it('schedules broadcasts and dispatches them when due', function () {
 it('saves drafts without sending and publishes them on demand', function () {
     $admin = CentralUser::create([
         'id' => Str::uuid()->toString(), 'name' => 'Admin',
-        'email' => 'admin-draft@test.com', 'password' => 'password',
+        'email' => 'admin-draft@test.com', 'password' => 'password', 'is_global_admin' => true,
     ]);
     $this->actingAs($admin, 'central');
 
@@ -191,4 +191,27 @@ it('saves drafts without sending and publishes them on demand', function () {
 
     expect($draft->fresh()->is_draft)->toBeFalse()
         ->and($draft->fresh()->sent_at)->not->toBeNull();
+});
+
+it('forbids broadcasts to staff without global admin', function () {
+    $viewer = CentralUser::create([
+        'id' => Str::uuid()->toString(), 'name' => 'Viewer',
+        'email' => 'viewer@test.com', 'password' => 'password',
+    ]);
+    $this->actingAs($viewer, 'central');
+
+    Livewire::test(BroadcastCenter::class)
+        ->set('title', 'Spam')
+        ->set('body', 'Should never send.')
+        ->call('send')
+        ->assertForbidden();
+
+    Livewire::test(BroadcastCenter::class)
+        ->set('title', 'Draft spam')
+        ->set('body', 'Should never save.')
+        ->call('saveDraft')
+        ->assertForbidden();
+
+    expect(Broadcast::where('title', 'Spam')->exists())->toBeFalse()
+        ->and(Broadcast::where('title', 'Draft spam')->exists())->toBeFalse();
 });

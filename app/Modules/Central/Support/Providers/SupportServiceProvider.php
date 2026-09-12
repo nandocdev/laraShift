@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Support\Providers;
 
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Support\Infrastructure\Console\DispatchDueBroadcastsCommand;
 use App\Modules\Central\Support\Livewire\BroadcastCenter;
 use App\Modules\Central\Support\Livewire\CentralAuditLog;
@@ -28,6 +29,12 @@ class SupportServiceProvider extends ServiceProvider
 
             return false;
         });
+
+        // Mass tenant comms (RF6): history is readable by all central
+        // staff, but sending/scheduling/mutating broadcasts requires
+        // global admin. Same split as tenants:view/manage.
+        Gate::define('broadcasts:view', fn ($user) => $user instanceof CentralUser);
+        Gate::define('broadcasts:manage', fn ($user) => (bool) ($user->is_global_admin ?? false));
 
         $this->loadViewsFrom(__DIR__.'/../UI', 'support');
 
