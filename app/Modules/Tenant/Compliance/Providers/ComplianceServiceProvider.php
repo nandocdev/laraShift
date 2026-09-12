@@ -6,6 +6,7 @@ namespace App\Modules\Tenant\Compliance\Providers;
 
 use App\Modules\Tenant\Compliance\Application\Contracts\UserResolverContract;
 use App\Modules\Tenant\Compliance\Application\Listeners\TenantAuthAuditSubscriber;
+use App\Modules\Tenant\Compliance\Infrastructure\Console\PruneAuditLogsCommand;
 use App\Modules\Tenant\Compliance\Infrastructure\Console\PruneExportsCommand;
 use App\Modules\Tenant\Compliance\Infrastructure\Resolvers\ConfiguredUserResolver;
 use App\Modules\Tenant\Compliance\Interface\Livewire\AuditLogViewer;
@@ -26,6 +27,7 @@ class ComplianceServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PruneExportsCommand::class,
+                PruneAuditLogsCommand::class,
             ]);
         }
 
