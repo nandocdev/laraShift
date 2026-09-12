@@ -6,6 +6,7 @@ namespace App\Modules\Central\Provisioning\Infrastructure\Console;
 
 use App\Modules\Central\Provisioning\Jobs\ProvisionTenantJob;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Settings\Infrastructure\Services\PlatformPolicies;
 use Illuminate\Console\Command;
 
 /**
@@ -55,7 +56,7 @@ class ProvisioningReconcileCommand extends Command
     {
         Tenant::where('status', 'provisioning')
             ->whereNull('deleted_at')
-            ->where('created_at', '<', now()->subMinutes((int) config('provisioning.stale_provisioning_minutes')))
+            ->where('created_at', '<', now()->subMinutes(PlatformPolicies::staleProvisioningMinutes()))
             ->chunkById(100, function ($tenants) {
                 foreach ($tenants as $tenant) {
                     $this->retryTenant($tenant);

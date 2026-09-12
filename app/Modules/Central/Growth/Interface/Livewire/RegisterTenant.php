@@ -8,6 +8,7 @@ use App\Modules\Central\Growth\Application\Actions\FraudScoringAction;
 use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
+use App\Modules\Central\Settings\Infrastructure\Services\PlatformPolicies;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
@@ -146,7 +147,7 @@ class RegisterTenant extends Component
             // Runs before tenant creation so quarantine status can be embedded in
             // CreateTenantData and carried through to ProvisionTenantJob.
             $fraudSignals = $fraudScoring->evaluate(request(), $this->email);
-            $isQuarantined = $fraudSignals->exceedsThreshold();
+            $isQuarantined = $fraudSignals->exceedsThreshold(PlatformPolicies::fraudThreshold());
 
             $tenant = $action->execute(new CreateTenantData(
                 name: strip_tags($this->company),
