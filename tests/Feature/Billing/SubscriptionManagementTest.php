@@ -99,3 +99,27 @@ it('shows the detail and changes plan', function () {
     expect($sub->fresh()->plan_id)->toBe(Plan::where('slug', 'enterprise')->firstOrFail()->id)
         ->and($tenant->fresh()->plan_id)->toBe('enterprise');
 });
+
+it('rejects inactive plans from the subscription detail', function () {
+    mgmtPlan('pro');
+    Plan::create([
+        'slug' => 'legacy', 'name' => 'Legacy',
+        'price_monthly' => 900, 'price_yearly' => 9000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => false,
+    ]);
+
+    $tenant = claveTestTenant('sub-mgmt-inactive');
+    $plan = Plan::where('slug', 'pro')->firstOrFail();
+    $sub = Subscription::create([
+        'tenant_id' => $tenant->id, 'plan_id' => $plan->id,
+        'status' => 'active', 'gateway' => 'clave',
+    ]);
+
+    Livewire::test(SubscriptionDetail::class, ['subscription' => $sub])
+        ->set('planSlug', 'legacy')
+        ->call('changePlan')
+        ->assertHasErrors(['planSlug']);
+
+    expect($sub->fresh()->plan_id)->toBe($plan->id);
+});

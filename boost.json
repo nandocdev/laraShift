@@ -1,5 +1,8 @@
 {
-    "agents": ["opencode", "antigravity"],
+    "agents": [
+        "opencode",
+        "antigravity"
+    ],
     "cloud": true,
     "guidelines": true,
     "mcp": true,
@@ -14,6 +17,7 @@
         "fortify-development",
         "laravel-best-practices",
         "configuring-horizon",
+        "socialite-development",
         "fluxui-development",
         "livewire-development",
         "pest-testing",

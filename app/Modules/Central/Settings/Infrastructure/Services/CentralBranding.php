@@ -6,6 +6,7 @@ namespace App\Modules\Central\Settings\Infrastructure\Services;
 
 use App\Modules\Central\Settings\Domain\Models\CentralSetting;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CentralBranding
 {

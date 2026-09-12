@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
 use App\Modules\Central\Billing\Domain\Events\PaymentApproved;
+use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
@@ -76,6 +77,26 @@ it('resets MIT failures on approved charge', function () {
 
     expect($subscription->fresh()->failed_attempts)->toBe(0)
         ->and($subscription->fresh()->status)->toBe(SubscriptionStatus::Active);
+});
+
+it('issues an invoice for an approved MIT charge', function () {
+    fakeDlocalMit('APPROVED');
+    $subscription = mitSubscription('sched-mit-inv');
+
+    artisan('billing:process-recurring')->assertSuccessful();
+
+    $payment = Payment::where('tenant_id', $subscription->tenant_id)
+        ->where('status', PaymentStatus::Approved)
+        ->firstOrFail();
+
+    assertDatabaseHas('invoices', [
+        'tenant_id' => $subscription->tenant_id,
+        'payment_id' => $payment->id,
+        'subscription_id' => $subscription->id,
+        'status' => 'paid',
+        'amount_cents' => $payment->amount_cents,
+    ]);
+    expect(Invoice::where('payment_id', $payment->id)->count())->toBe(1);
 });
 
 it('moves Clave link renewals to past_due after expiry, suspends 4 days later', function () {

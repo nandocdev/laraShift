@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
+use App\Modules\Central\Billing\Domain\Models\Subscription;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Livewire\CreateTenant;
 use App\Modules\Central\Provisioning\Livewire\ManageTenant;
 use App\Modules\Central\Provisioning\Livewire\TenantList;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -29,8 +32,13 @@ function makeTenantRow(string $slug, string $status = 'active', string $plan = '
 }
 
 beforeEach(function () {
-    $this->actingAs(CentralUser::factory()->create(), 'central');
+    $this->actingAs(CentralUser::factory()->create(['is_global_admin' => true]), 'central');
 });
+
+function staffUser(): CentralUser
+{
+    return CentralUser::factory()->create(['is_global_admin' => false]);
+}
 
 it('filters tenants by search, status, plan and health', function () {
     makeTenantRow('acme-one', 'active', 'free');
@@ -110,6 +118,50 @@ it('changes plan only to an existing plan slug', function () {
         ->assertHasErrors(['plan_id']);
 });
 
+it('syncs non-canceled subscriptions and rejects inactive plans on changePlan', function () {
+    $tenant = makeTenantRow('plan-sync', 'active', 'free');
+
+    Plan::create([
+        'slug' => 'pro', 'name' => 'Pro',
+        'price_monthly' => 1900, 'price_yearly' => 19000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true,
+    ]);
+    Plan::create([
+        'slug' => 'legacy', 'name' => 'Legacy',
+        'price_monthly' => 900, 'price_yearly' => 9000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => false,
+    ]);
+
+    $proId = Plan::where('slug', 'pro')->firstOrFail()->id;
+
+    $active = Subscription::create([
+        'tenant_id' => $tenant->id, 'plan_id' => null,
+        'status' => 'active', 'gateway' => 'clave',
+    ]);
+    $canceled = Subscription::create([
+        'tenant_id' => $tenant->id, 'plan_id' => null,
+        'status' => 'canceled', 'gateway' => 'clave',
+    ]);
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'pro')
+        ->call('changePlan')
+        ->assertHasNoErrors();
+
+    expect($tenant->fresh()->plan_id)->toBe('pro')
+        ->and($active->fresh()->plan_id)->toBe($proId)
+        ->and($canceled->fresh()->plan_id)->toBeNull();
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'legacy')
+        ->call('changePlan')
+        ->assertHasErrors(['plan_id']);
+
+    expect($tenant->fresh()->plan_id)->toBe('pro');
+});
+
 it('rejects purge when slug confirmation does not match', function () {
     $tenant = makeTenantRow('purge-me', 'suspended');
 
@@ -119,4 +171,69 @@ it('rejects purge when slug confirmation does not match', function () {
         ->assertHasErrors(['purgeConfirmSlug']);
 
     expect(Tenant::where('slug', 'purge-me')->exists())->toBeTrue();
+});
+
+it('lets non-admin staff view the list and detail but forbids lifecycle mutations', function () {
+    $tenant = makeTenantRow('viewable', 'active');
+    $this->actingAs(staffUser(), 'central');
+
+    Livewire::test(TenantList::class)
+        ->assertHasNoErrors()
+        ->assertSee('viewable');
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->assertHasNoErrors()
+        ->assertSee('Viewable');
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('suspend')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('quarantine')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('reactivate')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('purgeConfirmSlug', 'viewable')
+        ->call('purge')
+        ->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('save')->assertForbidden();
+
+    Livewire::test(TenantList::class)
+        ->set('selectedTenantId', $tenant->id)
+        ->set('confirmSlug', 'viewable')
+        ->call('delete')
+        ->assertForbidden();
+
+    Livewire::test(CreateTenant::class)->call('save')->assertForbidden();
+
+    expect($tenant->fresh()->status)->toBe('active');
+    expect(Tenant::where('slug', 'viewable')->exists())->toBeTrue();
+});
+
+it('never exposes tenant end-user data on the detail view', function () {
+    $tenant = makeTenantRow('privacy-co', 'active');
+
+    $tenant->run(fn () => User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'end-client-private@example.com',
+    ]));
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->assertHasNoErrors()
+        ->assertSee('Privacy-co')
+        ->assertDontSee('end-client-private@example.com');
+});
+
+it('assigns an active custom enterprise plan to a tenant manually', function () {
+    $tenant = makeTenantRow('enterprise-manual', 'active', 'free');
+
+    Plan::create([
+        'slug' => 'acme-enterprise', 'name' => 'Acme Enterprise',
+        'price_monthly' => 99900, 'price_yearly' => 999000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true, 'is_custom' => true,
+    ]);
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'acme-enterprise')
+        ->call('changePlan')
+        ->assertHasNoErrors();
+
+    expect($tenant->fresh()->plan_id)->toBe('acme-enterprise');
 });

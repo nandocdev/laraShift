@@ -11,6 +11,7 @@ use App\Modules\Central\Support\DTOs\BroadcastData;
 use App\Modules\Central\Support\Models\Broadcast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -19,7 +20,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.central')]
 class BroadcastCenter extends Component
 {
-    use WithPagination;
+    use AuthorizesRequests, WithPagination;
 
     // Form state
     public string $title = '';
@@ -38,11 +39,15 @@ class BroadcastCenter extends Component
 
     public function send(SendBroadcastAction $action): void
     {
+        $this->authorize('broadcasts:manage');
+
         $this->dispatchBroadcast($action, false, null);
     }
 
     public function schedule(SendBroadcastAction $action): void
     {
+        $this->authorize('broadcasts:manage');
+
         $this->validate(['scheduledAt' => 'required|date|after:now']);
 
         $this->dispatchBroadcast($action, false, $this->scheduledAt);
@@ -50,11 +55,15 @@ class BroadcastCenter extends Component
 
     public function saveDraft(SendBroadcastAction $action): void
     {
+        $this->authorize('broadcasts:manage');
+
         $this->dispatchBroadcast($action, true, null);
     }
 
     public function publishDraft(string $id, SendBroadcastAction $action): void
     {
+        $this->authorize('broadcasts:manage');
+
         $broadcast = Broadcast::find($id);
 
         if (! $broadcast || ! $broadcast->is_draft) {
@@ -69,6 +78,8 @@ class BroadcastCenter extends Component
 
     public function unschedule(string $id): void
     {
+        $this->authorize('broadcasts:manage');
+
         $broadcast = Broadcast::find($id);
 
         if (! $broadcast || $broadcast->sent_at) {
@@ -86,6 +97,8 @@ class BroadcastCenter extends Component
 
     public function deleteDraft(string $id): void
     {
+        $this->authorize('broadcasts:manage');
+
         $broadcast = Broadcast::find($id);
 
         if (! $broadcast || ! $broadcast->is_draft) {
@@ -126,6 +139,8 @@ class BroadcastCenter extends Component
 
     public function render(): View
     {
+        $this->authorize('broadcasts:view');
+
         return view('support::pages.broadcast-center', [
             'broadcasts' => Broadcast::with('creator')->latest()->paginate(10),
         ]);

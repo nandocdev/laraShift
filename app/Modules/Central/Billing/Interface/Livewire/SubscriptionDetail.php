@@ -9,10 +9,11 @@ use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
 use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Domain\Models\Payment;
 use App\Modules\Central\Billing\Domain\Models\Subscription;
-use App\Modules\Central\Catalog\Domain\Models\Plan;
-use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Provisioning\Actions\ChangeTenantPlanAction;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -30,13 +31,25 @@ class SubscriptionDetail extends Component
         $this->planSlug = (string) ($subscription->plan_id ?? '');
     }
 
-    public function changePlan(): void
+    public function changePlan(ChangeTenantPlanAction $sync): void
     {
         $this->validate([
             'planSlug' => 'required|string|max:60|exists:plans,slug',
         ]);
 
-        $plan = Plan::where('slug', $this->planSlug)->firstOrFail();
+        $plan = DB::table('plans')->where('slug', $this->planSlug)->first();
+
+        if (! $plan || ! (bool) ($plan->is_active ?? false)) {
+            $this->addError('planSlug', __('Selected plan is not active.'));
+
+            return;
+        }
+
+        if ($this->subscription->plan_id === $plan->id || $this->subscription->plan_id === $plan->slug) {
+            session()->flash('status', __('Subscription is already on this plan.'));
+
+            return;
+        }
 
         $this->subscription->update([
             'plan_id' => $plan->id,
@@ -44,17 +57,19 @@ class SubscriptionDetail extends Component
             'canceled_at' => null,
         ]);
 
-        $tenant = Tenant::find($this->subscription->tenant_id);
+        try {
+            $sync->executeById((string) $this->subscription->tenant_id, $plan->slug);
+        } catch (ModelNotFoundException) {
+            $this->addError('planSlug', __('Tenant not found.'));
 
-        if ($tenant) {
-            $tenant->update(['plan_id' => $plan->slug]);
-
-            activity('billing')
-                ->causedBy(auth('central')->user())
-                ->performedOn($tenant)
-                ->withProperties(['subscription_id' => $this->subscription->id, 'plan' => $plan->slug])
-                ->log('subscription_plan_changed');
+            return;
         }
+
+        activity('billing')
+            ->causedBy(auth('central')->user())
+            ->performedOn($this->subscription)
+            ->withProperties(['subscription_id' => $this->subscription->id, 'plan' => $plan->slug])
+            ->log('subscription_plan_changed');
 
         $this->subscription->refresh();
 
@@ -87,16 +102,21 @@ class SubscriptionDetail extends Component
     }
 
     #[Computed]
-    public function tenant(): ?Tenant
+    public function tenant(): ?object
     {
-        return Tenant::find($this->subscription->tenant_id);
+        try {
+            return DB::table('tenants')->where('id', $this->subscription->tenant_id)->first();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     #[Computed]
-    public function plan(): ?Plan
+    public function plan(): ?object
     {
         try {
-            return Plan::where('id', $this->subscription->plan_id)
+            return DB::table('plans')
+                ->where('id', $this->subscription->plan_id)
                 ->orWhere('slug', (string) $this->subscription->plan_id)
                 ->first();
         } catch (\Throwable) {
@@ -111,7 +131,8 @@ class SubscriptionDetail extends Component
     public function plans(): array
     {
         try {
-            return Plan::where('is_active', true)
+            return DB::table('plans')
+                ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['slug', 'name'])
                 ->map(fn ($plan) => ['slug' => $plan->slug, 'name' => $plan->name])
