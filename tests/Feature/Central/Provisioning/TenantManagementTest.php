@@ -219,3 +219,21 @@ it('never exposes tenant end-user data on the detail view', function () {
         ->assertSee('Privacy-co')
         ->assertDontSee('end-client-private@example.com');
 });
+
+it('assigns an active custom enterprise plan to a tenant manually', function () {
+    $tenant = makeTenantRow('enterprise-manual', 'active', 'free');
+
+    Plan::create([
+        'slug' => 'acme-enterprise', 'name' => 'Acme Enterprise',
+        'price_monthly' => 99900, 'price_yearly' => 999000,
+        'currency' => 'USD', 'interval' => 'month',
+        'features' => [], 'is_active' => true, 'is_custom' => true,
+    ]);
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('plan_id', 'acme-enterprise')
+        ->call('changePlan')
+        ->assertHasNoErrors();
+
+    expect($tenant->fresh()->plan_id)->toBe('acme-enterprise');
+});

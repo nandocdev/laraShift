@@ -45,6 +45,9 @@
                         <flux:table.cell>{{ number_format($plan->price_yearly / 100, 2) }} {{ $plan->currency }}</flux:table.cell>
                         <flux:table.cell>
                             <flux:badge size="sm" variant="outline">{{ $plan->is_active ? __('Yes') : __('No') }}</flux:badge>
+                            @if ($plan->is_custom)
+                                <flux:badge size="sm" variant="solid">{{ __('Custom') }}</flux:badge>
+                            @endif
                         </flux:table.cell>
                         <flux:table.cell>
                             <div class="flex justify-end gap-1">
@@ -144,6 +147,10 @@
 
             <flux:field>
                 <flux:checkbox wire:model="isActive" :label="__('Active')" />
+            </flux:field>
+
+            <flux:field>
+                <flux:checkbox wire:model="isCustom" :label="__('Custom (enterprise: hidden from public catalog, staff-assigned only)')" />
             </flux:field>
 
             <div class="flex gap-2">
