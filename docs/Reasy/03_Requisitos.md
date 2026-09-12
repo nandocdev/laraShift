@@ -102,7 +102,7 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 - [x] **RF2.1** - El sistema debe permitir crear y editar planes de suscripción con precios, límites y características (`Catalog/Livewire/ManagePlans`: crear/editar/desactivar/duplicar + precios en centavos, quotas, `display_features`, `gateway_ids`)
 - [x] **RF2.2** - El administrador debe poder asignar o cambiar manualmente el plan de cualquier tenant (`Provisioning/Actions/ChangeTenantPlanAction` + `ManageTenant::changePlan` + `Billing/Livewire/SubscriptionDetail::changePlan`; sincroniza `tenants.plan_id` ↔ `subscriptions.plan_id`, rechaza planes inactivos, `activity('provisioning'/'billing')`)
 - [~] **RF2.3** - El sistema debe aplicar automáticamente los límites definidos en cada plan (`CatalogPlanQuotaResolver` + `ResolveTenantFeatures` con caché existen; `Tenant::getQuotaLimit()` aún retorna `-1` fijo)
-- [ ] **RF2.4** - El sistema debe permitir planes customizados para clientes enterprise
+- [x] **RF2.4** - El sistema debe permitir planes customizados para clientes enterprise (`plans.is_custom`: ocultos del catálogo público `PlanManager::active()`/`SelectPlan`, asignables por staff vía `ManageTenant`/`SubscriptionDetail`, resolubles por `find()` para features y billing)
 
 #### RF3 - Dashboard de Plataforma
 
