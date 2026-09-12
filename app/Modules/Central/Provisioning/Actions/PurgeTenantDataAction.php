@@ -12,11 +12,31 @@ final readonly class PurgeTenantDataAction
 {
     /**
      * Tables that contain tenant_id and must be purged before tenants row is removed.
-     * Order matters: leaves first, then roots.
+     * Order matters: leaves first, then roots. Tables without the column
+     * (central-only) are skipped by the hasColumn guard; tables with a
+     * DB-level ON DELETE CASCADE are still listed so the purge is
+     * deterministic on every driver, not only where FKs fire.
      */
     private const TENANT_TABLES = [
         'tenant_api_keys',
         'tenant_settings',
+        'tenant_audit_logs',
+        'tenant_notifications',
+        'tenant_invitations',
+        'tenant_sessions',
+        'tenant_sso_settings',
+        'user_mfa',
+        'passkeys',
+        'tenant_user_impersonation_tokens',
+        'model_has_permissions',
+        'model_has_roles',
+        'roles',
+        'landings',
+        'landing_versions',
+        'broadcast_tenant',
+        'broadcast_dismissals',
+        'support_notes',
+        'support_sessions',
         'provisioning_logs',
         'activity_log',
         'domains',
