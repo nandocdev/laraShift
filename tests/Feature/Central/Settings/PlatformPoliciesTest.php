@@ -44,6 +44,35 @@ it('reads config defaults on a fresh install and round-trips overrides', functio
         ->and(PlatformPolicies::secopsEmail())->toBe('secops@test.com')
         ->and(PlatformPolicies::staleProvisioningMinutes())->toBe(120);
 });
+
+it('saves policies from the UI and logs the change', function () {
+    $this->actingAs(CentralUser::factory()->create(), 'central');
+
+    Livewire::test(ManagePolicies::class)
+        ->set('fraudThreshold', 60)
+        ->set('secopsEmail', 'soc@test.com')
+        ->set('staleMinutes', 45)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(PlatformPolicies::fraudThreshold())->toBe(60)
+        ->and(PlatformPolicies::secopsEmail())->toBe('soc@test.com')
+        ->and(PlatformPolicies::staleProvisioningMinutes())->toBe(45);
+
+    $this->assertDatabaseHas('activity_log', ['log_name' => 'settings', 'description' => 'policies_updated']);
+});
+
+it('validates policy input', function () {
+    $this->actingAs(CentralUser::factory()->create(), 'central');
+
+    Livewire::test(ManagePolicies::class)
+        ->set('fraudThreshold', 0)
+        ->set('secopsEmail', 'not-an-email')
+        ->set('staleMinutes', 0)
+        ->call('save')
+        ->assertHasErrors(['fraudThreshold', 'secopsEmail', 'staleMinutes']);
+});
+
 it('applies the policy threshold to fraud quarantine decisions', function () {
     $signals = new FraudSignals(score: 60, signals: [], ip: '127.0.0.1', email: 'user@test.com');
 
