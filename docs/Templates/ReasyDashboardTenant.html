@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasy — Panel de Barbería Cortez</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1C2126;
+            --ink-soft: #6B7280;
+            --paper: #FCFCFA;
+            --panel: #FFFFFF;
+            --line: #E7E5DE;
+            --amber: #F2A93B;
+            --amber-deep: #C9821A;
+            --teal: #1F7A5C;
+            --teal-bg: #E4F3EC;
+            --red: #C13A3A;
+            --red-bg: #FBEAEA;
+            --blue: #2E5AAC;
+            --blue-bg: #EAF0FB;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-columns: 224px 1fr;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--panel);
+            border-right: 1px solid var(--line);
+            padding: 22px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px 4px;
+            font-weight: 700;
+            font-size: 15.5px;
+        }
+
+        .brand .mark {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--ink);
+            position: relative;
+        }
+
+        .brand .mark::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 5px;
+            height: 5px;
+            background: var(--amber);
+            border-radius: 50%;
+        }
+
+        .biz-switch {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 14px 10px;
+            margin-bottom: 18px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+        }
+
+        .biz-switch .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--ink);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .biz-switch .name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .biz-switch .loc {
+            font-size: 11px;
+            color: var(--ink-soft);
+        }
+
+        .navgroup {
+            margin-bottom: 20px;
+        }
+
+        .navgroup-label {
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #A6ABB1;
+            padding: 0 10px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .navitem {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 10px;
+            border-radius: 8px;
+            color: var(--ink-soft);
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .navitem .left {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .navitem .ic {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: currentColor;
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+
+        .navitem.active {
+            background: #FBF1E1;
+            color: var(--amber-deep);
+        }
+
+        .navitem.active .ic {
+            background: var(--amber-deep);
+            opacity: 1;
+        }
+
+        .navitem .count {
+            font-size: 11px;
+            background: var(--line);
+            color: var(--ink-soft);
+            padding: 1px 7px;
+            border-radius: 20px;
+        }
+
+        .navitem.active .count {
+            background: var(--amber);
+            color: #3A2600;
+        }
+
+        .sidebar-foot {
+            margin-top: auto;
+            border-top: 1px solid var(--line);
+            padding-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--blue);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12.5px;
+        }
+
+        .sidebar-foot .who {
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-foot .role {
+            color: var(--ink-soft);
+            font-size: 11px;
+        }
+
+        /* MAIN */
+        .main {
+            padding: 26px 32px 50px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .topbar h1 {
+            font-size: 21px;
+            margin: 0 0 4px;
+            font-weight: 600;
+        }
+
+        .topbar .sub {
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 9px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            background: var(--panel);
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: #fff;
+            border-color: var(--ink);
+        }
+
+        /* KPI STRIP */
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .kpi {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 17px 19px;
+        }
+
+        .kpi .label {
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+
+        .kpi .value {
+            font-family: 'Space Grotesk';
+            font-size: 23px;
+            font-weight: 600;
+        }
+
+        .kpi .delta {
+            font-size: 11.5px;
+            margin-top: 5px;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        /* LAYOUT: calendar + side */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 18px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-head h2 {
+            font-size: 14.5px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .week-nav .arrow {
+            width: 26px;
+            height: 26px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* CALENDAR WEEK GRID */
+        .cal {
+            display: grid;
+            grid-template-columns: 52px repeat(3, 1fr);
+        }
+
+        .cal-head {
+            display: grid;
+            grid-template-columns: 52px repeat(3, 1fr);
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 10px;
+            margin-bottom: 6px;
+        }
+
+        .cal-head div {
+            font-size: 12px;
+            color: var(--ink-soft);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .cal-head .staffcol {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .cal-head .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .cal-time {
+            font-family: 'IBM Plex Mono';
+            font-size: 10.5px;
+            color: #A6ABB1;
+            padding-top: 2px;
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .cal-row {
+            display: grid;
+            grid-template-columns: 52px repeat(3, 1fr);
+            border-top: 1px solid #F1F0EC;
+            min-height: 56px;
+        }
+
+        .cal-cell {
+            position: relative;
+            border-left: 1px solid #F1F0EC;
+            padding: 4px;
+        }
+
+        .appt {
+            border-radius: 8px;
+            padding: 7px 9px;
+            font-size: 11.5px;
+            line-height: 1.35;
+            height: 100%;
+        }
+
+        .appt .who {
+            font-weight: 700;
+            display: block;
+        }
+
+        .appt .svc {
+            opacity: 0.85;
+        }
+
+        .appt-confirm {
+            background: var(--teal-bg);
+            color: var(--teal);
+            border: 1px solid #C7E5D6;
+        }
+
+        .appt-pending {
+            background: var(--blue-bg);
+            color: var(--blue);
+            border: 1px solid #CBDAF3;
+        }
+
+        .appt-block {
+            background: #F1F0EC;
+            color: #8A8A82;
+            border: 1px dashed #D8D6CC;
+        }
+
+        /* SIDE: today agenda */
+        .agenda-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F1F0EC;
+        }
+
+        .agenda-item:last-child {
+            border-bottom: none;
+        }
+
+        .agenda-time {
+            font-family: 'IBM Plex Mono';
+            font-size: 12px;
+            color: var(--ink-soft);
+            width: 44px;
+            flex-shrink: 0;
+            padding-top: 1px;
+        }
+
+        .agenda-body .who {
+            font-size: 13.5px;
+            font-weight: 600;
+        }
+
+        .agenda-body .svc {
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+
+        .agenda-badge {
+            font-size: 10.5px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .b-confirm {
+            background: var(--teal-bg);
+            color: var(--teal);
+        }
+
+        .b-wait {
+            background: #FCEFDA;
+            color: var(--amber-deep);
+        }
+
+        .b-deposit {
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        .waitlist-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #F1F0EC;
+            font-size: 13px;
+        }
+
+        .waitlist-row:last-child {
+            border-bottom: none;
+        }
+
+        .waitlist-row .name {
+            font-weight: 600;
+        }
+
+        .waitlist-row .want {
+            color: var(--ink-soft);
+            font-size: 11.5px;
+        }
+
+        .notify-btn {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--amber-deep);
+            border: 1px solid #F0D9AE;
+            background: #FBF1E1;
+            padding: 4px 10px;
+            border-radius: 7px;
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #A6ABB1;
+            font-weight: 600;
+            padding: 0 10px 9px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        td {
+            padding: 11px 10px;
+            border-bottom: 1px solid #F1F0EC;
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .staff-name {
+            font-weight: 600;
+        }
+
+        .occ-bar {
+            width: 70px;
+            height: 6px;
+            background: #F1F0EC;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .occ-bar>span {
+            display: block;
+            height: 100%;
+            background: var(--teal);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="mark"></div>Reasy
+            </div>
+            <div class="biz-switch">
+                <div class="icon">BC</div>
+                <div>
+                    <div class="name">Barbería Cortez</div>
+                    <div class="loc">Vía España, Panamá</div>
+                </div>
+            </div>
+
+            <div class="navgroup">
+                <div class="navgroup-label">Agenda</div>
+                <div class="navitem active"><span class="left"><span class="ic"></span>Calendario</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Lista de espera</span><span
+                        class="count">3</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Clientes</span></div>
+            </div>
+            <div class="navgroup">
+                <div class="navgroup-label">Negocio</div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Servicios</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Equipo</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Horarios</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Pagos</span></div>
+            </div>
+            <div class="navgroup">
+                <div class="navgroup-label">Análisis</div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Reportes</span></div>
+                <div class="navitem"><span class="left"><span class="ic"></span>Notificaciones</span></div>
+            </div>
+
+            <div class="sidebar-foot">
+                <div class="avatar">RC</div>
+                <div>
+                    <div class="who">Rodrigo Cortez</div>
+                    <div class="role">Dueño</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div>
+                    <h1>Hola, Rodrigo 👋</h1>
+                    <div class="sub">Martes 14 de septiembre · 8 citas hoy, 1 en lista de espera confirmable</div>
+                </div>
+                <div class="top-actions">
+                    <button class="btn">Compartir enlace de reserva</button>
+                    <button class="btn btn-primary">+ Nueva reserva</button>
+                </div>
+            </div>
+
+            <div class="kpis">
+                <div class="kpi">
+                    <div class="label">Ingresos hoy</div>
+                    <div class="value mono">$246</div>
+                    <div class="delta">↑ 18% vs martes pasado</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Ocupación de hoy</div>
+                    <div class="value">78%</div>
+                    <div class="delta">6 de 8 franjas usadas</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Citas esta semana</div>
+                    <div class="value">41</div>
+                    <div class="delta">↑ 4 vs semana pasada</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Inasistencias (30d)</div>
+                    <div class="value">6%</div>
+                    <div class="delta">↓ 3pp desde depósitos</div>
+                </div>
+            </div>
+
+            <div class="layout">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Calendario del equipo</h2>
+                        <div class="week-nav"><span class="arrow">‹</span>Mar 14 — Jue 16 sep<span
+                                class="arrow">›</span></div>
+                    </div>
+
+                    <div class="cal-head">
+                        <div></div>
+                        <div class="staffcol"><span class="dot" style="background:var(--teal)"></span>Rodrigo</div>
+                        <div class="staffcol"><span class="dot" style="background:var(--blue)"></span>Ana</div>
+                        <div class="staffcol"><span class="dot" style="background:var(--amber-deep)"></span>Luis</div>
+                    </div>
+
+                    <div class="cal-row">
+                        <div class="cal-time">9:00</div>
+                        <div class="cal-cell">
+                            <div class="appt appt-confirm"><span class="who">V. Núñez</span><span class="svc">Corte +
+                                    barba</span></div>
+                        </div>
+                        <div class="cal-cell">
+                            <div class="appt appt-block"><span class="who">Bloqueado</span><span class="svc">Llega
+                                    10am</span></div>
+                        </div>
+                        <div class="cal-cell">
+                            <div class="appt appt-confirm"><span class="who">D. Aguilar</span><span
+                                    class="svc">Coloración</span></div>
+                        </div>
+                    </div>
+                    <div class="cal-row">
+                        <div class="cal-time">10:00</div>
+                        <div class="cal-cell"></div>
+                        <div class="cal-cell">
+                            <div class="appt appt-pending"><span class="who">K. Ibarra</span><span class="svc">Manicure
+                                    · dep. pagado</span></div>
+                        </div>
+                        <div class="cal-cell">
+                            <div class="appt appt-confirm"><span class="who">D. Aguilar</span><span
+                                    class="svc">Coloración</span></div>
+                        </div>
+                    </div>
+                    <div class="cal-row">
+                        <div class="cal-time">11:00</div>
+                        <div class="cal-cell">
+                            <div class="appt appt-confirm"><span class="who">M. Ruiz</span><span class="svc">Corte
+                                    clásico</span></div>
+                        </div>
+                        <div class="cal-cell"></div>
+                        <div class="cal-cell"></div>
+                    </div>
+                    <div class="cal-row">
+                        <div class="cal-time">12:00</div>
+                        <div class="cal-cell"></div>
+                        <div class="cal-cell">
+                            <div class="appt appt-confirm"><span class="who">A. Solís</span><span class="svc">Corte +
+                                    tinte</span></div>
+                        </div>
+                        <div class="cal-cell"></div>
+                    </div>
+                    <div class="cal-row">
+                        <div class="cal-time">13:00</div>
+                        <div class="cal-cell" style="grid-column:2/4;">
+                            <div class="appt appt-block" style="text-align:center;">Almuerzo del equipo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h2>Agenda de hoy</h2><span style="font-size:12px;color:var(--ink-soft);">8 citas</span>
+                        </div>
+                        <div class="agenda-item">
+                            <div class="agenda-time">9:00</div>
+                            <div class="agenda-body">
+                                <div class="who">Valeria Núñez</div>
+                                <div class="svc">Corte + barba · Rodrigo</div>
+                                <span class="agenda-badge b-confirm">Confirmada</span>
+                            </div>
+                        </div>
+                        <div class="agenda-item">
+                            <div class="agenda-time">10:00</div>
+                            <div class="agenda-body">
+                                <div class="who">Karla Ibarra</div>
+                                <div class="svc">Manicure · Ana</div>
+                                <span class="agenda-badge b-deposit">Depósito pagado</span>
+                            </div>
+                        </div>
+                        <div class="agenda-item">
+                            <div class="agenda-time">11:00</div>
+                            <div class="agenda-body">
+                                <div class="who">Mateo Ruiz</div>
+                                <div class="svc">Corte clásico · Rodrigo</div>
+                                <span class="agenda-badge b-confirm">Confirmada</span>
+                            </div>
+                        </div>
+                        <div class="agenda-item">
+                            <div class="agenda-time">15:30</div>
+                            <div class="agenda-body">
+                                <div class="who">Andrea Solís</div>
+                                <div class="svc">Corte + tinte · Ana</div>
+                                <span class="agenda-badge b-wait">Por confirmar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-head">
+                            <h2>Lista de espera</h2><span style="font-size:12px;color:var(--ink-soft);">3
+                                personas</span>
+                        </div>
+                        <div class="waitlist-row">
+                            <div>
+                                <div class="name">Jorge Peña</div>
+                                <div class="want">Corte clásico · cualquier hora hoy</div>
+                            </div>
+                            <button class="notify-btn">Notificar</button>
+                        </div>
+                        <div class="waitlist-row">
+                            <div>
+                                <div class="name">Camila Ríos</div>
+                                <div class="want">Manicure · mañana AM</div>
+                            </div>
+                            <button class="notify-btn">Notificar</button>
+                        </div>
+                        <div class="waitlist-row">
+                            <div>
+                                <div class="name">Bruno Vega</div>
+                                <div class="want">Corte + barba · con Rodrigo</div>
+                            </div>
+                            <button class="notify-btn">Notificar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-grid">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Desempeño del equipo — esta semana</h2><span
+                            style="font-size:12px;color:var(--ink-soft);">Ver reporte completo</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Profesional</th>
+                                <th>Citas</th>
+                                <th>Ingresos</th>
+                                <th>Ocupación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="staff-name">Rodrigo Cortez</td>
+                                <td>16</td>
+                                <td class="mono">$612</td>
+                                <td><span class="occ-bar"><span style="width:82%"></span></span>82%</td>
+                            </tr>
+                            <tr>
+                                <td class="staff-name">Ana Delgado</td>
+                                <td>14</td>
+                                <td class="mono">$540</td>
+                                <td><span class="occ-bar"><span style="width:71%"></span></span>71%</td>
+                            </tr>
+                            <tr>
+                                <td class="staff-name">Luis Bravo</td>
+                                <td>11</td>
+                                <td class="mono">$398</td>
+                                <td><span class="occ-bar"><span style="width:58%"></span></span>58%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Clientes recientes</h2><span style="font-size:12px;color:var(--ink-soft);">Ver todos</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Última visita</th>
+                                <th>Visitas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="staff-name">Valeria Núñez</td>
+                                <td>Hoy</td>
+                                <td>12</td>
+                            </tr>
+                            <tr>
+                                <td class="staff-name">Diego Aguilar</td>
+                                <td>Hoy</td>
+                                <td>4</td>
+                            </tr>
+                            <tr>
+                                <td class="staff-name">Mateo Ruiz</td>
+                                <td>Hoy</td>
+                                <td>7</td>
+                            </tr>
+                            <tr>
+                                <td class="staff-name">Karla Ibarra</td>
+                                <td>Ayer</td>
+                                <td>2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</body>
+
+</html>

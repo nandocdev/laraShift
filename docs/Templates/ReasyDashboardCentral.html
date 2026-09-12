@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasy Control — Panel de Plataforma</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0E1319;
+            --panel: #151C24;
+            --panel-2: #1B242D;
+            --line: #26313C;
+            --text: #E7EBEF;
+            --text-dim: #8B98A6;
+            --amber: #F2A93B;
+            --teal: #3FD69B;
+            --red: #F0555A;
+            --blue: #5B9CF2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-columns: 236px 1fr;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--panel);
+            border-right: 1px solid var(--line);
+            padding: 22px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px 26px;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .brand .mark {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--amber);
+        }
+
+        .brand .env {
+            font-size: 10.5px;
+            color: var(--text-dim);
+            background: var(--panel-2);
+            padding: 2px 7px;
+            border-radius: 5px;
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .navgroup {
+            margin-bottom: 22px;
+        }
+
+        .navgroup-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #5C6773;
+            padding: 0 10px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .navitem {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            cursor: default;
+        }
+
+        .navitem .ic {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: currentColor;
+            opacity: 0.35;
+            flex-shrink: 0;
+        }
+
+        .navitem.active {
+            background: var(--panel-2);
+            color: var(--text);
+        }
+
+        .navitem.active .ic {
+            background: var(--amber);
+            opacity: 1;
+        }
+
+        .navitem:hover:not(.active) {
+            color: var(--text);
+        }
+
+        .sidebar-foot {
+            margin-top: auto;
+            border-top: 1px solid var(--line);
+            padding-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12.5px;
+        }
+
+        .sidebar-foot .who {
+            font-size: 12.5px;
+        }
+
+        .sidebar-foot .role {
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        /* MAIN */
+        .main {
+            padding: 26px 34px 50px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 28px;
+        }
+
+        .topbar h1 {
+            font-size: 22px;
+            margin: 0 0 4px;
+            font-weight: 600;
+        }
+
+        .topbar .sub {
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 9px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--line);
+            color: var(--text-dim);
+        }
+
+        .btn-primary {
+            background: var(--amber);
+            color: #1C1300;
+            border-color: var(--amber);
+        }
+
+        .search {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 13px;
+            font-size: 13px;
+            color: var(--text-dim);
+            width: 220px;
+        }
+
+        /* KPI STRIP */
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+
+        .kpi {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+
+        .kpi .label {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .kpi .value {
+            font-family: 'Space Grotesk';
+            font-size: 25px;
+            font-weight: 600;
+        }
+
+        .kpi .delta {
+            font-size: 11.5px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .up {
+            color: var(--teal);
+        }
+
+        .down {
+            color: var(--red);
+        }
+
+        /* GRID BODY */
+        .body-grid {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .panel-head h2 {
+            font-size: 14.5px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .panel-head .link {
+            font-size: 12px;
+            color: var(--blue);
+        }
+
+        /* CHART (fake bars) */
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 150px;
+            padding-top: 10px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, #F2A93B, #C9821A);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+        }
+
+        .bar.dim {
+            background: var(--panel-2);
+        }
+
+        .bar .tip {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .chart-axis {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .chart-axis span {
+            flex: 1;
+            text-align: center;
+            font-size: 10.5px;
+            color: #5C6773;
+        }
+
+        /* TENANT TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #5C6773;
+            font-weight: 600;
+            padding: 0 12px 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        td {
+            padding: 13px 12px;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tenant-name {
+            font-weight: 600;
+        }
+
+        .tenant-plan {
+            font-size: 11.5px;
+            color: var(--text-dim);
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .pill-active {
+            background: rgba(63, 214, 155, 0.14);
+            color: var(--teal);
+        }
+
+        .pill-risk {
+            background: rgba(240, 85, 90, 0.14);
+            color: var(--red);
+        }
+
+        .pill-trial {
+            background: rgba(91, 156, 242, 0.14);
+            color: var(--blue);
+        }
+
+        .risk-bar {
+            width: 60px;
+            height: 5px;
+            background: var(--panel-2);
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .risk-bar>span {
+            display: block;
+            height: 100%;
+            background: var(--red);
+        }
+
+        .mrr-val {
+            font-family: 'IBM Plex Mono';
+        }
+
+        /* RIGHT COLUMN LISTS */
+        .churn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .churn-item:last-child {
+            border-bottom: none;
+        }
+
+        .churn-item .t-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .churn-item .t-meta {
+            font-size: 11.5px;
+            color: var(--text-dim);
+        }
+
+        .churn-score {
+            font-family: 'IBM Plex Mono';
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        .incident {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .incident:last-child {
+            border-bottom: none;
+        }
+
+        .incident .sev {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .sev-crit {
+            background: var(--red);
+        }
+
+        .sev-warn {
+            background: var(--amber);
+        }
+
+        .sev-ok {
+            background: var(--teal);
+        }
+
+        .incident .txt {
+            font-size: 12.5px;
+        }
+
+        .incident .time {
+            color: #5C6773;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="shell">
+
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="mark"></div>Reasy Control<span class="env">PROD</span>
+            </div>
+
+            <div class="navgroup">
+                <div class="navgroup-label">Plataforma</div>
+                <div class="navitem active"><span class="ic"></span>Resumen general</div>
+                <div class="navitem"><span class="ic"></span>Tenants</div>
+                <div class="navitem"><span class="ic"></span>Planes y precios</div>
+                <div class="navitem"><span class="ic"></span>Facturación</div>
+            </div>
+            <div class="navgroup">
+                <div class="navgroup-label">Operación</div>
+                <div class="navitem"><span class="ic"></span>Salud del sistema</div>
+                <div class="navitem"><span class="ic"></span>Integraciones</div>
+                <div class="navitem"><span class="ic"></span>Webhooks</div>
+            </div>
+            <div class="navgroup">
+                <div class="navgroup-label">Gobernanza</div>
+                <div class="navitem"><span class="ic"></span>Auditoría</div>
+                <div class="navitem"><span class="ic"></span>Compliance (GDPR)</div>
+                <div class="navitem"><span class="ic"></span>Soporte / impersonar</div>
+            </div>
+
+            <div class="sidebar-foot">
+                <div class="avatar">FC</div>
+                <div>
+                    <div class="who">Fernando C.</div>
+                    <div class="role">Platform Admin</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div>
+                    <h1>Resumen de plataforma</h1>
+                    <div class="sub">Actualizado hace 2 min · 1,842 tenants activos</div>
+                </div>
+                <div class="top-actions">
+                    <input class="search" placeholder="Buscar tenant, ID, email…">
+                    <button class="btn">Exportar reporte</button>
+                    <button class="btn btn-primary">+ Anuncio a tenants</button>
+                </div>
+            </div>
+
+            <div class="kpis">
+                <div class="kpi">
+                    <div class="label">MRR</div>
+                    <div class="value mono">$284.6K</div>
+                    <div class="delta up">↑ 6.2% vs mes anterior</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Tenants activos</div>
+                    <div class="value">1,842</div>
+                    <div class="delta up">↑ 38 esta semana</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Churn (30d)</div>
+                    <div class="value">2.1%</div>
+                    <div class="delta down">↑ 0.4pp — revisar</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Reservas procesadas</div>
+                    <div class="value">96.3K</div>
+                    <div class="delta up">↑ 11% vs mes anterior</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Uptime API (30d)</div>
+                    <div class="value">99.97%</div>
+                    <div class="delta up">Dentro de SLA</div>
+                </div>
+            </div>
+
+            <div class="body-grid">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>MRR por plan — últimos 6 meses</h2>
+                        <span class="link">Ver desglose</span>
+                    </div>
+                    <div class="chart">
+                        <div class="bar dim" style="height:38%"><span class="tip">Abr</span></div>
+                        <div class="bar dim" style="height:46%"><span class="tip">May</span></div>
+                        <div class="bar dim" style="height:52%"><span class="tip">Jun</span></div>
+                        <div class="bar dim" style="height:61%"><span class="tip">Jul</span></div>
+                        <div class="bar dim" style="height:74%"><span class="tip">Ago</span></div>
+                        <div class="bar" style="height:100%"><span class="tip">Sep</span></div>
+                    </div>
+                    <div class="chart-axis">
+                        <span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Riesgo de churn</h2>
+                        <span class="link">Ver todos</span>
+                    </div>
+                    <div class="churn-item">
+                        <div>
+                            <div class="t-name">Estética Bellavista</div>
+                            <div class="t-meta">Plan Business · 0 logins en 12 días</div>
+                        </div>
+                        <div class="churn-score">87</div>
+                    </div>
+                    <div class="churn-item">
+                        <div>
+                            <div class="t-name">Clínica Dental Rosales</div>
+                            <div class="t-meta">Plan Professional · 2 pagos fallidos</div>
+                        </div>
+                        <div class="churn-score">74</div>
+                    </div>
+                    <div class="churn-item">
+                        <div>
+                            <div class="t-name">FitZone Studio</div>
+                            <div class="t-meta">Plan Starter · uso −40% MoM</div>
+                        </div>
+                        <div class="churn-score">61</div>
+                    </div>
+                    <div class="churn-item">
+                        <div>
+                            <div class="t-name">Barbería Cortez</div>
+                            <div class="t-meta">Plan Business · ticket sin responder 5d</div>
+                        </div>
+                        <div class="churn-score">55</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="body-grid" style="grid-template-columns:1fr;">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Tenants — vista operativa</h2>
+                        <span class="link">Gestionar todos (1,842)</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Negocio</th>
+                                <th>Plan</th>
+                                <th>Estado</th>
+                                <th>MRR</th>
+                                <th>Riesgo</th>
+                                <th>Última actividad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="tenant-name">Barbería Cortez</div>
+                                    <div class="tenant-plan">Panamá · desde ene 2025</div>
+                                </td>
+                                <td>Business</td>
+                                <td><span class="pill pill-active">Activo</span></td>
+                                <td class="mrr-val">$399</td>
+                                <td><span class="risk-bar"><span style="width:55%"></span></span>55</td>
+                                <td>Hace 3 h</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="tenant-name">Estética Bellavista</div>
+                                    <div class="tenant-plan">Costa Rica · desde mar 2024</div>
+                                </td>
+                                <td>Business</td>
+                                <td><span class="pill pill-risk">En riesgo</span></td>
+                                <td class="mrr-val">$399</td>
+                                <td><span class="risk-bar"><span style="width:87%"></span></span>87</td>
+                                <td>Hace 12 días</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="tenant-name">Clínica Dental Rosales</div>
+                                    <div class="tenant-plan">México · desde jul 2025</div>
+                                </td>
+                                <td>Professional</td>
+                                <td><span class="pill pill-risk">Pago fallido</span></td>
+                                <td class="mrr-val">$149</td>
+                                <td><span class="risk-bar"><span style="width:74%"></span></span>74</td>
+                                <td>Hace 1 día</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="tenant-name">FitZone Studio</div>
+                                    <div class="tenant-plan">Colombia · desde jun 2026</div>
+                                </td>
+                                <td>Starter</td>
+                                <td><span class="pill pill-trial">Prueba</span></td>
+                                <td class="mrr-val">$0</td>
+                                <td><span class="risk-bar"><span style="width:61%"></span></span>61</td>
+                                <td>Hace 5 h</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="tenant-name">Spa Luna Nueva</div>
+                                    <div class="tenant-plan">Panamá · desde feb 2025</div>
+                                </td>
+                                <td>Professional</td>
+                                <td><span class="pill pill-active">Activo</span></td>
+                                <td class="mrr-val">$149</td>
+                                <td><span class="risk-bar"><span style="width:12%"></span></span>12</td>
+                                <td>Hace 40 min</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bottom-grid">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Incidentes recientes</h2>
+                        <span class="link">Ver bitácora</span>
+                    </div>
+                    <div class="incident"><span class="sev sev-crit"></span>
+                        <div class="txt">Webhook de Stripe con reintentos elevados (tenant: Clínica Dental Rosales)<div
+                                class="time">Hace 34 min</div>
+                        </div>
+                    </div>
+                    <div class="incident"><span class="sev sev-warn"></span>
+                        <div class="txt">Latencia p95 de /availability sobre 480ms durante 6 min<div class="time">Hace 2
+                                h</div>
+                        </div>
+                    </div>
+                    <div class="incident"><span class="sev sev-ok"></span>
+                        <div class="txt">Job de recordatorios recuperado tras reintento automático<div class="time">Hace
+                                5 h</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>Distribución de planes</h2>
+                        <span class="link">Ver planes</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Plan</th>
+                                <th>Tenants</th>
+                                <th>% del total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Starter</td>
+                                <td>1,104</td>
+                                <td>60%</td>
+                            </tr>
+                            <tr>
+                                <td>Professional</td>
+                                <td>512</td>
+                                <td>28%</td>
+                            </tr>
+                            <tr>
+                                <td>Business</td>
+                                <td>203</td>
+                                <td>11%</td>
+                            </tr>
+                            <tr>
+                                <td>Enterprise</td>
+                                <td>23</td>
+                                <td>1%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</body>
+
+</html>

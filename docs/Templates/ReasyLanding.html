@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasy — El tiempo, vendido una sola vez</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink: #12181F;
+            --ink-soft: #3A4550;
+            --paper: #FCFCFA;
+            --paper-dim: #F1F0EC;
+            --line: #DEDCD4;
+            --amber: #F2A93B;
+            --amber-deep: #C9821A;
+            --teal: #1F7A5C;
+            --red: #C13A3A;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1,
+        h2,
+        h3,
+        .display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* NAV */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 26px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .logo-mark {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: var(--ink);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .logo-mark::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 6px;
+            height: 6px;
+            background: var(--amber);
+            border-radius: 50%;
+        }
+
+        .navlinks {
+            display: flex;
+            gap: 36px;
+            font-size: 14.5px;
+            color: var(--ink-soft);
+        }
+
+        .navlinks a:hover {
+            color: var(--ink);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            font-size: 14.5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 11px 22px;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 14.5px;
+            border: 1.5px solid var(--ink);
+        }
+
+        .btn-solid {
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        .btn-solid:hover {
+            background: #232B34;
+        }
+
+        .btn-ghost {
+            border-color: transparent;
+            color: var(--ink-soft);
+        }
+
+        /* HERO */
+        .hero {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 60px;
+            align-items: center;
+            padding: 56px 0 88px;
+        }
+
+        .eyebrow-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--ink-soft);
+            background: var(--paper-dim);
+            border: 1px solid var(--line);
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-bottom: 22px;
+        }
+
+        .eyebrow-tag .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--teal);
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            line-height: 1.04;
+            letter-spacing: -0.02em;
+            font-weight: 600;
+            margin: 0 0 22px;
+            max-width: 560px;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--amber-deep);
+        }
+
+        .hero p.lead {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--ink-soft);
+            max-width: 460px;
+            margin: 0 0 34px;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 38px;
+        }
+
+        .btn-lg {
+            padding: 15px 26px;
+            font-size: 15.5px;
+            border-radius: 10px;
+        }
+
+        .trust-row {
+            display: flex;
+            gap: 28px;
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            border-top: 1px solid var(--line);
+            padding-top: 22px;
+            max-width: 480px;
+        }
+
+        .trust-row strong {
+            display: block;
+            font-family: 'Space Grotesk';
+            font-size: 22px;
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        /* HERO VISUAL — el mecanismo real del producto */
+        .slotboard {
+            background: var(--ink);
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 30px 60px -20px rgba(18, 24, 31, 0.35);
+        }
+
+        .slotboard-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #C9CFD6;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .slotboard-head .place {
+            color: #fff;
+            font-weight: 600;
+            font-family: 'Space Grotesk';
+            font-size: 15px;
+        }
+
+        .slotgrid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .slot {
+            border-radius: 9px;
+            padding: 12px 10px;
+            font-family: 'IBM Plex Mono';
+            font-size: 13px;
+        }
+
+        .slot-open {
+            background: #1A2129;
+            border: 1px solid #2A333D;
+            color: #8FE0BE;
+        }
+
+        .slot-open .t {
+            color: #fff;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .slot-locked {
+            background: #241A1A;
+            border: 1px solid #3A2626;
+            color: #D98F8F;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot-locked .t {
+            color: #E8B4B4;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 3px;
+            text-decoration: line-through;
+            text-decoration-color: #7A4444;
+        }
+
+        .slot-locked .tag {
+            font-size: 10.5px;
+            color: #B87878;
+        }
+
+        .slot-selected {
+            background: var(--amber);
+            border: 1px solid var(--amber);
+            color: #3A2600;
+        }
+
+        .slot-selected .t {
+            color: #1C1300;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .slotboard-foot {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #2A333D;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slotboard-foot .msg {
+            font-size: 12.5px;
+            color: #8B94A0;
+        }
+
+        .slotboard-foot .msg strong {
+            color: #8FE0BE;
+        }
+
+        .confirm-pill {
+            background: #fff;
+            color: var(--ink);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 9px 16px;
+            border-radius: 8px;
+        }
+
+        /* LOGOS STRIP */
+        .strip {
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            padding: 26px 0;
+        }
+
+        .strip-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--ink-soft);
+            font-size: 13.5px;
+        }
+
+        .strip-inner .cats {
+            display: flex;
+            gap: 34px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        /* PROBLEM / MECHANISM SECTION */
+        .section {
+            padding: 96px 0;
+        }
+
+        .section-head {
+            max-width: 620px;
+            margin-bottom: 56px;
+        }
+
+        .section-kicker {
+            font-size: 13.5px;
+            color: var(--amber-deep);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .section-head h2 {
+            font-size: 36px;
+            line-height: 1.16;
+            letter-spacing: -0.01em;
+            font-weight: 600;
+            margin: 0 0 16px;
+        }
+
+        .section-head p {
+            font-size: 16.5px;
+            color: var(--ink-soft);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .cards3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 30px;
+            background: var(--paper);
+        }
+
+        .card .num {
+            font-family: 'IBM Plex Mono';
+            font-size: 13px;
+            color: var(--ink-soft);
+            margin-bottom: 16px;
+        }
+
+        .card h3 {
+            font-size: 19px;
+            margin: 0 0 10px;
+            font-weight: 600;
+        }
+
+        .card p {
+            font-size: 14.5px;
+            color: var(--ink-soft);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* SPLIT FEATURE */
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 70px;
+            align-items: center;
+        }
+
+        .split-visual {
+            background: var(--paper-dim);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 28px;
+        }
+
+        .split h2 {
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            margin: 0 0 18px;
+        }
+
+        .split p {
+            color: var(--ink-soft);
+            font-size: 16px;
+            line-height: 1.65;
+            margin: 0 0 22px;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checklist li {
+            display: flex;
+            gap: 10px;
+            font-size: 15px;
+            color: var(--ink);
+        }
+
+        .checklist li::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--teal);
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .mini-agenda {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .mini-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 11px 14px;
+        }
+
+        .mini-row .time {
+            font-family: 'IBM Plex Mono';
+            font-size: 12.5px;
+            color: var(--ink-soft);
+            width: 52px;
+            flex-shrink: 0;
+        }
+
+        .mini-row .who {
+            font-size: 14px;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .mini-row .svc {
+            font-size: 12.5px;
+            color: var(--ink-soft);
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-confirm {
+            background: #E4F3EC;
+            color: var(--teal);
+        }
+
+        .badge-wait {
+            background: #FCEFDA;
+            color: var(--amber-deep);
+        }
+
+        /* PRICING */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .price-card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 32px;
+            background: var(--paper);
+            position: relative;
+        }
+
+        .price-card.feat {
+            border-color: var(--ink);
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        .price-card.feat .plan-desc {
+            color: #A9B1BA;
+        }
+
+        .price-card.feat .checklist li {
+            color: var(--paper);
+        }
+
+        .price-card.feat .checklist li::before {
+            background: var(--amber);
+        }
+
+        .plan-name {
+            font-family: 'Space Grotesk';
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .plan-desc {
+            font-size: 13.5px;
+            color: var(--ink-soft);
+            margin-bottom: 22px;
+        }
+
+        .plan-price {
+            font-family: 'Space Grotesk';
+            font-size: 38px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .plan-price span {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--ink-soft);
+        }
+
+        .price-card.feat .plan-price span {
+            color: #A9B1BA;
+        }
+
+        .plan-cta {
+            display: block;
+            text-align: center;
+            padding: 12px;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 22px 0 24px;
+            border: 1.5px solid var(--ink);
+        }
+
+        .price-card.feat .plan-cta {
+            background: var(--amber);
+            border-color: var(--amber);
+            color: #1C1300;
+        }
+
+        .most-popular {
+            position: absolute;
+            top: -13px;
+            right: 28px;
+            background: var(--amber);
+            color: #1C1300;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        /* CTA FINAL */
+        .cta-final {
+            background: var(--ink);
+            border-radius: 24px;
+            padding: 64px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--paper);
+        }
+
+        .cta-final h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 10px;
+            max-width: 420px;
+        }
+
+        .cta-final p {
+            color: #A9B1BA;
+            font-size: 15.5px;
+            margin: 0;
+            max-width: 380px;
+        }
+
+        .cta-final .btn-solid {
+            background: var(--amber);
+            border-color: var(--amber);
+            color: #1C1300;
+        }
+
+        footer {
+            padding: 56px 0 40px;
+            border-top: 1px solid var(--line);
+            margin-top: 40px;
+        }
+
+        .foot-grid {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            color: var(--ink-soft);
+        }
+
+        .foot-cols {
+            display: flex;
+            gap: 70px;
+        }
+
+        .foot-cols h4 {
+            font-size: 12.5px;
+            color: var(--ink);
+            margin: 0 0 14px;
+            font-weight: 600;
+        }
+
+        .foot-cols div {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        @media(max-width:960px) {
+
+            .hero,
+            .split,
+            .cards3,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 40px;
+            }
+
+            .navlinks {
+                display: none;
+            }
+
+            .cta-final {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wrap">
+        <nav>
+            <div class="logo">
+                <div class="logo-mark"></div>Reasy
+            </div>
+            <div class="navlinks">
+                <a href="#">Producto</a>
+                <a href="#">Precios</a>
+                <a href="#">Casos de uso</a>
+                <a href="#">Ayuda</a>
+            </div>
+            <div class="nav-cta">
+                <a href="#" class="btn btn-ghost">Ingresar</a>
+                <a href="#" class="btn btn-solid">Crear cuenta</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div>
+                <div class="eyebrow-tag"><span class="dot"></span>Usado por negocios en 6 países de LatAm</div>
+                <h1>Tu hora, vendida <em>una sola vez.</em></h1>
+                <p class="lead">Reasy elimina la doble reserva de raíz. Tus clientes agendan solos, tu equipo deja de
+                    perseguir confirmaciones por WhatsApp, y cada franja horaria se factura exactamente una vez.</p>
+                <div class="hero-ctas">
+                    <a href="#" class="btn btn-solid btn-lg">Probar gratis 14 días</a>
+                    <a href="#" class="btn btn-ghost btn-lg" style="border:1.5px solid var(--line);">Ver una demo en
+                        vivo</a>
+                </div>
+                <div class="trust-row">
+                    <div><strong>0</strong>dobles reservas posibles</div>
+                    <div><strong>−63%</strong>inasistencias con recordatorio</div>
+                    <div><strong>4 min</strong>promedio de configuración inicial</div>
+                </div>
+            </div>
+
+            <div class="slotboard">
+                <div class="slotboard-head">
+                    <span class="place">Barbería Cortez · Martes 14</span>
+                    <span>Zona horaria: América/Panamá</span>
+                </div>
+                <div class="slotgrid">
+                    <div class="slot slot-open"><span class="t">9:00</span>Libre</div>
+                    <div class="slot slot-locked"><span class="t">9:30</span><span class="tag">Reservado · J.
+                            Pérez</span></div>
+                    <div class="slot slot-open"><span class="t">10:00</span>Libre</div>
+                    <div class="slot slot-selected"><span class="t">10:30</span>Bloqueando…</div>
+                    <div class="slot slot-locked"><span class="t">11:00</span><span class="tag">Reservado · M.
+                            Ruiz</span></div>
+                    <div class="slot slot-open"><span class="t">11:30</span>Libre</div>
+                    <div class="slot slot-open"><span class="t">12:00</span>Libre</div>
+                    <div class="slot slot-locked"><span class="t">12:30</span><span class="tag">Reservado · A.
+                            Solís</span></div>
+                </div>
+                <div class="slotboard-foot">
+                    <span class="msg">Franja <strong>10:30</strong> retenida con lock de fila — nadie más puede tomarla
+                        mientras confirmas.</span>
+                    <span class="confirm-pill">Confirmar →</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="strip">
+        <div class="wrap strip-inner">
+            <span>Diseñado para negocios de servicio por cita:</span>
+            <div class="cats"><span>Salones</span><span>Barberías</span><span>Clínicas</span><span>Estudios
+                    fitness</span><span>Spas</span></div>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <section class="section">
+            <div class="section-head">
+                <div class="section-kicker">EL PROBLEMA DE RAÍZ</div>
+                <h2>La agenda manual no puede garantizar nada.</h2>
+                <p>Un cuaderno, una hoja de cálculo o un chat de WhatsApp no tienen forma de bloquear una franja en el
+                    instante en que alguien la pide. Reasy sí.</p>
+            </div>
+            <div class="cards3">
+                <div class="card">
+                    <div class="num">01 — Antes</div>
+                    <h3>Doble reserva</h3>
+                    <p>Dos clientes confirman el mismo horario porque nadie vio el mensaje del otro a tiempo. Uno se va
+                        molesto.</p>
+                </div>
+                <div class="card">
+                    <div class="num">02 — Antes</div>
+                    <h3>Horas muertas invisibles</h3>
+                    <p>Nadie puede reservar fuera del horario en que alguien contesta el teléfono. El negocio pierde
+                        clientes que solo pueden agendar de noche.</p>
+                </div>
+                <div class="card">
+                    <div class="num">03 — Antes</div>
+                    <h3>No-shows sin registro</h3>
+                    <p>No hay dato de quién falta seguido, ni forma sistemática de cobrar un depósito para
+                        desincentivarlo.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top:0;">
+            <div class="split">
+                <div>
+                    <div class="section-kicker">CÓMO LO RESOLVEMOS</div>
+                    <h2>Un panel, toda la operación del día.</h2>
+                    <p>Tu equipo ve la agenda real, marca asistencias, cobra depósitos y reprograma sin salir de una
+                        sola pantalla — ya sea desde el mostrador o el celular.</p>
+                    <ul class="checklist">
+                        <li>Reservas online 24/7 con confirmación automática por correo o SMS</li>
+                        <li>Depósitos configurables por servicio para frenar inasistencias</li>
+                        <li>Lista de espera que se llena sola cuando alguien cancela</li>
+                        <li>Historial de cliente visible en cada cita: qué pidió, cuándo volvió</li>
+                    </ul>
+                </div>
+                <div class="split-visual">
+                    <div class="mini-agenda">
+                        <div class="mini-row"><span class="time">09:00</span><span class="who">Valeria Núñez<div
+                                    class="svc">Corte + barba</div></span><span
+                                class="badge badge-confirm">Confirmada</span></div>
+                        <div class="mini-row"><span class="time">10:30</span><span class="who">Diego Aguilar<div
+                                    class="svc">Coloración</div></span><span
+                                class="badge badge-confirm">Confirmada</span></div>
+                        <div class="mini-row"><span class="time">11:15</span><span class="who">Lista de espera (3)<div
+                                    class="svc">Corte clásico</div></span><span class="badge badge-wait">En
+                                espera</span></div>
+                        <div class="mini-row"><span class="time">13:00</span><span class="who">Karla Ibarra<div
+                                    class="svc">Manicure</div></span><span class="badge badge-confirm">Confirmada</span>
+                        </div>
+                        <div class="mini-row"><span class="time">15:30</span><span class="who">— espacio libre
+                                —</span><span class="badge badge-wait"
+                                style="background:var(--paper-dim);color:var(--ink-soft);">Disponible</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head" style="margin:0 auto 56px;text-align:center;">
+                <div class="section-kicker" style="text-align:center;">PRECIOS</div>
+                <h2>Un plan que crece con tu agenda, no al revés.</h2>
+            </div>
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <div class="plan-name">Starter</div>
+                    <div class="plan-desc">Para un solo profesional empezando a formalizar su agenda.</div>
+                    <div class="plan-price">$19<span>/mes</span></div>
+                    <a href="#" class="plan-cta">Empezar</a>
+                    <ul class="checklist">
+                        <li>1 ubicación, hasta 2 miembros de equipo</li>
+                        <li>Reservas online ilimitadas</li>
+                        <li>Recordatorios por email</li>
+                    </ul>
+                </div>
+                <div class="price-card feat">
+                    <span class="most-popular">Más elegido</span>
+                    <div class="plan-name">Negocio</div>
+                    <div class="plan-desc">Para equipos con varios profesionales y una sede.</div>
+                    <div class="plan-price">$49<span>/mes</span></div>
+                    <a href="#" class="plan-cta">Probar 14 días gratis</a>
+                    <ul class="checklist">
+                        <li>Todo lo de Starter</li>
+                        <li>Depósitos y cobros en línea</li>
+                        <li>Lista de espera automática</li>
+                        <li>Reportes de ocupación e ingresos</li>
+                    </ul>
+                </div>
+                <div class="price-card">
+                    <div class="plan-name">Cadena</div>
+                    <div class="plan-desc">Múltiples sedes bajo una sola cuenta administrada.</div>
+                    <div class="plan-price">$129<span>/mes</span></div>
+                    <a href="#" class="plan-cta">Hablar con ventas</a>
+                    <ul class="checklist">
+                        <li>Todo lo de Negocio</li>
+                        <li>Sedes y catálogos independientes</li>
+                        <li>Roles y permisos granulares</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top:20px;">
+            <div class="cta-final">
+                <div>
+                    <h2>Deja de perder clientes por un horario mal cruzado.</h2>
+                    <p>Configura tu negocio en menos de 5 minutos. Sin tarjeta de crédito para empezar.</p>
+                </div>
+                <a href="#" class="btn btn-solid btn-lg">Crear mi cuenta gratis</a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="foot-grid">
+                <div class="logo" style="font-size:16px;">
+                    <div class="logo-mark" style="width:20px;height:20px;"></div>Reasy © 2026
+                </div>
+                <div class="foot-cols">
+                    <div>
+                        <h4>Producto</h4><a href="#">Precios</a><a href="#">Integraciones</a><a href="#">API</a>
+                    </div>
+                    <div>
+                        <h4>Compañía</h4><a href="#">Nosotros</a><a href="#">Contacto</a>
+                    </div>
+                    <div>
+                        <h4>Legal</h4><a href="#">Privacidad</a><a href="#">Términos</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+</body>
+
+</html>
