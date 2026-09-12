@@ -16,4 +16,5 @@ Schedule::command('billing:reconcile')->dailyAt('03:00');
 Schedule::command('billing:process-recurring')->dailyAt('04:00');
 Schedule::command('broadcasts:dispatch-due')->everyFiveMinutes();
 Schedule::command('exports:prune')->daily();
+Schedule::command('compliance:prune-audit-logs')->daily();
 Schedule::command('tenants:purge-closed')->daily();
