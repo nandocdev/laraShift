@@ -8,6 +8,7 @@ use App\Modules\Central\Provisioning\Actions\CreateTenantAction;
 use App\Modules\Central\Provisioning\DTOs\CreateTenantData;
 use App\Modules\Central\Provisioning\Support\ReservedSlugs;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -15,6 +16,8 @@ use Livewire\Component;
 #[Layout('layouts.central')]
 class CreateTenant extends Component
 {
+    use AuthorizesRequests;
+
     #[Validate('required|string|min:3')]
     public string $name = '';
 
@@ -39,6 +42,7 @@ class CreateTenant extends Component
 
     public function save(CreateTenantAction $action): void
     {
+        $this->authorize('tenants:manage');
         $this->validate();
 
         $data = new CreateTenantData(

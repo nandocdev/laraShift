@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Providers;
 
+use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Provisioning\Application\Listeners\ScheduleTenantPurge;
 use App\Modules\Central\Provisioning\Infrastructure\Console\ProvisioningReconcileCommand;
 use App\Modules\Central\Provisioning\Infrastructure\Console\PurgeClosedTenantsCommand;
@@ -14,6 +15,7 @@ use App\Modules\Central\Provisioning\Services\TenantDomainResolver;
 use App\Modules\Platform\Contracts\TenantDomainResolverContract;
 use App\Modules\Platform\Events\TenantClosureRequested;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -29,6 +31,12 @@ class ProvisioningServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // RF1.3: ver el detalle operativo del tenant (sin datos de clientes)
+        // es lectura para todo el staff central; mutar su ciclo de vida
+        // (crear, suspender, purgar, cambiar plan) exige global admin.
+        Gate::define('tenants:view', fn (CentralUser $user) => true);
+        Gate::define('tenants:manage', fn (CentralUser $user) => (bool) $user->is_global_admin);
+
         $this->loadViewsFrom(__DIR__.'/../UI', 'provisioning');
         $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
 

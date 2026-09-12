@@ -10,6 +10,7 @@ use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Platform\Observability\Audit\Activity;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -18,6 +19,8 @@ use Livewire\Component;
 #[Layout('layouts.central')]
 class ManageTenant extends Component
 {
+    use AuthorizesRequests;
+
     public Tenant $tenant;
 
     public string $name = '';
@@ -38,6 +41,8 @@ class ManageTenant extends Component
 
     public function mount(Tenant $tenant): void
     {
+        $this->authorize('tenants:view');
+
         $this->tenant = $tenant;
         $this->name = $tenant->name;
         $this->email = $tenant->email;
@@ -58,6 +63,8 @@ class ManageTenant extends Component
 
     public function save(): void
     {
+        $this->authorize('tenants:manage');
+
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
@@ -84,6 +91,8 @@ class ManageTenant extends Component
 
     public function changePlan(): void
     {
+        $this->authorize('tenants:manage');
+
         $this->validate([
             'plan_id' => 'required|string|max:60|exists:plans,slug',
         ]);
@@ -109,11 +118,14 @@ class ManageTenant extends Component
 
     public function suspend(): void
     {
+        $this->authorize('tenants:manage');
         $this->transitionTo('suspended', 'tenant_suspended');
     }
 
     public function quarantine(): void
     {
+        $this->authorize('tenants:manage');
+
         $this->tenant->update([
             'status' => 'quarantine',
             'read_only' => true,
@@ -131,6 +143,8 @@ class ManageTenant extends Component
 
     public function reactivate(): void
     {
+        $this->authorize('tenants:manage');
+
         $this->tenant->update([
             'status' => 'active',
             'suspended_at' => null,
@@ -147,6 +161,8 @@ class ManageTenant extends Component
 
     public function purge(DeleteTenantAction $action): void
     {
+        $this->authorize('tenants:manage');
+
         if ($this->purgeConfirmSlug !== $this->tenant->slug) {
             $this->addError('purgeConfirmSlug', __('Slug confirmation does not match.'));
 

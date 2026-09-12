@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use App\Modules\Central\Auth\Models\CentralUser;
 use App\Modules\Central\Catalog\Domain\Models\Plan;
+use App\Modules\Central\Provisioning\Livewire\CreateTenant;
 use App\Modules\Central\Provisioning\Livewire\ManageTenant;
 use App\Modules\Central\Provisioning\Livewire\TenantList;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Tenant\Access\Domain\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -29,8 +31,13 @@ function makeTenantRow(string $slug, string $status = 'active', string $plan = '
 }
 
 beforeEach(function () {
-    $this->actingAs(CentralUser::factory()->create(), 'central');
+    $this->actingAs(CentralUser::factory()->create(['is_global_admin' => true]), 'central');
 });
+
+function staffUser(): CentralUser
+{
+    return CentralUser::factory()->create(['is_global_admin' => false]);
+}
 
 it('filters tenants by search, status, plan and health', function () {
     makeTenantRow('acme-one', 'active', 'free');
@@ -119,4 +126,51 @@ it('rejects purge when slug confirmation does not match', function () {
         ->assertHasErrors(['purgeConfirmSlug']);
 
     expect(Tenant::where('slug', 'purge-me')->exists())->toBeTrue();
+});
+
+it('lets non-admin staff view the list and detail but forbids lifecycle mutations', function () {
+    $tenant = makeTenantRow('viewable', 'active');
+    $this->actingAs(staffUser(), 'central');
+
+    Livewire::test(TenantList::class)
+        ->assertHasNoErrors()
+        ->assertSee('viewable');
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->assertHasNoErrors()
+        ->assertSee('Viewable');
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('suspend')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('quarantine')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('reactivate')->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->set('purgeConfirmSlug', 'viewable')
+        ->call('purge')
+        ->assertForbidden();
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])->call('save')->assertForbidden();
+
+    Livewire::test(TenantList::class)
+        ->set('selectedTenantId', $tenant->id)
+        ->set('confirmSlug', 'viewable')
+        ->call('delete')
+        ->assertForbidden();
+
+    Livewire::test(CreateTenant::class)->call('save')->assertForbidden();
+
+    expect($tenant->fresh()->status)->toBe('active');
+    expect(Tenant::where('slug', 'viewable')->exists())->toBeTrue();
+});
+
+it('never exposes tenant end-user data on the detail view', function () {
+    $tenant = makeTenantRow('privacy-co', 'active');
+
+    $tenant->run(fn () => User::factory()->create([
+        'tenant_id' => $tenant->id,
+        'email' => 'end-client-private@example.com',
+    ]));
+
+    Livewire::test(ManageTenant::class, ['tenant' => $tenant])
+        ->assertHasNoErrors()
+        ->assertSee('Privacy-co')
+        ->assertDontSee('end-client-private@example.com');
 });

@@ -8,6 +8,7 @@ use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Actions\ImpersonateTenantAction;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,7 +16,7 @@ use Livewire\WithPagination;
 #[Layout('layouts.central')]
 class TenantList extends Component
 {
-    use WithPagination;
+    use AuthorizesRequests, WithPagination;
 
     public ?string $selectedTenantId = null;
 
@@ -84,6 +85,8 @@ class TenantList extends Component
 
     public function delete(DeleteTenantAction $action): void
     {
+        $this->authorize('tenants:manage');
+
         $tenant = $this->selectedTenant;
 
         if (! $tenant) {
@@ -136,6 +139,8 @@ class TenantList extends Component
 
     public function render(): View
     {
+        $this->authorize('tenants:view');
+
         $tenants = Tenant::with('domains')
             ->when($this->search !== '', function ($query) {
                 $term = '%'.strtolower($this->search).'%';
