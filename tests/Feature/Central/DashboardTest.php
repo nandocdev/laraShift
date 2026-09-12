@@ -176,3 +176,16 @@ it('fires billing alerts and degrades billing health on real arrears', function 
         ->and($health['metrics']['past_due'])->toBe(1)
         ->and(collect($health['services'])->firstWhere('name', 'Billing')['status'])->toBe('degraded');
 });
+
+it('charts tenants and subscriptions per day without invented figures', function () {
+    $this->actingAs(CentralUser::factory()->create(), 'central');
+    $t1 = dashTenant('chart-one');
+    Subscription::create(['tenant_id' => $t1->id, 'status' => 'active', 'gateway' => 'clave']);
+
+    $chart = Livewire::test(Dashboard::class)->instance()->activityChart;
+
+    expect($chart['days'])->toHaveCount(7)
+        ->and(array_sum(array_column($chart['days'], 'value')))->toBe(1)
+        ->and(array_sum(array_column($chart['days'], 'subs')))->toBe(1)
+        ->and($chart['max'])->toBe(1);
+});

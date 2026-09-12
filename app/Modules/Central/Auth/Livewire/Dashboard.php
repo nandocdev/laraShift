@@ -163,21 +163,24 @@ class Dashboard extends Component
     public function activityChart(): array
     {
         $days = [];
-        $counts = $this->tenantsPerDay(7);
+        $tenants = $this->tenantsPerDay(7);
+        $subs = $this->subscriptionsPerDay(7);
 
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $key = $date->format('Y-m-d');
-            $value = (int) ($counts[$key] ?? 0);
+            $value = (int) ($tenants[$key] ?? 0);
+            $subValue = (int) ($subs[$key] ?? 0);
             $days[] = [
                 'key' => $date->translatedFormat('D'),
                 'label' => $date->translatedFormat('l'),
                 'value' => $value,
                 'users' => $value,
+                'subs' => $subValue,
             ];
         }
 
-        $max = max(array_column($days, 'value'));
+        $max = max(array_merge(array_column($days, 'value'), array_column($days, 'subs')));
 
         return [
             'days' => $days,
@@ -444,6 +447,22 @@ class Dashboard extends Component
     {
         try {
             return Tenant::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
+                ->selectRaw('date(created_at) as day, count(*) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day')
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * @return array<string, int> Y-m-d => total
+     */
+    private function subscriptionsPerDay(int $days): array
+    {
+        try {
+            return Subscription::where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
                 ->selectRaw('date(created_at) as day, count(*) as total')
                 ->groupBy('day')
                 ->pluck('total', 'day')
