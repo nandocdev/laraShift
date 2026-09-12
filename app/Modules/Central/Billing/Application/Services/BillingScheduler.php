@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Billing\Application\Services;
 
 use App\Modules\Central\Billing\Application\Actions\GenerateRenewalCheckoutAction;
+use App\Modules\Central\Billing\Application\Actions\IssueInvoiceAction;
 use App\Modules\Central\Billing\Domain\Enums\PaymentStatus;
 use App\Modules\Central\Billing\Domain\Enums\SubscriptionStatus;
 use App\Modules\Central\Billing\Domain\Exceptions\RecurringBillingNotSupported;
@@ -33,6 +34,7 @@ final readonly class BillingScheduler
         private SuspendTenantForNonPayment $suspend,
         private GenerateRenewalCheckoutAction $renewals,
         private PlanManager $plans,
+        private IssueInvoiceAction $invoices,
     ) {}
 
     /**
@@ -180,6 +182,7 @@ final readonly class BillingScheduler
         }
 
         $payment->update(['status' => PaymentStatus::Approved, 'gateway_reference' => $ref->providerPaymentId]);
+        $this->invoices->execute($payment->refresh(), (string) $subscription->id);
 
         $periodEnd = ($subscription->current_period_end ?? now())->copy()->addMonth();
         $subscription->update([

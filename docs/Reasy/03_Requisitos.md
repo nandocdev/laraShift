@@ -113,10 +113,10 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 #### RF4 - Facturación de Plataforma
 
-- [~] **RF4.1** - El sistema debe generar automáticamente facturas mensuales por tenant (Migraciones listas, falta automatización)
+- [x] **RF4.1** - El sistema debe generar automáticamente facturas mensuales por tenant (recibo por pago aprobado en todas las vías: webhook→`FulfillSubscription`, cargo directo, MIT del scheduler; idempotente por `payment_id`)
 - [x] **RF4.2** - El administrador debe poder visualizar el historial de facturación completo
-- [ ] **RF4.3** - El sistema debe gestionar automáticamente los cargos por transacción
-- [ ] **RF4.4** - El sistema debe manejar prorrateos por cambios de plan
+- [ ] **RF4.3** - El sistema debe gestionar automáticamente los cargos por transacción (diferido: sin modelo de fees ni transacciones de producto en el repo; el cobro recurrente MIT/link del scheduler es la automatización real)
+- [ ] **RF4.4** - El sistema debe manejar prorrateos por cambios de plan (diferido: prorrateo manual vía soporte con las Actions existentes; sin cargos automáticos al gateway en cambios de plan de staff)
 
 #### RF5 - Configuración Global
 
@@ -633,7 +633,7 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 | RF1 tenants            | ✅                     | `Provisioning/Actions/{CreateTenantAction, ProvisionTenantPipeline, PurgeTenantDataAction}`, `TenantList` (filtros search/status/plan/health) + `ManageTenant` (tabs + suspender/purgar), `provisioning:reconcile`; gates `tenants:view` (staff) / `tenants:manage` (global admin) + tests en `TenantManagementTest` (incl. no-exposición de datos de clientes) |
 | RF2 planes             | ✅                     | `Catalog/Livewire/ManagePlans`, `Catalog/Application/Services/PlanManager`, `Provisioning/Actions/ChangeTenantPlanAction` (sync tenant↔subscriptions, rechazo inactivos), migración `plans`                                                                                                                                                                     |
 | RF3 dashboard          | ✅                     | `Auth/Livewire/Dashboard` (MRR, churn 30d, transacciones, chart dual, `wire:poll.60s`, alertas/health con datos reales); reservas N/A sin producto                                                                                                                                                                                                              |
-| RF4 facturación        | 🟡                     | `Billing/Actions/IssueInvoiceAction`, `GenerateInvoicePdf`, `SubscriptionList`, `TenantInvoiceList`; prorrateo manual                                                                                                                                                                                                                                           |
+| RF4 facturación        | ✅/🚫                  | `Billing/Actions/IssueInvoiceAction` (idempotente, con catch `QueryException` real), invoice en MIT aprobado vía `BillingScheduler`, `SubscriptionList`, `TenantInvoiceList` + PDF; fees y prorrateo automático diferidos (sin consumidor real)                                                                                                                 |
 | RF5 config global      | ✅                     | `Settings/Infrastructure/Services/CentralBranding`, `CentralSetting`, `PlatformBranding`                                                                                                                                                                                                                                                                        |
 | RF6 broadcasts         | ✅/🟡                  | `Support/Livewire/BroadcastCenter`, `Support/Actions/SendBroadcastAction`, historial ✅; programado/audiencia avanzada 🟡                                                                                                                                                                                                                                       |
 | RF7 compliance central | 🟡                     | `activity()` disperso; `Compliance/AuditLogViewer` es tenant; sin UI central de Audit Log                                                                                                                                                                                                                                                                       |

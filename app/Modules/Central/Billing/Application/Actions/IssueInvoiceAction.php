@@ -6,6 +6,7 @@ namespace App\Modules\Central\Billing\Application\Actions;
 
 use App\Modules\Central\Billing\Domain\Models\Invoice;
 use App\Modules\Central\Billing\Domain\Models\Payment;
+use Illuminate\Database\QueryException;
 
 /**
  * Issues the receipt row for an approved payment. Idempotent per payment:
