@@ -7,6 +7,7 @@ namespace App\Modules\Central\Growth\Application\Actions;
 use App\Modules\Central\Growth\Domain\ValueObjects\FraudSignals;
 use App\Modules\Central\Growth\Infrastructure\Notifications\SecOpsAlertNotification;
 use App\Modules\Central\Provisioning\Models\Tenant;
+use App\Modules\Central\Settings\Infrastructure\Services\PlatformPolicies;
 use Illuminate\Notifications\AnonymousNotifiable;
 
 /**
@@ -30,7 +31,7 @@ final readonly class QuarantineTenantAction
             ->withProperties($fraudSignals->toArray())
             ->log('tenant_quarantined');
 
-        $secopsEmail = config('fraud.secops_email');
+        $secopsEmail = PlatformPolicies::secopsEmail();
 
         if ($secopsEmail) {
             /** @var AnonymousNotifiable $notifiable */

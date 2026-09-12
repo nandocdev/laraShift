@@ -66,8 +66,12 @@
 
             <flux:sidebar.group :heading="__('Settings')" class="grid">
                 <flux:sidebar.item icon="paint-brush" :href="route('central.settings.branding')"
-                    :current="request()->routeIs('central.settings.*')" wire:navigate>
+                    :current="request()->routeIs('central.settings.branding')" wire:navigate>
                     {{ __('Platform Branding') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="shield-check" :href="route('central.settings.policies')"
+                    :current="request()->routeIs('central.settings.policies')" wire:navigate>
+                    {{ __('Platform Policies') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>
