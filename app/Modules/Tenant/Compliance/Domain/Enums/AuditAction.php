@@ -29,4 +29,7 @@ enum AuditAction: string
     case CATEGORY_CREATED = 'service_category.created';
     case CATEGORY_UPDATED = 'service_category.updated';
     case CATEGORY_DELETED = 'service_category.deleted';
+    case RESOURCE_CREATED = 'resource.created';
+    case RESOURCE_UPDATED = 'resource.updated';
+    case RESOURCE_DELETED = 'resource.deleted';
 }
