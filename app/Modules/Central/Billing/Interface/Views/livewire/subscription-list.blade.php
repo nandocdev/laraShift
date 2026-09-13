@@ -33,7 +33,7 @@
             </div>
         </div>
 
-        <flux:table>
+        <flux:table :paginate="$subscriptions">
             <flux:table.columns>
                 <flux:table.column>{{ __('Tenant') }}</flux:table.column>
                 <flux:table.column>{{ __('Plan') }}</flux:table.column>
@@ -43,6 +43,15 @@
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
             <flux:table.rows>
+                <flux:table.row wire:loading.flex wire:target="search,statusFilter,gatewayFilter,nextPage,previousPage,gotoPage">
+                    <flux:table.cell colspan="6">
+                        <div class="flex flex-col gap-2" aria-hidden="true">
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
                 @forelse($subscriptions as $subscription)
                     <flux:table.row :key="$subscription->id">
                         <flux:table.cell>{{ $tenants[$subscription->tenant_id]?->name ?? $subscription->tenant_id }}</flux:table.cell>
@@ -57,7 +66,7 @@
                         <flux:table.cell>{{ $subscription->current_period_end?->toDateString() ?? '—' }}</flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown>
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="min-h-12 min-w-12" aria-label="{{ __('Subscription actions') }}" />
                                 <flux:menu>
                                     <flux:menu.item icon="eye" :href="route('central.billing.subscriptions.show', $subscription->id)" wire:navigate>{{ __('View') }}</flux:menu.item>
                                     <flux:menu.item icon="arrow-path" wire:click="reactivate('{{ $subscription->id }}')">{{ __('Reactivate') }}</flux:menu.item>
