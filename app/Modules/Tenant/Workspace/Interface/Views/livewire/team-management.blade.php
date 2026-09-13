@@ -31,6 +31,14 @@
             </flux:table.columns>
 
             <flux:table.rows>
+                <flux:table.row wire:loading.flex wire:target="nextPage,previousPage,gotoPage">
+                    <flux:table.cell colspan="5">
+                        <div class="flex flex-col gap-2" aria-hidden="true">
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
                 @foreach ($members as $member)
                     <flux:table.row :key="$member->id">
                         <flux:table.cell class="flex items-center gap-3">
@@ -58,7 +66,7 @@
                         <flux:table.cell class="text-right">
                             @if ($member->id !== auth()->id())
                                 <flux:dropdown>
-                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="min-h-12 min-w-12" aria-label="{{ __('Member actions') }}" />
                                     <flux:menu>
                                         <flux:modal.trigger name="change-role">
                                             <flux:menu.item icon="pencil"
@@ -128,15 +136,15 @@
                                 </flux:table.cell>
                                 <flux:table.cell class="text-right">
                                     <div class="flex justify-end gap-2">
-                                        <flux:button icon="arrow-path" size="sm" variant="ghost"
+                                        <flux:button icon="arrow-path" size="sm" variant="ghost" class="min-h-12 min-w-12"
                                             wire:click="resendInvitation('{{ $invite->id }}')"
                                             wire:loading.attr="disabled"
-                                            tooltip="{{ __('Resend Invitation') }}" />
-                                        <flux:button icon="trash" size="sm" variant="ghost"
+                                            tooltip="{{ __('Resend Invitation') }}" aria-label="{{ __('Resend invitation') }}" />
+                                        <flux:button icon="trash" size="sm" variant="ghost" class="min-h-12 min-w-12"
                                             wire:click="cancelInvitation('{{ $invite->id }}')"
                                             wire:loading.attr="disabled"
                                             wire:confirm="{{ __('Are you sure you want to cancel this invitation?') }}"
-                                            tooltip="{{ __('Cancel Invitation') }}" />
+                                            tooltip="{{ __('Cancel Invitation') }}" aria-label="{{ __('Cancel invitation') }}" />
                                     </div>
                                 </flux:table.cell>
                             </flux:table.row>
@@ -152,7 +160,7 @@
         <form wire:submit="updateRole" class="space-y-6">
             <div>
                 <flux:heading size="lg">{{ __('Change Member Role') }}</flux:heading>
-                <flux:subheading>{{ __('Assign a new access level to :name.', ['name' => $selectedMember?->name]) }}
+                <flux:subheading>{{ __('Assign a new access level to :name.', ['name' => $this->selectedMember?->name ?? __('member')]) }}
                 </flux:subheading>
             </div>
 
