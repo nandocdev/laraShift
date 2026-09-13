@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Product\Services\Application\Actions;
 
+use App\Modules\Product\Services\Domain\Models\Service;
 use App\Modules\Product\Services\Domain\Models\ServiceCategory;
 use App\Modules\Tenant\Compliance\Application\Actions\RecordAuditLogAction;
 use App\Modules\Tenant\Compliance\Domain\DTOs\AuditLogData;
@@ -15,7 +16,12 @@ final readonly class DeleteCategory
     public function execute(ServiceCategory $category): void
     {
         DB::transaction(function () use ($category) {
-            // Services keep their data: the FK uses SET NULL.
+            // Soft deletes never fire FK actions, so detach explicitly.
+            // The FK stays SET NULL as a hard-delete safeguard.
+            Service::where('tenant_id', tenant('id'))
+                ->where('category_id', $category->id)
+                ->update(['category_id' => null]);
+
             $category->delete();
 
             app(RecordAuditLogAction::class)->execute(

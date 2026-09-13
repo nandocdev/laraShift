@@ -20,13 +20,13 @@
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif
 
-    <flux:tab.group>
-        <flux:tabs wire:model.live="activeTab">
-            <flux:tab name="services" icon="sparkles">{{ __('Services') }}</flux:tab>
-            <flux:tab name="categories" icon="tag">{{ __('Categories') }}</flux:tab>
-        </flux:tabs>
+    <div class="flex gap-2">
+        <flux:button :variant="$activeTab === 'services' ? 'primary' : 'ghost'" icon="sparkles" wire:click="$set('activeTab', 'services')">{{ __('Services') }}</flux:button>
+        <flux:button :variant="$activeTab === 'categories' ? 'primary' : 'ghost'" icon="tag" wire:click="$set('activeTab', 'categories')">{{ __('Categories') }}</flux:button>
+    </div>
 
-        <flux:tab.panel name="services">
+    @if ($activeTab === 'services')
+        <div class="flex flex-col gap-4">
             <div class="flex flex-col md:flex-row gap-3 md:items-center md:justify-between py-4">
                 <div class="flex flex-col md:flex-row gap-3">
                     <flux:input wire:model.live.debounce.300ms="search" :label="__('Search')" placeholder="Haircut…" />
@@ -112,9 +112,9 @@
                     </flux:table.rows>
                 </flux:table>
             </flux:card>
-        </flux:tab.panel>
-
-        <flux:tab.panel name="categories">
+        </div>
+    @else
+        <div class="flex flex-col gap-4">
             <flux:card class="overflow-hidden mt-4">
                 <flux:table :paginate="$categoriesList">
                     <flux:table.columns>
@@ -171,8 +171,8 @@
                     </flux:table.rows>
                 </flux:table>
             </flux:card>
-        </flux:tab.panel>
-    </flux:tab.group>
+        </div>
+    @endif
 
     <flux:modal name="service-form" class="md:max-w-3xl">
         <form wire:submit="saveService" class="flex flex-col gap-4">

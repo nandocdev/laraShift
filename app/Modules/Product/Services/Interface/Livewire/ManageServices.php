@@ -202,8 +202,17 @@ class ManageServices extends Component
         $this->authorize('services:manage');
 
         $validated = $this->validate($this->serviceRules());
-        $deposit = $this->resolveDeposit($validated);
-        $cancellationPolicy = $this->resolveCancellationPolicy($validated);
+
+        try {
+            $deposit = $this->resolveDeposit($validated);
+            $cancellationPolicy = $this->resolveCancellationPolicy($validated);
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field, $messages[0]);
+            }
+
+            return;
+        }
 
         $data = new ServiceData(
             name: $validated['name'],
