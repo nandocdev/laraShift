@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Central\Operations\Interface\Livewire;
 
 use App\Modules\Central\Billing\Domain\Models\Subscription;
+use App\Modules\Central\Operations\Application\Actions\DetectCriticalIncidents;
 use App\Modules\Central\Operations\Infrastructure\Horizon\HorizonQueueResolver;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use Illuminate\Contracts\View\View;
@@ -113,10 +114,10 @@ class HealthMonitor extends Component
         }
 
         $failedJobs = $this->failedJobsCount();
-        if ($failedJobs > 0) {
+        if ($failedJobs > 0 && $failedJobs <= 100) {
             $incidents[] = [
                 'id' => 'failed-jobs',
-                'severity' => $failedJobs > 100 ? 'critical' : 'warning',
+                'severity' => 'warning',
                 'title' => 'Failed jobs',
                 'detail' => number_format($failedJobs).' jobs fallidos pendientes de revisión.',
                 'link' => null,
@@ -134,26 +135,9 @@ class HealthMonitor extends Component
             ];
         }
 
-        $quarantined = $this->countWhere(Tenant::class, 'quarantine');
-        if ($quarantined > 0) {
-            $incidents[] = [
-                'id' => 'tenants-quarantine',
-                'severity' => 'critical',
-                'title' => 'Tenants en cuarentena',
-                'detail' => $quarantined === 1 ? '1 tenant aislado por antifraude.' : "{$quarantined} tenants aislados por antifraude.",
-                'link' => route('central.provisioning.index'),
-            ];
-        }
-
-        $failed = $this->countWhere(Tenant::class, 'failed');
-        if ($failed > 0) {
-            $incidents[] = [
-                'id' => 'provisioning-failed',
-                'severity' => 'critical',
-                'title' => 'Provisioning fallido',
-                'detail' => $failed === 1 ? '1 tenant con provisioning fallido.' : "{$failed} tenants con provisioning fallido.",
-                'link' => route('central.provisioning.index'),
-            ];
+        // Criticals share one definition with operations:alert-incidents.
+        foreach (app(DetectCriticalIncidents::class)->execute() as $critical) {
+            $incidents[] = $critical;
         }
 
         return array_values(array_filter(
