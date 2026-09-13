@@ -20,4 +20,7 @@ enum AuditAction: string
     case SETTINGS_SMTP_CONFIGURED = 'settings.smtp_configured';
     case SETTINGS_MFA_CHANGED = 'settings.mfa_requirement_changed';
     case EXPORT_STARTED = 'export.initiated';
+    case LOCATION_CREATED = 'location.created';
+    case LOCATION_UPDATED = 'location.updated';
+    case LOCATION_DELETED = 'location.deleted';
 }

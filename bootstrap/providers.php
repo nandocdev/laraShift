@@ -9,6 +9,7 @@ use App\Modules\Central\Provisioning\Providers\ProvisioningServiceProvider;
 use App\Modules\Central\Settings\Providers\SettingsServiceProvider;
 use App\Modules\Central\Support\Providers\SupportServiceProvider;
 use App\Modules\Platform\UI\Providers\UiServiceProvider;
+use App\Modules\Product\Locations\Providers\LocationsServiceProvider;
 use App\Modules\Tenant\Access\Providers\AccessServiceProvider;
 use App\Modules\Tenant\Compliance\Providers\ComplianceServiceProvider;
 use App\Modules\Tenant\Experience\Providers\ExperienceServiceProvider;
@@ -38,4 +39,5 @@ return [
     ExperienceServiceProvider::class,
     IntegrationsServiceProvider::class,
     ComplianceServiceProvider::class,
+    LocationsServiceProvider::class,
 ];
