@@ -313,6 +313,36 @@ class Dashboard extends Component
     }
 
     /**
+     * Churn-risk tenants with explainable reasons (RF10.1, heuristics v1).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    #[Computed]
+    public function churnRisks(): array
+    {
+        try {
+            return app(TenantRiskInsights::class)->churnRisks();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
+     * Upgrade candidates by quota saturation (RF10.2 + RF10.3).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    #[Computed]
+    public function upgradeCandidates(): array
+    {
+        try {
+            return app(TenantRiskInsights::class)->upgradeCandidates();
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     #[Computed]
