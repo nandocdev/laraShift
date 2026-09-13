@@ -7,7 +7,7 @@
 > **Tipo:** Especificación de Requisitos de Software (SRS)
 > **Nombres anteriores deprecados:** ReserveHub. El nombre oficial del producto es **Reasy** sobre el framework **openSaaS**.
 >
-> **Estado de implementación (§7):** verificado contra el código de `main` (commits `f2d904a/6379d01/fbdbce8`). Leyenda: `✅ existe` · `🟡 parcial` · `⬜ no existe` · `🚫 diferido MVP`. El avance de `01_PRD.md §14` (8/12) corresponde al prototipo legado, no a este repo: `app/Modules/Product/` no existe y ningún UC `BO/CL/BM` tiene código aquí.
+> **Estado de implementación (§7):** verificado contra el código (rev. 2026-09-11 rama `main` + rev. 2026-09-13 rama `develop`). Leyenda: `✅ existe` · `🟡 parcial` · `⬜ no existe` · `🚫 diferido MVP`. El avance de `01_PRD.md §14` (8/12) corresponde al prototipo legado, no a este repo: `app/Modules/Product/` existe desde RF12 (`Locations`, merge `4aa1544` en `develop`) y ningún UC `BO/CL/BM` de reservas tiene código aún.
 
 > **Alineación normativa openSaaS (lectura obligatoria):**
 >
@@ -158,15 +158,15 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 #### RF11 - Configuración del Negocio
 
-- [~] **RF11.1** - El sistema debe permitir configurar perfil completo: nombre, logo, descripción, dirección (Módulo Workspace existe, falta UI detallada)
-- [~] **RF11.2** - El administrador debe poder establecer zona horaria y moneda del negocio (Módulo Workspace existe, falta UI detallada)
-- [~] **RF11.3** - El sistema debe permitir personalización de branding para clientes (Módulo Workspace existe, falta UI detallada)
+- [x] **RF11.1** - El sistema debe permitir configurar perfil completo: nombre, logo, descripción, dirección (nombre/logo ya existían en `Experience/BrandingSettings`; descripción + dirección estructurada agregadas a `tenant_settings` + UI en `BrandingSettings`. Código + `BusinessProfileTest` 4/4 en rama de trabajo, pendiente de merge a `develop`)
+- [x] **RF11.2** - El administrador debe poder establecer zona horaria y moneda del negocio (`Experience/LocalizationSettings`: timezone validado contra `timezone_identifiers_list`, locale, currency)
+- [x] **RF11.3** - El sistema debe permitir personalización de branding para clientes (`Experience/BrandingSettings`: logo, `primary_color`, presets + sync a landing vía `TenantBrandResolver`/`UpdateTenantBranding`)
 
 #### RF12 - Gestión de Sedes/Ubicaciones
 
-- [ ] **RF12.1** - El sistema debe permitir gestionar múltiples ubicaciones de forma independiente
-- [ ] **RF12.2** - Cada sede debe poder tener su propia configuración de horarios y servicios
-- [ ] **RF12.3** - El sistema debe permitir transferir recursos entre sedes
+- [x] **RF12.1** - El sistema debe permitir gestionar múltiples ubicaciones de forma independiente (`Product/Locations`: `ManageLocations` CRUD + soft-delete/restore, slug único por tenant, merge `4aa1544` en `develop`, `LocationManagementTest` 7/7)
+- [~] **RF12.2** - Cada sede debe poder tener su propia configuración de horarios y servicios (fundación: `locations.timezone` propio con fallback al negocio + `settings json`; la asignación de servicios por sede llega con RF13 —pivot `location_service`—, horarios por sede con RF15)
+- [ ] **RF12.3** - El sistema debe permitir transferir recursos entre sedes (bloqueado por RF14: exige la entidad Recurso; contrato fijado: futuros recursos llevan `location_id` y el transfer será reasignación)
 
 #### RF13 - Gestión de Servicios
 
@@ -588,7 +588,7 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 > Fuente: `02_Documents.md §4.1.2–4.1.3`. Se resumen aquí como reglas testeables; el detalle algorítmico queda en `02`.
 >
-> **Estado_repo: ⬜ todas (RN1–RN8).** Sin `app/Modules/Product/` no hay máquina de estados, motor de disponibilidad ni políticas de depósito/reembolso implementados. Ver §7.
+> **Estado_repo: ⬜ todas (RN1–RN8).** Sin motor de reservas no hay máquina de estados, motor de disponibilidad ni políticas de depósito/reembolso implementados (`Product/Locations` no cubre RN). Ver §7.
 
 - [ ] **RN1 - Estados de reserva:** `draft → pending_payment → confirmed → rescheduled | cancelled | no_show | completed | expired`. Transiciones validadas en Action (p. ej. no confirmar una ya cancelada). `pending` del happy-path de `01_PRD.md` equivale a `pending_payment` cuando hay depósito, o a estado pendiente de confirmación del dueño cuando no lo hay.
 - [ ] **RN2 - Disponibilidad:** slots = horario semanal del recurso − excepciones (feriados/vacaciones con prioridad) − reservas existentes − buffers (`buffer_before/after`). Cálculo en Action/Query, mostrado en zona horaria del negocio, almacenado en UTC. Cache `tenant:{id}:availability:*` TTL corto (5 min) con invalidación por crear/cancelar.
@@ -605,17 +605,17 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 `business_id` = `tenant_id` lógico. `M` = MVP (`01_PRD.md`), `E` = post-MVP/enterprise (`02`/`03`).
 
-| RF                                                                                                                           | Alcance          | Módulo openSaaS / Producto                                                      | UCs `01`                                                     | Estado                                                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| RF1–RF10 (plataforma: tenants, planes, dashboard, facturación, config, comms, compliance, health, integraciones, predictivo) | Framework        | `Central/Provisioning, Catalog, Billing, Settings, Support, Operations, Growth` | PA-01/02                                                     | ✅/🟡 framework (detalle en §7: RF3/RF4/RF7/RF8 parciales, RF10 inexistente); Reasy no los reimplementa |
-| RF11–RF16 (negocio, sedes, servicios, recursos, horarios, empleados)                                                         | Producto         | Extensión Reasy sobre `Tenant/Access + Experience` (scaffolding)                | BO-01/02/05/06/07 hechos en legado; en repo ⬜ salvo RF16 🟡 | M: BO-03/04                                                                                             |
-| RF13.3–RF13.4, RF21, RF41, RF50 (depósitos, pagos)                                                                           | Producto+Billing | Billing Core + Actions de reserva; Clave/dLocal, Stripe diferido                | Explícitamente fuera de MVP en `01 §7.2`                     | E (Q1 post-MVP salvo que el MVP active Clave)                                                           |
-| RF17–RF18, RF27–RF31, RF35 (panel reservas, calendario staff, check-in)                                                      | Producto         | Extensión Reasy (Booking) + `Tenant/Workspace` (notificaciones)                 | BM-01/02 pendientes                                          | M: BM-01/02                                                                                             |
-| RF19, RF36–RF40, RF46–RF53 (clientes, guest OTP, booking múltiple)                                                           | Producto         | Extensión Reasy (Customers/Bookings)                                            | CL-01..04 pendientes                                         | M: CL-01..04                                                                                            |
-| RF20, RF23 (dashboard negocio, finanzas)                                                                                     | Producto         | Extensión Reasy Queries/Read Models                                             | —                                                            | E parcial (KPIs básicos en M, fiscal multi-jurisdicción en E)                                           |
-| RF22, RF31 (notificaciones, plantillas, timing)                                                                              | Transversal      | `Tenant/Integrations` (SMTP) + Jobs `TenantAware` + colas                       | CL-04                                                        | M: email confirmación/cambio estado; SMS/WhatsApp = E                                                   |
-| RF24–RF26, RF32–RF34, RF42–RF45 (inventario, marketing, waitlist, comisiones, tareas, fidelidad, suscripciones)              | Producto         | Extensión Reasy futura                                                          | Fuera de MVP `01 §7.2`                                       | E                                                                                                       |
-| RF54–RF59 (soporte, dev portal, auditoría)                                                                                   | Framework        | `Central/Support, Tenant/Compliance, Access` (API keys)                         | —                                                            | Heredado; marketplace/RM = E                                                                            |
+| RF                                                                                                                           | Alcance          | Módulo openSaaS / Producto                                                      | UCs `01`                                                                                          | Estado                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| RF1–RF10 (plataforma: tenants, planes, dashboard, facturación, config, comms, compliance, health, integraciones, predictivo) | Framework        | `Central/Provisioning, Catalog, Billing, Settings, Support, Operations, Growth` | PA-01/02                                                                                          | ✅/🟡 framework (detalle en §7: RF3/RF4/RF7/RF8 parciales, RF10 inexistente); Reasy no los reimplementa |
+| RF11–RF16 (negocio, sedes, servicios, recursos, horarios, empleados)                                                         | Producto         | Extensión Reasy (`Product/*`) sobre `Tenant/Access + Experience` (scaffolding)  | BO-01/02/05/06/07 hechos en legado; en repo ✅ RF11.2/11.3, 🟡 RF11.1 (rama), ✅ RF12.1, resto ⬜ | M: BO-03/04                                                                                             |
+| RF13.3–RF13.4, RF21, RF41, RF50 (depósitos, pagos)                                                                           | Producto+Billing | Billing Core + Actions de reserva; Clave/dLocal, Stripe diferido                | Explícitamente fuera de MVP en `01 §7.2`                                                          | E (Q1 post-MVP salvo que el MVP active Clave)                                                           |
+| RF17–RF18, RF27–RF31, RF35 (panel reservas, calendario staff, check-in)                                                      | Producto         | Extensión Reasy (Booking) + `Tenant/Workspace` (notificaciones)                 | BM-01/02 pendientes                                                                               | M: BM-01/02                                                                                             |
+| RF19, RF36–RF40, RF46–RF53 (clientes, guest OTP, booking múltiple)                                                           | Producto         | Extensión Reasy (Customers/Bookings)                                            | CL-01..04 pendientes                                                                              | M: CL-01..04                                                                                            |
+| RF20, RF23 (dashboard negocio, finanzas)                                                                                     | Producto         | Extensión Reasy Queries/Read Models                                             | —                                                                                                 | E parcial (KPIs básicos en M, fiscal multi-jurisdicción en E)                                           |
+| RF22, RF31 (notificaciones, plantillas, timing)                                                                              | Transversal      | `Tenant/Integrations` (SMTP) + Jobs `TenantAware` + colas                       | CL-04                                                                                             | M: email confirmación/cambio estado; SMS/WhatsApp = E                                                   |
+| RF24–RF26, RF32–RF34, RF42–RF45 (inventario, marketing, waitlist, comisiones, tareas, fidelidad, suscripciones)              | Producto         | Extensión Reasy futura                                                          | Fuera de MVP `01 §7.2`                                                                            | E                                                                                                       |
+| RF54–RF59 (soporte, dev portal, auditoría)                                                                                   | Framework        | `Central/Support, Tenant/Compliance, Access` (API keys)                         | —                                                                                                 | Heredado; marketplace/RM = E                                                                            |
 
 **Criterio de corte MVP:** `BO-03/04 + CL-01..04 + BM-01/02` de `01_PRD.md` + `CL-04` por Jobs. Todo lo marcado `E` requiere RF dedicado + ADR antes de entrar al core o a la extensión.
 
@@ -623,8 +623,8 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 ## 7. Estado de implementación (verificado en código)
 
-> Rev. 2026-09-11, rama `main`. Método: `grep` de clases/Actions/Livewire/comandos en `app/` + `ls` de módulos y migraciones. `✅` = clase + ruta/test o uso verificado · `🟡` = existe pero incompleto o con deuda auditada · `⬜` = sin código en el repo · `🚫` = diferido del MVP (Billing Core del framework sí existe).
-> `app/Modules/Product/` no existe: todo lo marcado Producto es ⬜ salvo scaffolding heredado del core.
+> Rev. 2026-09-11, rama `main` + rev. 2026-09-13, rama `develop` (merge `4aa1544` RF12). Método: `grep` de clases/Actions/Livewire/comandos en `app/` + `ls` de módulos y migraciones. `✅` = clase + ruta/test o uso verificado · `🟡` = existe pero incompleto o con deuda auditada · `⬜` = sin código en el repo · `🚫` = diferido del MVP (Billing Core del framework sí existe).
+> `app/Modules/Product/` existe desde RF12 (`Locations` en `develop`): RF12.1 ✅ + `LocationManagementTest` 7/7; RF11.1 implementado con `BusinessProfileTest` 4/4 en rama de trabajo (pendiente de merge).
 
 ### 7.1 Framework — Central/Tenant (RF1–RF10, RF54–RF59)
 
@@ -651,8 +651,8 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 | RF                     | Estado_repo | Evidencia / nota                                                                                                                                                                                                            |
 | ---------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RF11 negocio/branding  | 🟡          | Scaffolding `Experience/BrandingSettings` ✅; entidad negocio (`timezone/moneda`) ❌                                                                                                                                        |
-| RF12 sedes             | ⬜          | No existe                                                                                                                                                                                                                   |
+| RF11 negocio/branding  | ✅/🟡       | `Experience/BrandingSettings` (nombre/logo) + `LocalizationSettings` (timezone/moneda) ✅; descripción + dirección en `tenant_settings` implementados con `BusinessProfileTest` 4/4 en rama de trabajo (pendiente merge)    |
+| RF12 sedes             | ✅/🟡/⬜    | `Product/Locations` en `develop` (merge `4aa1544`): RF12.1 ✅ `ManageLocations` + `LocationManagementTest` 7/7; RF12.2 🟡 fundación (`timezone`/`settings` por sede, pivot con RF13); RF12.3 ⬜ bloqueado por RF14          |
 | RF13 servicios         | ⬜          | BO-03 pendiente (= `01`)                                                                                                                                                                                                    |
 | RF14 recursos          | ⬜          | BO-04 pendiente (= `01`)                                                                                                                                                                                                    |
 | RF15 horarios          | ⬜ en repo  | BO-05/06 "hechos" solo en prototipo legado                                                                                                                                                                                  |
@@ -683,4 +683,4 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 - [ ] **RNF6:** 🟡 (retry en colas + `failed_attempts`/dunning ✅; circuit breakers ❌).
 - [ ] **RNF7.1–7.4:** ✅ (Fortify/MFA/RBAC en `Access` + `Auth`).
 - [ ] **RNF7.5–7.10, RNF8:** ✅ normativa (guards separados, Redis sessions, RLS + `TenantAware`, caché `tenant:{id}:*`, `CrossTenantLeakTest` con grupo `RLSEnforce` en `BillingRlsEnforceTest`).
-- [ ] **RN1–RN8:** ⬜ todas (sin `app/Modules/Product/`).
+- [ ] **RN1–RN8:** ⬜ todas (sin motor de reservas en `app/Modules/Product/`).
