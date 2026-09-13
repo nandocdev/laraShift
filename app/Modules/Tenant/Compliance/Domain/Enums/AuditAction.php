@@ -23,4 +23,10 @@ enum AuditAction: string
     case LOCATION_CREATED = 'location.created';
     case LOCATION_UPDATED = 'location.updated';
     case LOCATION_DELETED = 'location.deleted';
+    case SERVICE_CREATED = 'service.created';
+    case SERVICE_UPDATED = 'service.updated';
+    case SERVICE_DELETED = 'service.deleted';
+    case CATEGORY_CREATED = 'service_category.created';
+    case CATEGORY_UPDATED = 'service_category.updated';
+    case CATEGORY_DELETED = 'service_category.deleted';
 }
