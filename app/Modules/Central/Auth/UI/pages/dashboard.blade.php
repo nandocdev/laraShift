@@ -155,6 +155,43 @@
         </flux:card>
     </div>
 
+    {{-- Portfolio insights: churn risk + upgrade candidates (RF10, heurísticas v1) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <flux:card class="flex flex-col p-5 space-y-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ __('EN RIESGO DE CHURN') }}
+            </span>
+            @forelse ($this->churnRisks as $risk)
+                <div class="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-2 last:border-0">
+                    <div>
+                        <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $risk['name'] }}</div>
+                        <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ implode(' ', $risk['reasons']) }}</div>
+                    </div>
+                    <flux:badge size="sm" variant="outline">{{ $risk['score'] }}</flux:badge>
+                </div>
+            @empty
+                <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Sin señales de churn.') }}</div>
+            @endforelse
+        </flux:card>
+
+        <flux:card class="flex flex-col p-5 space-y-3">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ __('CANDIDATOS A UPGRADE') }}
+            </span>
+            @forelse ($this->upgradeCandidates as $candidate)
+                <div class="flex items-start justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-2 last:border-0">
+                    <div>
+                        <div class="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{{ $candidate['name'] }}</div>
+                        <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $candidate['metric'] }}: {{ $candidate['usage'] }}/{{ $candidate['limit'] }} → {{ $candidate['suggested_plan'] }}</div>
+                    </div>
+                    <flux:badge size="sm" variant="outline">{{ $candidate['percentage'] }}%</flux:badge>
+                </div>
+            @empty
+                <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Sin saturación de cuotas.') }}</div>
+            @endforelse
+        </flux:card>
+    </div>
+
     {{-- Middle Section 1: Platform Activity & System Health --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left (2 cols): ACTIVIDAD DE LA PLATAFORMA --}}
