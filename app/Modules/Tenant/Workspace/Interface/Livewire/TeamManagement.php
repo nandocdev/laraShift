@@ -18,6 +18,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -37,9 +38,17 @@ class TeamManagement extends Component
     #[Locked]
     public ?string $selectedMemberId = null;
 
-    public ?User $selectedMember = null;
-
     public string $newRole = '';
+
+    #[Computed]
+    public function selectedMember(): ?User
+    {
+        if (! $this->selectedMemberId) {
+            return null;
+        }
+
+        return User::find($this->selectedMemberId);
+    }
 
     public function invite(SendInvitation $action): void
     {
@@ -97,9 +106,9 @@ class TeamManagement extends Component
 
     public function selectMember(string $userId): void
     {
-        $this->selectedMember = User::findOrFail($userId);
-        $this->selectedMemberId = $this->selectedMember->id;
-        $this->newRole = $this->selectedMember->getRoleNames()->first() ?: 'member';
+        $member = User::findOrFail($userId);
+        $this->selectedMemberId = $member->id;
+        $this->newRole = $member->getRoleNames()->first() ?: 'member';
     }
 
     public function updateRole(UpdateTenantUserRole $action): void
@@ -119,7 +128,7 @@ class TeamManagement extends Component
         try {
             $action->execute($targetUser, $this->newRole, auth()->user());
 
-            $this->reset(['selectedMember', 'selectedMemberId', 'newRole']);
+            $this->reset(['selectedMemberId', 'newRole']);
             session()->flash('status', __('User role updated.'));
         } catch (ValidationException $e) {
             foreach ($e->errors() as $key => $messages) {

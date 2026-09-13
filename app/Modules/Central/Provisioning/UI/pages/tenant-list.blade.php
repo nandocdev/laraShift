@@ -51,6 +51,15 @@
             </flux:table.columns>
 
             <flux:table.rows>
+                <flux:table.row wire:loading.flex wire:target="search,statusFilter,planFilter,healthFilter,nextPage,previousPage,gotoPage">
+                    <flux:table.cell colspan="7">
+                        <div class="flex flex-col gap-2" aria-hidden="true">
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
                 @forelse ($tenants as $tenant)
                     <flux:table.row :key="$tenant->id">
                         <flux:table.cell class="font-medium">
@@ -95,7 +104,7 @@
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown>
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" class="min-h-12 min-w-12" aria-label="{{ __('Tenant actions') }}" />
                                 <flux:menu>
                                     <flux:menu.item icon="pencil" :href="route('central.provisioning.edit', $tenant->id)" wire:navigate>{{ __('Edit') }}</flux:menu.item>
                                     

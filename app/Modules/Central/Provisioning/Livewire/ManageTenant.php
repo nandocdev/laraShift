@@ -20,7 +20,7 @@ class ManageTenant extends Component
 {
     use AuthorizesRequests;
 
-    public Tenant $tenant;
+    public string $tenantId = '';
 
     public string $name = '';
 
@@ -42,13 +42,19 @@ class ManageTenant extends Component
     {
         $this->authorize('tenants:view');
 
-        $this->tenant = $tenant;
+        $this->tenantId = $tenant->id;
         $this->name = $tenant->name;
         $this->email = $tenant->email;
         $this->status = $tenant->status;
         $this->maintenance_mode = (bool) $tenant->maintenance_mode;
         $this->read_only = (bool) $tenant->read_only;
         $this->plan_id = (string) ($tenant->plan_id ?? 'free');
+    }
+
+    #[Computed]
+    public function tenant(): Tenant
+    {
+        return Tenant::with('domains')->findOrFail($this->tenantId);
     }
 
     public function setTab(string $tab): void
@@ -72,7 +78,9 @@ class ManageTenant extends Component
             'read_only' => 'boolean',
         ]);
 
-        $this->tenant->update([
+        $tenant = $this->tenant;
+
+        $tenant->update([
             'name' => $this->name,
             'email' => $this->email,
             'status' => $this->status,
@@ -81,7 +89,7 @@ class ManageTenant extends Component
         ]);
 
         activity('provisioning')
-            ->performedOn($this->tenant)
+            ->performedOn($tenant)
             ->log('tenant_updated');
 
         session()->flash('status', __('Tenant updated successfully.'));
@@ -113,7 +121,9 @@ class ManageTenant extends Component
     {
         $this->authorize('tenants:manage');
 
-        $this->tenant->update([
+        $tenant = $this->tenant;
+
+        $tenant->update([
             'status' => 'quarantine',
             'read_only' => true,
         ]);
@@ -122,7 +132,7 @@ class ManageTenant extends Component
 
         activity('provisioning')
             ->causedBy(auth('central')->user())
-            ->performedOn($this->tenant)
+            ->performedOn($tenant)
             ->log('tenant_quarantined_manual');
 
         session()->flash('status', __('Tenant quarantined.'));
@@ -132,7 +142,9 @@ class ManageTenant extends Component
     {
         $this->authorize('tenants:manage');
 
-        $this->tenant->update([
+        $tenant = $this->tenant;
+
+        $tenant->update([
             'status' => 'active',
             'suspended_at' => null,
         ]);
@@ -140,7 +152,7 @@ class ManageTenant extends Component
 
         activity('provisioning')
             ->causedBy(auth('central')->user())
-            ->performedOn($this->tenant)
+            ->performedOn($tenant)
             ->log('tenant_reactivated');
 
         session()->flash('status', __('Tenant reactivated.'));
@@ -150,14 +162,16 @@ class ManageTenant extends Component
     {
         $this->authorize('tenants:manage');
 
-        if ($this->purgeConfirmSlug !== $this->tenant->slug) {
+        $tenant = $this->tenant;
+
+        if ($this->purgeConfirmSlug !== $tenant->slug) {
             $this->addError('purgeConfirmSlug', __('Slug confirmation does not match.'));
 
             return;
         }
 
         try {
-            $action->execute($this->tenant, true);
+            $action->execute($tenant, true);
 
             session()->flash('status', __('Tenant deletion queued successfully.'));
             $this->redirect(route('central.provisioning.index'), navigate: true);
@@ -168,7 +182,9 @@ class ManageTenant extends Component
 
     private function transitionTo(string $status, string $log): void
     {
-        if ($this->tenant->status === $status) {
+        $tenant = $this->tenant;
+
+        if ($tenant->status === $status) {
             session()->flash('status', __('Tenant is already :status.', ['status' => $status]));
 
             return;
@@ -180,12 +196,12 @@ class ManageTenant extends Component
             $attributes['suspended_at'] = now();
         }
 
-        $this->tenant->update($attributes);
+        $tenant->update($attributes);
         $this->status = $status;
 
         activity('provisioning')
             ->causedBy(auth('central')->user())
-            ->performedOn($this->tenant)
+            ->performedOn($tenant)
             ->log($log);
 
         session()->flash('status', __('Tenant status updated to :status.', ['status' => $status]));
@@ -198,10 +214,12 @@ class ManageTenant extends Component
     public function plans(): array
     {
         try {
+            $currentPlan = $this->plan_id !== '' ? $this->plan_id : 'free';
+
             return DB::table('plans')
-                ->where(function ($query): void {
+                ->where(function ($query) use ($currentPlan): void {
                     $query->where('is_active', true)
-                        ->orWhere('slug', $this->tenant->plan_id ?? 'free');
+                        ->orWhere('slug', $currentPlan);
                 })
                 ->orderBy('name')
                 ->get(['slug', 'name'])
@@ -220,7 +238,7 @@ class ManageTenant extends Component
     {
         try {
             $subscription = DB::table('subscriptions')
-                ->where('tenant_id', $this->tenant->id)
+                ->where('tenant_id', $this->tenantId)
                 ->latest()
                 ->first();
 
@@ -237,9 +255,9 @@ class ManageTenant extends Component
     public function usage(): array
     {
         return [
-            'users' => $this->countWhere('users', 'tenant_id', $this->tenant->id),
-            'subscriptions' => $this->countWhere('subscriptions', 'tenant_id', $this->tenant->id),
-            'payments' => $this->countWhere('payments', 'tenant_id', $this->tenant->id),
+            'users' => $this->countWhere('users', 'tenant_id', $this->tenantId),
+            'subscriptions' => $this->countWhere('subscriptions', 'tenant_id', $this->tenantId),
+            'payments' => $this->countWhere('payments', 'tenant_id', $this->tenantId),
         ];
     }
 
@@ -251,7 +269,7 @@ class ManageTenant extends Component
     {
         try {
             return Activity::where('subject_type', Tenant::class)
-                ->where('subject_id', $this->tenant->id)
+                ->where('subject_id', $this->tenantId)
                 ->latest()
                 ->take(10)
                 ->get()
@@ -276,6 +294,8 @@ class ManageTenant extends Component
 
     public function render(): View
     {
-        return view('provisioning::pages.manage-tenant');
+        return view('provisioning::pages.manage-tenant', [
+            'tenant' => $this->tenant,
+        ]);
     }
 }

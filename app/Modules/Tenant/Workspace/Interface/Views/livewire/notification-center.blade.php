@@ -1,6 +1,11 @@
-<div class="space-y-4">
+<div class="space-y-4" aria-live="polite">
     <flux:heading size="lg">{{ __('Notifications') }}</flux:heading>
-    
+
+    <div wire:loading.flex class="flex flex-col gap-2" aria-hidden="true">
+        <flux:skeleton class="h-16 w-full" />
+        <flux:skeleton class="h-16 w-full" />
+    </div>
+
     <div class="space-y-2">
         @forelse($notifications as $notification)
             <flux:card class="flex items-start justify-between p-4">
@@ -13,9 +18,9 @@
                 
                 <div class="flex gap-2">
                     @if(! $notification->read_at)
-                        <flux:button wire:click="markAsRead('{{ $notification->id }}')" variant="ghost" size="sm" icon="check" />
+                        <flux:button wire:click="markAsRead('{{ $notification->id }}')" variant="ghost" size="sm" icon="check" class="min-h-12 min-w-12" aria-label="{{ __('Mark as read') }}" />
                     @endif
-                    <flux:button wire:click="delete('{{ $notification->id }}')" variant="ghost" size="sm" icon="trash" />
+                    <flux:button wire:click="delete('{{ $notification->id }}')" variant="ghost" size="sm" icon="trash" class="min-h-12 min-w-12" aria-label="{{ __('Delete notification') }}" />
                 </div>
             </flux:card>
         @empty

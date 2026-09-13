@@ -52,6 +52,13 @@
 
     {{-- Wizard Content --}}
     <div class="sm:mx-auto sm:w-full sm:max-w-xl transition-all duration-300">
+        <div aria-live="polite">
+            @if ($errors->any())
+                <flux:callout variant="danger" class="mb-4">
+                    <flux:heading size="sm">{{ __('Please review the highlighted fields.') }}</flux:heading>
+                </flux:callout>
+            @endif
+        </div>
         <flux:card class="py-8 px-4 shadow-xl sm:rounded-xl sm:px-10 border border-zinc-200/50 dark:border-zinc-800/50">
 
             {{-- ═══════════════════════════════════════════════════════ --}}

@@ -34,6 +34,15 @@
             </flux:table.columns>
 
             <flux:table.rows>
+                <flux:table.row wire:loading.flex wire:target="search,logFilter,tenantSlug,dateFrom,dateTo,nextPage,previousPage,gotoPage">
+                    <flux:table.cell colspan="5">
+                        <div class="flex flex-col gap-2" aria-hidden="true">
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                            <flux:skeleton class="h-10 w-full" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
                 @forelse ($entries as $entry)
                     <flux:table.row :key="$entry->id">
                         <flux:table.cell class="font-medium">
@@ -57,7 +66,7 @@
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:modal.trigger name="audit-event-view">
-                                <flux:button variant="ghost" size="sm" wire:click="view('{{ $entry->id }}')">{{ __('View') }}</flux:button>
+                                <flux:button variant="ghost" size="sm" wire:click="view('{{ $entry->id }}')" class="min-h-12 min-w-12">{{ __('View') }}</flux:button>
                             </flux:modal.trigger>
                         </flux:table.cell>
                     </flux:table.row>

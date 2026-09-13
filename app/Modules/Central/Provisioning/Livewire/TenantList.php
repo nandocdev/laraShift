@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Provisioning\Livewire;
 
+use App\Modules\Central\Catalog\Domain\Models\Plan;
 use App\Modules\Central\Provisioning\Actions\DeleteTenantAction;
 use App\Modules\Central\Provisioning\Models\Tenant;
 use App\Modules\Central\Support\Actions\ImpersonateTenantAction;

@@ -4,7 +4,7 @@
             <flux:heading size="xl">{{ __('Health Monitor') }}</flux:heading>
             <flux:subheading>{{ __('Qué está fallando, desde cuándo y a quién afecta.') }}</flux:subheading>
         </div>
-        <flux:button variant="primary" size="sm" icon="arrow-path" wire:click="refresh">{{ __('Refresh') }}</flux:button>
+        <flux:button variant="primary" size="sm" icon="arrow-path" wire:click="refresh" wire:loading.attr="disabled" class="min-h-12">{{ __('Refresh') }}</flux:button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -86,9 +86,9 @@
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         @if($incident['link'])
-                            <flux:button variant="ghost" size="sm" :href="$incident['link']" wire:navigate>{{ __('View') }}</flux:button>
+                            <flux:button variant="ghost" size="sm" :href="$incident['link']" wire:navigate class="min-h-12">{{ __('View') }}</flux:button>
                         @endif
-                        <flux:button variant="ghost" size="sm" wire:click="acknowledge('{{ $incident['id'] }}')">{{ __('Acknowledge') }}</flux:button>
+                        <flux:button variant="ghost" size="sm" wire:click="acknowledge('{{ $incident['id'] }}')" class="min-h-12">{{ __('Acknowledge') }}</flux:button>
                     </div>
                 </div>
             @empty

@@ -10,9 +10,12 @@ use App\Modules\Central\Support\Models\SupportNote;
 use App\Modules\Central\Support\Models\SupportSession;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class TenantSupportBitacora extends Component
 {
+    use WithPagination;
+
     public string $tenantId;
 
     public string $newNote = '';
@@ -41,8 +44,8 @@ class TenantSupportBitacora extends Component
     public function render(): View
     {
         return view('support::livewire.tenant-support-bitacora', [
-            'notes' => SupportNote::with('author')->where('tenant_id', $this->tenantId)->latest()->get(),
-            'sessions' => SupportSession::with('operator')->where('tenant_id', $this->tenantId)->latest()->get(),
+            'notes' => SupportNote::with('author')->where('tenant_id', $this->tenantId)->latest()->paginate(10, ['*'], 'notes_page'),
+            'sessions' => SupportSession::with('operator')->where('tenant_id', $this->tenantId)->latest()->paginate(10, ['*'], 'sessions_page'),
         ]);
     }
 }
