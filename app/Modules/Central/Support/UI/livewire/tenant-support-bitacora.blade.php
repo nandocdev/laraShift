@@ -22,8 +22,12 @@
         <!-- Notes List -->
         <div class="space-y-4">
             <flux:heading size="sm" class="uppercase text-zinc-400 tracking-widest font-bold">{{ __('Recent Notes') }}</flux:heading>
+            <div wire:loading.flex wire:target="nextPage,previousPage,gotoPage" class="flex flex-col gap-2" aria-hidden="true">
+                <flux:skeleton class="h-16 w-full" />
+                <flux:skeleton class="h-16 w-full" />
+            </div>
             @forelse($notes as $note)
-                <div class="p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm">
+                <div wire:key="note-{{ $note->id }}" class="p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-sm">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ $note->author->name }}</span>
                         <span class="text-[10px] text-zinc-500">{{ $note->created_at->diffForHumans() }}</span>
@@ -33,13 +37,14 @@
             @empty
                 <flux:text class="text-center py-4">{{ __('No internal notes for this tenant.') }}</flux:text>
             @endforelse
+            <div class="mt-2">{{ $notes->links() }}</div>
         </div>
 
         <!-- Impersonation History -->
         <div class="space-y-4">
             <flux:heading size="sm" class="uppercase text-zinc-400 tracking-widest font-bold">{{ __('Impersonation Audit') }}</flux:heading>
             <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                <flux:table>
+                <flux:table :paginate="$sessions">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Operator') }}</flux:table.column>
                         <flux:table.column>{{ __('Reason') }}</flux:table.column>
@@ -64,6 +69,7 @@
                     </flux:table.rows>
                 </flux:table>
             </div>
+            <div class="mt-2">{{ $sessions->links() }}</div>
         </div>
     </div>
 </div>
