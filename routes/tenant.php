@@ -66,5 +66,8 @@ Route::middleware([
 
         // Product: business locations (Reasy vertical, never core)
         require base_path('app/Modules/Product/Locations/Interface/Routes/web.php');
+
+        // Product: services and categories (Reasy vertical, never core)
+        require base_path('app/Modules/Product/Services/Interface/Routes/web.php');
     });
 });
