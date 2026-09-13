@@ -42,4 +42,5 @@ return [
     ComplianceServiceProvider::class,
     LocationsServiceProvider::class,
     ServicesServiceProvider::class,
+    ResourcesServiceProvider::class,
 ];

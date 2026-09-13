@@ -44,6 +44,7 @@ class RoleManagement extends Component
         'audit:read' => 'View organization audit logs',
         'locations:manage' => 'Manage business locations',
         'services:manage' => 'Manage services and categories',
+        'resources:manage' => 'Manage resources and assignments',
     ];
 
     public function create(): void
