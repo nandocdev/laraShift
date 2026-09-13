@@ -137,6 +137,8 @@ class ManageLocations extends Component
             return;
         }
 
+        $this->resetErrorBag();
+
         session()->flash('status', __('Location restored.'));
     }
 
@@ -158,7 +160,9 @@ class ManageLocations extends Component
      */
     private function rules(): array
     {
-        $unique = Rule::unique('locations', 'slug')->where('tenant_id', tenant('id'));
+        $unique = Rule::unique('locations', 'slug')
+            ->where('tenant_id', tenant('id'))
+            ->whereNull('deleted_at');
 
         if ($this->editingId) {
             $unique->ignore($this->editingId, 'id');

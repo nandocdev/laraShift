@@ -28,11 +28,17 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['tenant_id', 'slug']);
             $table->index('tenant_id');
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
         });
+
+        // Slugs stay unique per tenant only among live rows: soft-deleted
+        // locations free their slug for reuse. Partial unique indexes are
+        // supported by both PostgreSQL and SQLite.
+        if (in_array(DB::getDriverName(), ['pgsql', 'sqlite'], true)) {
+            DB::statement('CREATE UNIQUE INDEX locations_tenant_slug_unique ON locations (tenant_id, slug) WHERE deleted_at IS NULL');
+        }
 
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE locations ENABLE ROW LEVEL SECURITY;');
