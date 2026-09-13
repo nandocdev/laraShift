@@ -38,4 +38,5 @@ return [
     ExperienceServiceProvider::class,
     IntegrationsServiceProvider::class,
     ComplianceServiceProvider::class,
+    LocationsServiceProvider::class,
 ];

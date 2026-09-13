@@ -63,5 +63,8 @@ Route::middleware([
 
         // Billing (plans, checkout, invoices)
         require base_path('app/Modules/Central/Billing/Interface/Routes/tenant.php');
+
+        // Product: business locations (Reasy vertical, never core)
+        require base_path('app/Modules/Product/Locations/Interface/Routes/web.php');
     });
 });

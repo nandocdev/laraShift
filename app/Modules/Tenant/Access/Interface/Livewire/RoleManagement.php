@@ -42,6 +42,7 @@ class RoleManagement extends Component
         'roles:manage' => 'Manage custom roles and permissions',
         'settings:manage' => 'Update organization settings',
         'audit:read' => 'View organization audit logs',
+        'locations:manage' => 'Manage business locations',
     ];
 
     public function create(): void
