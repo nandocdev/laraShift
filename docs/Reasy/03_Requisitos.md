@@ -165,17 +165,17 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 #### RF12 - Gestión de Sedes/Ubicaciones
 
 - [x] **RF12.1** - El sistema debe permitir gestionar múltiples ubicaciones de forma independiente (`Product/Locations`: `ManageLocations` CRUD + soft-delete/restore, slug único por tenant, merge `4aa1544` en `develop`, `LocationManagementTest` 7/7)
-- [~] **RF12.2** - Cada sede debe poder tener su propia configuración de horarios y servicios (fundación: `locations.timezone` propio con fallback al negocio + `settings json`; la asignación de servicios por sede llega con RF13 —pivot `location_service`—, horarios por sede con RF15)
+- [~] **RF12.2** - Cada sede debe poder tener su propia configuración de horarios y servicios (fundación: `locations.timezone` propio con fallback al negocio + `settings json`; servicios por sede vía pivot `location_service` ✅ con RF13 —`ManageServices` asigna sedes—; horarios por sede llegan con RF15)
 - [ ] **RF12.3** - El sistema debe permitir transferir recursos entre sedes (bloqueado por RF14: exige la entidad Recurso; contrato fijado: futuros recursos llevan `location_id` y el transfer será reasignación)
 
 #### RF13 - Gestión de Servicios
 
-- [ ] **RF13.1** - El administrador debe poder crear, editar y categorizar servicios
-- [ ] **RF13.2** - El sistema debe permitir definir duración, capacidad y precio por servicio
-- [ ] **RF13.3** - El administrador debe poder configurar políticas de depósito (ninguno, porcentaje, cantidad fija)
-- [ ] **RF13.4** - El sistema debe permitir configurar políticas de cancelación personalizadas por servicio
-- [ ] **RF13.5** - El administrador debe poder establecer buffers antes y después de cada servicio
-- [ ] **RF13.6** - El sistema debe soportar servicios grupales con capacidad múltiple
+- [x] **RF13.1** - El administrador debe poder crear, editar y categorizar servicios (`Product/Services`: `ServiceCategory` CRUD + `ManageServices` con tabs servicios/categorías, merge en `develop`, `ServiceManagementTest` 8/8)
+- [x] **RF13.2** - El sistema debe permitir definir duración, capacidad y precio por servicio (`duration_minutes`, `capacity`, `price_cents` en centavos + `currency` nullable con fallback al negocio, RNF8.3)
+- [x] **RF13.3** - El administrador debe poder configurar políticas de depósito (`DepositType none|percentage|fixed` + `deposit_value`: % 0–100 o centavos, con validación de coherencia en el componente)
+- [x] **RF13.4** - El sistema debe permitir configurar políticas de cancelación personalizadas por servicio (`cancellation_window_hours` + `cancellation_policy json [{min_hours, refund_percent}]`; la ejecución de reembolsos llega con el motor de reservas RN5)
+- [x] **RF13.5** - El administrador debe poder establecer buffers antes y después de cada servicio (`buffer_before/after_minutes`, consumidos por el futuro motor de disponibilidad RN2)
+- [x] **RF13.6** - El sistema debe soportar servicios grupales con capacidad múltiple (`capacity ≥ 1`; test con `capacity = 20`)
 
 #### RF14 - Gestión de Recursos
 
@@ -649,30 +649,30 @@ Reasy será un sistema multi-tenant sobre openSaaS que soportará:
 
 ### 7.2 Producto Reasy (RF11–RF53) — ⬜ salvo scaffolding
 
-| RF                     | Estado_repo | Evidencia / nota                                                                                                                                                                                                            |
-| ---------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RF11 negocio/branding  | ✅/🟡       | `Experience/BrandingSettings` (nombre/logo) + `LocalizationSettings` (timezone/moneda) ✅; descripción + dirección en `tenant_settings` implementados con `BusinessProfileTest` 4/4 en rama de trabajo (pendiente merge)    |
-| RF12 sedes             | ✅/🟡/⬜    | `Product/Locations` en `develop` (merge `4aa1544`): RF12.1 ✅ `ManageLocations` + `LocationManagementTest` 7/7; RF12.2 🟡 fundación (`timezone`/`settings` por sede, pivot con RF13); RF12.3 ⬜ bloqueado por RF14          |
-| RF13 servicios         | ⬜          | BO-03 pendiente (= `01`)                                                                                                                                                                                                    |
-| RF14 recursos          | ⬜          | BO-04 pendiente (= `01`)                                                                                                                                                                                                    |
-| RF15 horarios          | ⬜ en repo  | BO-05/06 "hechos" solo en prototipo legado                                                                                                                                                                                  |
-| RF16 empleados         | 🟡          | `Access/Actions/{SendInvitation, UpdateTenantUserRole}`, `Workspace/TeamManagement` (scaffolding)                                                                                                                           |
-| RF17–RF18 panel/manual | ⬜          | No existe                                                                                                                                                                                                                   |
-| RF19 clientes          | ⬜          | No existe                                                                                                                                                                                                                   |
-| RF20 dashboard negocio | 🟡          | `Workspace/UsageOverview` (cuotas) ✅; KPIs ingresos/ocupación ❌                                                                                                                                                           |
-| RF21 pagos negocio     | 🚫 diferido | Framework ✅ (`CreateCheckoutSessionAction`, `SubscribeTenantAction`, `ChargeDirectAction`, `GenerateRenewalCheckoutAction`, `BillingScheduler`, `billing:process-recurring`, `billing:reconcile`); depósitos en reserva ❌ |
-| RF22 notificaciones    | 🟡          | `Workspace/NotificationCenter` + `Integrations/SmtpSettings` ✅; plantillas/SMS ❌                                                                                                                                          |
-| RF23–RF26              | ⬜          | Finanzas/inventario/marketing/waitlist sin código                                                                                                                                                                           |
-| RF27–RF30 staff/agenda | ⬜          | Sin agenda de staff                                                                                                                                                                                                         |
-| RF31 tiempo real       | 🟡          | `NotificationCenter` ✅; recordatorios programados ❌                                                                                                                                                                       |
-| RF32–RF35              | ⬜          | Comisiones/chat/tareas/check-in sin código                                                                                                                                                                                  |
-| RF36–RF37 auth/perfil  | 🟡          | Login/MFA/invitaciones ✅ (`EnrollTenantMfa`, `SendInvitation`); SSO corporativo ❌                                                                                                                                         |
-| RF38–RF40              | ⬜          | Sin reserva de cliente registrado                                                                                                                                                                                           |
-| RF41 pagos cliente     | 🚫 diferido | Framework ✅; producto ❌                                                                                                                                                                                                   |
-| RF42–RF45              | ⬜          | Fidelidad/preferencias/social/suscripciones sin código                                                                                                                                                                      |
-| RF46–RF49 guest        | ⬜          | `Growth/RegisterTenant` es alta de tenants, no guest del negocio; OTP ❌                                                                                                                                                    |
-| RF50 pago guest        | 🚫 diferido | Framework ✅; producto ❌                                                                                                                                                                                                   |
-| RF51–RF53              | ⬜          | Enlace firmado/conversión/múltiple sin código                                                                                                                                                                               |
+| RF                     | Estado_repo | Evidencia / nota                                                                                                                                                                                                                 |
+| ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RF11 negocio/branding  | ✅/🟡       | `Experience/BrandingSettings` (nombre/logo) + `LocalizationSettings` (timezone/moneda) ✅; descripción + dirección en `tenant_settings` implementados con `BusinessProfileTest` 4/4 en rama de trabajo (pendiente merge)         |
+| RF12 sedes             | ✅/🟡/⬜    | `Product/Locations` en `develop` (merge `4aa1544`): RF12.1 ✅ `ManageLocations` + `LocationManagementTest` 7/7; RF12.2 🟡 fundación (`timezone`/`settings` por sede, pivot con RF13); RF12.3 ⬜ bloqueado por RF14               |
+| RF13 servicios         | ✅          | `Product/Services` en `develop`: `Service` + `ServiceCategory` (RLS, soft-delete, slugs parciales únicos), `ManageServices` (precios en centavos, depósitos, cancelación, pivot `location_service`), `ServiceManagementTest` 8/8 |
+| RF14 recursos          | ⬜          | BO-04 pendiente (= `01`)                                                                                                                                                                                                         |
+| RF15 horarios          | ⬜ en repo  | BO-05/06 "hechos" solo en prototipo legado                                                                                                                                                                                       |
+| RF16 empleados         | 🟡          | `Access/Actions/{SendInvitation, UpdateTenantUserRole}`, `Workspace/TeamManagement` (scaffolding)                                                                                                                                |
+| RF17–RF18 panel/manual | ⬜          | No existe                                                                                                                                                                                                                        |
+| RF19 clientes          | ⬜          | No existe                                                                                                                                                                                                                        |
+| RF20 dashboard negocio | 🟡          | `Workspace/UsageOverview` (cuotas) ✅; KPIs ingresos/ocupación ❌                                                                                                                                                                |
+| RF21 pagos negocio     | 🚫 diferido | Framework ✅ (`CreateCheckoutSessionAction`, `SubscribeTenantAction`, `ChargeDirectAction`, `GenerateRenewalCheckoutAction`, `BillingScheduler`, `billing:process-recurring`, `billing:reconcile`); depósitos en reserva ❌      |
+| RF22 notificaciones    | 🟡          | `Workspace/NotificationCenter` + `Integrations/SmtpSettings` ✅; plantillas/SMS ❌                                                                                                                                               |
+| RF23–RF26              | ⬜          | Finanzas/inventario/marketing/waitlist sin código                                                                                                                                                                                |
+| RF27–RF30 staff/agenda | ⬜          | Sin agenda de staff                                                                                                                                                                                                              |
+| RF31 tiempo real       | 🟡          | `NotificationCenter` ✅; recordatorios programados ❌                                                                                                                                                                            |
+| RF32–RF35              | ⬜          | Comisiones/chat/tareas/check-in sin código                                                                                                                                                                                       |
+| RF36–RF37 auth/perfil  | 🟡          | Login/MFA/invitaciones ✅ (`EnrollTenantMfa`, `SendInvitation`); SSO corporativo ❌                                                                                                                                              |
+| RF38–RF40              | ⬜          | Sin reserva de cliente registrado                                                                                                                                                                                                |
+| RF41 pagos cliente     | 🚫 diferido | Framework ✅; producto ❌                                                                                                                                                                                                        |
+| RF42–RF45              | ⬜          | Fidelidad/preferencias/social/suscripciones sin código                                                                                                                                                                           |
+| RF46–RF49 guest        | ⬜          | `Growth/RegisterTenant` es alta de tenants, no guest del negocio; OTP ❌                                                                                                                                                         |
+| RF50 pago guest        | 🚫 diferido | Framework ✅; producto ❌                                                                                                                                                                                                        |
+| RF51–RF53              | ⬜          | Enlace firmado/conversión/múltiple sin código                                                                                                                                                                                    |
 
 ### 7.3 RNF y RN
 
