@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Central\Operations\Providers;
 
+use App\Modules\Central\Operations\Infrastructure\Console\AlertCriticalIncidentsCommand;
 use App\Modules\Central\Operations\Infrastructure\Console\HorizonUpdateCommand;
 use App\Modules\Central\Operations\Interface\Livewire\HealthMonitor;
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +20,7 @@ class OperationsServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 HorizonUpdateCommand::class,
+                AlertCriticalIncidentsCommand::class,
             ]);
         }
 
