@@ -69,5 +69,8 @@ Route::middleware([
 
         // Product: services and categories (Reasy vertical, never core)
         require base_path('app/Modules/Product/Services/Interface/Routes/web.php');
+
+        // Product: resources, staff, rooms and equipment (Reasy vertical, never core)
+        require base_path('app/Modules/Product/Resources/Interface/Routes/web.php');
     });
 });
