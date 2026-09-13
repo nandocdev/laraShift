@@ -11,9 +11,9 @@
         <flux:text color="emerald">{{ session('status') }}</flux:text>
     @endif
 
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap gap-2" role="tablist" aria-label="{{ __('Tenant sections') }}">
         @foreach (['overview' => __('Overview'), 'subscription' => __('Subscription'), 'usage' => __('Usage'), 'health' => __('Health'), 'activity' => __('Activity'), 'danger' => __('Danger Zone')] as $tab => $label)
-            <flux:button :variant="$activeTab === $tab ? 'primary' : 'ghost'" size="sm" wire:click="setTab('{{ $tab }}')">{{ $label }}</flux:button>
+            <flux:button :variant="$activeTab === $tab ? 'primary' : 'ghost'" size="sm" wire:click="setTab('{{ $tab }}')" class="min-h-12">{{ $label }}</flux:button>
         @endforeach
     </div>
 
